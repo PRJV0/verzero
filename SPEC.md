@@ -1,0 +1,396 @@
+# Verzero — Specifica tecnica MVP
+### Piattaforma digitale di sostenibilità ed energia per PMI
+Versione 0.1 · luglio 2026 · documento di partenza per lo sviluppo con Claude Code
+
+---
+
+## 1. Visione e perimetro dell'MVP
+
+MISSIONE: abbattere tempi e costi del sistema consulenziale italiano, partendo da settori specifici e allargandosi quando arrivano i numeri. L'AI è il motore di tutto.
+
+Verzero accentra in un'unica piattaforma il maggior numero possibile di servizi consulenziali in ambito sostenibilità ed efficienza energetica, acquistabili in autonomia dal cliente finale — PMI e grandi aziende — ciascuno fruito nella propria area privata: carbon footprint di organizzazione, bilancio di sostenibilità VSME, diagnosi energetica, e nel tempo i sistemi di gestione (ISO 9001, 14001, UNI/PdR 125, 14064, 14067 e altri). Interfaccia semplice e pulita, prezzi sotto la media di mercato, massima automazione tramite AI: l'effort richiesto all'organizzazione è ridotto al minimo. Verzero si propone come piattaforma di riferimento della consulenza di nuova generazione: automazione AI e presidio umano integrati e ottimizzati — dietro lo schermo ci sono sempre persone che verificano le informazioni e rispondono. MESSAGGIO GUIDA (sintesi da cui discendono tutti i testi di sito e prodotto): "la piattaforma con i prezzi migliori del mercato che qualifica la tua azienda con l'effort più basso di sempre" — prezzo, qualifica, effort: ogni pagina deve far passare questi tre elementi. Posizionamento: Ver0 è un partner che QUALIFICA le imprese — attraverso i servizi le aziende ottengono vantaggi di reputazione, attendibilità e riconoscimento (verso banche, capofiliera, stazioni appaltanti), e questo messaggio deve essere percepibile fin dalla home del sito. Il principio guida dell'esperienza utente: **mai chiedere un dato che si può estrarre da un documento caricato**. Il cliente carica bollette e documenti, l'AI estrae i dati, il cliente verifica e conferma, la piattaforma genera i report.
+
+**Perimetro MVP (fase 1-2):** un solo modulo completo end-to-end — il carbon footprint di organizzazione (Scope 1 e 2 completi, Scope 3 semplificato) — con multi-tenancy, upload documenti, estrazione AI, calcolo emissioni, dashboard e report PDF scaricabile.
+
+**Fuori perimetro MVP (fasi successive):** modulo VSME, diagnosi energetica, CER, fatturazione Stripe, rete EGE convenzionati, portale amministratore.
+
+**Utenti target dell'MVP:** 3-5 aziende pilota. Ogni azienda ha 1-3 utenti.
+
+## 2. Stack tecnico
+
+| Componente | Scelta | Motivazione |
+|---|---|---|
+| Frontend + backend | Next.js 16 (App Router, TypeScript) | Un solo framework per UI e API routes |
+| UI | Tailwind CSS + componenti custom | Riuso del prototipo esistente (`verzero-prototipo.jsx`) |
+| Database + Auth + Storage | Supabase (regione EU, Francoforte) | Postgres gestito, autenticazione, storage documenti, Row Level Security per il multi-tenant, residenza dati UE (requisito GDPR) |
+| Motore AI | Claude API (modello `claude-sonnet-4-6`) | Estrazione dati da PDF bollette e generazione testi. Docs: https://docs.claude.com/en/api/overview |
+| Grafici | Recharts | Già usato nel prototipo |
+| Generazione PDF | @react-pdf/renderer (o Puppeteer su route server) | Report brandizzati scaricabili |
+| Hosting | Vercel (funzioni in regione EU) | Deploy automatico da Git |
+| Email transazionali | Resend | Invito utenti, notifiche report pronto |
+
+Variabili d'ambiente richieste: `ANTHROPIC_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`.
+
+**Requisito trasversale di interfaccia:** web application responsive — piena fruibilita da desktop E da smartphone (mobile-first sui flussi chiave: upload documenti da fotocamera, conferma dati, consultazione dashboard e documenti). Nessuna app nativa nell'MVP.
+
+## 3. Architettura e multi-tenancy
+
+- Ogni azienda cliente è una `organization`. Ogni riga di ogni tabella dati porta `organization_id`.
+- **Row Level Security (RLS) attiva su tutte le tabelle**: un utente vede solo i dati della propria organizzazione. Le policy RLS sono la barriera di sicurezza primaria; il codice applicativo è la seconda.
+- I file caricati vanno in un bucket Supabase Storage privato, con path `{organization_id}/{document_id}.pdf` e policy di accesso allineate alla RLS.
+- Le chiamate all'API Claude avvengono **solo lato server** (API routes / server actions): la chiave API non raggiunge mai il browser.
+- Anno di rendicontazione come dimensione ovunque: tutti i dati di attività sono legati a `reporting_year`.
+
+## 4. Modello dati (schema Postgres)
+
+```sql
+-- Identità e tenancy
+organizations (
+  id uuid pk, name text, vat_number text, ateco_code text,
+  employees_count int, sector text, created_at timestamptz
+)
+profiles (           -- estende auth.users di Supabase
+  id uuid pk references auth.users, full_name text,
+  organization_id uuid references organizations, role text  -- 'owner' | 'member'
+)
+
+-- Moduli e attivazioni
+modules ( id text pk, name text, description text )  -- 'carbon', 'vsme', 'audit'
+module_activations (
+  id uuid pk, organization_id uuid, module_id text,
+  reporting_year int, status text,  -- 'active' | 'completed'
+  activated_at timestamptz
+)
+
+-- Documenti e estrazioni
+documents (
+  id uuid pk, organization_id uuid, reporting_year int,
+  kind text,          -- 'electricity_bill' | 'gas_bill' | 'fuel_invoice' | 'other'
+  storage_path text, original_filename text,
+  status text,        -- 'uploaded' | 'extracting' | 'extracted' | 'confirmed' | 'failed'
+  uploaded_by uuid, created_at timestamptz
+)
+extractions (
+  id uuid pk, document_id uuid, organization_id uuid,
+  raw_json jsonb,     -- output integrale del modello
+  model text, confidence text,  -- 'high' | 'medium' | 'low'
+  created_at timestamptz
+)
+
+-- Dati di attività (una riga = un consumo confermato)
+activity_data (
+  id uuid pk, organization_id uuid, reporting_year int,
+  scope int,          -- 1 | 2 | 3
+  category text,      -- 'electricity' | 'natural_gas' | 'diesel' | 'petrol' | 'district_heating' | 'purchased_goods' | ...
+  quantity numeric, unit text,   -- kWh, Smc, litri, km, €
+  period_start date, period_end date,
+  source_document_id uuid null,  -- null se inserito a mano
+  supply_type text null,         -- per elettricità: 'go_renewable' | 'national_mix'
+  confirmed_by uuid, created_at timestamptz
+)
+
+-- Fattori di emissione (tabella di sistema, non per-tenant)
+emission_factors (
+  id uuid pk, category text, unit text,
+  factor_location numeric,   -- kgCO2e per unità (location-based)
+  factor_market numeric null,
+  source text, valid_year int   -- es. 'ISPRA 2025', 'DEFRA 2025'
+)
+
+-- Risultati e report
+reports (
+  id uuid pk, organization_id uuid, module_id text, reporting_year int,
+  totals jsonb,       -- { scope1: n, scope2_location: n, scope2_market: n, scope3: n }
+  storage_path text,  -- PDF generato
+  generated_at timestamptz
+)
+```
+
+Seed iniziale di `emission_factors`: elettricità mix nazionale Italia (fonte ISPRA, ultimo anno disponibile), gas naturale (Smc), gasolio e benzina (litri), GPL, teleriscaldamento. Nel codice il fattore non è mai hardcodato: si legge sempre da questa tabella, così l'aggiornamento annuale dei fattori non richiede deploy.
+
+## 5. Flussi utente dell'MVP
+
+**Flusso di acquisto e onboarding.** Sito pubblico → pagina di dettaglio del servizio → checkout (dati di fatturazione con P.IVA, scelta mensile/annuale anticipato, accettazione termini con autorizzazione alle banche dati, pagamento) → SOLO a pagamento avvenuto: creazione dell'area riservata, interrogazione delle banche dati e precompilazione (anagrafica, ATECO, addetti, dati economici) → scelta anno di rendicontazione → dashboard con checklist delle categorie da coprire. REGOLA: nessuna chiamata a banche dati a pagamento prima dell'incasso; eventuali anteprime pre-acquisto usano solo fonti gratuite o a costo trascurabile. Ogni servizio del catalogo ha la propria pagina di dettaglio con descrizione, caratteristiche dell'output (conforme alla norma di riferimento) e ganci commerciali; questi contenuti vivono in tabelle gestibili senza deploy, come i prezzi.
+
+**Raccolta dati (il cuore del prodotto).** Wizard per categoria: Azienda → Veicoli e carburanti → Energia elettrica → Gas naturale → Altre fonti (Scope 3 semplificato). Per ogni categoria due strade:
+1. *Carica documento*: upload PDF/foto → stato `extracting` → il motore AI estrae i campi → form precompilato → l'utente verifica, corregge se serve, conferma → si crea la riga in `activity_data` con `source_document_id`.
+2. *Inserisci a mano*: form vuoto per chi ha già i totali (es. da contabilità).
+Durante l'inserimento, un pannello mostra l'impatto in tCO2e calcolato in tempo reale (il momento "wow" già validato nel prototipo).
+
+**Dashboard.** La dashboard e COMPOSTA dai soli servizi attivi dell'organizzazione: ogni modulo ha il proprio spazio di lavoro con i propri passi e contenuti, e la vista generale li aggrega mostrando in evidenza il servizio acquistato con il prossimo passo da compiere; i moduli non attivi compaiono come disponibili (upsell), mai come contenuto vuoto. Metriche mostrate solo se pertinenti ai moduli attivi (es. tCO2e solo con carbon attivo), stato dei moduli, documenti recenti. Il completamento si calcola come percentuale di categorie confermate sul totale delle categorie applicabili all'azienda.
+
+**Generazione report.** Quando tutte le categorie obbligatorie sono confermate → bottone "Genera report" → calcolo dei totali → PDF brandizzato con metodologia, tabelle per categoria, grafici, dichiarazione di conformità GHG Protocol / ISO 14064-1 → salvato in `reports` e scaricabile. Il report riporta sempre Scope 2 in doppia lettura: location-based e market-based.
+
+## 6. Motore di estrazione documenti (Claude API)
+
+Pipeline server-side per ogni documento caricato:
+1. Route `POST /api/documents/{id}/extract`: scarica il PDF dallo storage, lo invia all'API Claude come documento (base64) con un prompt di estrazione specifico per `kind`.
+2. Il prompt chiede **solo JSON** conforme a uno schema per tipo documento. Esempio per `electricity_bill`:
+
+```
+Sei un estrattore di dati da bollette elettriche italiane. Analizza il documento
+e restituisci SOLO un oggetto JSON, senza testo aggiuntivo, con questo schema:
+{
+  "pod": string | null,
+  "supplier": string | null,
+  "period_start": "YYYY-MM-DD" | null,
+  "period_end": "YYYY-MM-DD" | null,
+  "total_kwh": number | null,
+  "supply_type": "go_renewable" | "national_mix" | "unknown",
+  "confidence": "high" | "medium" | "low",
+  "notes": string | null
+}
+Regole: se un campo non è leggibile usa null, non inventare mai valori.
+total_kwh è il consumo fatturato del periodo, non la potenza impegnata.
+supply_type è "go_renewable" solo se la bolletta menziona esplicitamente
+energia 100% rinnovabile o Garanzia d'Origine. In notes segnala anomalie
+(conguagli, stime, più POD nello stesso documento).
+```
+
+3. Parsing difensivo della risposta (strip di eventuali backtick, `JSON.parse` in try/catch). Salvataggio integrale in `extractions.raw_json`.
+4. Se `confidence` è `low` o campi chiave sono null → il form si apre con un avviso "verifica con attenzione" e i campi mancanti evidenziati. **L'utente conferma sempre**: nessun dato entra in `activity_data` senza conferma umana. Questo è anche il posizionamento legale del prodotto: l'AI assiste, il cliente valida.
+5. Prompt analoghi per `gas_bill` (Smc, coefficiente C) e `fuel_invoice` (litri per carburante).
+
+Costo stimato: pochi centesimi per documento. Prevedere un limite di dimensione upload (10 MB) e un contatore di estrazioni per organizzazione.
+
+## 7. Motore di calcolo
+
+- Per ogni riga di `activity_data`: `emissioni = quantity × fattore` (dalla tabella `emission_factors`, per anno e categoria; conversione unità dove serve).
+- Scope 2 elettricità: location-based sempre con il fattore del mix nazionale; market-based = 0 se `supply_type = 'go_renewable'`, altrimenti fattore del residual mix.
+- Totali per Scope e per categoria, salvati in `reports.totals` alla generazione. Tutti gli arrotondamenti solo in presentazione (una cifra decimale), mai nei dati.
+- Ogni calcolo deve essere ricostruibile: il report elenca per ogni voce quantità, unità, fattore usato e fonte del fattore. La tracciabilità è ciò che rende il documento difendibile davanti a banche e auditor.
+
+## 8. Sicurezza, GDPR e requisiti non funzionali
+
+- Residenza dati UE (Supabase Francoforte, funzioni Vercel EU). DPA firmato con i sub-processor; informativa privacy e nomina a responsabile del trattamento verso i clienti (da predisporre con un legale prima dei clienti paganti).
+- RLS su tutte le tabelle; storage privato; chiavi API solo server-side; rate limiting sulle route di estrazione.
+- Cancellazione account = cancellazione effettiva di dati e documenti (diritto all'oblio).
+- Log applicativi senza dati personali; backup automatici Supabase attivi.
+- Lingua: solo italiano nell'MVP. Struttura testi pronta per i18n futura.
+
+## 9. Piano di lavoro per fasi
+
+| Fase | Contenuto | Criterio di completamento |
+|---|---|---|
+| 0. Setup | Repo, Next.js + Supabase + deploy Vercel, CI minima | "Hello world" autenticato online |
+| 1. Fondamenta | Schema DB con RLS, onboarding organizzazione, inviti utenti | Due account di due org non vedono i dati altrui (test esplicito) |
+| 2. Raccolta dati | Upload documenti, pipeline estrazione, form di conferma, inserimento manuale, pannello impatto live | Bolletta reale caricata → dato confermato in activity_data |
+| 3. Dashboard + report | Dashboard con metriche reali, motore di calcolo, generazione PDF | Report PDF completo generato da dati reali |
+| 4. Pilota | Seed fattori ISPRA/DEFRA aggiornati, onboarding 3-5 aziende pilota, raccolta feedback | Primo report consegnato a un'azienda vera |
+
+Ordine di sviluppo consigliato dentro ogni fase: prima il percorso felice end-to-end, poi gli stati di errore, poi la rifinitura UI riprendendo lo stile del prototipo.
+
+## 10. Istruzioni per Claude Code
+
+Metti questo file nella radice del repository come `SPEC.md` insieme a `verzero-prototipo.jsx` (riferimento visivo per lo stile). Primo comando suggerito, dalla cartella vuota del progetto:
+
+> Leggi SPEC.md. Inizializza il progetto della fase 0: Next.js 16 con TypeScript e Tailwind, client Supabase configurato, struttura cartelle per app router. Poi fermati e mostrami la struttura prima di procedere.
+
+Procedi una fase alla volta e chiedi a Claude Code di scrivere test per la RLS (fase 1) e per il motore di calcolo (fase 3) prima di considerarle chiuse. A ogni sessione, fai aggiornare un file `PROGRESS.md` con lo stato, così ogni nuova sessione riparte dal punto giusto.
+
+## 11. Modulo bollino "Ver0 — Impresa Certificata"
+
+Marchio di certificazione della piattaforma, esposto dalle aziende che raggiungono i criteri. Riferimento grafico: `bollino-ver0.svg` (sigillo circolare, wordmark "Ver0" con foglia innestata sullo zero, arco "IMPRESA CERTIFICATA", millesimo). Va costruito in coerenza con la direttiva UE 2024/825: criteri pubblici, verifica, revocabilità.
+
+**Scala MULTI-PERCORSO (un solo sigillo, più strade per meritarlo; criteri per percorso pubblici, mai a pagamento):**
+- Livello 1 — "Percorso verificato": si ottiene completando ALMENO UN percorso qualificante con validazione del team tecnico. Percorsi qualificanti (elenco estendibile, criteri pubblici per ciascuno): carbon footprint con categorie obbligatorie confermate; bilancio VSME completo e validato; sistema di gestione ISO (famiglia A) completato; fascicolo UNI/PdR 125 pronto per l'audit; check-up energetico con monitoraggio attivo. Il sigillo e unico ("Impresa Ver0" millesimato); la dicitura sotto il wordmark varia per ambito (es. "dati verificati - carbon", "sistema completo - qualita", "percorso verificato - parita"); la pagina pubblica di verifica elenca QUALI ambiti sono verificati e da quando. Piu percorsi = piu ambiti sulla stessa pagina, mai sigilli multipli.
+- Livello 2 — "Risultato dimostrato" (sigillo pieno): livello 1 + risultato misurato nel proprio ambito: emissioni in calo a parita di perimetro (carbon); certificazione di terza parte conseguita da organismo accreditato (ISO / PdR 125); KPI di parita migliorati anno su anno; risparmi energetici realizzati e misurati. Premia il fatto, non il documento.
+Estensione dati: `certifications` acquisisce i campi `pathway` (percorso che ha generato il livello) e la pagina pubblica espone l'elenco dei pathway verificati con date.
+
+**Estensione del modello dati:**
+```sql
+certifications (
+  id uuid pk, organization_id uuid, reporting_year int,
+  level int,                -- 1 | 2
+  status text,              -- 'active' | 'expired' | 'revoked'
+  public_slug text unique,  -- per l'URL pubblico
+  issued_at timestamptz, expires_at timestamptz,  -- 12 mesi dall'emissione
+  revoked_reason text null
+)
+```
+
+**Funzionalità:**
+- Assegnazione automatica alla generazione del report se i criteri sono soddisfatti; scadenza a 12 mesi; passaggio a `expired` via job pianificato. Revoca manuale da ruolo amministratore piattaforma con motivazione obbligatoria.
+- Pagina pubblica `/verifica/{public_slug}` senza login: ragione sociale, P.IVA, settore, livello e anno, emissioni totali, metodologia, data di verifica e scadenza, link a criteri pubblici, registro delle imprese certificate e canale di segnalazione usi impropri. Nessun altro dato oltre a questi (privacy by design).
+- Kit grafico scaricabile per l'azienda certificata: SVG/PNG del sigillo millesimato con QR code che punta alla pagina di verifica, in versione colore e monocromatica.
+- Registro pubblico `/registro`: elenco consultabile delle certificazioni attive.
+
+Collocazione nel piano: la tabella e l'assegnazione automatica entrano in fase 3 (insieme alla generazione report); pagina pubblica, kit grafico e registro in fase 4. Nota legale (fuori dal codice): deposito del marchio di certificazione UE presso EUIPO con regolamento d'uso, e deposito del marchio denominativo "Verzero" e figurativo "Ver0".
+
+## 12. Listino, piani e regole di prezzo
+
+Prezzi in canone mensile ricorrente, IVA esclusa, riferiti ad aziende fino a 50 dipendenti. I prezzi NON vanno hardcodati: vivono in una tabella `price_plans` gestibile senza deploy.
+
+| Codice | Voce | Canone mensile |
+|---|---|---|
+| PLT | Canone piattaforma (obbligatorio) | 49 € |
+| CF-B | Carbon footprint Base (Scope 1+2) | 89 € |
+| CF-P | Carbon footprint Plus (Scope 3 + piano riduzione) | 199 € |
+| VS-B | Bilancio VSME Base | 129 € |
+| VS-P | Bilancio VSME Plus (con revisione umana) | 349 € |
+| EC | Rating economia circolare | 129 € |
+| SET | Pacchetto settore | 39 € |
+| BUNDLE | Percorso Ver0 = PLT + CF-B + VS-B | 199 € (vs 267 € a listino) |
+
+**Regole di prezzo:**
+- Fascia dimensionale: 51-200 dipendenti → maggiorazione del 60% su tutte le voci. La fascia si determina dal dato dipendenti dell'organizzazione e va ricontrollata al rinnovo annuale.
+- Pagamento annuale anticipato → sconto 10% sul totale.
+- Il bundle Percorso Ver0 dà accesso ai requisiti del bollino livello 1; il bollino stesso non è mai una voce di prezzo (vincolo di conformità, vedi sezione 11).
+- Canale partner: provvigione ricorrente standard del 20% sul canone incassato, uguale per tutti i canali partner; nessuna provvigione sul canale self-service.
+- L'hub / registro pubblico delle imprese certificate è previsto ma NON va esposto nel marketing né nel prodotto fino alla decisione di lancio di seconda fase (massa critica di aziende certificate).
+
+## 13. Estensioni del catalogo — CON GERARCHIA DI PRIORITÀ (aggiornata alla strategia dei 18 mesi)
+
+NOTA DI PRIORITÀ (prevale sull'etichetta storica "post-MVP"): il blocco 13.5-13.8 — generatore di sistemi di gestione, PdR 125, arricchimento camerale e banche dati — è il CUORE della piattaforma e dell'innovazione, ed è il PRIMO prodotto da portare sul mercato nella finestra parallela (cuneo a bassa sovrapposizione: ISO 9001 + PdR 125), insieme al 13.9 (check-up energetico) come funnel. Le fasi 0-4 (carbon/VSME) restano il motore da costruire — infrastruttura comune di estrazione, calcolo e generazione — ma la loro spinta commerciale e di seconda ondata (post-decisione mese 18). Le sezioni 13.1-13.4 (compensazione, CFP/LCA di prodotto, academy, supporto certificazioni) sono fase 2: riusano lo stesso motore documentale e si attivano a valle. L'ordine di costruzione dei verticali in fase 2 di sviluppo segue questa nota, non l'ordine di numerazione.
+
+Estensioni del catalogo dopo le fasi 0-4, per allineare l'ampiezza dell'offerta ai leader di mercato mantenendo il modello self-service con prezzi pubblici. Nessuna di queste voci entra nel codice dell'MVP; la struttura modulare (tabelle `modules` e `price_plans`) deve però permettere di aggiungerle senza rifattorizzazioni.
+
+**13.1 Compensazione — "Contributo climatico" (priorità alta: opportunità di business rilevante).** Vendita in piattaforma di crediti di carbonio certificati (standard riconosciuti: Verra/VCS, Gold Standard) e Garanzie d'Origine, con margine di intermediazione. Il cliente vede il proprio residuo emissivo dal modulo carbon footprint e può finanziare progetti climatici in pochi click, con registro delle transazioni e attestato di contributo. VINCOLI DI CONFORMITÀ NON NEGOZIABILI (direttiva UE 2024/825): (a) mai generare o suggerire claim di neutralità o riduzione basati sulla compensazione ("carbon neutral", "a impatto zero grazie ai crediti"); il linguaggio in piattaforma e negli attestati è sempre "contributo climatico" riferito al finanziamento di progetti, distinto dalle emissioni proprie; (b) il bollino Ver0 non dipende MAI dai crediti acquistati: i criteri restano misurazione verificata (livello 1) e riduzione reale (livello 2); l'acquisto di crediti non concorre in alcun modo; (c) tracciabilità completa: per ogni credito venduto, progetto, standard, vintage e registro di ritiro visibili al cliente. INTEGRAZIONE TECNICA (fase 2): Verzero non gestisce crediti in proprio ma si collega a operatori esistenti — via API di provider/aggregatori di crediti certificati (catalogo progetti, acquisto, ritiro sul registro, certificato con seriali) o tramite accordi con exchange/broker (es. CTX - Carbon Trade Exchange) e canali diretti già in essere; selezione del partner con criteri di qualità espliciti e ritiro sempre nominativo per il cliente finale.
+
+**13.2 Carbon footprint di prodotto (LCA semplificata).** Calcolo delle emissioni di prodotto/servizio a partire dai dati aziendali già in piattaforma; percorso certificato ISO 14067 / EPD tramite verificatori partner (stesso schema convenzionale degli EGE per la diagnosi energetica). Target: PMI manifatturiere sotto pressione di qualifica fornitori.
+
+**13.3 Academy Verzero (formazione).** Corsi digitali in piattaforma su sostenibilità, rendicontazione e uso degli strumenti, con attestati; versione team per il coinvolgimento del personale. Margine elevato, nessun costo consulenziale, coerente con il self-service.
+
+**13.4 Supporto certificazioni.** Accompagnamento a verifiche e certificazioni (es. ISO 14064 di parte terza) tramite rete di partner qualificati, con la piattaforma che prepara automaticamente il fascicolo documentale.
+
+Nota di posizionamento: l'intera roadmap mantiene la differenza strutturale rispetto ai player consulenza-intensivi — self-service, prezzi pubblici, verifica incorporata (bollino) — che permette di servire in modo economico la fascia di clienti sotto la soglia di convenienza della consulenza tradizionale.
+
+**13.5 Generatore di sistemi di gestione e documentali ISO (due famiglie; estensione 14064 verso verifica di parte terza).**
+
+*Famiglia A — sistemi di gestione CERTIFICABILI (struttura HLS, stessa macchina di generazione):* ISO 9001 (qualita), ISO 14001 (ambiente), ISO 20121 (eventi sostenibili — verticale eventi/fiere/hospitality). Output: manuale, politica, procedure, modulistica, pronto per l'audit dell'organismo accreditato.
+
+*Famiglia B — norme GUIDA, NON certificabili per costruzione:* ISO 26000 (responsabilita sociale), ISO 20400 (acquisti sostenibili — sinergia con Scope 3 e dati fornitori). Output: sistema documentale di ADERENZA — politica, procedure, autovalutazione strutturata sui temi della norma, report di allineamento spendibile verso filiere, rating ESG e capitolati. VINCOLO: la piattaforma non deve MAI promettere o lasciar intendere una certificazione per le norme di famiglia B; il linguaggio e sempre "aderenza/allineamento alla norma".
+
+*Verticale Ho.Re.Ca e turismo (estensione delle famiglie sopra):* UNI ISO 21401 (sistema di gestione della sostenibilita per strutture ricettive — famiglia A, certificabile; i requisiti ambientali si precompilano dai dati carbon e check-up energetico gia in piattaforma) e UNI ISO 13009 (gestione di spiagge e stabilimenti balneari — standard di requisiti di servizio, certificabile, con impianto documentale dedicato non-HLS). Si integrano con ISO 20121 (eventi) e i pacchetti settore ristorazione/hospitality.
+
+*Percorso "pronto per i portali" (Booking, Airbnb, OTA):* i portali espongono certificazioni di sostenibilita DI TERZA PARTE riconosciute (schemi accreditati, es. ambito GSTC, Green Key, EU Ecolabel, in taluni casi ISO 21401). Il servizio prepara la struttura alla certificazione riconosciuta: sistema di gestione generato, mappatura dei requisiti dello schema scelto, fascicolo per l'audit dell'ente. VINCOLI: mai promettere il badge sul portale (dipende dall'ente certificatore e dalle policy del portale, che cambiano e vanno monitorate dall'osservatorio); il bollino Ver0 NON e uno schema riconosciuto dai portali e non va mai presentato come tale.
+
+*Posticipate:* ISO 45001 (vedi vincolo (c) sotto) e ISO 50001 — quest'ultima esclusa per ora perche il suo cuore (analisi energetica: usi significativi, baseline EnB, EnPI, piani d'azione) richiede dati granulari per essere credibile in audit; rientra quando check-up energetico e monitoraggio saranno attivi e alimenteranno l'analisi con curve e storici reali, con revisione tecnica umana obbligatoria su usi significativi e piani d'azione. Gancio da conservare per allora: la certificazione 50001 esonera dall'obbligo di diagnosi ex D.Lgs. 102. Modulo che genera l'impianto documentale completo di un sistema di gestione — manuale, politica, analisi del contesto, rischi e opportunità, procedure gestionali, modulistica — tramite questionario guidato più riuso automatico dei dati già in piattaforma (contesto, processi, consumi, aspetti ambientali dai moduli carbon/VSME). Flusso: questionario → generazione AI sezione per sezione → revisione e conferma del cliente → export in formato Word modificabile. Modello di prezzo: generazione una tantum a prezzo fortemente concorrenziale rispetto alla consulenza tradizionale + canone di mantenimento ricorrente (aggiornamenti normativi, scadenzario audit interni e riesami, registro formazione). VINCOLI: (a) mai riprodurre testo delle norme UNI/ISO (protetto da diritto d'autore): i documenti lavorano al livello dell'applicazione dei requisiti; l'acquisto della norma ufficiale resta a carico del cliente; (b) comunicazione esplicita che la piattaforma produce l'impianto documentale "pronto per la certificazione": la certificazione è rilasciata esclusivamente da organismi accreditati dopo audit; (c) la ISO 45001 (salute e sicurezza) è temporaneamente ESCLUSA dal perimetro del modulo per le implicazioni di responsabilità ex D.Lgs. 81/08: potrà entrare in una fase successiva solo con revisione umana obbligatoria di professionista convenzionato; (d) per la ISO 14064 l'estensione è il percorso di verifica di parte terza del carbon footprint già calcolato dal modulo core, tramite organismi accreditati partner.
+
+**13.6 Certificazione della parità di genere — UNI/PdR 125:2022.** Modulo che prepara l'azienda alla certificazione della parità di genere: autovalutazione guidata sui KPI delle sei aree della prassi (cultura e strategia, governance, processi HR, opportunità di crescita, equità remunerativa, tutela della genitorialità e conciliazione), generazione del sistema di gestione della parità (politica, piano strategico, comitato guida, procedure) e fascicolo pronto per l'audit dell'organismo accreditato. Argomenti di vendita integrati nel modulo: esonero contributivo per le aziende certificate, premialità nei bandi pubblici e punteggi negli appalti. VINCOLI: i dati di dettaglio su retribuzioni e genere del personale sono dati sensibili — trattamento solo in forma aggregata ai fini dei KPI, mai archiviazione di dati nominativi su retribuzione o genere dei singoli dipendenti; la certificazione è rilasciata esclusivamente da organismi accreditati.
+
+**13.7 Arricchimento anagrafico automatico (capacita di piattaforma, trasversale).** Integrazione con fonti dati camerali via API (InfoCamere/Registro Imprese, Cerved o aggregatori tipo openapi.it) per precompilare all'onboarding e mantenere aggiornati: anagrafica e sede, codici ATECO, numero addetti, cariche sociali e composizione degli organi (utile ai KPI di governance della PdR 125), unita locali. Principio: MAI chiedere al cliente un dato che una visura sa gia. Il costo per interrogazione entra nei costi variabili per cliente del modello economico. Le interrogazioni a pagamento partono SOLO dopo il pagamento del servizio: mai in fase di anteprima, simulazione o registrazione non pagata. I dati acquistati da provider esterni vanno usati nei limiti di licenza del provider e mai rivenduti come dato grezzo.
+
+**13.8 Mappa delle banche dati (estende la 13.7 — la tesi di innovazione della piattaforma).** L'innovazione di Verzero e la combinazione di automazione AI e banche dati esterne, che abbatte il costo di erogazione rispetto alla consulenza tradizionale. Fonti in tre gruppi:
+- Disponibili subito via API commerciali: dati camerali (InfoCamere/Registro Imprese, Cerved, aggregatori) per anagrafica, ATECO, addetti, cariche, unita locali; bilanci depositati in formato XBRL per dati economici, intensita emissive (tCO2e/fatturato) e indicatori VSME.
+- Da esplorare per modalita di accesso: GSE (impianti FV e Garanzie d'Origine del cliente), SIAPE (classi energetiche degli immobili), dati ISTAT/Eurostat per ATECO per benchmark settoriali, monitoraggio fonti normative per alimentare registro obblighi di conformita 14001 e scadenzari.
+- Base benchmark interna: i dati dei clienti alimentano benchmark proprietari (consumi ed emissioni per settore, dimensione, territorio) ESCLUSIVAMENTE in forma aggregata e anonimizzata; mai dati identificabili di un cliente visibili ad altri; la finalita va dichiarata nell'informativa e nei termini di servizio. Questo asset cresce con ogni cliente ed e il vantaggio competitivo di lungo periodo.
+
+## 14. Principi di esperienza utente (vincoli di progettazione, valgono per ogni modulo)
+
+Obiettivo contrattuale dell'esperienza: chi paga un servizio deve raggiungere il risultato senza impiegare un numero eccessivo di ore di risorse interne e senza mai trovarsi bloccato.
+
+1. **Ogni campo ha una via d'uscita.** Accanto a ogni richiesta dati esistono sempre: "carica un documento" (estrazione AI), "non ho il dato - stimalo" (stima da benchmark per settore/dimensione, proposta e confermata dal cliente), "lo aggiungo dopo" (salvataggio parziale senza perdita). Vietati i campi obbligatori senza fallback.
+2. **Qualita del dato dichiarata.** Ogni valore porta un'etichetta: misurato / da documento / stimato. I report espongono la ripartizione per qualita. Per il bollino livello 1 e richiesta una soglia minima di dati primari sulle categorie principali; le stime sono ammesse sulle voci minori. Le soglie sono parametri di sistema, non hardcoded.
+3. **Budget di effort per modulo (requisito misurabile).** Tempo massimo di lavoro richiesto al cliente, dichiarato in interfaccia e verificato coi piloti: carbon footprint <= 3 ore, VSME <= 4 ore, PdR 125 <= 2 ore + aggregati dal consulente del lavoro. Superamenti sistematici in test = difetto da correggere.
+4. **Delega integrata.** Il cliente puo invitare un soggetto esterno (commercialista, consulente) a compilare una singola sezione, con accesso limitato a quella sezione.
+5. **Ultimo miglio umano.** Canale "sblocca la pratica": i clienti fermi sullo stesso passaggio oltre una soglia di giorni ricevono contatto proattivo di supporto. Metrica di prodotto principale: tasso di completamento dei percorsi avviati.
+
+## 15. Consenso, trasparenza e modello di servizio uomo+AI
+
+**15.1 Autorizzazione alle interrogazioni (onboarding, fase 1).** Nei termini di servizio accettati alla registrazione il cliente conferisce a Verzero incarico esplicito a interrogare per suo conto banche dati ufficiali e commerciali (elenco delle fonti nell'informativa, aggiornabile). L'accettazione e registrata con timestamp e versione del documento (tabella `consents`: user_id, organization_id, doc_type, doc_version, accepted_at). L'autorizzazione e revocabile dall'area privata; alla revoca la piattaforma continua a funzionare in modalita inserimento manuale. Le nuove versioni dei termini richiedono ri-accettazione tracciata. Testi legali definitivi a cura del legale privacy/ToS.
+
+**15.2 Trasparenza uomo+AI (obbligo AI Act + posizionamento).** L'interfaccia dichiara sempre chi sta operando: le risposte e le elaborazioni automatiche sono etichettate come AI; gli interventi umani (validazione tecnica, revisione, supporto) sono etichettati come effettuati da una persona, con nome o ruolo. Vietato simulare operatori umani con sistemi automatici. I report espongono il marcatore "verificato dal team tecnico" dove la validazione umana e avvenuta (coerente coi criteri del bollino, sez. 11).
+
+**15.3 Supporto ibrido.** Primo livello AI in tempo reale (assistente in piattaforma, addestrato su documentazione e stato pratica del cliente); escalation umana garantita con tempi di risposta dichiarati in interfaccia (parametro di sistema, es. entro il giorno lavorativo successivo nell'MVP); canale "sblocca la pratica" (sez. 14.5) presidiato da persone. Il posizionamento pubblico del servizio e: consulenza di nuova generazione — AI per la velocita, persone per la verifica e la responsabilita.
+
+## 16. Metodo di progettazione dei servizi (scheda servizio)
+
+Ogni nuovo servizio, PRIMA dello sviluppo, viene progettato con una scheda in cinque parti. Nessun modulo si costruisce senza la sua scheda approvata.
+
+1. **Riferimento normativo.** Norma/standard che governa il documento di output e struttura che impone (es. ISO 14064-1 per il report GHG, standard VSME per il bilancio, UNI/PdR 125 per le sei aree KPI, struttura HLS punti 4-10 per i sistemi di gestione). Il documento generato segue la struttura della norma, non un formato proprietario. Mai riprodurre testo delle norme (diritto d'autore).
+2. **Inventario dei dati.** Elenco completo dei campi richiesti dal documento, sezione per sezione.
+3. **Mappa di reperimento.** Per OGNI campo, la gerarchia delle fonti in ordine di preferenza: (a) gia in piattaforma da altro modulo → (b) banca dati esterna → (c) estrazione AI da documento caricato → (d) domanda al cliente → (e) stima da benchmark con etichetta "stimato". La domanda diretta al cliente e sempre l'ultima risorsa. Ogni campo senza fonte (a)-(c) va giustificato.
+4. **Punti di verifica umana.** Dove e cosa valida il team tecnico prima dell'emissione.
+5. **Budget di effort.** Ore massime richieste al cliente, coerenti con la sezione 14; se la mappa di reperimento non le rispetta, si riprogetta la mappa.
+
+Esempio di mappa di reperimento (estratto, modulo carbon footprint):
+| Campo | Fonte primaria | Fallback |
+|---|---|---|
+| Ragione sociale, ATECO, addetti | (b) Registro Imprese | (d) cliente |
+| Fatturato (per intensita emissiva) | (b) bilancio XBRL | (d) cliente |
+| Consumo elettrico kWh | (c) bolletta caricata | (e) stima da benchmark ATECO |
+| Tipo fornitura (GO / mix) | (c) bolletta | (d) cliente, default mix nazionale |
+| Km flotta aziendale | (c) fatture carburante | (e) stima da n. veicoli |
+| Fattori di emissione | tabella di sistema (ISPRA/DEFRA) | — mai richiesti al cliente |
+
+Le schede servizio complete vivono nel repository in /docs/schede-servizio/, una per modulo, e sono l'input di lavoro per Claude Code su ogni nuovo modulo.
+
+**13.9 Check-up energetico (efficienza energetica — primo servizio del filone, progettato per il lancio SENZA qualifica ESCo/ETP).**
+
+Scheda servizio (metodo sez. 16):
+1. *Riferimento normativo:* nessuna norma cogente governa l'output; il documento e un'analisi tariffaria e dei consumi in linea con le buone pratiche di settore. DISCLAIMER OBBLIGATORIO nel report e nel sito: il check-up NON e una diagnosi energetica ai sensi del D.Lgs. 102/2014 (quella richiede EGE ed e altro servizio in roadmap).
+2. *Inventario dati:* consumi mensili e per fasce F1/F2/F3, potenza impegnata e massime potenze prelevate, energia reattiva/penali, oneri e corrispettivi unitari, tipologia contratto e prezzo, eventuale curva di carico quartoraria.
+3. *Mappa di reperimento:* bollette gia in piattaforma (estrazione AI, fonte primaria per tutto) → curve di carico caricate dal cliente con wizard guidato al download dal Portale Consumi o dall'area del distributore (facoltative, sbloccano l'analisi avanzata) → delega al distributore per richiesta misure storiche (ponte, ove il processo del distributore lo consenta) → stima del profilo di carico da ripartizione F1/F2/F3 e profili standard di settore, etichettata "stimato". MAI richiesto al cliente cio che e gia in bolletta.
+4. *Verifica umana:* il team tecnico valida i risparmi stimati sopra soglia prima dell'emissione del report.
+5. *Effort cliente:* zero ore aggiuntive se le bollette sono gia caricate; ~15 minuti per il download facoltativo delle curve.
+
+Output: report con anomalie tariffarie (potenza sovradimensionata, penali reattiva, oneri anomali, fasce sfavorevoli), stima del risparmio annuo in euro, confronto col mercato e azioni ordinate per impatto. Ganci: "scopri se paghi troppo l'energia" (funnel d'ingresso a basso prezzo e alta conversione); il risparmio individuato ripaga il servizio; riusa le bollette gia caricate (zero effort).
+
+Evoluzione (roadmap societaria, post-costituzione): accreditamento al SII e iscrizione all'Elenco Terze Parti (delibere ARERA 158/2024 e 509/2024) — via piu naturale: certificazione ESCo UNI CEI 11352 della societa — per ricevere le curve in automatico su autorizzazione del cliente dal Portale Consumi (finalita "servizi connessi all'energia"), portando il monitoraggio a effort zero. Fino ad allora il servizio opera con le sole strade sopra.
+
+## 17. Documenti pregressi e continuità documentale
+
+Area "Documenti pregressi" nell'area riservata: il cliente carica documentazione gia esistente — bilanci di sostenibilita precedenti, carbon footprint redatti da terzi, diagnosi energetiche, certificati e manuali di sistemi di gestione, report di consulenza. Obiettivo: dare CONTINUITA al set documentale dell'azienda, non ripartire da zero.
+
+Pipeline: upload → classificazione AI del tipo di documento → estrazione del patrimonio riusabile (anno base e perimetro di rendicontazione, metodologie e fattori usati, KPI adottati, valori storici, certificazioni possedute con scadenze, struttura della reportistica) → proposta di riuso nei moduli attivi, SEMPRE con conferma del cliente → i dati ereditati portano l'etichetta di qualita "da documento pregresso".
+
+Effetti sui moduli: il carbon footprint eredita baseline e serie storica (confrontabilita anno su anno); il VSME prosegue con gli stessi indicatori e la stessa impostazione; i manuali di sistema partono dai documenti esistenti aggiornandoli invece di rigenerarli; le certificazioni possedute alimentano un registro certificazioni dell'organizzazione (con scadenze e promemoria di rinnovo). La piattaforma SEGNALA le discontinuita di perimetro o metodo rispetto al pregresso invece di nasconderle.
+
+Estensione dati: `documents.kind` include i tipi pregressi (es. 'legacy_report', 'legacy_certificate', 'legacy_manual', 'legacy_audit'); nuova tabella `org_certifications` (organization_id, standard, ente, numero, data_emissione, scadenza, source_document_id) per il registro certificazioni.
+
+GARANZIA (da esplicitare anche nei termini e nel sito): i documenti caricati dal cliente arricchiscono esclusivamente le elaborazioni DELLA SUA organizzazione; non vengono mai usati per addestrare modelli ne per alimentare output di altri clienti. Resta valida la sola aggregazione anonima per benchmark (sez. 13.8).
+
+Gancio commerciale del modulo: "Non ricominci da zero: porta la tua storia, la continuiamo noi" — risposta diretta all'obiezione di chi ha gia investito in consulenza tradizionale.
+
+## 18. Corner con il consulente — calendario prenotazioni (PREVISTO ORA, OPERATIVO IN FASE SUCCESSIVA)
+
+Sezione "Prenota un corner" nell'area riservata: il cliente fissa appuntamenti di 30 minuti con un consulente del team, scegliendo tra le disponibilita che l'ufficio pubblica internamente. Estende il modello uomo+AI (sez. 15) da reattivo a prenotabile.
+
+**Modello dei consulenti: RETE DI AFFILIATI A CHIAMATA (nessun costo di struttura diretto).** I consulenti tecnici sono professionisti esterni affiliati, compensati a slot erogato: il costo nasce solo quando c'e un corner prenotato (stessa logica dei costi variabili di banche dati e AI). Matrice percorso→qualifica per il matching automatico: sistemi di gestione ISO → consulente SGQ/auditor; UNI/PdR 125 → esperto di parita certificato; energia → EGE; carbon/VSME → esperto di sostenibilita. Requisiti di affiliazione verificati per ambito (titoli, certificazioni, esperienza); valutazione del cliente dopo ogni corner e revoca dell'affiliazione sotto soglia di qualita. Contratti: collaborazione autonoma genuina (mai vincoli assimilabili alla subordinazione); clausole obbligatorie di riservatezza sui dati cliente, non sviamento della clientela (il cliente e di Verzero) e divieto di proporre servizi propri nei corner. Estensione dati: `consultants` acquisisce qualifiche/ambiti, stato affiliazione e rating.
+
+Meccanica: slot da 30 o 60 minuti; le disponibilita sono gestite SOLO dal back-office (pannello interno: consulente, giorni, fasce), mai calendari personali esposti; prenotazione dal cliente con motivo/modulo di riferimento (cosi il consulente arriva preparato sulla pratica); conferma + promemoria email; link videochiamata generato automaticamente; regole di annullamento e gestione no-show (parametri di sistema); ogni corner registrato nello storico della pratica.
+
+Predisposizioni da fare SUBITO (fase 0-3, a costo quasi nullo): tabelle `consultants`, `availability_slots`, `bookings` nello schema (anche vuote); nessun vincolo architetturale che assuma supporto solo asincrono. Implementazione consigliata alla attivazione: valutare integrazione di un motore di scheduling esistente (es. Cal.com, self-hostable) prima di costruirne uno proprio.
+
+Decisione commerciale da prendere all'attivazione (non ora): corner inclusi nei tier Plus / N corner inclusi per modulo / a pagamento singolo. Il costo del tempo consulente e l'unico costo orario umano rilevante della piattaforma: va prezzato o contingentato, mai illimitato gratuito.
+
+## 19. Albo delle Imprese Ver0 e network (PREVISTO ORA, ATTIVO IN SECONDA FASE)
+
+Evoluzione del registro pubblico (sez. 11) in un vero ALBO delle imprese qualificate, con funzioni di network tra i membri. E la forma matura dell'hub: un club di aziende qualificate, non un elenco clienti.
+
+**Ammissione e permanenza:** si entra SOLO con bollino attivo (livello 1 o superiore); l'uscita e automatica alla scadenza o revoca del bollino. L'albo eredita cosi l'integrita del marchio: chi e dentro, e verificato oggi — non una volta nel passato.
+
+**Funzioni (alla attivazione):** profilo azienda arricchito (ambiti verificati con date, certificazioni possedute dal registro di sez. 17, settore, territorio, presentazione); ricerca e filtri per settore/territorio/ambito; richieste di contatto tra membri (solo opt-in reciproco); vetrina "fornitori qualificati" consultabile dalle capofiliera per la qualifica di filiera (aggancio Scope 3). Fase ulteriore: matchmaking di filiera.
+
+**Predisposizioni da fare SUBITO (a costo quasi nullo):** campo di visibilita del profilo sull'organizzazione (privato di default); opt-in esplicito al network nei consensi (sez. 15.1), distinto e revocabile; i dati esposti nell'albo sono SOLO quelli aziendali gia pubblici sulla pagina di verifica piu quelli che l'azienda sceglie di aggiungere — mai dati di consumo o di dettaglio.
+
+**Attivazione:** alla massa critica (parametro di sistema, es. soglia minima di imprese qualificate per settore/territorio), per evitare l'effetto network vuoto gia deciso come rischio da scongiurare. Fino ad allora: nessuna menzione dell'albo nel marketing ne nel prodotto.
+
+## 20. Osservatorio finanza agevolata (chiave commerciale distintiva)
+
+Sezione dedicata, in due viste: (a) PUBBLICA sul sito — i principali bandi nazionali e regionali attivi negli ambiti Verzero (sostenibilita, efficienza energetica, digitalizzazione, certificazioni, parita di genere), come contenuto di acquisizione; (b) NELL'AREA RISERVATA — vista personalizzata: matching automatico tra bandi e profilo dell'organizzazione (ATECO, regione, dimensione, servizi attivi) con l'indicazione di QUALI servizi Verzero sono rendicontabili su ciascun bando ("questo bando copre fino al X% del modulo Y").
+
+**Pipeline AI (aggiornamento MENSILE):** scansione delle fonti ufficiali (MIMIT, Invitalia, portali bandi regionali, Camere di Commercio, GSE) → estrazione strutturata per ogni bando: beneficiari, territorio, spese ammissibili, intensita di aiuto, scadenza, link al testo ufficiale → classificazione per ambito e mappatura ai servizi Verzero rendicontabili → VALIDAZIONE UMANA del team prima della pubblicazione (un bando sbagliato brucia fiducia) → pubblicazione con data di ultimo aggiornamento visibile.
+
+**Regole:** ogni scheda bando linka SEMPRE il testo ufficiale e riporta il disclaimer che fanno fede esclusivamente i documenti ufficiali dell'ente; le scadenze generano promemoria per i clienti con match attivo; i bandi scaduti escono automaticamente; nessuna promessa di ammissione o esito.
+
+**Dati:** tabella `grants` (ente, titolo, ambiti, territori, dimensioni ammesse, spese ammissibili, intensita, scadenza, url ufficiale, servizi_verzero_rendicontabili, stato, validated_by, updated_at).
+
+**Evoluzione commerciale:** rete di consulenti di finanza agevolata convenzionati per la predisposizione delle domande (stesso schema partner, provvigione ricorrente), attivabile in seconda fase.
+
+**13.10 Filone efficienza energetica — servizi in roadmap oltre il check-up (13.9).**
+- *Monitoraggio energetico continuo:* bollette mensili (o curve di carico) → dashboard consumi, alert anomalie, benchmark di settore, intensita energetica; canone ricorrente; alimenta gratis il carbon dell'anno successivo. Le curve arrivano per le vie della 13.9 (upload guidato, delega distributore; ETP in evoluzione societaria).
+- *Studio di fattibilita fotovoltaico:* dai consumi reali in piattaforma + superficie disponibile → producibilita (dati pubblici PVGIS), dimensionamento, autoconsumo stimato, tempi di ritorno, confronto acquisto/PPA/noleggio. Evoluzione commerciale: segnalazione qualificata a installatori/ESCo partner.
+- *Diagnosi energetica ex D.Lgs. 102/2014:* pre-analisi automatica dalla piattaforma + incarico e firma di EGE convenzionato (schema partner, come i verificatori). Mercato a scadenze quadriennali certe (grandi imprese, energivori).
+- *CER (comunita energetiche):* simulazione di fattibilita e incentivi in self-service; costituzione e pratiche tramite partner. Seconda fase.
+
+## Appendice — Indice di controllo del catalogo (per non perdere niente)
+Ogni servizio pensato, con il suo stato. Questo indice si AGGIORNA a ogni modifica del catalogo: se un servizio non e qui, e stato perso — segnalarlo.
+
+**MVP (fasi 0-4):** Piattaforma base | Carbon footprint Base e Plus | Bilancio VSME Base e Plus | Rating economia circolare | Pacchetto settore Ho.Re.Ca ("Impatto Menù", "Impatto Soggiorno" — nomi provvisori Verzero, da battezzare col sistema dello zero) | Bundle "Percorso Ver0" | Bollino Ver0 multi-percorso (sez. 11)
+**Cuneo finestra 18 mesi (bassa sovrapposizione, primi verticali sviluppati):** Manuale ISO 9001 | UNI/PdR 125 (sez. 13.6)
+**Sistemi di gestione (sez. 13.5):** Famiglia A certificabili: ISO 9001, ISO 14001, ISO 20121 + verticale Ho.Re.Ca: UNI ISO 21401, UNI ISO 13009 + percorso "pronto per i portali" OTA | Famiglia B aderenza (non certificabili): ISO 26000, ISO 20400 | Posticipate con condizioni di rientro: ISO 45001, ISO 50001
+**Sostenibilita roadmap (sez. 13.1-13.4):** Compensazione "contributo climatico" (crediti + GO) | Carbon footprint di prodotto / LCA / ISO 14067 / EPD via partner | Academy formazione | Supporto certificazioni (ISO 14064 di parte terza)
+**Efficienza energetica (sez. 13.9-13.10):** Check-up energetico | Monitoraggio continuo | Fattibilita fotovoltaico | Diagnosi ex D.Lgs. 102 con EGE | CER
+**Capacita trasversali:** Arricchimento camerale (13.7) | Banche dati e benchmark interno (13.8) | Documenti pregressi e continuita (17) | Corner consulenti affiliati 30/60 min (18) | Albo Imprese Ver0 (19, non esposto fino a massa critica) | Osservatorio finanza agevolata (20)
