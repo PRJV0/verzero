@@ -4,7 +4,16 @@ import { NextResponse, type NextRequest } from "next/server";
 import { publicEnv } from "@/lib/env";
 
 /** Percorsi accessibili senza login (sito pubblico, auth, pagine di verifica del bollino). */
-const PUBLIC_PREFIXES = ["/", "/login", "/auth", "/verifica", "/registro"];
+const PUBLIC_PREFIXES = [
+  "/",
+  "/login",
+  "/auth",
+  "/servizi",
+  "/bollino",
+  "/partner",
+  "/verifica",
+  "/registro",
+];
 
 function isPublic(pathname: string) {
   return PUBLIC_PREFIXES.some(

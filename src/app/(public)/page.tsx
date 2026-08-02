@@ -1,18 +1,13 @@
 import Link from "next/link";
-import {
-  Leaf,
-  Zap,
-  Scale,
-  CircleCheck,
-  Upload,
-  ShieldCheck,
-} from "lucide-react";
+import { Leaf, Zap, Scale, CircleCheck, Upload, ShieldCheck } from "lucide-react";
+
+import { SERVIZI } from "@/lib/catalog";
 
 /**
  * Home del sito pubblico. Resa grafica ripresa dal riferimento visivo
  * ufficiale (docs/riferimenti/verzero-prototipo.jsx): hero su fondo salvia,
  * i tre pilastri, gli ambiti, la fascia scura della qualifica, i servizi con
- * prezzi in chiaro, la fascia bollino e il footer. Mobile-first.
+ * prezzi in chiaro, la fascia bollino. Header e footer sono nel layout (public).
  *
  * Messaggio guida (SPEC §1): prezzo, qualifica, effort su ogni sezione.
  */
@@ -53,40 +48,6 @@ const PASSI = [
   },
 ];
 
-const SERVIZI = [
-  {
-    name: "Percorso Ver0",
-    price: "199 €/mese",
-    desc: "Piattaforma + carbon footprint + bilancio VSME. La via diretta al bollino.",
-    featured: true,
-  },
-  {
-    name: "Carbon footprint Base",
-    price: "89 €/mese",
-    desc: "Scope 1 e 2 secondo GHG Protocol e ISO 14064-1.",
-  },
-  {
-    name: "Bilancio VSME Base",
-    price: "129 €/mese",
-    desc: "Il report che banche e clienti capofiliera ti chiedono.",
-  },
-  {
-    name: "Manuale ISO 9001 o 14001",
-    price: "990 € + 49 €/mese",
-    desc: "Impianto documentale pronto per la certificazione.",
-  },
-  {
-    name: "Parità di genere PdR 125",
-    price: "129 €/mese",
-    desc: "KPI, sistema di gestione e fascicolo per l'audit.",
-  },
-  {
-    name: "Rating economia circolare",
-    price: "129 €/mese",
-    desc: "Punteggio di circolarità con report dedicato.",
-  },
-];
-
 const PILASTRI = [
   "Prezzi in chiaro, sotto la media di mercato",
   "Effort minimo: mai un dato che sappiamo già",
@@ -95,35 +56,7 @@ const PILASTRI = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-paper">
-      {/* Header */}
-      <header className="flex items-center justify-between border-b border-line bg-white px-5 py-3">
-        <span className="font-display text-xl font-semibold text-pine">
-          Ver<span className="text-pine-dark">0</span>
-          <span className="text-mint">.</span>
-        </span>
-        <nav className="hidden gap-5 text-xs text-gray-warm sm:flex">
-          <a href="#come-funziona" className="hover:text-pine">
-            Come funziona
-          </a>
-          <a href="#servizi" className="hover:text-pine">
-            Servizi e prezzi
-          </a>
-          <a href="#bollino" className="hover:text-pine">
-            Il bollino
-          </a>
-          <a href="#partner" className="hover:text-pine">
-            Partner
-          </a>
-        </nav>
-        <Link
-          href="/login"
-          className="rounded-lg bg-pine px-3.5 py-2 text-xs font-medium text-white"
-        >
-          Inizia ora
-        </Link>
-      </header>
-
+    <>
       {/* Hero */}
       <section className="bg-moss px-5 py-14 text-center">
         <p className="mb-3 text-xs font-medium tracking-widest text-mint">
@@ -141,17 +74,17 @@ export default function HomePage() {
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2.5">
           <Link
-            href="/login"
+            href="/servizi"
             className="rounded-lg bg-pine px-5 py-2.5 text-sm font-medium text-white"
           >
             Scopri cosa possiamo fare per te
           </Link>
-          <a
-            href="#bollino"
+          <Link
+            href="/bollino"
             className="rounded-lg border border-pine bg-white px-5 py-2.5 text-sm font-medium text-pine"
           >
             Verifica un bollino
-          </a>
+          </Link>
         </div>
         {/* I tre pilastri con le spunte */}
         <ul className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-1 text-xs text-pine">
@@ -253,10 +186,11 @@ export default function HomePage() {
         </p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {SERVIZI.map((s) => (
-            <article
-              key={s.name}
+            <Link
+              key={s.slug}
+              href={`/servizi/${s.slug}`}
               className={
-                "flex flex-col rounded-xl bg-white p-4 " +
+                "flex flex-col rounded-xl bg-white p-4 transition-shadow hover:shadow-md " +
                 (s.featured ? "border-2 border-pine" : "border border-line")
               }
             >
@@ -266,7 +200,9 @@ export default function HomePage() {
                 </span>
               )}
               <p className="text-sm font-semibold text-ink">{s.name}</p>
-              <p className="mb-3 mt-1 flex-1 text-xs text-gray-warm">{s.desc}</p>
+              <p className="mb-3 mt-1 flex-1 text-xs text-gray-warm">
+                {s.short}
+              </p>
               <div className="flex items-center justify-between">
                 <p
                   className={
@@ -276,19 +212,16 @@ export default function HomePage() {
                 >
                   {s.price}
                 </p>
-                <Link
-                  href="/login"
+                <span
                   className={
                     "rounded-lg border border-pine px-3 py-1.5 text-sm font-medium " +
-                    (s.featured
-                      ? "bg-pine text-white"
-                      : "bg-white text-pine")
+                    (s.featured ? "bg-pine text-white" : "bg-white text-pine")
                   }
                 >
-                  Attiva
-                </Link>
+                  Scopri
+                </span>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
         <p className="mt-3 text-center text-xs text-gray-light">
@@ -298,8 +231,11 @@ export default function HomePage() {
       </section>
 
       {/* Fascia bollino */}
-      <section id="bollino" className="px-5 pb-8">
-        <div className="mx-auto flex max-w-3xl items-center gap-4 rounded-xl border border-line bg-paper p-4">
+      <section id="bollino" className="px-5 pb-10">
+        <Link
+          href="/bollino"
+          className="mx-auto flex max-w-3xl items-center gap-4 rounded-xl border border-line bg-paper p-4 transition-shadow hover:shadow-md"
+        >
           <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-full border-[2.5px] border-pine bg-moss">
             <span className="font-display text-lg font-semibold leading-none text-pine">
               0
@@ -315,23 +251,8 @@ export default function HomePage() {
               ogni anno va riconquistato.
             </p>
           </div>
-        </div>
+        </Link>
       </section>
-
-      {/* Footer */}
-      <footer
-        id="partner"
-        className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-5 py-3 text-xs text-gray-light"
-      >
-        <span>
-          Commercialista o consulente? Programma partner con provvigioni
-          ricorrenti
-        </span>
-        <span>
-          verzero.it · dati ospitati in UE · dietro lo schermo ci sono sempre
-          persone
-        </span>
-      </footer>
-    </div>
+    </>
   );
 }
