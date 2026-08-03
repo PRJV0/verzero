@@ -11,13 +11,12 @@ import {
  * Catalogo dei servizi pubblici — unica fonte per home, indice /servizi e
  * pagine di dettaglio /servizi/[slug]. Contenuti ripresi dal riferimento
  * visivo (docs/riferimenti/verzero-prototipo.jsx, SERVICE_DETAILS) e dalla
- * SPEC (listino §12, effort §14). I prezzi qui sono di presentazione: nel
- * prodotto vero vivranno in tabella `price_plans` gestibile senza deploy.
+ * SPEC (catalogo §12.Y, effort §14). I prezzi NON vivono qui: la fonte unica
+ * è la matrice per dimensione in src/lib/pricing.ts (SPEC §12.X).
  */
 export type Servizio = {
   slug: string;
   name: string;
-  price: string;
   icon: LucideIcon;
   featured?: boolean;
   /** Riga breve per le card di home e indice. */
@@ -36,7 +35,6 @@ export const SERVIZI: Servizio[] = [
   {
     slug: "percorso-ver0",
     name: "Percorso Ver0",
-    price: "199 €/mese",
     icon: Leaf,
     featured: true,
     short:
@@ -59,7 +57,6 @@ export const SERVIZI: Servizio[] = [
   {
     slug: "carbon-footprint-base",
     name: "Carbon footprint Base",
-    price: "89 €/mese",
     icon: Leaf,
     short: "Scope 1 e 2 secondo GHG Protocol e ISO 14064-1.",
     desc: "La misura ufficiale delle emissioni della tua organizzazione: Scope 1 e 2 calcolati dai tuoi documenti reali, con metodo riconosciuto a livello internazionale.",
@@ -80,10 +77,9 @@ export const SERVIZI: Servizio[] = [
   {
     slug: "bilancio-vsme-base",
     name: "Bilancio VSME Base",
-    price: "129 €/mese",
     icon: FileText,
     short: "Il report che banche e clienti capofiliera ti chiedono.",
-    desc: "Il bilancio di sostenibilità nel formato europeo pensato per le PMI: un documento unico e standard che risponde a banche, clienti e bandi senza rifare il lavoro ogni volta.",
+    desc: "Il bilancio di sostenibilità nel formato europeo VSME: un documento unico e standard che risponde a banche, clienti e bandi senza rifare il lavoro ogni volta.",
     output: [
       "Bilancio conforme allo standard VSME (EFRAG), modulo base",
       "Narrativa professionale generata sui tuoi dati e rivista da te",
@@ -101,7 +97,6 @@ export const SERVIZI: Servizio[] = [
   {
     slug: "manuale-iso-9001",
     name: "Manuale ISO 9001",
-    price: "990 € + 49 €/mese",
     icon: Scale,
     short: "Sistema qualità: impianto documentale pronto per la certificazione.",
     desc: "L'impianto documentale completo del tuo sistema di gestione per la qualità, generato sui dati reali della tua azienda e pronto per l'audit di certificazione ISO 9001.",
@@ -122,7 +117,6 @@ export const SERVIZI: Servizio[] = [
   {
     slug: "manuale-iso-14001",
     name: "Manuale ISO 14001",
-    price: "990 € + 49 €/mese",
     icon: Scale,
     short: "Sistema ambientale: impianto documentale pronto per la certificazione.",
     desc: "L'impianto documentale completo del tuo sistema di gestione ambientale, generato sui dati reali della tua azienda e pronto per l'audit di certificazione ISO 14001.",
@@ -143,7 +137,6 @@ export const SERVIZI: Servizio[] = [
   {
     slug: "parita-di-genere-pdr-125",
     name: "Parità di genere PdR 125",
-    price: "129 €/mese",
     icon: ShieldCheck,
     short: "KPI, sistema di gestione e fascicolo per l'audit.",
     desc: "Il percorso verso la certificazione della parità di genere: autovalutazione sui KPI ufficiali, sistema di gestione e fascicolo pronto per l'audit dell'organismo accreditato.",
@@ -164,7 +157,6 @@ export const SERVIZI: Servizio[] = [
   {
     slug: "rating-economia-circolare",
     name: "Rating economia circolare",
-    price: "129 €/mese",
     icon: Building2,
     short: "Punteggio di circolarità con report dedicato.",
     desc: "La misura di quanto la tua impresa è circolare: materiali, rifiuti, riuso ed energia in un punteggio chiaro, con le azioni per migliorarlo.",
@@ -186,3 +178,137 @@ export const SERVIZI: Servizio[] = [
 export function getServizio(slug: string): Servizio | undefined {
   return SERVIZI.find((s) => s.slug === slug);
 }
+
+/* ------------------------------------------------------------------ */
+/* Vetrina a catalogo per categorie (SPEC §12.Y)                       */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Una voce della vetrina: attiva (con `slug` verso la pagina servizio) oppure
+ * di roadmap ("In arrivo": amplia l'offerta percepita, non acquistabile).
+ * Vincolo §12.Y: nessuna voce può suggerire che Verzero certifichi — Verzero
+ * prepara e accompagna, certificano gli enti terzi accreditati.
+ */
+export type VoceVetrina = {
+  name: string;
+  /** Una riga di beneficio. */
+  benefit: string;
+  /** Presente solo per i servizi attivi: punta a /servizi/[slug]. */
+  slug?: string;
+  roadmap?: boolean;
+};
+
+export type CategoriaVetrina = {
+  key: string;
+  title: string;
+  /** Sottotitolo breve della categoria. */
+  sub: string;
+  voci: VoceVetrina[];
+};
+
+/** Sostenibilità nei tre pilastri E/S/G + famiglia Sistemi di gestione. */
+export const VETRINA: CategoriaVetrina[] = [
+  {
+    key: "ambiente",
+    title: "Ambiente",
+    sub: "Sostenibilità · pilastro E",
+    voci: [
+      {
+        slug: "carbon-footprint-base",
+        name: "Carbon footprint",
+        benefit: "La misura ufficiale delle tue emissioni, dai documenti reali.",
+      },
+      {
+        slug: "rating-economia-circolare",
+        name: "Rating economia circolare",
+        benefit: "Quanto sei circolare, in un punteggio chiaro e migliorabile.",
+      },
+      {
+        slug: "manuale-iso-14001",
+        name: "Manuale ISO 14001",
+        benefit: "Il sistema ambientale pronto per l'audit dell'ente terzo.",
+      },
+      {
+        name: "Check-up energetico",
+        benefit: "Scopri se paghi troppo l'energia, dalle bollette che hai già.",
+        roadmap: true,
+      },
+      {
+        name: "Monitoraggio energetico",
+        benefit: "Consumi sotto controllo mese per mese, con alert e benchmark.",
+        roadmap: true,
+      },
+    ],
+  },
+  {
+    key: "sociale",
+    title: "Sociale",
+    sub: "Sostenibilità · pilastro S",
+    voci: [
+      {
+        slug: "parita-di-genere-pdr-125",
+        name: "Parità di genere UNI/PdR 125",
+        benefit: "KPI e fascicolo pronti per l'audit; esonero contributivo.",
+      },
+      {
+        name: "Ospitalità sostenibile UNI ISO 21401",
+        benefit: "Il sistema di gestione per le strutture ricettive.",
+        roadmap: true,
+      },
+      {
+        name: "Eventi sostenibili ISO 20121",
+        benefit: "Il sistema di gestione per eventi, fiere e hospitality.",
+        roadmap: true,
+      },
+    ],
+  },
+  {
+    key: "governance",
+    title: "Governance",
+    sub: "Sostenibilità · pilastro G",
+    voci: [
+      {
+        slug: "bilancio-vsme-base",
+        name: "Bilancio VSME",
+        benefit: "Un solo report standard al posto di dieci questionari.",
+      },
+      {
+        slug: "manuale-iso-9001",
+        name: "Manuale ISO 9001",
+        benefit: "Il sistema qualità pronto per l'audit dell'ente terzo.",
+      },
+      {
+        name: "Preparazione a rating e questionari ESG",
+        benefit: "Risposte pronte e coerenti per banche e capofiliera.",
+        roadmap: true,
+      },
+    ],
+  },
+  {
+    key: "sistemi-di-gestione",
+    title: "Sistemi di gestione",
+    sub: "Manuali e procedure generati sui tuoi dati",
+    voci: [
+      {
+        slug: "manuale-iso-9001",
+        name: "Manuale ISO 9001 — qualità",
+        benefit: "Impianto documentale completo, pronto per l'audit.",
+      },
+      {
+        slug: "manuale-iso-14001",
+        name: "Manuale ISO 14001 — ambiente",
+        benefit: "Analisi ambientale precompilata dai tuoi dati carbon.",
+      },
+      {
+        slug: "parita-di-genere-pdr-125",
+        name: "UNI/PdR 125 — parità di genere",
+        benefit: "Sistema di gestione della parità e fascicolo per l'audit.",
+      },
+      {
+        name: "ISO 26000 e ISO 20400 — aderenza",
+        benefit: "Allineamento alle norme guida, spendibile verso le filiere.",
+        roadmap: true,
+      },
+    ],
+  },
+];

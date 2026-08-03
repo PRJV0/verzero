@@ -20,7 +20,7 @@ Verzero accentra in un'unica piattaforma il maggior numero possibile di servizi 
 
 | Componente | Scelta | Motivazione |
 |---|---|---|
-| Frontend + backend | Next.js 16 (App Router, TypeScript) | Un solo framework per UI e API routes |
+| Frontend + backend | Next.js 15 (App Router, TypeScript) | Un solo framework per UI e API routes |
 | UI | Tailwind CSS + componenti custom | Riuso del prototipo esistente (`verzero-prototipo.jsx`) |
 | Database + Auth + Storage | Supabase (regione EU, Francoforte) | Postgres gestito, autenticazione, storage documenti, Row Level Security per il multi-tenant, residenza dati UE (requisito GDPR) |
 | Motore AI | Claude API (modello `claude-sonnet-4-6`) | Estrazione dati da PDF bollette e generazione testi. Docs: https://docs.claude.com/en/api/overview |
@@ -184,7 +184,7 @@ Ordine di sviluppo consigliato dentro ogni fase: prima il percorso felice end-to
 
 Metti questo file nella radice del repository come `SPEC.md` insieme a `verzero-prototipo.jsx` (riferimento visivo per lo stile). Primo comando suggerito, dalla cartella vuota del progetto:
 
-> Leggi SPEC.md. Inizializza il progetto della fase 0: Next.js 16 con TypeScript e Tailwind, client Supabase configurato, struttura cartelle per app router. Poi fermati e mostrami la struttura prima di procedere.
+> Leggi SPEC.md. Inizializza il progetto della fase 0: Next.js 15 con TypeScript e Tailwind, client Supabase configurato, struttura cartelle per app router. Poi fermati e mostrami la struttura prima di procedere.
 
 Procedi una fase alla volta e chiedi a Claude Code di scrivere test per la RLS (fase 1) e per il motore di calcolo (fase 3) prima di considerarle chiuse. A ogni sessione, fai aggiornare un file `PROGRESS.md` con lo stato, così ogni nuova sessione riparte dal punto giusto.
 
@@ -247,6 +247,17 @@ Prezzi in canone mensile ricorrente, IVA esclusa, riferiti ad aziende fino a 50 
 - Il bundle Percorso Ver0 dà accesso ai requisiti del Sigillo livello 1; il Sigillo stesso non è mai una voce di prezzo (vincolo di conformità, vedi sezione 11).
 - Canale partner: provvigione ricorrente standard del 20% sul canone incassato, uguale per tutti i canali partner; nessuna provvigione sul canale self-service.
 - L'hub / registro pubblico delle imprese certificate è previsto ma NON va esposto nel marketing né nel prodotto fino alla decisione di lancio di seconda fase (massa critica di aziende certificate).
+
+**12.X — EVOLUZIONE LISTINO: PREZZI PER DIMENSIONE D'AZIENDA (decisione del fondatore, prevale sul listino piatto).**
+- Ogni servizio ha una MATRICE DI PREZZO per dimensione: micro / piccola / media / grande. Il listino esistente diventa la fascia micro/piccola; media indicativamente +40-50%; grande +100% oppure "su richiesta" con contatto (aggancio commerciale). Percentuali da validare nel modello economico prima del lancio.
+- Trasparenza invariata: i prezzi restano pubblici PER FASCIA — il posizionamento "prezzi in chiaro" non si tocca.
+- In home i prezzi si espongono come "da X €/mese" (X = prezzo micro); il prezzo esatto si compone nella pagina del servizio tramite SELETTORE DI DIMENSIONE (micro/piccola/media/grande) che aggiorna prezzo e CTA. La dimensione scelta si propaga al checkout.
+- Fonte dati unica: matrice prezzi in un file/tabella dedicata (mai prezzi cablati nelle pagine), pronta a diventare tabella a database in fase 2.
+
+**12.Y — VETRINA A CATALOGO PER CATEGORIE (sostituisce le card piatte in home).**
+- La sezione servizi della home diventa un catalogo navigabile per categorie: Sostenibilita declinata nei tre pilastri E (ambiente: carbon, check-up energetico, monitoraggio, ISO 14001, rating circolarita), S (sociale: UNI/PdR 125, UNI ISO 21401, ISO 20121), G (governance: VSME/report ESG, ISO 9001, preparazione ai rating e questionari) + famiglia Sistemi di gestione + altre famiglie a seguire.
+- Ogni voce: nome, una riga di beneficio, "da X €/mese" (o "da X € una tantum"), link alla pagina servizio.
+- I servizi di roadmap compaiono marcati "IN ARRIVO" (ampliano l'offerta percepita, non acquistabili); nessuna voce puo suggerire che Verzero certifichi.
 
 ## 13. Estensioni del catalogo — CON GERARCHIA DI PRIORITÀ (aggiornata alla strategia dei 18 mesi)
 

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowRight, FileCheck2, Sparkles } from "lucide-react";
+import { ArrowLeft, FileCheck2, Sparkles } from "lucide-react";
 
 import { SERVIZI, getServizio } from "@/lib/catalog";
+
+import { PrezzoBox } from "./prezzo-box";
 
 /** Pre-genera le sei pagine di dettaglio a build time. */
 export function generateStaticParams() {
@@ -88,22 +90,9 @@ export default async function ServizioPage({
           </div>
         </div>
 
-        {/* Box prezzo */}
+        {/* Box prezzo con selettore di dimensione (matrice §12.X) */}
         <div>
-          <div className="rounded-xl border-2 border-pine bg-white p-4">
-            <p className="text-xs text-gray-warm">Prezzo</p>
-            <p className="mb-1 font-display text-2xl text-pine">{s.price}</p>
-            <p className="mb-3 text-xs text-gray-light">
-              IVA esclusa · fino a 50 dipendenti · disdici quando vuoi · −10%
-              con pagamento annuale
-            </p>
-            <Link
-              href="/login"
-              className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-pine px-4 py-2.5 text-sm font-medium text-white"
-            >
-              Procedi all&apos;acquisto <ArrowRight size={15} />
-            </Link>
-          </div>
+          <PrezzoBox slug={s.slug} />
           <p className="mt-3 text-center text-xs text-gray-light">
             Dati ospitati in UE · dietro lo schermo ci sono sempre persone
           </p>

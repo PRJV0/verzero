@@ -14,8 +14,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-import { SERVIZI } from "@/lib/catalog";
 import { Sigillo } from "@/components/brand/sigillo";
+import { CatalogoVetrina } from "@/components/catalogo-vetrina";
 
 /**
  * Home del sito pubblico. Comunicazione secondo "Il sistema dello Zero"
@@ -424,49 +424,13 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {SERVIZI.map((s) => (
-              <Link
-                key={s.slug}
-                href={`/servizi/${s.slug}`}
-                className={
-                  "flex flex-col rounded-2xl bg-white p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift " +
-                  (s.featured ? "ring-2 ring-pine" : "border border-line/70")
-                }
-              >
-                {s.featured && (
-                  <span className="mb-2 self-start rounded-full bg-pine px-2.5 py-1 text-xs font-medium text-white">
-                    Il più scelto
-                  </span>
-                )}
-                <p className="text-sm font-semibold text-ink">{s.name}</p>
-                <p className="mb-3 mt-1 flex-1 text-xs text-gray-warm">
-                  {s.short}
-                </p>
-                <div className="flex items-center justify-between">
-                  <p
-                    className={
-                      "font-display text-lg tabular-nums " +
-                      (s.featured ? "text-pine" : "text-ink")
-                    }
-                  >
-                    {s.price}
-                  </p>
-                  <span
-                    className={
-                      "rounded-lg border border-pine px-3 py-1.5 text-sm font-medium " +
-                      (s.featured ? "bg-pine text-white" : "bg-white text-pine")
-                    }
-                  >
-                    Scopri
-                  </span>
-                </div>
-              </Link>
-            ))}
+          <div className="mt-10">
+            <CatalogoVetrina />
           </div>
           <p className="mt-4 text-center text-xs text-gray-warm">
-            Prezzi per aziende fino a 50 dipendenti, IVA esclusa · 51-200
-            dipendenti: listino +60% · −10% con pagamento annuale
+            Prezzi &quot;da&quot; riferiti alla fascia micro, IVA esclusa · il
+            prezzo per la tua dimensione si compone nella pagina del servizio ·
+            −10% con pagamento annuale
           </p>
         </div>
       </section>

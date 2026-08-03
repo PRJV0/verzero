@@ -23,10 +23,18 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="mx-auto mt-4 flex max-w-5xl flex-wrap items-center justify-between gap-2 text-xs text-gray-light">
-        <Link href="/partner" className="hover:text-pine">
-          Commercialista o consulente? Programma partner con provvigioni
-          ricorrenti
-        </Link>
+        <span className="flex flex-wrap gap-x-4 gap-y-1">
+          <Link href="/partner" className="hover:text-pine">
+            Commercialista o consulente? Programma partner con provvigioni
+            ricorrenti
+          </Link>
+          <a
+            href="mailto:info@verzero.it?subject=Percorsi%20su%20misura%20%E2%80%94%20grande%20impresa"
+            className="hover:text-pine"
+          >
+            Grande impresa? Percorsi su misura: parliamone
+          </a>
+        </span>
         <span>
           verzero.it · dati ospitati in UE · dietro lo schermo ci sono sempre
           persone

@@ -19,9 +19,9 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
-  title: "Ver0 — sostenibilità ed energia per le PMI",
+  title: "Ver0 — la piattaforma che qualifica la tua impresa",
   description:
-    "La piattaforma con i prezzi migliori del mercato che qualifica la tua azienda con l'effort più basso di sempre.",
+    "Consulenza digitale col Motore Ver0: sostenibilità, sistemi di gestione, consulenti veri. Percorsi verificabili e prezzi in chiaro, per imprese di ogni dimensione.",
 };
 
 // Mobile-first: l'app deve essere pienamente fruibile da smartphone (SPEC §2).
