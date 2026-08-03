@@ -528,7 +528,7 @@ export default function HomePage() {
         <DottedRing className="left-1/2 top-14 h-40 w-40 -translate-x-1/2 border-mint/25" />
         <div className="relative mx-auto max-w-2xl">
           <div className="mb-6 flex justify-center">
-            <Sigillo className="h-24 w-24" />
+            <Sigillo tone="dark" className="h-24 w-24" />
           </div>
           <p className="font-display text-2xl leading-relaxed text-white md:text-3xl">
             Ci chiamiamo Ver0 per un principio solo, lo Zero, che torna in ogni

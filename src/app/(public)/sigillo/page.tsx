@@ -262,7 +262,7 @@ export default function SigilloPage() {
       {/* Millesimatura */}
       <section className="bg-pine-dark px-5 py-16">
         <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 md:flex-row">
-          <Sigillo className="h-24 w-24 shrink-0" />
+          <Sigillo tone="dark" className="h-24 w-24 shrink-0" />
           <div className="text-center md:text-left">
             <p className="inline-flex items-center gap-2 font-display text-2xl text-white">
               <CalendarClock size={22} className="text-mint" />
