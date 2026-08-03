@@ -53,7 +53,7 @@ export default function SigilloPage() {
           <Sigillo className="h-28 w-28" />
         </div>
         <p className="mb-3 text-xs font-semibold tracking-widest text-pine">
-          IMPRESA VER0 · IL SIGILLO
+          IL MARCHIO DI VERIFICA
         </p>
         <h1 className="mx-auto max-w-2xl font-display text-4xl leading-[1.1] text-pine-dark md:text-5xl">
           Il Sigillo non si compra. Si dimostra.
