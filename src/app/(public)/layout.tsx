@@ -2,7 +2,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 /**
- * Layout delle pagine pubbliche (home, servizi, bollino, partner): header e
+ * Layout delle pagine pubbliche (home, servizi, sigillo, partner): header e
  * footer condivisi, contenuto in mezzo. Le aree (auth) e (app) hanno chrome
  * proprio e non passano di qui.
  */

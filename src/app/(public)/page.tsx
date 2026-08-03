@@ -1,8 +1,8 @@
 import Link from "next/link";
 import {
   Leaf,
-  Zap,
   Scale,
+  Landmark,
   CircleCheck,
   Upload,
   Sparkles,
@@ -11,17 +11,18 @@ import {
 } from "lucide-react";
 
 import { SERVIZI } from "@/lib/catalog";
+import { Sigillo } from "@/components/brand/sigillo";
 
 /**
  * Home del sito pubblico. Comunicazione secondo "Il sistema dello Zero"
  * (ver0-sistema-dello-zero.md): dominante di pagina "zero effort", claim di
- * firma invariato, declinazioni dello zero sotto il claim. Ogni promessa è
+ * firma invariato, lo Zero come principio unico (mai "zeri"). Ogni promessa è
  * verificabile — mai iperboli.
  *
  * Art direction: il "0" del logotipo come motivo ricorrente (filigrana, anello
- * punteggiato, foglia), profondità con ombre morbide, tipografia Fraunces più
- * decisa con le parole-zero in corsivo, ritmo di fondi alternati e reveal allo
- * scroll in puro CSS (globals.css). Mobile-first.
+ * punteggiato, foglia della sola sostenibilità), profondità con ombre morbide,
+ * tipografia Fraunces più decisa con le parole-zero in corsivo, ritmo di fondi
+ * alternati e reveal allo scroll in puro CSS (globals.css). Mobile-first.
  */
 
 /* --- Elementi decorativi (aria-hidden, puramente grafici) --- */
@@ -31,14 +32,9 @@ function ZeroWatermark({
   tone = "pine",
 }: {
   className?: string;
-  tone?: "pine" | "light" | "mint";
+  tone?: "pine" | "light";
 }) {
-  const color =
-    tone === "light"
-      ? "text-white/[0.06]"
-      : tone === "mint"
-        ? "text-mint/10"
-        : "text-pine/[0.05]";
+  const color = tone === "light" ? "text-white/[0.06]" : "text-pine/[0.05]";
   return (
     <span
       aria-hidden
@@ -58,26 +54,6 @@ function DottedRing({ className = "" }: { className?: string }) {
   );
 }
 
-/** Sigillo circolare millesimato con anello punteggiato. */
-function Sigillo({ className = "" }: { className?: string }) {
-  return (
-    <span
-      className={`relative inline-flex h-24 w-24 items-center justify-center ${className}`}
-    >
-      <span
-        aria-hidden
-        className="absolute inset-0 rounded-full border-2 border-dotted border-mint/50"
-      />
-      <span className="flex h-[76px] w-[76px] flex-col items-center justify-center rounded-full border-2 border-pine bg-white shadow-soft">
-        <span className="font-display text-3xl font-semibold leading-none text-pine">
-          0
-        </span>
-        <span className="text-[10px] tracking-widest text-pine-dark">2026</span>
-      </span>
-    </span>
-  );
-}
-
 /* --- Dati di pagina --- */
 
 const AMBITI = [
@@ -88,18 +64,18 @@ const AMBITI = [
     leaf: true,
   },
   {
-    icon: Zap,
-    title: "Efficienza energetica",
-    desc: "Dai consumi reali alle opportunità di risparmio: la tua energia letta, misurata e messa al lavoro.",
-  },
-  {
     icon: Scale,
     title: "Sistemi di gestione",
     desc: "Manuali e procedure ISO e parità di genere, generati sui tuoi dati e pronti per la certificazione.",
   },
+  {
+    icon: Landmark,
+    title: "Finanza agevolata",
+    desc: "Ti troviamo i fondi che coprono i tuoi percorsi: bandi e incentivi filtrati sul profilo della tua impresa, con le scadenze in chiaro.",
+  },
 ];
 
-// Le declinazioni dello zero (una selezione: 6 delle 10 del sistema, mai tutte).
+// Lo Zero, principio unico, declinato sezione per sezione (una selezione).
 const ZERI = [
   {
     accent: "Zero",
@@ -124,12 +100,12 @@ const ZERI = [
   {
     accent: "Zero",
     tail: "scorciatoie",
-    m: "Il bollino non si compra, si dimostra. Ogni anno.",
+    m: "Il Sigillo non si compra, si dimostra. Ogni anno.",
   },
   {
     accent: "Verso zero",
-    tail: "sprechi ed emissioni",
-    m: "La tua energia e le tue emissioni: misurate, messe al lavoro.",
+    tail: "emissioni",
+    m: "L'impronta della tua impresa: misurata, ridotta, dimostrata.",
     leaf: true,
   },
 ];
@@ -137,19 +113,25 @@ const ZERI = [
 const MAGIA = [
   {
     icon: Upload,
-    title: "Carichi la bolletta",
-    desc: "Un PDF o una foto. Anche più mesi insieme, come ce li hai.",
+    title: "Porti quello che hai",
+    desc: "Bollette, visure, organigrammi, i report che hai già. Un PDF o una foto.",
   },
   {
     icon: Sparkles,
     title: "L'AI legge e compila",
-    desc: "Estrae i dati dal documento e riempie i campi al posto tuo.",
+    desc: "Qualunque documento: estrae i dati e riempie i campi al posto tuo.",
   },
   {
     icon: FileCheck2,
     title: "Il documento si genera, tu confermi",
     desc: "Controlli, correggi se serve, confermi. L'ultima parola è tua.",
   },
+];
+
+const ESEMPI = [
+  "Bollette → carbon footprint",
+  "Visura e organigramma → Manuale ISO 9001",
+  "I documenti che hai già → continuità",
 ];
 
 const PILASTRI = [
@@ -161,7 +143,7 @@ const PILASTRI = [
 export default function HomePage() {
   return (
     <>
-      {/* HERO — fondo salvia, dominante "zero effort" */}
+      {/* HERO — fondo salvia, dominante "zero effort", CTA singola */}
       <section className="relative overflow-hidden bg-gradient-to-b from-moss via-moss to-paper px-5 py-16 text-center">
         <ZeroWatermark
           tone="pine"
@@ -171,7 +153,7 @@ export default function HomePage() {
 
         <div className="relative mx-auto max-w-2xl">
           <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
-            SOSTENIBILITÀ · EFFICIENZA ENERGETICA · SISTEMI DI GESTIONE
+            SOSTENIBILITÀ · SISTEMI DI GESTIONE · FINANZA AGEVOLATA
           </p>
           <h1 className="font-display text-4xl leading-[1.1] text-pine-dark md:text-6xl">
             I tuoi consulenti in cloud. La crescita della tua azienda, in
@@ -186,18 +168,12 @@ export default function HomePage() {
             risultato — a una frazione del prezzo della consulenza tradizionale.
           </p>
 
-          <div className="mt-7 flex flex-wrap justify-center gap-2.5">
+          <div className="mt-7 flex justify-center">
             <Link
               href="/servizi"
-              className="rounded-lg bg-pine px-5 py-2.5 text-sm font-medium text-white shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift"
+              className="rounded-lg bg-pine px-6 py-3 text-sm font-medium text-white shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift"
             >
               Scopri cosa possiamo fare per te
-            </Link>
-            <Link
-              href="/bollino"
-              className="rounded-lg border border-pine bg-white/70 px-5 py-2.5 text-sm font-medium text-pine backdrop-blur transition-all hover:-translate-y-0.5 hover:shadow-soft"
-            >
-              Verifica un bollino
             </Link>
           </div>
 
@@ -242,7 +218,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* GLI ZERI DI VER0 — fondo salvia, sezione firma */}
+      {/* LO ZERO DI VER0 — fondo salvia, sezione firma */}
       <section className="relative overflow-hidden bg-gradient-to-b from-paper via-moss to-moss px-5 py-16">
         <ZeroWatermark
           tone="pine"
@@ -251,12 +227,12 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-4xl">
           <div className="text-center">
             <h2 className="font-display text-3xl text-ink md:text-4xl">
-              Gli <em className="text-pine">zeri</em> di Ver0
+              Lo <em className="text-pine">Zero</em> di Ver0
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-sm text-gray-warm">
-              Il nome è una promessa, declinata sezione per sezione. Ognuno di
-              questi zeri regge la domanda «dimostramelo»: nessuna iperbole, solo
-              cose che puoi verificare.
+              Il nome è una promessa, un principio solo declinato sezione per
+              sezione. Ogni volta che lo incontri, lo Zero regge la domanda
+              «dimostramelo»: nessuna iperbole, solo cose che puoi verificare.
             </p>
           </div>
 
@@ -293,7 +269,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* LA MAGIA — fondo pino scuro, tre battute animate in sequenza */}
+      {/* LA MAGIA — fondo pino scuro, "porta quello che hai", tre battute */}
       <section className="relative overflow-hidden bg-pine-dark px-5 py-16">
         <ZeroWatermark
           tone="light"
@@ -305,11 +281,12 @@ export default function HomePage() {
               LA MAGIA, IN TRE MOSSE
             </p>
             <h2 className="font-display text-3xl text-white md:text-4xl">
-              Fai una cosa sola: carichi.
+              Fai una cosa sola: porti quello che hai.
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-sm text-moss">
-              Nessun modulo da imparare, nessun questionario infinito. Al resto
-              pensa la piattaforma — e tu hai sempre l&apos;ultima parola.
+              Nessun modulo da imparare, nessun questionario infinito. L&apos;AI
+              legge qualunque documento e compila — e tu hai sempre l&apos;ultima
+              parola.
             </p>
           </div>
 
@@ -321,7 +298,6 @@ export default function HomePage() {
                   key={m.title}
                   className="vz-magia-step relative flex flex-col items-center text-center"
                 >
-                  {/* Tratto di collegamento (solo tra i passi, da sm in su) */}
                   {i < MAGIA.length - 1 && (
                     <span
                       aria-hidden
@@ -342,7 +318,22 @@ export default function HomePage() {
             })}
           </ol>
 
-          <p className="mt-10 text-center text-xs text-moss/80">
+          {/* Esempi multipli: porta quello che hai, non solo la bolletta */}
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-2">
+            <span className="text-xs uppercase tracking-widest text-mint">
+              Per esempio
+            </span>
+            {ESEMPI.map((e) => (
+              <span
+                key={e}
+                className="rounded-full border border-mint/30 bg-white/10 px-3.5 py-1.5 text-xs text-moss"
+              >
+                {e}
+              </span>
+            ))}
+          </div>
+
+          <p className="mt-8 text-center text-xs text-moss/80">
             Le elaborazioni automatiche sono marcate come AI; le verifiche umane
             portano il nome di chi le ha fatte. Nessun dato entra nei report
             senza la tua conferma.
@@ -373,9 +364,7 @@ export default function HomePage() {
                 href={`/servizi/${s.slug}`}
                 className={
                   "flex flex-col rounded-2xl bg-white p-4 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift " +
-                  (s.featured
-                    ? "ring-2 ring-pine"
-                    : "border border-line/70")
+                  (s.featured ? "ring-2 ring-pine" : "border border-line/70")
                 }
               >
                 {s.featured && (
@@ -415,16 +404,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* BOLLINO — teaser su salvia, dominante soft "zero scorciatoie" */}
-      <section id="bollino" className="bg-moss px-5 py-14">
+      {/* SIGILLO — teaser su salvia, dominante soft "zero scorciatoie" */}
+      <section id="sigillo" className="bg-moss px-5 py-14">
         <Link
-          href="/bollino"
+          href="/sigillo"
           className="group mx-auto flex max-w-3xl items-center gap-5 rounded-2xl bg-white p-5 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift"
         >
           <Sigillo className="h-20 w-20 shrink-0" />
           <div className="min-w-0">
             <h3 className="font-display text-xl text-ink">
-              <em className="text-pine">Zero</em> scorciatoie: il bollino non si
+              <em className="text-pine">Zero</em> scorciatoie: il Sigillo non si
               compra, si dimostra.
             </h3>
             <p className="mt-1 text-sm text-gray-warm">
@@ -432,7 +421,7 @@ export default function HomePage() {
               ogni anno va riconquistato.
             </p>
             <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-pine">
-              Scopri il bollino{" "}
+              Scopri il Sigillo{" "}
               <ArrowRight
                 size={14}
                 className="transition-transform group-hover:translate-x-0.5"
@@ -451,19 +440,19 @@ export default function HomePage() {
         <DottedRing className="left-1/2 top-14 h-40 w-40 -translate-x-1/2 border-mint/25" />
         <div className="relative mx-auto max-w-2xl">
           <div className="mb-6 flex justify-center">
-            <Sigillo />
+            <Sigillo className="h-24 w-24" />
           </div>
           <p className="font-display text-2xl leading-relaxed text-white md:text-3xl">
-            Ci chiamiamo Ver0 per tutti gli zeri che contiamo:{" "}
-            <em className="text-mint">zero</em> effort,{" "}
+            Ci chiamiamo Ver0 per un principio solo, lo Zero, che torna in ogni
+            promessa: <em className="text-mint">zero</em> effort,{" "}
             <em className="text-mint">zero</em> domande inutili,{" "}
             <em className="text-mint">zero</em> sorprese sul prezzo,{" "}
-            <em className="text-mint">zero</em> scorciatoie sul bollino. E per la
+            <em className="text-mint">zero</em> scorciatoie sul Sigillo. E per la
             direzione di marcia: <em className="text-mint">verso zero</em>{" "}
             sprechi, <em className="text-mint">verso zero</em> emissioni.
           </p>
           <p className="mt-6 font-display text-xl text-moss md:text-2xl">
-            Lo zero, da noi, non è il niente — è il traguardo.
+            Lo Zero, da noi, non è il niente — è il traguardo.
           </p>
           <div className="mt-8 flex justify-center">
             <Link

@@ -1,10 +1,12 @@
 import Link from "next/link";
 
+import { Logo } from "@/components/brand/logo";
+
 /** Voci di navigazione del sito pubblico. */
 const NAV = [
   { label: "Come funziona", href: "/#come-funziona" },
   { label: "Servizi e prezzi", href: "/servizi" },
-  { label: "Il bollino", href: "/bollino" },
+  { label: "Il Sigillo", href: "/sigillo" },
   { label: "Partner", href: "/partner" },
 ];
 
@@ -12,9 +14,8 @@ const NAV = [
 export function SiteHeader() {
   return (
     <header className="flex items-center justify-between border-b border-line bg-white px-5 py-3">
-      <Link href="/" className="font-display text-xl font-semibold text-pine">
-        Ver<span className="text-pine-dark">0</span>
-        <span className="text-mint">.</span>
+      <Link href="/" aria-label="Ver0 — home">
+        <Logo />
       </Link>
       <nav className="hidden gap-5 text-xs text-gray-warm sm:flex">
         {NAV.map((n) => (

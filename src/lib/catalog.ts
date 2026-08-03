@@ -40,18 +40,18 @@ export const SERVIZI: Servizio[] = [
     icon: Leaf,
     featured: true,
     short:
-      "Piattaforma + carbon footprint + bilancio VSME. La via diretta al bollino.",
-    desc: "Il pacchetto completo che porta la tua impresa dalla prima bolletta al bollino: carbon footprint e bilancio di sostenibilità insieme, con un unico inserimento dati.",
+      "Piattaforma + carbon footprint + bilancio VSME. La via diretta al Sigillo.",
+    desc: "Il pacchetto completo che porta la tua impresa dalla prima bolletta al Sigillo: carbon footprint e bilancio di sostenibilità insieme, con un unico inserimento dati.",
     output: [
       "Report carbon footprint conforme a GHG Protocol e ISO 14064-1",
       "Bilancio di sostenibilità in formato VSME (standard EFRAG)",
-      "Bollino Impresa Ver0 livello 1 al completamento, con pagina pubblica di verifica e QR",
+      "Sigillo Ver0 livello 1 al completamento, con pagina pubblica di verifica e QR",
       "Dashboard sempre aggiornata e documenti scaricabili e condivisibili",
     ],
     ganci: [
       "Le banche chiedono già questi dati per il credito: presentati con documenti standard, non con questionari compilati a mano",
       "I clienti capofiliera devono rendicontare lo Scope 3: un fornitore qualificato Ver0 parte avvantaggiato",
-      "Costo di un ordine di grandezza inferiore alla consulenza tradizionale, con il bollino incluso nel percorso",
+      "Costo di un ordine di grandezza inferiore alla consulenza tradizionale, con il Sigillo incluso nel percorso",
     ],
     effort:
       "Circa 3 ore di lavoro totali, distribuite come preferisci. Un solo inserimento dati alimenta sia il carbon sia il bilancio. Nessun campo ti blocca: se un dato non lo hai, lo stimiamo insieme o lo deleghi al tuo commercialista.",
@@ -71,7 +71,7 @@ export const SERVIZI: Servizio[] = [
     ],
     ganci: [
       "È il documento che i clienti grandi ti stanno per chiedere (o ti hanno già chiesto): arriva pronto, non rincorrere",
-      "Primo passo verso il bollino Impresa Ver0",
+      "Primo passo verso il Sigillo Ver0 e lo status Impresa Ver0",
       "Ogni anno si rinnova in poche ore: lo storico resta in piattaforma",
     ],
     effort:
@@ -99,12 +99,12 @@ export const SERVIZI: Servizio[] = [
       "Circa 4 ore di lavoro totali, distribuite come preferisci. Gli indicatori ambientali arrivano già dagli altri moduli attivi. Nessun campo ti blocca: dove serve, stimiamo insieme o deleghi.",
   },
   {
-    slug: "manuale-iso-9001-14001",
-    name: "Manuale ISO 9001 o 14001",
+    slug: "manuale-iso-9001",
+    name: "Manuale ISO 9001",
     price: "990 € + 49 €/mese",
     icon: Scale,
-    short: "Impianto documentale pronto per la certificazione.",
-    desc: "L'impianto documentale completo del tuo sistema di gestione — qualità o ambiente — generato sui dati reali della tua azienda e pronto per l'audit di certificazione.",
+    short: "Sistema qualità: impianto documentale pronto per la certificazione.",
+    desc: "L'impianto documentale completo del tuo sistema di gestione per la qualità, generato sui dati reali della tua azienda e pronto per l'audit di certificazione ISO 9001.",
     output: [
       "Manuale, politica, analisi del contesto, rischi e opportunità secondo la struttura HLS (punti 4-10)",
       "Procedure gestionali e modulistica di registrazione complete",
@@ -114,10 +114,31 @@ export const SERVIZI: Servizio[] = [
     ganci: [
       "La certificazione è requisito o premialità in bandi e qualifiche fornitori: senza, certe porte restano chiuse",
       "La consulenza tradizionale chiede migliaia di euro per gli stessi documenti, spesso da template riciclati",
-      "Per la 14001, l'analisi ambientale nasce già precompilata dai tuoi dati carbon",
+      "I tuoi processi diventano un sistema ordinato, non un raccoglitore di moduli",
     ],
     effort:
       "Il grosso è un questionario guidato su processi e ruoli: il resto lo generiamo dai tuoi dati. Poche ore in tutto, revisione compresa. La certificazione è rilasciata da un organismo accreditato dopo l'audit; noi prepariamo il fascicolo.",
+  },
+  {
+    slug: "manuale-iso-14001",
+    name: "Manuale ISO 14001",
+    price: "990 € + 49 €/mese",
+    icon: Scale,
+    short: "Sistema ambientale: impianto documentale pronto per la certificazione.",
+    desc: "L'impianto documentale completo del tuo sistema di gestione ambientale, generato sui dati reali della tua azienda e pronto per l'audit di certificazione ISO 14001.",
+    output: [
+      "Manuale, politica, analisi ambientale, aspetti e impatti e obblighi di conformità (struttura HLS, punti 4-10)",
+      "Procedure gestionali e modulistica di registrazione complete",
+      "Tutto in formato Word modificabile, di tua proprietà",
+      "Registro degli obblighi di conformità e scadenzario inclusi nel mantenimento",
+    ],
+    ganci: [
+      "La certificazione è requisito o premialità in bandi, appalti verdi e qualifiche fornitori",
+      "L'analisi ambientale nasce già precompilata dai tuoi dati carbon: meno lavoro, più coerenza",
+      "La consulenza tradizionale chiede migliaia di euro per gli stessi documenti, spesso da template riciclati",
+    ],
+    effort:
+      "Un questionario guidato più il riuso automatico dei tuoi dati carbon: poche ore in tutto, revisione compresa. La certificazione è rilasciata da un organismo accreditato dopo l'audit; noi prepariamo il fascicolo.",
   },
   {
     slug: "parita-di-genere-pdr-125",

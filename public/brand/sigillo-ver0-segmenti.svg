@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Sigillo Ver0 con due percorsi verificati">
+  <title>Sigillo Ver0 — esempio con segmenti: ogni percorso verificato riempie un segmento dell'anello</title>
+  <circle cx="100" cy="100" r="98" fill="#FFFFFF"/>
+  <circle cx="100" cy="100" r="82" fill="none" stroke="#0E5238" stroke-width="2.2" stroke-dasharray="0.1 11.4" stroke-linecap="round"/>
+  <path d="M 100 18 A 82 82 0 0 1 169 59" fill="none" stroke="#0E5238" stroke-width="4.6" stroke-linecap="round"/>
+  <path d="M 175 68 A 82 82 0 0 1 179 110" fill="none" stroke="#1D9E75" stroke-width="4.6" stroke-linecap="round"/>
+  <ellipse cx="100" cy="92" rx="25" ry="38" fill="none" stroke="#0E5238" stroke-width="4.2"/>
+  <text x="100" y="152" text-anchor="middle" style="font-family: 'Fraunces', Georgia, serif; font-size: 15px; letter-spacing: 5px;" fill="#0A3D2A">2026</text>
+</svg>

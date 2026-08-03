@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Sigillo Ver0">
+  <title>Sigillo Ver0 — versione base (zero canonico E1, anello punteggiato, millesimo)</title>
+  <circle cx="100" cy="100" r="98" fill="#FFFFFF"/>
+  <circle cx="100" cy="100" r="82" fill="none" stroke="#0E5238" stroke-width="2.2" stroke-dasharray="0.1 11.4" stroke-linecap="round"/>
+  <ellipse cx="100" cy="92" rx="25" ry="38" fill="none" stroke="#0E5238" stroke-width="4.2"/>
+  <text x="100" y="152" text-anchor="middle" style="font-family: 'Fraunces', Georgia, serif; font-size: 15px; letter-spacing: 5px;" fill="#0A3D2A">2026</text>
+</svg>

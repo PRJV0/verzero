@@ -3,12 +3,13 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { publicEnv } from "@/lib/env";
 
-/** Percorsi accessibili senza login (sito pubblico, auth, pagine di verifica del bollino). */
+/** Percorsi accessibili senza login (sito pubblico, auth, pagine di verifica del Sigillo). */
 const PUBLIC_PREFIXES = [
   "/",
   "/login",
   "/auth",
   "/servizi",
+  "/sigillo",
   "/bollino",
   "/partner",
   "/verifica",
