@@ -2,11 +2,15 @@ import Link from "next/link";
 import {
   Leaf,
   Scale,
+  Users,
   Landmark,
   CircleCheck,
   Upload,
   Sparkles,
   FileCheck2,
+  FileSearch,
+  Database,
+  ShieldCheck,
   ArrowRight,
 } from "lucide-react";
 
@@ -66,12 +70,12 @@ const AMBITI = [
   {
     icon: Scale,
     title: "Sistemi di gestione",
-    desc: "Manuali e procedure ISO e parità di genere, generati sui tuoi dati e pronti per la certificazione.",
+    desc: "Manuali e procedure ISO e parità di genere, generati sui tuoi dati e pronti per l'audit di un ente accreditato.",
   },
   {
-    icon: Landmark,
-    title: "Finanza agevolata",
-    desc: "Ti troviamo i fondi che coprono i tuoi percorsi: bandi e incentivi filtrati sul profilo della tua impresa, con le scadenze in chiaro.",
+    icon: Users,
+    title: "Consulenza",
+    desc: "Dietro lo schermo, consulenti veri: specialisti prenotabili nei corner da 30 o 60 minuti, verifica umana su ogni documento, supporto continuo.",
   },
 ];
 
@@ -80,7 +84,7 @@ const ZERI = [
   {
     accent: "Zero",
     tail: "effort",
-    m: "Mai un dato che sappiamo già: l'AI fa il lavoro pesante, tu confermi.",
+    m: "Mai un dato che sappiamo già: il Motore Ver0 fa il lavoro pesante, tu confermi.",
   },
   {
     accent: "Zero",
@@ -118,13 +122,13 @@ const MAGIA = [
   },
   {
     icon: Sparkles,
-    title: "L'AI legge e compila",
-    desc: "Qualunque documento: estrae i dati e riempie i campi al posto tuo.",
+    title: "Il Motore legge e incrocia",
+    desc: "Estrae i dati dai tuoi documenti e li incrocia con le banche dati camerali ed energetiche.",
   },
   {
     icon: FileCheck2,
-    title: "Il documento si genera, tu confermi",
-    desc: "Controlli, correggi se serve, confermi. L'ultima parola è tua.",
+    title: "Genera i documenti conformi, tu confermi",
+    desc: "Documenti che seguono la norma di riferimento; tu controlli, correggi, confermi. E restano aggiornati nel tempo.",
   },
 ];
 
@@ -132,6 +136,25 @@ const ESEMPI = [
   "Bollette → carbon footprint",
   "Visura e organigramma → Manuale ISO 9001",
   "I documenti che hai già → continuità",
+];
+
+// Le tre capacità del Motore Ver0 — innovazione concreta, non "AI" generica.
+const MOTORE = [
+  {
+    icon: FileSearch,
+    title: "Lettura intelligente dei documenti",
+    desc: "Estrae i dati da bollette, visure, fatture e report — qualunque formato, anche una foto — e li struttura al posto tuo.",
+  },
+  {
+    icon: Database,
+    title: "Incrocio con le banche dati ufficiali",
+    desc: "Collega i tuoi dati alle fonti camerali ed energetiche: anagrafica, ATECO, addetti, consumi. Mai chiederti ciò che una fonte ufficiale sa già.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Generazione conforme, con verifica umana",
+    desc: "Produce documenti secondo la struttura della norma di riferimento; il team tecnico li valida prima dell'emissione e li tiene aggiornati.",
+  },
 ];
 
 const PILASTRI = [
@@ -153,7 +176,7 @@ export default function HomePage() {
 
         <div className="relative mx-auto max-w-2xl">
           <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
-            SOSTENIBILITÀ · SISTEMI DI GESTIONE · FINANZA AGEVOLATA
+            SOSTENIBILITÀ · SISTEMI DI GESTIONE · CONSULENZA
           </p>
           <h1 className="font-display text-4xl leading-[1.1] text-pine-dark md:text-6xl">
             I tuoi consulenti in cloud. La crescita della tua azienda, in
@@ -164,8 +187,9 @@ export default function HomePage() {
             mai un dato che sappiamo già.
           </p>
           <p className="mx-auto mt-3 max-w-lg text-sm text-gray-warm">
-            L&apos;AI fa il lavoro pesante, le persone verificano, tu raccogli il
-            risultato — a una frazione del prezzo della consulenza tradizionale.
+            Il Motore Ver0 fa il lavoro pesante, le persone verificano, tu
+            raccogli il risultato — a una frazione del prezzo della consulenza
+            tradizionale.
           </p>
 
           <div className="mt-7 flex justify-center">
@@ -284,9 +308,10 @@ export default function HomePage() {
               Fai una cosa sola: porti quello che hai.
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-sm text-moss">
-              Nessun modulo da imparare, nessun questionario infinito. L&apos;AI
-              legge qualunque documento e compila — e tu hai sempre l&apos;ultima
-              parola.
+              Nessun modulo da imparare, nessun questionario infinito. Il Motore
+              Ver0 legge i tuoi documenti, li incrocia con le banche dati
+              ufficiali e genera i documenti conformi — e li tiene aggiornati.
+              Tu hai sempre l&apos;ultima parola.
             </p>
           </div>
 
@@ -334,10 +359,52 @@ export default function HomePage() {
           </div>
 
           <p className="mt-8 text-center text-xs text-moss/80">
-            Le elaborazioni automatiche sono marcate come AI; le verifiche umane
-            portano il nome di chi le ha fatte. Nessun dato entra nei report
-            senza la tua conferma.
+            Le elaborazioni del Motore Ver0 sono sempre dichiarate; le verifiche
+            umane portano il nome di chi le ha fatte. Nessun dato entra nei
+            report senza la tua conferma.
           </p>
+        </div>
+      </section>
+
+      {/* IL MOTORE VER0 — vetrina del motore proprietario, fondo salvia */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-moss to-paper px-5 py-16">
+        <ZeroWatermark tone="pine" className="-right-12 -bottom-20 text-[24rem]" />
+        <div className="relative mx-auto max-w-4xl">
+          <div className="text-center">
+            <p className="mb-3 text-xs font-semibold tracking-widest text-pine">
+              IL NOSTRO MOTORE
+            </p>
+            <h2 className="font-display text-3xl text-ink md:text-4xl">
+              Il Motore Ver0
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-sm text-gray-warm">
+              Un motore specializzato nei documenti d&apos;impresa: addestrato su
+              bollette, visure, bilanci e manuali — non un motore qualunque.
+              Legge, incrocia le fonti ufficiali, genera. Le persone verificano.
+            </p>
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {MOTORE.map((c) => {
+              const Icon = c.icon;
+              return (
+                <article
+                  key={c.title}
+                  className="vz-reveal rounded-2xl border border-line/70 bg-white p-5 shadow-soft"
+                >
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-moss text-pine">
+                    <Icon size={20} />
+                  </span>
+                  <p className="mt-3 text-sm font-semibold text-ink">
+                    {c.title}
+                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-gray-warm">
+                    {c.desc}
+                  </p>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </section>
 
@@ -401,6 +468,27 @@ export default function HomePage() {
             Prezzi per aziende fino a 50 dipendenti, IVA esclusa · 51-200
             dipendenti: listino +60% · −10% con pagamento annuale
           </p>
+        </div>
+      </section>
+
+      {/* OSSERVATORIO BANDI — pannello informativo secondario, nessuna promessa */}
+      <section className="bg-white px-5 pb-14">
+        <div className="mx-auto flex max-w-3xl items-start gap-4 rounded-2xl border border-line/70 bg-paper p-5">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-moss text-pine">
+            <Landmark size={19} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-ink">Osservatorio bandi</p>
+            <p className="mt-1 text-sm text-gray-warm">
+              Ti segnaliamo i fondi che possono coprire i tuoi percorsi: bandi e
+              incentivi filtrati sul profilo della tua impresa, con le scadenze
+              in chiaro.
+            </p>
+            <p className="mt-1.5 text-xs text-gray-light">
+              Fanno fede i documenti ufficiali degli enti: nessuna promessa di
+              ammissione o esito.
+            </p>
+          </div>
         </div>
       </section>
 

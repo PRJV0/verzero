@@ -15,7 +15,7 @@ import { TargaVerifica } from "@/components/brand/targa";
 export const metadata: Metadata = {
   title: "Il Sigillo Ver0 — non si compra, si dimostra",
   description:
-    "Il Sigillo Ver0: marchio di certificazione della piattaforma. Criteri pubblici, dati verificati dal team tecnico, ogni Sigillo verificabile pubblicamente con QR, millesimato ogni anno. Coerente con la direttiva UE 2024/825.",
+    "Il Sigillo Ver0: marchio di verifica della piattaforma. Criteri pubblici, dati verificati dal team tecnico, ogni Sigillo verificabile pubblicamente con QR, millesimato ogni anno. Coerente con la direttiva UE 2024/825. Verzero prepara e accompagna; certificano gli enti terzi accreditati.",
 };
 
 const PERCORSI = [
@@ -59,10 +59,10 @@ export default function SigilloPage() {
           Il Sigillo non si compra. Si dimostra.
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-sm text-pine">
-          È il marchio di certificazione della piattaforma, esposto dalle
-          aziende che raggiungono i criteri. Criteri pubblici, dati verificati da
-          persone, revocabilità: costruito in coerenza con la direttiva UE
-          2024/825 contro il greenwashing.
+          È il marchio di verifica della piattaforma, esposto dalle aziende che
+          raggiungono i criteri. Criteri pubblici, dati verificati da persone,
+          revocabilità: costruito in coerenza con la direttiva UE 2024/825
+          contro il greenwashing.
         </p>
       </section>
 
@@ -79,8 +79,9 @@ export default function SigilloPage() {
             appaltanti. Il Sigillo rende quella qualifica — lo status{" "}
             <strong className="font-semibold text-pine">Impresa Ver0</strong> —
             leggibile e verificabile da chiunque, in un colpo d&apos;occhio. Non
-            certifichiamo un&apos;intenzione: attestiamo un lavoro fatto e
-            controllato.
+            è il timbro di un&apos;intenzione: è l&apos;evidenza di un lavoro
+            fatto e controllato dal team tecnico. Verzero prepara e accompagna;
+            le certificazioni di norma le rilasciano gli enti terzi accreditati.
           </p>
         </div>
       </section>
@@ -299,7 +300,7 @@ export default function SigilloPage() {
           </Link>
         </div>
         <p className="mx-auto mt-8 max-w-xl text-xs leading-relaxed text-gray-light">
-          Marchio di certificazione conforme alla direttiva UE 2024/825: criteri
+          Marchio di verifica conforme alla direttiva UE 2024/825: criteri
           pubblici per ogni percorso, verifica da parte del team tecnico,
           revocabilità con motivazione. Il Sigillo Ver0 non è uno schema di
           certificazione riconosciuto dai portali di terze parti e non va
