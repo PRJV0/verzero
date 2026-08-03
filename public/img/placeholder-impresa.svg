@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 700" role="img" aria-label="">
+  <!-- FOTO SEGNAPOSTO (astratta, locale): sostituire con lo scatto reale del
+       fondatore mantenendo lo stesso path. Il trattamento duotone verde lo
+       applica il componente PhotoDuotone, quindi qui bastano toni di grigio. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d8d8d8"/>
+      <stop offset="1" stop-color="#9a9a9a"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="26"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="700" fill="url(#sky)"/>
+  <circle cx="1180" cy="180" r="150" fill="#ececec" filter="url(#soft)"/>
+  <g fill="#6f6f6f">
+    <rect x="120" y="300" width="150" height="400"/>
+    <rect x="300" y="220" width="120" height="480" fill="#5a5a5a"/>
+    <rect x="450" y="360" width="170" height="340" fill="#7d7d7d"/>
+    <rect x="660" y="260" width="130" height="440" fill="#4e4e4e"/>
+    <rect x="820" y="400" width="180" height="300" fill="#8a8a8a"/>
+    <rect x="1040" y="320" width="140" height="380" fill="#616161"/>
+    <rect x="1210" y="430" width="200" height="270" fill="#777777"/>
+    <rect x="1440" y="350" width="120" height="350" fill="#565656"/>
+  </g>
+  <g fill="#c9c9c9" opacity="0.5">
+    <rect x="330" y="260" width="18" height="18"/><rect x="360" y="260" width="18" height="18"/>
+    <rect x="330" y="300" width="18" height="18"/><rect x="690" y="300" width="16" height="16"/>
+    <rect x="720" y="300" width="16" height="16"/><rect x="690" y="340" width="16" height="16"/>
+    <rect x="1070" y="360" width="16" height="16"/><rect x="1100" y="360" width="16" height="16"/>
+  </g>
+</svg>

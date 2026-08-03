@@ -32,7 +32,7 @@ export default function PartnerPage() {
       <span className="inline-flex items-center gap-2 rounded-full bg-moss px-3.5 py-1.5 text-xs font-medium text-pine">
         <Handshake size={14} /> In arrivo
       </span>
-      <h1 className="mt-5 font-display text-3xl text-ink md:text-4xl">
+      <h1 className="mt-5 font-display text-4xl text-ink md:text-5xl">
         Programma partner
       </h1>
       <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-gray-warm">

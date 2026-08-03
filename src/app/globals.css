@@ -17,6 +17,14 @@
   --color-amber-soft: #f7ecd9;
   --color-amber-ink: #7a4e0e;
 
+  /* Direzione grafica a tre registri (SPEC §12.W) */
+  --color-mint-bright: #2fcf9a; /* Registro B: bagliori menta su pino scuro */
+  --color-cream: #f7f2e8; /* Registro C: fondo crema caldo "carta e timbro" */
+  --color-terracotta: #c96f4a; /* Registro C: accento, max uno per schermata */
+
+  /* Transizioni uniformi in tutto il sito (Registro A). */
+  --default-transition-duration: 200ms;
+
   --font-display: var(--font-fraunces), Georgia, serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;
 
@@ -116,5 +124,48 @@ body {
   }
   to {
     background-position: 0 0;
+  }
+}
+
+/*
+ * Registro B "tech botanico" (SPEC §12.W) — solo sezioni del Motore Ver0.
+ * Flusso documenti → Motore → output: trattini che scorrono lungo i
+ * connettori e alone menta che respira sul Motore. Puro CSS; con
+ * prefers-reduced-motion tutto resta statico e pienamente leggibile.
+ */
+.vz-flow-track {
+  background-image: repeating-linear-gradient(
+    90deg,
+    rgba(47, 207, 154, 0.7) 0 10px,
+    transparent 10px 22px
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes vz-flow-run {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes vz-motore-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 24px 2px rgba(47, 207, 154, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 42px 10px rgba(47, 207, 154, 0.5);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vz-flow-track {
+    animation: vz-flow-run 2.8s linear infinite;
+  }
+  .vz-motore-glow {
+    animation: vz-motore-breathe 3.6s ease-in-out infinite;
   }
 }

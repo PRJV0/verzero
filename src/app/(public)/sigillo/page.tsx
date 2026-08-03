@@ -47,16 +47,19 @@ const VERIFICA = [
 export default function SigilloPage() {
   return (
     <main>
-      {/* Hero */}
-      <section className="bg-gradient-to-b from-moss via-moss to-paper px-5 py-16 text-center">
+      {/* Hero — Registro C "carta e timbro" (SPEC §12.W): crema caldo,
+          sigillo "timbrato" con lieve rotazione, UN solo accento terracotta
+          per schermata (qui: "Si dimostra."). */}
+      <section className="bg-cream px-5 py-16 text-center">
         <div className="mb-6 flex justify-center">
-          <Sigillo className="h-28 w-28" />
+          <Sigillo className="h-28 w-28 -rotate-6" />
         </div>
-        <p className="mb-3 text-xs font-semibold tracking-widest text-pine">
+        <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
           IL MARCHIO DI VERIFICA
         </p>
-        <h1 className="mx-auto max-w-2xl font-display text-4xl leading-[1.1] text-pine-dark md:text-5xl">
-          Il Sigillo non si compra. Si dimostra.
+        <h1 className="mx-auto max-w-2xl font-display text-5xl leading-[1.05] text-pine-dark md:text-6xl">
+          Il Sigillo non si compra.{" "}
+          <em className="text-terracotta">Si dimostra.</em>
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-sm text-pine">
           È il marchio di verifica della piattaforma, esposto dalle aziende che
@@ -69,7 +72,7 @@ export default function SigilloPage() {
       {/* Cos'è */}
       <section className="bg-white px-5 py-14">
         <div className="mx-auto max-w-3xl">
-          <h2 className="font-display text-3xl text-ink">
+          <h2 className="font-display text-4xl text-ink md:text-5xl">
             Una qualifica, non un logo
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-gray-warm">
@@ -87,9 +90,9 @@ export default function SigilloPage() {
       </section>
 
       {/* Scala multi-percorso */}
-      <section className="bg-gradient-to-b from-paper via-moss to-moss px-5 py-14">
+      <section className="bg-cream px-5 py-16">
         <div className="mx-auto max-w-4xl">
-          <h2 className="text-center font-display text-3xl text-ink">
+          <h2 className="text-center font-display text-4xl text-ink md:text-5xl">
             Un solo Sigillo, più strade per meritarlo
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-gray-warm">
@@ -173,7 +176,7 @@ export default function SigilloPage() {
       <section className="bg-white px-5 py-16">
         <div className="mx-auto grid max-w-4xl grid-cols-1 items-center gap-10 md:grid-cols-2">
           <div className="order-2 md:order-1">
-            <h2 className="font-display text-3xl text-ink">
+            <h2 className="font-display text-4xl text-ink md:text-5xl">
               Un anello che si riempie
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-gray-warm">
@@ -220,9 +223,9 @@ export default function SigilloPage() {
       </section>
 
       {/* Verificabilità + targa */}
-      <section className="bg-gradient-to-b from-moss to-paper px-5 py-16">
+      <section className="bg-cream px-5 py-16">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="font-display text-3xl text-ink">
+          <h2 className="font-display text-4xl text-ink md:text-5xl">
             Ogni Sigillo sarà verificabile pubblicamente
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-gray-warm">
@@ -283,7 +286,7 @@ export default function SigilloPage() {
 
       {/* CTA + nota conformità */}
       <section className="bg-white px-5 py-16 text-center">
-        <h2 className="font-display text-3xl text-ink">
+        <h2 className="font-display text-4xl text-ink md:text-5xl">
           La via diretta al Sigillo
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-sm text-gray-warm">

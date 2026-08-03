@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-label="">
+  <!-- FOTO SEGNAPOSTO (astratta, locale): sostituire con lo scatto reale del
+       fondatore (persone/consulenza) mantenendo lo stesso path. Duotone verde
+       applicato dal componente PhotoDuotone: qui solo toni di grigio. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e2e2e2"/>
+      <stop offset="1" stop-color="#a6a6a6"/>
+    </linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="900" fill="url(#bg)"/>
+  <circle cx="920" cy="150" r="180" fill="#f0f0f0" filter="url(#soft)" opacity="0.7"/>
+  <!-- due figure stilizzate una di fronte all'altra (colloquio) -->
+  <g filter="url(#soft)">
+    <circle cx="420" cy="330" r="95" fill="#5c5c5c"/>
+    <path d="M 230 760 Q 240 520 420 500 Q 600 520 610 760 Z" fill="#4d4d4d"/>
+    <circle cx="820" cy="360" r="85" fill="#767676"/>
+    <path d="M 650 780 Q 660 560 820 540 Q 980 560 990 780 Z" fill="#666666"/>
+  </g>
+  <!-- piano del tavolo -->
+  <rect x="140" y="760" width="920" height="140" fill="#8d8d8d"/>
+  <rect x="500" y="700" width="220" height="26" rx="6" fill="#d6d6d6" opacity="0.85"/>
+</svg>

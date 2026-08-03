@@ -248,6 +248,12 @@ Prezzi in canone mensile ricorrente, IVA esclusa, riferiti ad aziende fino a 50 
 - Canale partner: provvigione ricorrente standard del 20% sul canone incassato, uguale per tutti i canali partner; nessuna provvigione sul canale self-service.
 - L'hub / registro pubblico delle imprese certificate è previsto ma NON va esposto nel marketing né nel prodotto fino alla decisione di lancio di seconda fase (massa critica di aziende certificate).
 
+**12.W — DIREZIONE GRAFICA A TRE REGISTRI (decisione del fondatore).**
+- Registro A "editoriale vivo" = impianto generale del sito: gerarchia tipografica drammatica (Fraunces display grande), parole-Zero in corsivo menta come accento, fotografie vere trattate in duotone verde (persone e imprese; placeholder finche non ci sono scatti propri).
+- Registro B "tech botanico" = SOLO sezioni del Motore Ver0: fondo pino scuro, bagliori menta (#2FCF9A), flussi animati documenti→Motore→output (CSS, con prefers-reduced-motion), card in vetro.
+- Registro C "carta e timbro" = ben calibrato e solo per sezioni specifiche (pagina Sigillo e momenti di fiducia): fondo crema caldo, sigillo "timbrato" con lieve rotazione, accento terracotta (#C96F4A) usato con estrema parsimonia.
+- Regola generale: la pulizia resta la firma — i tre registri non si mescolano nella stessa sezione; mai piu di un registro speciale (B o C) per schermata.
+
 **12.X — EVOLUZIONE LISTINO: PREZZI PER DIMENSIONE D'AZIENDA (decisione del fondatore, prevale sul listino piatto).**
 - Ogni servizio ha una MATRICE DI PREZZO per dimensione: micro / piccola / media / grande. Il listino esistente diventa la fascia micro/piccola; media indicativamente +40-50%; grande +100% oppure "su richiesta" con contatto (aggancio commerciale). Percentuali da validare nel modello economico prima del lancio.
 - Trasparenza invariata: i prezzi restano pubblici PER FASCIA — il posizionamento "prezzi in chiaro" non si tocca.

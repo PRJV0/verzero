@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function ServiziPage() {
   return (
     <main className="mx-auto max-w-4xl px-5 py-10">
-      <h1 className="text-center font-display text-3xl text-ink md:text-4xl">
+      <h1 className="text-center font-display text-4xl text-ink md:text-5xl">
         Servizi e prezzi, in chiaro
       </h1>
       <p className="mx-auto mt-3 max-w-xl text-center text-sm text-gray-warm">
