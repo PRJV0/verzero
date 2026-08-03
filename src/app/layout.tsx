@@ -12,6 +12,8 @@ const inter = Inter({
 const fraunces = Fraunces({
   subsets: ["latin"],
   weight: ["400", "600"],
+  // Il corsivo Fraunces è l'accento tipografico delle "parole-zero" (art direction).
+  style: ["normal", "italic"],
   variable: "--font-fraunces",
   display: "swap",
 });

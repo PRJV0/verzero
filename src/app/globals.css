@@ -19,6 +19,12 @@
 
   --font-display: var(--font-fraunces), Georgia, serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  /* Ombre morbide e stratificate per le card (profondità, non solo bordi). */
+  --shadow-soft: 0 1px 2px rgba(10, 61, 42, 0.04),
+    0 6px 20px rgba(10, 61, 42, 0.07);
+  --shadow-lift: 0 2px 8px rgba(10, 61, 42, 0.08),
+    0 18px 36px rgba(10, 61, 42, 0.14);
 }
 
 html,
@@ -33,5 +39,82 @@ body {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/*
+ * Art direction — animazioni in puro CSS.
+ * Principio di accessibilità: senza supporto o con "meno movimento" richiesto,
+ * il contenuto è SEMPRE pienamente visibile. Nessun reveal nasconde testo in
+ * modo permanente.
+ */
+@keyframes vz-reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Reveal discreti allo scroll: solo dove le scroll-timeline sono supportate e
+   solo se l'utente non ha chiesto meno movimento. Altrove restano visibili. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: view()) {
+    .vz-reveal {
+      animation: vz-reveal-in both;
+      animation-timeline: view();
+      animation-range: entry 4% cover 20%;
+    }
+  }
+}
+
+/* Sezione "la magia": i tre passi si accendono in sequenza, in loop discreto.
+   L'alone mint viaggia da 1 a 2 a 3 e poi riposa. */
+@keyframes vz-magia-pulse {
+  0%,
+  22%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(29, 158, 117, 0);
+    transform: none;
+  }
+  6% {
+    box-shadow: 0 0 0 5px rgba(29, 158, 117, 0.3);
+    transform: translateY(-3px);
+  }
+  16% {
+    box-shadow: 0 0 0 0 rgba(29, 158, 117, 0);
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vz-magia-badge {
+    animation: vz-magia-pulse 5.4s ease-in-out infinite;
+  }
+  .vz-magia-step:nth-child(1) .vz-magia-badge {
+    animation-delay: 0s;
+  }
+  .vz-magia-step:nth-child(2) .vz-magia-badge {
+    animation-delay: 0.9s;
+  }
+  .vz-magia-step:nth-child(3) .vz-magia-badge {
+    animation-delay: 1.8s;
+  }
+  /* Il tratto che collega i passi scorre col ritmo della sequenza. */
+  .vz-magia-flow {
+    background-size: 200% 100%;
+    animation: vz-magia-flow 5.4s linear infinite;
+  }
+}
+
+@keyframes vz-magia-flow {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: 0 0;
   }
 }
