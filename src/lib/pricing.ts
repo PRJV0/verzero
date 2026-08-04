@@ -2,11 +2,11 @@
  * Matrice prezzi per dimensione d'azienda — FONTE DATI UNICA (SPEC §12.X).
  * Mai prezzi cablati nelle pagine: home, indice e dettagli leggono da qui.
  *
- * Regola (decisione del fondatore): il listino esistente è la fascia
- * micro/piccola; media = +45%; grande = sempre "su richiesta" con contatto.
- * La struttura (una riga per servizio, componenti con importo base e unità)
- * è pensata per diventare la tabella `price_plans` a database in fase 2
- * senza cambiare la forma dei dati.
+ * Scala (decisione del fondatore, OGNI passaggio di fascia cambia il prezzo):
+ * micro = listino, piccola = +20%, media = +50%, grande = sempre "su
+ * richiesta" con contatto. La struttura (una riga per servizio, componenti
+ * con importo base e unità) è pensata per diventare la tabella `price_plans`
+ * a database in fase 2 senza cambiare la forma dei dati.
  */
 
 export const DIMENSIONI = ["micro", "piccola", "media", "grande"] as const;
@@ -19,11 +19,19 @@ export const DIMENSIONE_LABEL: Record<Dimensione, string> = {
   grande: "Grande",
 };
 
+/** Range indicativi per aiutare la scelta (classi dimensionali UE). */
+export const DIMENSIONE_RANGE: Record<Dimensione, string> = {
+  micro: "fino a 9 addetti · ≤ 2 M€",
+  piccola: "10–49 addetti · ≤ 10 M€",
+  media: "50–249 addetti · ≤ 50 M€",
+  grande: "250+ addetti · > 50 M€",
+};
+
 /** Moltiplicatori per fascia; grande è fuori matrice: sempre su richiesta. */
 const MULTIPLIER: Record<Exclude<Dimensione, "grande">, number> = {
   micro: 1,
-  piccola: 1,
-  media: 1.45,
+  piccola: 1.2,
+  media: 1.5,
 };
 
 type Unit = "mese" | "una_tantum";
@@ -34,7 +42,10 @@ type PriceComponent = { base: number; unit: Unit };
 /** Listino base per servizio (slug del catalogo → componenti). */
 const LISTINO: Record<string, PriceComponent[]> = {
   "percorso-ver0": [{ base: 199, unit: "mese" }],
-  "carbon-footprint-base": [{ base: 89, unit: "mese" }],
+  // Carbon in due tagli (SPEC §12.Z): Light = listino attuale; Completa =
+  // Scope 3 incluso, indicativo +70% (89 × 1,7 ≈ 151), da validare.
+  "carbon-light": [{ base: 89, unit: "mese" }],
+  "carbon-completa": [{ base: 151, unit: "mese" }],
   "bilancio-vsme-base": [{ base: 129, unit: "mese" }],
   "manuale-iso-9001": [
     { base: 990, unit: "una_tantum" },

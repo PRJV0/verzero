@@ -47,7 +47,21 @@ export default async function ServizioPage({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* Colonna contenuti */}
         <div className="md:col-span-2">
-          <h1 className="mb-1 font-display text-2xl text-ink">{s.name}</h1>
+          <h1 className="mb-1 font-display text-3xl text-ink md:text-4xl">
+            {s.name}
+          </h1>
+          {s.copre && (
+            <div className="mb-2 mt-2 flex flex-wrap gap-1.5">
+              {s.copre.map((c) => (
+                <span
+                  key={c}
+                  className="rounded-full border border-mint/40 bg-moss px-2.5 py-1 text-xs font-medium text-pine"
+                >
+                  {c}
+                </span>
+              ))}
+            </div>
+          )}
           <p className="mb-4 text-sm text-gray-warm">{s.desc}</p>
 
           {/* Cosa ottieni */}

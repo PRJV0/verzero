@@ -255,10 +255,22 @@ Prezzi in canone mensile ricorrente, IVA esclusa, riferiti ad aziende fino a 50 
 - Regola generale: la pulizia resta la firma — i tre registri non si mescolano nella stessa sezione; mai piu di un registro speciale (B o C) per schermata.
 
 **12.X — EVOLUZIONE LISTINO: PREZZI PER DIMENSIONE D'AZIENDA (decisione del fondatore, prevale sul listino piatto).**
-- Ogni servizio ha una MATRICE DI PREZZO per dimensione: micro / piccola / media / grande. Il listino esistente diventa la fascia micro/piccola; media indicativamente +40-50%; grande +100% oppure "su richiesta" con contatto (aggancio commerciale). Percentuali da validare nel modello economico prima del lancio.
+- Ogni servizio ha una MATRICE DI PREZZO per dimensione: micro / piccola / media / grande. OGNI passaggio di fascia cambia il prezzo: micro = listino attuale; piccola = +20%; media = +50%; grande = "su richiesta" con contatto (aggancio commerciale). Percentuali indicative, da validare nel modello economico prima del lancio.
 - Trasparenza invariata: i prezzi restano pubblici PER FASCIA — il posizionamento "prezzi in chiaro" non si tocca.
 - In home i prezzi si espongono come "da X €/mese" (X = prezzo micro); il prezzo esatto si compone nella pagina del servizio tramite SELETTORE DI DIMENSIONE (micro/piccola/media/grande) che aggiorna prezzo e CTA. La dimensione scelta si propaga al checkout.
 - Fonte dati unica: matrice prezzi in un file/tabella dedicata (mai prezzi cablati nelle pagine), pronta a diventare tabella a database in fase 2.
+
+**12.V — IL CANONE INCLUDE (pacchetto abbonato — giustifica il ricorrente, va comunicato ovunque c'e un prezzo /mese).**
+Chi ha un abbonamento attivo su qualunque servizio riceve, incluso nel canone:
+- OSSERVATORIO FINANZA AGEVOLATA riservato agli abbonati: segnalazione di bandi e incentivi pertinenti per profilo (settore, dimensione, territorio, percorsi attivi); mai promesse di esito.
+- AGGIORNAMENTO DOCUMENTALE IN TEMPO REALE: quando cambia una norma o ne arriva una nuova che tocca i documenti del cliente, il Motore Ver0 segnala l'impatto e aggiorna/rigenera i documenti interessati (con verifica umana dove prevista). E il cuore del valore ricorrente: il documento non invecchia mai.
+- MANTENIMENTO DEL SIGILLO: rinnovo annuale dei percorsi verificati, millesimo aggiornato, pagina pubblica di verifica sempre attiva.
+- Archivio documentale sempre disponibile e assistenza (uomo+AI) inclusa.
+Regola di comunicazione: ogni prezzo "/mese" sul sito deve rendere visibile questo pacchetto (tooltip, riga "il canone include", o sezione dedicata "Perche l'abbonamento").
+
+**12.Z — CARBON FOOTPRINT IN DUE TAGLI (decisione del fondatore).**
+- Il modulo carbon si declina in due prodotti distinti a catalogo: "Carbon Light" (Scope 1 e 2) al prezzo attuale del modulo, e "Carbon Completa" (Scope 1, 2 e 3) a prezzo superiore — indicativo +70%, da validare — perche lo Scope 3 richiede raccolta dati di filiera e metodi di stima piu onerosi.
+- Ogni taglio mantiene le varianti Base/Plus (revisione umana) e la matrice per dimensione d'azienda. Upgrade Light→Completa sempre possibile pagando la differenza. Il Percorso Ver0 chiarisce quale taglio include.
 
 **12.Y — VETRINA A CATALOGO PER CATEGORIE (sostituisce le card piatte in home).**
 - La sezione servizi della home diventa un catalogo navigabile per categorie: Sostenibilita declinata nei tre pilastri E (ambiente: carbon, check-up energetico, monitoraggio, ISO 14001, rating circolarita), S (sociale: UNI/PdR 125, UNI ISO 21401, ISO 20121), G (governance: VSME/report ESG, ISO 9001, preparazione ai rating e questionari) + famiglia Sistemi di gestione + altre famiglie a seguire.

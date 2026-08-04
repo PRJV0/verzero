@@ -3,6 +3,7 @@ import { ArrowRight, Leaf, Mail } from "lucide-react";
 
 import { VETRINA } from "@/lib/catalog";
 import { GRANDE_IMPRESA, prezzoDa } from "@/lib/pricing";
+import { CANONE_INLINE } from "@/lib/canone";
 
 /**
  * Vetrina a catalogo per categorie (SPEC §12.Y): Sostenibilità nei tre
@@ -30,7 +31,7 @@ export function CatalogoVetrina() {
             </span>
             <p className="mt-1 font-display text-xl text-ink">Percorso Ver0</p>
             <p className="text-sm text-gray-warm">
-              Piattaforma + carbon footprint + bilancio VSME. La via diretta al
+              Piattaforma + Carbon Light + bilancio VSME. La via diretta al
               Sigillo.
             </p>
           </div>
@@ -110,6 +111,14 @@ export function CatalogoVetrina() {
           </section>
         ))}
       </div>
+
+      {/* Il pacchetto abbonato accanto ai prezzi /mese (SPEC §12.V) */}
+      <p className="mt-4 text-center text-xs leading-relaxed text-gray-warm">
+        {CANONE_INLINE}{" "}
+        <Link href="/#canone" className="font-medium text-pine hover:underline">
+          Perché l&apos;abbonamento
+        </Link>
+      </p>
 
       {/* Aggancio grande impresa (§12.X) */}
       <div className="mt-6 flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-line/70 bg-paper px-5 py-4 text-center">

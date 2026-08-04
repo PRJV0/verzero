@@ -29,6 +29,8 @@ export type Servizio = {
   ganci: string[];
   /** "Quanto tempo ti chiede". */
   effort: string;
+  /** Badge "cosa copre" (es. Scope): mostrati sotto il titolo del dettaglio. */
+  copre?: string[];
 };
 
 export const SERVIZI: Servizio[] = [
@@ -38,10 +40,11 @@ export const SERVIZI: Servizio[] = [
     icon: Leaf,
     featured: true,
     short:
-      "Piattaforma + carbon footprint + bilancio VSME. La via diretta al Sigillo.",
-    desc: "Il pacchetto completo che porta la tua impresa dalla prima bolletta al Sigillo: carbon footprint e bilancio di sostenibilità insieme, con un unico inserimento dati.",
+      "Piattaforma + Carbon Light + bilancio VSME. La via diretta al Sigillo.",
+    desc: "Il pacchetto completo che porta la tua impresa dalla prima bolletta al Sigillo: Carbon Light (Scope 1 e 2) e bilancio di sostenibilità insieme, con un unico inserimento dati.",
+    copre: ["Include Carbon Light (Scope 1+2)", "Bilancio VSME", "Piattaforma"],
     output: [
-      "Report carbon footprint conforme a GHG Protocol e ISO 14064-1",
+      "Report Carbon Light (Scope 1 e 2) conforme a GHG Protocol e ISO 14064-1",
       "Bilancio di sostenibilità in formato VSME (standard EFRAG)",
       "Sigillo Ver0 livello 1 al completamento, con pagina pubblica di verifica e QR",
       "Dashboard sempre aggiornata e documenti scaricabili e condivisibili",
@@ -55,11 +58,12 @@ export const SERVIZI: Servizio[] = [
       "Circa 3 ore di lavoro totali, distribuite come preferisci. Un solo inserimento dati alimenta sia il carbon sia il bilancio. Nessun campo ti blocca: se un dato non lo hai, lo stimiamo insieme o lo deleghi al tuo commercialista.",
   },
   {
-    slug: "carbon-footprint-base",
-    name: "Carbon footprint Base",
+    slug: "carbon-light",
+    name: "Carbon Light",
     icon: Leaf,
     short: "Scope 1 e 2 secondo GHG Protocol e ISO 14064-1.",
-    desc: "La misura ufficiale delle emissioni della tua organizzazione: Scope 1 e 2 calcolati dai tuoi documenti reali, con metodo riconosciuto a livello internazionale.",
+    desc: "La misura ufficiale delle emissioni dirette e da energia acquistata della tua organizzazione: Scope 1 e 2 calcolati dai tuoi documenti reali, con metodo riconosciuto a livello internazionale.",
+    copre: ["Scope 1 — emissioni dirette", "Scope 2 — energia acquistata"],
     output: [
       "Report di inventario GHG conforme a GHG Protocol e ISO 14064-1",
       "Scope 2 in doppia lettura (location-based e market-based)",
@@ -69,10 +73,35 @@ export const SERVIZI: Servizio[] = [
     ganci: [
       "È il documento che i clienti grandi ti stanno per chiedere (o ti hanno già chiesto): arriva pronto, non rincorrere",
       "Primo passo verso il Sigillo Ver0 e lo status Impresa Ver0",
-      "Ogni anno si rinnova in poche ore: lo storico resta in piattaforma",
+      "Passi a Carbon Completa quando vuoi, pagando solo la differenza: i dati inseriti restano",
     ],
     effort:
       "Circa 3 ore di lavoro totali, distribuite come preferisci. Nessun campo ti blocca: se un dato non lo hai, lo stimiamo insieme o lo deleghi al tuo commercialista.",
+  },
+  {
+    slug: "carbon-completa",
+    name: "Carbon Completa",
+    icon: Leaf,
+    short: "Scope 1, 2 e 3: l'impronta intera, filiera compresa.",
+    desc: "L'inventario completo delle emissioni della tua organizzazione: oltre a Scope 1 e 2, lo Scope 3 con i dati di filiera — acquisti, trasporti, uso dei prodotti — raccolti e stimati con metodi dichiarati.",
+    copre: [
+      "Scope 1 — emissioni dirette",
+      "Scope 2 — energia acquistata",
+      "Scope 3 — filiera e indirette",
+    ],
+    output: [
+      "Report di inventario GHG completo (Scope 1, 2 e 3) conforme a GHG Protocol e ISO 14064-1",
+      "Mappatura delle categorie Scope 3 applicabili e raccolta guidata dei dati di filiera",
+      "Etichetta di qualità su ogni dato e tracciabilità di fattori e metodi di stima",
+      "Base pronta per i questionari dei clienti capofiliera (CDP, EcoVadis e simili)",
+    ],
+    ganci: [
+      "I capofiliera rendicontano lo Scope 3: è dei fornitori che hanno bisogno — arriva con i numeri già pronti",
+      "Include tutto Carbon Light; se parti da Light, l'upgrade costa solo la differenza",
+      "La base più solida per il Sigillo e per obiettivi di riduzione credibili",
+    ],
+    effort:
+      "Circa 5 ore di lavoro totali: lo Scope 3 chiede qualche dato in più dalla contabilità fornitori. Nessun campo ti blocca: dove il dato non c'è, stimiamo insieme con metodi dichiarati.",
   },
   {
     slug: "bilancio-vsme-base",
@@ -214,9 +243,14 @@ export const VETRINA: CategoriaVetrina[] = [
     sub: "Sostenibilità · pilastro E",
     voci: [
       {
-        slug: "carbon-footprint-base",
-        name: "Carbon footprint",
-        benefit: "La misura ufficiale delle tue emissioni, dai documenti reali.",
+        slug: "carbon-light",
+        name: "Carbon Light",
+        benefit: "Scope 1 e 2: la misura ufficiale, dai documenti reali.",
+      },
+      {
+        slug: "carbon-completa",
+        name: "Carbon Completa",
+        benefit: "Scope 1, 2 e 3: l'impronta intera, filiera compresa.",
       },
       {
         slug: "rating-economia-circolare",

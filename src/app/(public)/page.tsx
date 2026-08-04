@@ -3,7 +3,6 @@ import {
   Leaf,
   Scale,
   Users,
-  Landmark,
   CircleCheck,
   Upload,
   FileCheck2,
@@ -19,6 +18,7 @@ import {
 import { Sigillo } from "@/components/brand/sigillo";
 import { CatalogoVetrina } from "@/components/catalogo-vetrina";
 import { PhotoDuotone } from "@/components/photo-duotone";
+import { CANONE_INCLUDE } from "@/lib/canone";
 
 /**
  * Home del sito pubblico — direzione grafica a tre registri (SPEC §12.W):
@@ -210,54 +210,63 @@ const PILASTRI = [
 export default function HomePage() {
   return (
     <>
-      {/* HERO — Registro A: fondo salvia, dominante "zero effort", CTA singola */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-moss via-moss to-paper px-5 py-16 text-center">
+      {/* HERO — Registro A pieno: apertura editoriale asimmetrica, display
+          Fraunces grande, parola-Zero in evidenza, foto duotone già sopra la
+          piega (a lato su desktop, a fascia su mobile). */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-moss via-moss to-paper px-5 py-14 md:py-20">
         <ZeroWatermark
           tone="pine"
           className="-right-10 -top-16 text-[22rem] md:text-[32rem]"
         />
         <DottedRing className="-left-16 top-24 h-56 w-56 border-mint/20" />
 
-        <div className="relative mx-auto max-w-3xl">
-          <p className="mb-5 text-xs font-semibold tracking-widest text-pine">
-            SOSTENIBILITÀ · SISTEMI DI GESTIONE · CONSULENZA
-          </p>
-          <h1 className="font-display text-5xl leading-[1.05] text-pine-dark md:text-7xl">
-            I tuoi consulenti in cloud. La crescita della tua azienda, in
-            abbonamento.
-          </h1>
-          <p className="mx-auto mt-7 max-w-xl font-display text-2xl text-pine md:text-3xl">
-            La consulenza con <ZeroWord>zero</ZeroWord> effort: mai un dato che
-            sappiamo già.
-          </p>
-          <p className="mx-auto mt-3 max-w-lg text-sm text-gray-warm">
-            Il Motore Ver0 fa il lavoro pesante, le persone verificano, tu
-            raccogli il risultato — a una frazione del prezzo della consulenza
-            tradizionale.
-          </p>
+        <div className="relative mx-auto grid max-w-5xl grid-cols-1 items-center gap-10 md:grid-cols-[1.2fr_1fr]">
+          <div className="text-left">
+            <p className="mb-5 text-xs font-semibold tracking-widest text-pine">
+              SOSTENIBILITÀ · SISTEMI DI GESTIONE · CONSULENZA
+            </p>
+            <h1 className="font-display text-5xl leading-[1.02] text-pine-dark md:text-7xl">
+              I tuoi consulenti in cloud. La crescita della tua azienda, in
+              abbonamento.
+            </h1>
+            <p className="mt-7 max-w-xl font-display text-2xl leading-snug text-pine md:text-3xl">
+              La consulenza con{" "}
+              <ZeroWord>
+                <span className="text-3xl md:text-4xl">zero</span>
+              </ZeroWord>{" "}
+              effort: mai un dato che sappiamo già.
+            </p>
+            <p className="mt-4 max-w-lg text-sm text-gray-warm">
+              Il Motore Ver0 fa il lavoro pesante, le persone verificano, tu
+              raccogli il risultato — a una frazione del prezzo della consulenza
+              tradizionale.
+            </p>
 
-          <div className="mt-8 flex justify-center">
-            <Link
-              href="/servizi"
-              className="rounded-lg bg-pine px-6 py-3 text-sm font-medium text-white shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift"
-            >
-              Scopri cosa possiamo fare per te
-            </Link>
+            <div className="mt-8">
+              <Link
+                href="/servizi"
+                className="inline-block rounded-lg bg-pine px-6 py-3 text-sm font-medium text-white shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift"
+              >
+                Scopri cosa possiamo fare per te
+              </Link>
+            </div>
+
+            <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-1 text-xs text-pine">
+              {PILASTRI.map((p) => (
+                <li key={p} className="flex items-center gap-1.5">
+                  <CircleCheck size={14} className="shrink-0 text-mint" />
+                  {p}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <ul className="mt-6 flex flex-wrap justify-center gap-x-5 gap-y-1 text-xs text-pine">
-            {PILASTRI.map((p) => (
-              <li key={p} className="flex items-center gap-1.5">
-                <CircleCheck size={14} className="shrink-0 text-mint" />
-                {p}
-              </li>
-            ))}
-          </ul>
-
-          {/* SLOT FOTO 1 — vicino all'hero (Registro A, duotone) */}
+          {/* SLOT FOTO 1 — hero (Registro A, duotone soft: illustrazione già
+              in palette; con uno scatto fotografico passare intensity="full") */}
           <PhotoDuotone
-            src="/img/placeholder-impresa.svg"
-            className="vz-reveal mx-auto mt-12 aspect-[21/9] max-w-4xl rounded-2xl shadow-lift"
+            src="/photos/hero.jpg"
+            intensity="soft"
+            className="aspect-[16/10] rounded-3xl shadow-lift md:aspect-[4/5]"
           />
         </div>
       </section>
@@ -343,8 +352,10 @@ export default function HomePage() {
       {/* CONSULENZA — Registro A editoriale, foto duotone (SLOT FOTO 2) */}
       <section className="bg-white px-5 py-20">
         <div className="mx-auto grid max-w-4xl grid-cols-1 items-center gap-10 md:grid-cols-2">
+          {/* SLOT FOTO 2 — consulenza (duotone soft; scatti veri: stesso path) */}
           <PhotoDuotone
-            src="/img/placeholder-consulenza.svg"
+            src="/photos/consulenza.jpg"
+            intensity="soft"
             className="vz-reveal aspect-[4/3] rounded-2xl shadow-lift"
           />
           <div>
@@ -538,23 +549,46 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* OSSERVATORIO BANDI — pannello informativo secondario, nessuna promessa */}
-      <section className="bg-white px-5 pb-16">
-        <div className="mx-auto flex max-w-3xl items-start gap-4 rounded-2xl border border-line/70 bg-paper p-5">
-          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-moss text-pine">
-            <Landmark size={19} />
-          </span>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-ink">Osservatorio bandi</p>
-            <p className="mt-1 text-sm text-gray-warm">
-              Ti segnaliamo i fondi che possono coprire i tuoi percorsi: bandi e
-              incentivi filtrati sul profilo della tua impresa, con le scadenze
-              in chiaro.
+      {/* PERCHÉ L'ABBONAMENTO — il pacchetto incluso in ogni canone (SPEC
+          §12.V). L'osservatorio bandi vive qui come beneficio da abbonati. */}
+      <section id="canone" className="bg-white px-5 pb-20">
+        <div className="mx-auto max-w-4xl rounded-3xl bg-gradient-to-b from-moss to-paper px-6 py-12 md:px-10">
+          <div className="text-center">
+            <p className="mb-3 text-xs font-semibold tracking-widest text-pine">
+              PERCHÉ L&apos;ABBONAMENTO
             </p>
-            <p className="mt-1.5 text-xs text-gray-light">
-              Fanno fede i documenti ufficiali degli enti: nessuna promessa di
-              ammissione o esito.
+            <h2 className="font-display text-4xl text-ink md:text-5xl">
+              Il tuo canone include
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-sm text-gray-warm">
+              Qualunque servizio attivi, l&apos;abbonamento non è un affitto sul
+              documento: è ciò che lo tiene vivo.
             </p>
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {CANONE_INCLUDE.map((b) => {
+              const Icon = b.icon;
+              return (
+                <article
+                  key={b.title}
+                  className="vz-reveal rounded-2xl bg-white p-5 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift"
+                >
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-moss text-pine">
+                    <Icon size={20} />
+                  </span>
+                  <p className="mt-3 font-display text-lg text-ink">
+                    {b.title}
+                  </p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-gray-warm">
+                    {b.desc}
+                  </p>
+                  {b.note && (
+                    <p className="mt-2 text-xs text-gray-light">{b.note}</p>
+                  )}
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -590,8 +624,9 @@ export default function HomePage() {
       {/* MANIFESTO DELLO ZERO — fascia finale su pino scuro con foto in
           filigrana (SLOT FOTO 3, Registro A in chiusura) */}
       <section className="relative overflow-hidden bg-pine-dark px-5 py-24 text-center">
+        {/* SLOT FOTO 3 — filigrana della fascia finale (scatti veri: stesso path) */}
         <PhotoDuotone
-          src="/img/placeholder-orizzonte.svg"
+          src="/photos/impresa.jpg"
           className="absolute inset-0 opacity-20"
         />
         <div aria-hidden className="absolute inset-0 bg-pine-dark/60" />
