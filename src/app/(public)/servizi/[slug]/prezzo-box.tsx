@@ -9,22 +9,22 @@ import {
   DIMENSIONE_LABEL,
   DIMENSIONE_RANGE,
   GRANDE_IMPRESA,
-  prezzoPer,
+  prezzoDettaglio,
   type Dimensione,
 } from "@/lib/pricing";
 import { CANONE_INLINE } from "@/lib/canone";
 
+const eur = (n: number) => n.toLocaleString("it-IT");
+
 /**
- * Box prezzo con selettore di dimensione (SPEC §12.X, scala micro / +20% /
- * +50% / su richiesta): quattro opzioni impilate con etichetta e range di
- * addetti/fatturato — comode al tocco, niente dropdown — fascia selezionata
- * evidente, prezzo che entra con una transizione visibile a ogni click
- * (key={dim} rimonta il nodo). "Grande" mostra "su richiesta" con la CTA di
- * contatto. La dimensione scelta si propaga alla CTA (?dimensione=...).
+ * Box prezzo con selettore di dimensione (SPEC §12.X) e DOPPIA ESPOSIZIONE
+ * del canone (§12.R, vincolante): mensile in evidenza con "impegno minimo
+ * 12 mesi" dichiarato, e subito sotto l'unica soluzione annuale con badge
+ * −10%. La CTA porta al funnel di acquisto (§12.T) propagando la dimensione.
  */
 export function PrezzoBox({ slug }: { slug: string }) {
   const [dim, setDim] = useState<Dimensione>("micro");
-  const prezzo = prezzoPer(slug, dim);
+  const p = prezzoDettaglio(slug, dim);
 
   return (
     <div className="rounded-xl border-2 border-pine bg-white p-4">
@@ -81,24 +81,39 @@ export function PrezzoBox({ slug }: { slug: string }) {
         })}
       </div>
 
-      <p className="mt-4 text-xs text-gray-warm">Prezzo</p>
-      {prezzo ? (
+      {p ? (
         <div key={dim} className="vz-price-in">
-          <p className="mb-1 font-display text-3xl tabular-nums text-pine">
-            {prezzo}
+          {/* Canone mensile in evidenza (§12.R) */}
+          <p className="mt-4 text-xs text-gray-warm">Canone</p>
+          <p className="font-display text-3xl tabular-nums text-pine">
+            {p.unaTantum ? `${eur(p.unaTantum)} € + ` : ""}
+            {eur(p.mensile)} €/mese
           </p>
-          <p className="mb-3 text-xs text-gray-light">
-            IVA esclusa · disdici quando vuoi · −10% con pagamento annuale
+          <p className="text-xs text-gray-light">
+            impegno minimo 12 mesi · IVA esclusa
+          </p>
+          {/* Unica soluzione annuale, subito sotto (§12.R) */}
+          <p className="mt-2 flex flex-wrap items-center gap-1.5 text-sm text-gray-warm">
+            <span className="rounded-full bg-mint/15 px-2 py-0.5 text-xs font-semibold text-pine">
+              −10%
+            </span>
+            oppure{" "}
+            <span className="font-semibold tabular-nums text-ink">
+              {p.unaTantum ? `${eur(p.unaTantum)} € + ` : ""}
+              {eur(p.annuale)} €/anno
+            </span>{" "}
+            in unica soluzione
           </p>
           <Link
-            href={`/login?dimensione=${dim}`}
-            className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-pine px-4 py-2.5 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
+            href={`/acquista/${slug}?dimensione=${dim}`}
+            className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg bg-pine px-4 py-2.5 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
           >
             Procedi all&apos;acquisto <ArrowRight size={15} />
           </Link>
         </div>
       ) : (
         <div key="grande" className="vz-price-in">
+          <p className="mt-4 text-xs text-gray-warm">Prezzo</p>
           <p className="mb-1 font-display text-3xl text-pine">Su richiesta</p>
           <p className="mb-3 text-sm text-gray-warm">{GRANDE_IMPRESA.copy}</p>
           <a

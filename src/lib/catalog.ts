@@ -40,9 +40,13 @@ export const SERVIZI: Servizio[] = [
     icon: Leaf,
     featured: true,
     short:
-      "Piattaforma + Carbon Light + bilancio VSME. La via diretta al Sigillo.",
+      "Carbon Light + bilancio VSME + miglioramento score rating. La via diretta al Sigillo.",
     desc: "Il pacchetto completo che porta la tua impresa dalla prima bolletta al Sigillo: Carbon Light (Scope 1 e 2) e bilancio di sostenibilità insieme, con un unico inserimento dati.",
-    copre: ["Include Carbon Light (Scope 1+2)", "Bilancio VSME", "Piattaforma"],
+    copre: [
+      "Include Carbon Light (Scope 1+2)",
+      "Bilancio VSME",
+      "Miglioramento score rating",
+    ],
     output: [
       "Report Carbon Light (Scope 1 e 2) conforme a GHG Protocol e ISO 14064-1",
       "Bilancio di sostenibilità in formato VSME (standard EFRAG)",

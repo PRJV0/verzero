@@ -3,6 +3,7 @@ import {
   RefreshCw,
   BadgeCheck,
   Archive,
+  Megaphone,
   type LucideIcon,
 } from "lucide-react";
 
@@ -43,8 +44,13 @@ export const CANONE_INCLUDE: BeneficioCanone[] = [
     title: "Archivio e assistenza inclusi",
     desc: "I tuoi documenti sempre disponibili in un posto solo, con assistenza uomo+AI compresa nel canone.",
   },
+  {
+    icon: Megaphone,
+    title: "Kit Comunicazione Ver0",
+    desc: "Claim verificati con la fonte a supporto, materiali per filiera e banche, verifica anti-greenwashing dei tuoi testi. Comunichi solo ciò che puoi dimostrare.",
+  },
 ];
 
 /** Riga sintetica da mostrare accanto ai prezzi /mese. */
 export const CANONE_INLINE =
-  "Ogni canone include: bandi per il tuo profilo, documenti sempre aggiornati alle norme, mantenimento del Sigillo, archivio e assistenza.";
+  "Ogni canone include: bandi per il tuo profilo, documenti sempre aggiornati alle norme, mantenimento del Sigillo, archivio e assistenza, Kit Comunicazione.";

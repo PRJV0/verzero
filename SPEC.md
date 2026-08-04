@@ -277,6 +277,37 @@ Regola di comunicazione: ogni prezzo "/mese" sul sito deve rendere visibile ques
 - Ogni voce: nome, una riga di beneficio, "da X €/mese" (o "da X € una tantum"), link alla pagina servizio.
 - I servizi di roadmap compaiono marcati "IN ARRIVO" (ampliano l'offerta percepita, non acquistabili); nessuna voce puo suggerire che Verzero certifichi.
 
+**12.R — REVISIONE FINALE LISTINO: KIT INCLUSO DI DEFAULT + DOPPIA ESPOSIZIONE MENSILE/ANNUALE (prevale sui numeri di 12.S).**
+- Il KIT COMUNICAZIONE VER0 e INCLUSO DI DEFAULT in ogni servizio in abbonamento (entra nel pacchetto "il canone include" come quinto beneficio); di conseguenza tutti i canoni salgono leggermente. La voce standalone del Kit esce dal catalogo; per i servizi solo una tantum resta acquistabile come add-on (490 euro/anno fascia micro).
+- MODALITA DI PAGAMENTO E VISUALIZZAZIONE (regola vincolante): ogni prezzo ricorrente si mostra in DOPPIA FORMA ben visibile — canone MENSILE in evidenza (valore visivamente inferiore; impegno minimo 12 mesi, dichiarato con chiarezza accanto) e, immediatamente sotto/accanto, l'opzione UNICA SOLUZIONE ANNUALE con SCONTO 10% e badge "-10%". Esempio di card: "45 euro/mese" grande + "oppure 490 euro/anno in unica soluzione (risparmi il 10%)".
+- NUOVI PREZZI BASE FASCIA MICRO (mensile / annuale unica soluzione -10%; gradini di fascia invariati +20% piccola, +50% media, grande su richiesta):
+  Carbon Light: 45/mese · 490/anno | Carbon Completa: 75/mese · 810/anno | Bilancio VSME: 89/mese · 960/anno | BUNDLE Percorso Ver0 (Carbon Light + VSME + miglioramento score + Kit): 119/mese · 1.290/anno | Manuale ISO 9001 o 14001: 990 una tantum + mantenimento 59/mese · 640/anno | UNI/PdR 125: 990 una tantum + mantenimento 39/mese · 420/anno | Check-up energetico: 290 una tantum | Miglioramento score rating (standalone): 45/mese · 490/anno.
+- Il copy dei prezzi valorizza il Kit incluso: "incluso il Kit Comunicazione: claim verificati, materiali per filiera e banche, verifica anti-greenwashing dei tuoi testi".
+- Resta ferma la verifica di coerenza sul modello economico (margine lordo >=70%).
+
+**12.S — LISTINO "SHOCK" v2 (adattato al benchmark di mercato — proposta operativa, da validare sul modello economico prima del lancio).**
+Principio: prezzi ancorati alle soglie psicologiche emerse dall'indagine (micro/piccola sotto 990 euro/anno per il bundle; media sotto 2.900 euro/anno) e sempre SOTTO il SaaS concorrente di riferimento, con il tradizionale come termine di paragone nel copy ("dal consulente: da 10.000 euro").
+Prezzi base fascia MICRO (annuale, con equivalente mensile mostrato; fasce: piccola +20%, media +50%, grande su richiesta):
+- Carbon Light (Scope 1+2): 390 euro/anno (39/mese) — riferimento: Greenly ~500 $, tradizionale 1.500-3.000.
+- Carbon Completa (Scope 1-2-3): 660 euro/anno (66/mese) — regola +70% su Light.
+- Bilancio VSME: 790 euro/anno (79/mese) — sotto Ecomate 949; tradizionale 5.000-10.000.
+- BUNDLE "Percorso Ver0" (Carbon Light + VSME + preparazione rating): 990 euro/anno (99/mese) — l'offerta-manifesto sotto la soglia psicologica; upgrade a Carbon Completa +270/anno.
+- Manuale ISO 9001 / ISO 14001: 990 una tantum + mantenimento 490/anno (49/mese) ciascuno — tradizionale 1.500-2.500 micro.
+- UNI/PdR 125 (preparazione): 990 una tantum + 290/anno mantenimento — tradizionale 2.000-4.000; certificazione OdC esclusa e detto chiaramente.
+- Check-up energetico: 290 una tantum.
+- KIT COMUNICAZIONE VER0 (servizio ad alto margine): 590 euro/anno (fascia micro; gradini standard) o in bundle col Percorso. Il Motore genera dai SOLI dati verificati del cliente un kit pronto all'uso: claim ambientali difendibili con la fonte a supporto di ciascuno, one-pager per filiera e banche, testi per sito e social, template comunicato, linee guida d'uso del Sigillo — piu la VERIFICA DEI CLAIM: il cliente sottopone i propri testi e il Motore li valida contro i dati (semaforo verde/ambra/rosso con motivazione). Posizionamento: "comunica solo cio che puoi dimostrare" — tutela dal greenwashing e dalle nuove norme sui green claim. Margine quasi puro (generazione AI su dati gia in piattaforma); e la leva per NON svendere il resto del listino.
+- Preparazione/miglioramento score rating (EcoVadis, Synesgy, Open-es): MAI venduto come assessment (quelli sono gratis sul mercato) ma come "miglioramento dello score": 490/anno add-on o incluso nel Percorso.
+Regole di esposizione: prezzo annuale in evidenza con mensile accanto; accanto ai prezzi il paragone col tradizionale; il pacchetto "il canone include" sempre visibile; percentuali di fascia con gradini reali (v. 12.X).
+COERENZA ECONOMICA: prima del lancio, verifica sul modello economico che ogni prezzo copra i costi variabili (banche dati + AI + revisione) con margine lordo >=70%; se un prezzo non regge, si alza il prezzo, non si taglia la revisione umana.
+
+**12.T — FLUSSO DI ACQUISTO E REGISTRAZIONE (decisione del fondatore — sostituisce il solo magic link come porta d'ingresso all'acquisto).**
+Scelto servizio, taglio e dimensione, il cliente entra in un funnel di acquisto in step:
+1. RIEPILOGO: schermata con il riepilogo di cio che sta acquistando (servizio, taglio, dimensione, prezzo, cosa include il canone) sempre visibile a lato/in alto per tutto il funnel.
+2. REGISTRAZIONE AZIENDA: dati impresa (ragione sociale, P.IVA, email aziendale) + creazione account con EMAIL E PASSWORD (il magic link resta come metodo di accesso successivo, non come porta d'acquisto).
+3. CONSENSI (due flag distinti, non pre-spuntati): (a) accettazione condizioni di servizio; (b) AUTORIZZAZIONE ESPRESSA ad accedere in nome e per conto del cliente alle banche dati ufficiali per reperire le informazioni dell'azienda — sia fonti gratuite sia a pagamento (registro imprese/Camere di Commercio, provider camerali, Cerved e assimilati, catasti e fonti energetiche citate in specifica). Testo del mandato chiaro su: quali fonti, per quale finalita, revocabilita. NOTA: formulazione legale da validare con legale prima del lancio.
+4. PAGAMENTO: schermata modalita di pagamento. In questa fase l'integrazione del pagamento reale (Stripe o equivalente) e rimandata alla fase successiva: UI pronta con provider disattivato o modalita test; nessun incasso reale prima della societa costituita.
+5. ATTIVAZIONE: post-conferma si atterra nel flusso di attivazione gia specificato (onboarding, banche dati, precompilazione).
+
 ## 13. Estensioni del catalogo — CON GERARCHIA DI PRIORITÀ (aggiornata alla strategia dei 18 mesi)
 
 NOTA DI PRIORITÀ (prevale sull'etichetta storica "post-MVP"): il blocco 13.5-13.8 — generatore di sistemi di gestione, PdR 125, arricchimento camerale e banche dati — è il CUORE della piattaforma e dell'innovazione, ed è il PRIMO prodotto da portare sul mercato nella finestra parallela (cuneo a bassa sovrapposizione: ISO 9001 + PdR 125), insieme al 13.9 (check-up energetico) come funnel. Le fasi 0-4 (carbon/VSME) restano il motore da costruire — infrastruttura comune di estrazione, calcolo e generazione — ma la loro spinta commerciale e di seconda ondata (post-decisione mese 18). Le sezioni 13.1-13.4 (compensazione, CFP/LCA di prodotto, academy, supporto certificazioni) sono fase 2: riusano lo stesso motore documentale e si attivano a valle. L'ordine di costruzione dei verticali in fase 2 di sviluppo segue questa nota, non l'ordine di numerazione.
@@ -431,4 +462,5 @@ Ogni servizio pensato, con il suo stato. Questo indice si AGGIORNA a ogni modifi
 **Sistemi di gestione (sez. 13.5):** Famiglia A certificabili: ISO 9001, ISO 14001, ISO 20121 + verticale Ho.Re.Ca: UNI ISO 21401, UNI ISO 13009 + percorso "pronto per i portali" OTA | Famiglia B aderenza (non certificabili): ISO 26000, ISO 20400 | Posticipate con condizioni di rientro: ISO 45001, ISO 50001
 **Sostenibilita roadmap (sez. 13.1-13.4):** Compensazione "contributo climatico" (crediti + GO) | Carbon footprint di prodotto / LCA / ISO 14067 / EPD via partner | Academy formazione | Supporto certificazioni (ISO 14064 di parte terza)
 **Efficienza energetica (sez. 13.9-13.10):** Check-up energetico | Monitoraggio continuo | Fattibilita fotovoltaico | Diagnosi ex D.Lgs. 102 con EGE | CER
+**Servizi ad alto margine:** Kit Comunicazione Ver0 (claim verificati anti-greenwashing + verifica claim; 12.S)
 **Capacita trasversali:** Arricchimento camerale (13.7) | Banche dati e benchmark interno (13.8) | Documenti pregressi e continuita (17) | Corner consulenti affiliati 30/60 min (18) | Albo Imprese Ver0 (19, non esposto fino a massa critica) | Osservatorio finanza agevolata (20)

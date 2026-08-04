@@ -9,6 +9,8 @@ const PUBLIC_PREFIXES = [
   "/login",
   "/auth",
   "/servizi",
+  "/acquista",
+  "/termini",
   "/sigillo",
   "/bollino",
   "/partner",

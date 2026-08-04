@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 
+import { OrdinePendente } from "./ordine-pendente";
+
 /**
  * Criterio di completamento della fase 0: "hello world" autenticato.
  * Dalla fase 3 questa pagina diventa la dashboard composta dai soli
@@ -23,6 +25,8 @@ export default async function DashboardPage() {
       <p className="mt-2 text-sm text-gray-warm">
         Sei autenticato come <strong>{user.email}</strong>.
       </p>
+
+      <OrdinePendente />
 
       <div className="mt-6 rounded-xl border border-line bg-white p-5">
         <p className="text-sm text-gray-warm">

@@ -31,8 +31,8 @@ export function CatalogoVetrina() {
             </span>
             <p className="mt-1 font-display text-xl text-ink">Percorso Ver0</p>
             <p className="text-sm text-gray-warm">
-              Piattaforma + Carbon Light + bilancio VSME. La via diretta al
-              Sigillo.
+              Carbon Light + bilancio VSME + miglioramento score rating. La via
+              diretta al Sigillo.
             </p>
           </div>
         </div>
