@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { Sigillo } from "@/components/brand/sigillo";
+import { MotoreScrolly } from "@/components/motore-scrolly";
 import { PhotoDuotone } from "@/components/photo-duotone";
 import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
 
@@ -64,33 +65,6 @@ const POSSIBILE = [
   },
 ];
 
-const MOTORE_PASSI = [
-  {
-    icon: ClipboardList,
-    t: "Raccolta documentale guidata",
-    d: "Per ogni percorso il Motore indica la lista precisa dei documenti che servono — non «carica quello che vuoi» — e segnala cosa manca.",
-  },
-  {
-    icon: FileSearch,
-    t: "Lettura e struttura",
-    d: "Estrae i dati da bollette, visure, bilanci e registri, li normalizza e li etichetta per qualità: misurato, da documento, stimato.",
-  },
-  {
-    icon: Database,
-    t: "Incrocio con le banche dati",
-    d: "Collega i dati alle fonti camerali ed energetiche ufficiali: anagrafica, ATECO, addetti, consumi. Mai chiederti ciò che una fonte pubblica sa già.",
-  },
-  {
-    icon: BadgeCheck,
-    t: "Generazione conforme",
-    d: "Costruisce i documenti sulla struttura della norma di riferimento, con ogni valore tracciabile alla sua fonte.",
-  },
-  {
-    icon: UserCheck,
-    t: "Verifica umana",
-    d: "Un professionista valida prima dell'emissione. La responsabilità resta di una persona, con nome e cognome dentro la piattaforma.",
-  },
-];
 
 const PRINCIPI = [
   {
@@ -197,54 +171,10 @@ export default function ChiSiamoPage() {
         </div>
       </section>
 
-      {/* 3. IL MOTORE VER0 — fondo scuro istituzionale, cinque passi */}
-      <section className="relative overflow-hidden bg-pine-deep px-5 py-20">
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -right-24 top-10 h-80 w-80 rounded-full bg-mint-bright/10 blur-3xl"
-        />
-        <div className="relative mx-auto max-w-4xl">
-          <div className="text-center">
-            <p className="mb-3 text-xs font-semibold tracking-widest text-mint-bright">
-              IL NOSTRO MOTORE
-            </p>
-            <h2 className="font-display text-4xl text-white md:text-5xl">
-              Come lavora il Motore Ver0
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-moss">
-              Abbiamo costruito il Motore Ver0 per unire la potenza dell&apos;AI
-              alle competenze di professionisti veri: un motore proprietario
-              specializzato nei documenti e nei settori d&apos;impresa, che
-              lavora sempre in questo ordine.
-            </p>
-          </div>
+      {/* 3. IL MOTORE VER0 — sezione narrativa con scrollytelling:
+          il palco resta fermo, le cinque fasi si avvicendano. */}
+      <MotoreScrolly />
 
-          <ol className="mt-12 space-y-3">
-            {MOTORE_PASSI.map((m, i) => {
-              const Icon = m.icon;
-              return (
-                <li
-                  key={m.t}
-                  className="vz-reveal flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm"
-                >
-                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-mint-bright/15 text-mint-bright">
-                    <Icon size={20} />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="font-display text-lg text-white">
-                      <span className="mr-2 text-mint-bright">{i + 1}.</span>
-                      {m.t}
-                    </p>
-                    <p className="mt-1 text-sm leading-relaxed text-moss">
-                      {m.d}
-                    </p>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
-      </section>
 
       {/* 4. LE PERSONE — racconto collettivo con foto */}
       <section className="bg-white px-5 py-20">

@@ -11,6 +11,7 @@ import {
 
 import { Sigillo } from "@/components/brand/sigillo";
 import { TargaVerifica } from "@/components/brand/targa";
+import { SigilloScrolly } from "@/components/sigillo-scrolly";
 
 export const metadata: Metadata = {
   title: "Il Sigillo Ver0 — non si compra, si dimostra",
@@ -171,55 +172,10 @@ export default function SigilloPage() {
         </div>
       </section>
 
-      {/* Sistema dei segmenti */}
-      <section className="bg-white px-5 py-16">
-        <div className="mx-auto grid max-w-4xl grid-cols-1 items-center gap-10 md:grid-cols-2">
-          <div className="order-2 md:order-1">
-            <h2 className="font-display text-4xl text-ink md:text-5xl">
-              Un anello che si riempie
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-gray-warm">
-              Il Sigillo è uno solo, ma racconta quanto hai fatto. L&apos;anello
-              punteggiato è la cornice; ogni percorso verificato ne{" "}
-              <strong className="font-semibold text-pine">
-                riempie un segmento
-              </strong>
-              . Più percorsi porti a termine, più l&apos;anello si completa —
-              sempre sullo stesso, unico Sigillo.
-            </p>
-            <ul className="mt-5 space-y-2 text-sm text-gray-warm">
-              <li className="flex items-start gap-2.5">
-                <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-pine" />
-                <span>
-                  Un segmento <span className="text-pine">pino</span>: un
-                  percorso verificato di livello 1.
-                </span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-mint" />
-                <span>
-                  Un segmento <span className="text-mint">mint</span>: un
-                  ulteriore percorso verificato nello stesso anno.
-                </span>
-              </li>
-              <li className="flex items-start gap-2.5">
-                <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full border border-line" />
-                <span>
-                  Il tratteggio ancora vuoto: i percorsi che puoi ancora
-                  aggiungere.
-                </span>
-              </li>
-            </ul>
-            <p className="mt-4 text-xs text-gray-light">
-              L&apos;esempio mostra due percorsi verificati. Un solo Sigillo, mai
-              Sigilli multipli.
-            </p>
-          </div>
-          <div className="order-1 flex justify-center md:order-2">
-            <Sigillo segmenti className="h-56 w-56 drop-shadow-sm" />
-          </div>
-        </div>
-      </section>
+      {/* Sistema dei segmenti — sezione narrativa con scrollytelling:
+          l'anello si riempie di un segmento per percorso verificato. */}
+      <SigilloScrolly />
+
 
       {/* Verificabilità + targa — fondo scuro istituzionale, targa presentata
           su placca bianca (§11.X: su superfici stampate sempre placca bianca) */}

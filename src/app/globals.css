@@ -189,3 +189,68 @@ body {
     animation: vz-price-in 0.28s ease-out;
   }
 }
+
+/* =====================================================================
+ * SCROLLYTELLING — solo per le tre sezioni narrative (Motore, Sigillo,
+ * Zero). Mai su catalogo, pagine prezzo e funnel: lì conta la velocità.
+ *
+ * Tecnica: scroll-driven animations native (ViewTimeline), agganciate a
+ * runtime da scrolly.tsx. Nessuna libreria.
+ *
+ * Perché non `@supports (animation-timeline: view())`: esistono motori in
+ * cui la query risponde `true` ma le timeline DICHIARATIVE restano inerti
+ * (verificato su Chrome 148 in-app: la stessa ViewTimeline creata via JS è
+ * attiva, quella da `view-timeline-name` no). Con un fallback fidato di
+ * `@supports` il contenuto resterebbe a opacity 0, cioè invisibile.
+ *
+ * Regola di base, quindi: il markup è una LISTA STATICA COMPLETA e
+ * leggibile, e nulla viene nascosto finché il runtime non ha PROVATO che
+ * la timeline è viva (`data-live="1"`). Se manca il supporto, se l'utente
+ * ha chiesto meno movimento o se JS non gira, resta il contenuto integrale.
+ * ===================================================================== */
+
+/* Fallback statico: le fasi sono una sotto l'altra, tutte visibili. */
+.vz-scrolly-steps {
+  display: grid;
+  gap: 1.5rem;
+}
+
+/* Nel fallback il "palco" è un'illustrazione statica sopra le fasi. */
+.vz-scrolly-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Modalità narrata: attiva SOLO dopo la prova di vitalità della timeline.
+   Da qui in poi le fasi si sovrappongono e l'avvicendamento è guidato
+   dallo scorrimento (fotogrammi in scrolly.tsx, sulla stessa ViewTimeline). */
+.vz-scrolly[data-live="1"] {
+  /* Altezza di scorrimento proporzionale al numero di fasi. */
+  min-height: calc(var(--steps, 5) * 72svh);
+}
+
+.vz-scrolly[data-live="1"] .vz-scrolly-stage {
+  position: sticky;
+  top: 0;
+  min-height: 100svh;
+}
+
+/* Le fasi si sovrappongono nella stessa cella: si avvicendano. */
+.vz-scrolly[data-live="1"] .vz-scrolly-steps {
+  gap: 0;
+}
+.vz-scrolly[data-live="1"] .vz-scrolly-steps > * {
+  grid-area: 1 / 1;
+}
+
+/* Nessun opacity:0 fuori da qui: se il runtime non attiva, si legge tutto. */
+.vz-scrolly[data-live="1"] .vz-fase,
+.vz-scrolly[data-live="1"] .vz-fase-keep {
+  opacity: 0;
+}
+
+.vz-scrolly[data-live="1"] .vz-scrolly-progress {
+  transform-origin: left center;
+  transform: scaleX(0);
+}
