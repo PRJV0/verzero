@@ -37,7 +37,19 @@ export type Servizio = {
   opportunita: string[];
   /** Badge "cosa copre": mostrati sotto il titolo del dettaglio. */
   copre?: string[];
+  /**
+   * "Cosa ti chiederemo" (§12.P): la lista PRECISA di documenti richiesti dal
+   * percorso. Il Motore Ver0 non accetta documenti qualsiasi: chiede esattamente
+   * questi, li legge e segnala cosa manca.
+   */
+  documenti: string[];
+  /** Norme e standard di riferimento, citati con precisione (§12.P). */
+  riferimenti: string[];
 };
+
+/** Principio "solo standard ufficiali" (§12.P): formula unica per tutto il sito. */
+export const SOLO_STANDARD_UFFICIALI =
+  "Lavoriamo solo su standard e norme nazionali e internazionali riconosciute — mai protocolli proprietari senza validità tecnico-scientifica.";
 
 export const SERVIZI: Servizio[] = [
   {
@@ -54,7 +66,7 @@ export const SERVIZI: Servizio[] = [
       "Miglioramento score rating",
     ],
     comeFunziona: [
-      "Carichi i documenti che hai già (bollette, visura, bilancio): il Motore Ver0 estrae i dati e li incrocia con le banche dati ufficiali.",
+      "Il Motore Ver0 ti indica la lista esatta dei documenti da caricare (bollette, visura, bilancio), li legge e li incrocia con le banche dati ufficiali.",
       "Verifichi e confermi i dati proposti; dove un dato manca, il sistema propone una stima dichiarata che approvi tu.",
       "La piattaforma genera report GHG e bilancio VSME; il team tecnico li valida prima dell'emissione.",
       "Con le categorie obbligatorie confermate accedi ai requisiti del Sigillo Ver0 livello 1.",
@@ -70,6 +82,18 @@ export const SERVIZI: Servizio[] = [
       "Le stime richiedono sempre la tua conferma: nessun dato entra nei report senza validazione",
       "Il Sigillo attesta percorsi verificati in piattaforma; non è una certificazione di terza parte",
     ],
+    documenti: [
+      "Visura camerale aggiornata (o solo P.IVA: la recuperiamo noi)",
+      "Bollette di energia elettrica e gas dell'anno di rendicontazione",
+      "Registri o fatture dei carburanti per mezzi e impianti",
+      "Ultimo bilancio depositato (per intensità emissiva e indicatori economici)",
+      "Dati di organico e governance aggregati (per le sezioni sociali del VSME)",
+    ],
+    riferimenti: [
+      "GHG Protocol Corporate Standard",
+      "UNI EN ISO 14064-1:2019",
+      "Standard VSME (EFRAG)",
+    ],
     opportunita: [
       "Banche e capofiliera chiedono già questi dati per credito e qualifica fornitori: presentarsi con documenti standard riduce i tempi di risposta",
       "Chi rendiconta lo Scope 3 di filiera privilegia fornitori con dati pronti e verificabili",
@@ -84,7 +108,7 @@ export const SERVIZI: Servizio[] = [
     cosE: "L'inventario delle emissioni dirette (Scope 1) e da energia acquistata (Scope 2) della tua organizzazione, calcolato dai documenti reali di consumo con fattori di emissione pubblici e tracciabili.",
     copre: ["Scope 1 — emissioni dirette", "Scope 2 — energia acquistata"],
     comeFunziona: [
-      "Carichi bollette e fatture carburante (PDF o foto): il Motore Ver0 estrae consumi, periodi e tipo di fornitura.",
+      "Il Motore Ver0 ti chiede i documenti previsti dal percorso — bollette e fatture carburante — e ne estrae consumi, periodi e tipo di fornitura, segnalando cosa manca.",
       "Verifichi i dati estratti nel pannello di conferma; l'impatto in tCO₂e si aggiorna in tempo reale.",
       "Il calcolo applica fattori di emissione da fonti pubbliche (ISPRA, DEFRA), sempre citati riga per riga.",
       "Il team tecnico valida il report prima dell'emissione; il documento resta aggiornato nel tuo archivio.",
@@ -98,6 +122,18 @@ export const SERVIZI: Servizio[] = [
     requisiti: [
       "Documenti di consumo dell'anno di rendicontazione; per i dati mancanti si applicano stime da benchmark, dichiarate come tali",
       "Il report è un inventario di parte prima: l'eventuale verifica di terza parte (ISO 14064-3) è un percorso successivo tramite organismi accreditati",
+    ],
+    documenti: [
+      "Bollette di energia elettrica di tutti i punti di prelievo (POD)",
+      "Bollette del gas naturale o forniture di altri combustibili (Smc)",
+      "Registri o fatture dei carburanti per la flotta e i mezzi d'opera",
+      "Eventuali contratti di fornitura con Garanzia d'Origine",
+      "Visura camerale (o P.IVA: la recuperiamo noi)",
+    ],
+    riferimenti: [
+      "GHG Protocol Corporate Standard",
+      "UNI EN ISO 14064-1:2019",
+      "Fattori di emissione ISPRA e DEFRA",
     ],
     opportunita: [
       "È il documento che i clienti strutturati chiedono per primo nella qualifica fornitori",
@@ -117,7 +153,7 @@ export const SERVIZI: Servizio[] = [
       "Scope 3 — filiera e indirette",
     ],
     comeFunziona: [
-      "Parti dai documenti di consumo come in Carbon Light; il Motore Ver0 estrae e incrocia i dati con le banche dati ufficiali.",
+      "Parti dalla stessa lista di Carbon Light; il Motore Ver0 legge i documenti, incrocia le banche dati ufficiali e segnala gli scostamenti.",
       "La piattaforma mappa le categorie Scope 3 applicabili alla tua attività e guida la raccolta dei dati di filiera (acquisti, trasporti, rifiuti).",
       "Dove il dato primario non è disponibile si applicano stime spend-based o da benchmark, sempre etichettate e approvate da te.",
       "Il team tecnico valida metodologia e risultati prima dell'emissione.",
@@ -132,6 +168,18 @@ export const SERVIZI: Servizio[] = [
       "Oltre ai consumi diretti servono dati dalla contabilità fornitori (categorie di spesa); l'effort aggiuntivo dipende dalla qualità del dato disponibile",
       "Lo Scope 3 combina dati primari e stime: la ripartizione per qualità è sempre esposta nel report",
       "Inventario di parte prima; la verifica di terza parte resta un percorso separato tramite organismi accreditati",
+    ],
+    documenti: [
+      "Tutti i documenti di Carbon Light (bollette, carburanti, visura)",
+      "Estrazione dei fornitori per categoria di spesa dalla contabilità",
+      "Documenti di trasporto e logistica in ingresso e uscita",
+      "Registri dei rifiuti (MUD o formulari) dell'anno di riferimento",
+      "Dati su trasferte e spostamenti casa-lavoro, se disponibili",
+    ],
+    riferimenti: [
+      "GHG Protocol Corporate Standard",
+      "GHG Protocol Corporate Value Chain (Scope 3) Standard",
+      "UNI EN ISO 14064-1:2019",
     ],
     opportunita: [
       "I capofiliera devono rendicontare lo Scope 3: i fornitori con dati pronti entrano prima nei loro perimetri",
@@ -160,6 +208,17 @@ export const SERVIZI: Servizio[] = [
     requisiti: [
       "Dati di organico e governance dell'anno di rendicontazione; i dati economici arrivano dal bilancio depositato",
       "Lo standard VSME è volontario: non sostituisce obblighi di rendicontazione eventualmente applicabili alla tua impresa",
+    ],
+    documenti: [
+      "Visura camerale e ultimo bilancio depositato",
+      "Dati di organico aggregati: numero addetti, contratti, formazione",
+      "Composizione degli organi sociali (per gli indicatori di governance)",
+      "Dati ambientali dai moduli carbon attivi, o bollette se non attivi",
+      "Politiche e procedure già adottate, se esistenti",
+    ],
+    riferimenti: [
+      "Standard VSME (EFRAG), modulo base",
+      "GHG Protocol e UNI EN ISO 14064-1 per gli indicatori ambientali",
     ],
     opportunita: [
       "Un documento standard al posto di questionari diversi per ogni banca o cliente",
@@ -190,6 +249,14 @@ export const SERVIZI: Servizio[] = [
       "La certificazione è rilasciata esclusivamente da organismi accreditati dopo audit: Ver0 prepara l'impianto documentale, non certifica",
       "Serve la disponibilità di chi conosce i processi interni per il questionario iniziale",
     ],
+    documenti: [
+      "Visura camerale e organigramma aziendale",
+      "Elenco dei processi e delle attività, con i responsabili",
+      "Procedure, istruzioni e moduli già in uso, se esistenti",
+      "Elenco di clienti e fornitori critici (per contesto e parti interessate)",
+      "Eventuali certificazioni già possedute e relativi rapporti di audit",
+    ],
+    riferimenti: ["UNI EN ISO 9001:2015 (struttura HLS, punti 4-10)"],
     opportunita: [
       "La certificazione 9001 è requisito o premialità in bandi pubblici e qualifiche fornitori",
       "Impianto generato sui tuoi processi, non da template riciclati",
@@ -220,6 +287,14 @@ export const SERVIZI: Servizio[] = [
       "La certificazione è rilasciata esclusivamente da organismi accreditati dopo audit: Ver0 prepara, non certifica",
       "L'analisi ambientale richiede i dati di consumo: il percorso rende al meglio con il modulo carbon attivo",
     ],
+    documenti: [
+      "Visura camerale e organigramma aziendale",
+      "Planimetrie e descrizione dei siti produttivi",
+      "Autorizzazioni ambientali, scarichi ed emissioni, se applicabili",
+      "Registri dei rifiuti (MUD o formulari) e contratti di smaltimento",
+      "Dati di consumo energetico o modulo carbon attivo",
+    ],
+    riferimenti: ["UNI EN ISO 14001:2015 (struttura HLS, punti 4-10)"],
     opportunita: [
       "Requisito o premialità in bandi, appalti verdi e qualifiche di filiera",
       "Con i dati carbon già in piattaforma l'analisi ambientale nasce precompilata: meno lavoro, più coerenza",
@@ -249,6 +324,14 @@ export const SERVIZI: Servizio[] = [
       "Servono gli aggregati HR, tipicamente forniti dal consulente del lavoro",
       "La certificazione è rilasciata esclusivamente da organismi accreditati dopo audit",
     ],
+    documenti: [
+      "Visura camerale e composizione degli organi sociali",
+      "Organico aggregato per genere, inquadramento e tipologia contrattuale",
+      "Dati retributivi aggregati per fascia (mai nominativi)",
+      "Piani formativi e politiche HR già adottate",
+      "Dati su congedi parentali e strumenti di conciliazione",
+    ],
+    riferimenti: ["UNI/PdR 125:2022 (sei aree e relativi KPI)"],
     opportunita: [
       "Esonero contributivo previsto per le aziende certificate (nei limiti di legge)",
       "Premialità nei bandi pubblici e punteggi negli appalti",
@@ -274,6 +357,17 @@ export const SERVIZI: Servizio[] = [
     requisiti: [
       "Dati su acquisti, rifiuti e gestione dei materiali dell'anno di riferimento; dove mancano si applicano stime dichiarate",
       "Il rating è una valutazione di parte prima con metodologia trasparente: non è una certificazione",
+    ],
+    documenti: [
+      "Elenco dei materiali e delle materie prime acquistate",
+      "Registri dei rifiuti (MUD o formulari) dell'anno di riferimento",
+      "Dati su recupero, riuso e materiali riciclati in ingresso",
+      "Consumi energetici o modulo carbon attivo",
+      "Eventuali analisi o certificazioni di prodotto già disponibili",
+    ],
+    riferimenti: [
+      "UNI/TS 11820:2022 (misurazione della circolarità) come riferimento metodologico",
+      "Principi del Piano d'azione UE per l'economia circolare",
     ],
     opportunita: [
       "Le filiere chiedono con frequenza crescente evidenze di circolarità ai fornitori",

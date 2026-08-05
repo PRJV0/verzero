@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { CatalogoVetrina } from "@/components/catalogo-vetrina";
 
 export const metadata: Metadata = {
-  title: "Servizi e prezzi — Ver0",
+  title: "Servizi — Ver0",
   description:
     "Il catalogo Ver0 per categorie con prezzi in chiaro: sostenibilità nei pilastri ambiente, sociale e governance, più i sistemi di gestione. Prezzi per fascia dimensionale, per imprese di ogni dimensione.",
 };
@@ -13,7 +13,7 @@ export default function ServiziPage() {
   return (
     <main className="mx-auto max-w-4xl px-5 py-10">
       <h1 className="text-center font-display text-4xl text-ink md:text-5xl">
-        Servizi e prezzi, in chiaro
+        Servizi, con i prezzi in chiaro
       </h1>
       <p className="mx-auto mt-3 max-w-xl text-center text-sm text-gray-warm">
         Nessun preventivo da chiedere: attivi quello che ti serve, quando ti

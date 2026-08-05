@@ -47,21 +47,20 @@ const VERIFICA = [
 export default function SigilloPage() {
   return (
     <main>
-      {/* Hero — Registro C "carta e timbro" (SPEC §12.W): crema caldo,
-          sigillo "timbrato" con lieve rotazione, UN solo accento terracotta
-          per schermata (qui: "Si dimostra."). */}
-      <section className="bg-cream px-5 py-16 text-center">
+      {/* Hero — registro scuro istituzionale (§11.X): pino profondo, sigillo
+          tono-su-tono bianco con segmento menta acceso. */}
+      <section className="bg-pine-deep px-5 py-16 text-center">
         <div className="mb-6 flex justify-center">
-          <Sigillo className="h-28 w-28 -rotate-6" />
+          <Sigillo tone="dark" className="h-28 w-28" />
         </div>
-        <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
+        <p className="mb-4 text-xs font-semibold tracking-widest text-mint-bright">
           IL MARCHIO DI VERIFICA
         </p>
-        <h1 className="mx-auto max-w-2xl font-display text-5xl leading-[1.05] text-pine-dark md:text-6xl">
+        <h1 className="mx-auto max-w-2xl font-display text-5xl leading-[1.05] text-white md:text-6xl">
           Il Sigillo non si compra.{" "}
-          <em className="text-terracotta">Si dimostra.</em>
+          <em className="text-mint-bright">Si dimostra.</em>
         </h1>
-        <p className="mx-auto mt-5 max-w-xl text-sm text-pine">
+        <p className="mx-auto mt-5 max-w-xl text-sm text-moss">
           È il marchio di verifica della piattaforma, esposto dalle aziende che
           raggiungono i criteri. Criteri pubblici, dati verificati da persone,
           revocabilità: costruito in coerenza con la direttiva UE 2024/825
@@ -90,7 +89,7 @@ export default function SigilloPage() {
       </section>
 
       {/* Scala multi-percorso */}
-      <section className="bg-cream px-5 py-16">
+      <section className="bg-paper px-5 py-16">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-center font-display text-4xl text-ink md:text-5xl">
             Un solo Sigillo, più strade per meritarlo
@@ -222,19 +221,20 @@ export default function SigilloPage() {
         </div>
       </section>
 
-      {/* Verificabilità + targa */}
-      <section className="bg-cream px-5 py-16">
+      {/* Verificabilità + targa — fondo scuro istituzionale, targa presentata
+          su placca bianca (§11.X: su superfici stampate sempre placca bianca) */}
+      <section className="bg-pine-deep px-5 py-16">
         <div className="mx-auto max-w-4xl text-center">
-          <h2 className="font-display text-4xl text-ink md:text-5xl">
+          <h2 className="font-display text-4xl text-white md:text-5xl">
             Ogni Sigillo sarà verificabile pubblicamente
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm text-gray-warm">
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-moss">
             La verificabilità è la promessa del Sigillo: chi lo espone accetta di
             poter essere controllato. Ecco l&apos;anteprima della targa di
             verifica che accompagnerà ogni impresa qualificata.
           </p>
 
-          <div className="mx-auto mt-8 max-w-xl rounded-2xl bg-white p-4 shadow-soft sm:p-6">
+          <div className="mx-auto mt-8 max-w-xl rounded-2xl bg-white p-4 shadow-lift sm:p-6">
             <TargaVerifica className="h-auto w-full" />
           </div>
 
@@ -244,15 +244,15 @@ export default function SigilloPage() {
               return (
                 <div
                   key={v.title}
-                  className="rounded-2xl border border-line/70 bg-white p-5 shadow-soft"
+                  className="rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur-sm"
                 >
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-moss text-pine">
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-mint-bright/15 text-mint-bright">
                     <Icon size={20} />
                   </span>
-                  <p className="mt-3 text-sm font-semibold text-ink">
+                  <p className="mt-3 text-sm font-semibold text-white">
                     {v.title}
                   </p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-gray-warm">
+                  <p className="mt-1.5 text-xs leading-relaxed text-moss">
                     {v.desc}
                   </p>
                 </div>

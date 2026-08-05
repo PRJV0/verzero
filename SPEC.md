@@ -251,7 +251,7 @@ Prezzi in canone mensile ricorrente, IVA esclusa, riferiti ad aziende fino a 50 
 **12.W — DIREZIONE GRAFICA A TRE REGISTRI (decisione del fondatore).**
 - Registro A "editoriale vivo" = impianto generale del sito: gerarchia tipografica drammatica (Fraunces display grande), parole-Zero in corsivo menta come accento, fotografie vere trattate in duotone verde (persone e imprese; placeholder finche non ci sono scatti propri).
 - Registro B "tech botanico" = SOLO sezioni del Motore Ver0: fondo pino scuro, bagliori menta (#2FCF9A), flussi animati documenti→Motore→output (CSS, con prefers-reduced-motion), card in vetro.
-- Registro C "carta e timbro" = ben calibrato e solo per sezioni specifiche (pagina Sigillo e momenti di fiducia): fondo crema caldo, sigillo "timbrato" con lieve rotazione, accento terracotta (#C96F4A) usato con estrema parsimonia.
+- Registro C: RITIRATO dopo prova sul campo (crema/terracotta giudicato estraneo al brand dal fondatore). La pagina del Sigillo adotta il TRATTAMENTO SCURO ISTITUZIONALE: fondo pino profondo (#0A2E1F), sigillo tono-su-tono bianco con segmento menta acceso #2FCF9A (regole fondo scuro della sezione identita del Sigillo), tipografia bianca/salvia, targa di verifica su placca bianca. L'accento terracotta e i fondi crema si eliminano dal sito.
 - Regola generale: la pulizia resta la firma — i tre registri non si mescolano nella stessa sezione; mai piu di un registro speciale (B o C) per schermata.
 
 **12.X — EVOLUZIONE LISTINO: PREZZI PER DIMENSIONE D'AZIENDA (decisione del fondatore, prevale sul listino piatto).**
@@ -276,6 +276,11 @@ Regola di comunicazione: ogni prezzo "/mese" sul sito deve rendere visibile ques
 - La sezione servizi della home diventa un catalogo navigabile per categorie: Sostenibilita declinata nei tre pilastri E (ambiente: carbon, check-up energetico, monitoraggio, ISO 14001, rating circolarita), S (sociale: UNI/PdR 125, UNI ISO 21401, ISO 20121), G (governance: VSME/report ESG, ISO 9001, preparazione ai rating e questionari) + famiglia Sistemi di gestione + altre famiglie a seguire.
 - Ogni voce: nome, una riga di beneficio, "da X €/mese" (o "da X € una tantum"), link alla pagina servizio.
 - I servizi di roadmap compaiono marcati "IN ARRIVO" (ampliano l'offerta percepita, non acquistabili); nessuna voce puo suggerire che Verzero certifichi.
+
+**12.P — PRINCIPIO "SOLO STANDARD UFFICIALI" + RACCOLTA DOCUMENTALE GUIDATA (regole di comunicazione e prodotto).**
+- SOLO STANDARD UFFICIALI: Verzero lavora esclusivamente su standard e normative nazionali e internazionali di riferimento — UNI EN ISO, UNI/PdR, D.Lgs., regolamenti e direttive europee, standard EFRAG/GHG Protocol — MAI su protocolli inventati o privati privi di validita tecnico-scientifica e legislativa. Questo principio va comunicato ovunque conti: home, chi-siamo (tra i principi), ogni pagina servizio (con le norme di riferimento citate con precisione), pagina Sigillo. E un differenziante contro gli schemi proprietari e un presidio anti-greenwashing.
+- RACCOLTA DOCUMENTALE GUIDATA (sostituisce ogni formula tipo "carica quello che hai/vuoi"): il Motore Ver0 NON accetta documenti qualsiasi — per ogni percorso richiede una LISTA PRECISA di documenti (es. carbon: bollette dei vettori, registri carburanti, visura; ISO 9001: visura, organigramma, processi), li legge, incrocia le banche dati ufficiali e segnala cosa manca. La comunicazione racconta metodo e rigore ("il Motore ti chiede esattamente cio che serve, lo legge e lo trasforma"), mai onnipotenza. La checklist per percorso e parte della scheda servizio.
+- NAVIGAZIONE: "Chi siamo" e la PRIMA voce del menu; la voce "Servizi e prezzi" si rinomina "Servizi".
 
 **12.Q — FORMATO UNICO DEI PREZZI E CICLO DI VITA DEL CANONE (prevale su 12.R dove diverge).**
 - FORMATO UNICO: tutti i servizi ricorrenti si espongono SOLO a canone mensile (impegno minimo 12 mesi) + opzione annuale unica soluzione -10%. Le parti fisse una tantum SPARISCONO dalla visualizzazione: si spalmano nel canone del primo anno. Restano una tantum solo i servizi one-shot senza canone (check-up energetico 290).

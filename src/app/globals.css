@@ -17,10 +17,11 @@
   --color-amber-soft: #f7ecd9;
   --color-amber-ink: #7a4e0e;
 
-  /* Direzione grafica a tre registri (SPEC §12.W) */
-  --color-mint-bright: #2fcf9a; /* Registro B: bagliori menta su pino scuro */
-  --color-cream: #f7f2e8; /* Registro C: fondo crema caldo "carta e timbro" */
-  --color-terracotta: #c96f4a; /* Registro C: accento, max uno per schermata */
+  /* Direzione grafica (SPEC §12.W) — due registri: editoriale chiaro e
+     scuro istituzionale. Il registro "carta e timbro" (crema/terracotta) è
+     stato ritirato: sul sito non esistono più quei token. */
+  --color-mint-bright: #2fcf9a; /* bagliori e segmenti su fondo scuro */
+  --color-pine-deep: #0a2e1f; /* fondo del registro scuro istituzionale */
 
   /* Transizioni uniformi in tutto il sito (Registro A). */
   --default-transition-duration: 200ms;

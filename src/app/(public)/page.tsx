@@ -3,8 +3,9 @@ import {
   Leaf,
   Scale,
   Users,
+  BookMarked,
   CircleCheck,
-  Upload,
+  ClipboardList,
   FileCheck2,
   FileSearch,
   Database,
@@ -19,6 +20,7 @@ import { Sigillo } from "@/components/brand/sigillo";
 import { CatalogoVetrina } from "@/components/catalogo-vetrina";
 import { PhotoDuotone } from "@/components/photo-duotone";
 import { CANONE_INCLUDE } from "@/lib/canone";
+import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
 
 /**
  * Home del sito pubblico — direzione grafica a tre registri (SPEC §12.W):
@@ -26,9 +28,9 @@ import { CANONE_INCLUDE } from "@/lib/canone";
  *   drammatica, parole-Zero in corsivo menta, foto duotone verde.
  * - Registro B "tech botanico": SOLO la macro-sezione del Motore Ver0 —
  *   pino scuro, bagliori menta, flusso animato, card in vetro.
- * - Registro C "carta e timbro": SOLO il teaser del Sigillo (momento di
- *   fiducia) — crema caldo, sigillo timbrato, un accento terracotta.
- * I registri speciali non convivono mai nella stessa schermata.
+ * - Registro scuro istituzionale: Motore Ver0, teaser del Sigillo e
+ *   manifesto — pino profondo, sigillo tono-su-tono, bagliori menta.
+ * Il registro "carta e timbro" (crema/terracotta) è stato ritirato.
  *
  * Copy secondo "Il sistema dello Zero": dominante "zero effort", claim di
  * firma invariato, promesse verificabili — mai iperboli.
@@ -157,29 +159,31 @@ const ZERI = [
   },
 ];
 
+/** Raccolta documentale guidata (§12.P): metodo e rigore, mai onnipotenza. */
 const FLUSSO = [
   {
-    icon: Upload,
-    title: "Porti quello che hai",
-    desc: "Bollette, visure, organigrammi, i report che hai già. Un PDF o una foto.",
+    icon: ClipboardList,
+    title: "Ti chiediamo documenti precisi",
+    desc: "Per ogni percorso una lista puntuale: non «carica quello che vuoi», ma esattamente ciò che la norma richiede.",
   },
   {
     // Il nodo centrale è il Motore: reso a parte con lo zero E1 e il bagliore.
     icon: null,
     title: "Il Motore legge e incrocia",
-    desc: "Estrae i dati dai tuoi documenti e li incrocia con le banche dati camerali ed energetiche.",
+    desc: "Estrae i dati dai documenti, li incrocia con le banche dati camerali ed energetiche e segnala cosa manca.",
   },
   {
     icon: FileCheck2,
-    title: "Genera i documenti conformi, tu confermi",
-    desc: "Documenti che seguono la norma di riferimento; tu controlli, correggi, confermi. E restano aggiornati nel tempo.",
+    title: "Genera, un professionista verifica",
+    desc: "Documenti costruiti sulla norma di riferimento; il team tecnico li valida e tu confermi prima dell'emissione.",
   },
 ];
 
+/** Esempi concreti di checklist per percorso (§12.P). */
 const ESEMPI = [
-  "Bollette → carbon footprint",
-  "Visura e organigramma → Manuale ISO 9001",
-  "I documenti che hai già → continuità",
+  "Carbon: bollette dei vettori energetici, registri carburanti, visura",
+  "ISO 9001: visura, organigramma, elenco processi e responsabili",
+  "VSME: bilancio depositato, organico aggregato, dati di governance",
 ];
 
 // Le tre capacità del Motore Ver0 — innovazione concreta, non "AI" generica.
@@ -416,13 +420,13 @@ export default function HomePage() {
               IL NOSTRO MOTORE
             </p>
             <h2 className="font-display text-4xl text-white md:text-5xl">
-              Fai una cosa sola: porti quello che hai.
+              Raccolta documentale guidata.
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-sm text-moss">
-              Nessun modulo da imparare, nessun questionario infinito. Il Motore
-              Ver0 legge i tuoi documenti, li incrocia con le banche dati
-              ufficiali e genera i documenti conformi — e li tiene aggiornati.
-              Tu hai sempre l&apos;ultima parola.
+              Il Motore Ver0 non chiede «carica quello che vuoi»: per ogni
+              percorso indica la lista precisa dei documenti che servono, li
+              legge, li incrocia con le banche dati ufficiali e segnala cosa
+              manca. Poi genera — e un professionista verifica.
             </p>
           </div>
 
@@ -593,24 +597,45 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* SIGILLO — Registro C "carta e timbro": crema caldo, sigillo timbrato,
-          un solo accento terracotta in questa schermata */}
-      <section id="sigillo" className="bg-cream px-5 py-16">
+      {/* SOLO STANDARD UFFICIALI — principio in evidenza (§12.P) */}
+      <section className="bg-white px-5 pb-16">
+        <div className="mx-auto flex max-w-3xl items-start gap-4 rounded-2xl border border-pine/25 bg-moss/40 p-5">
+          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-pine">
+            <BookMarked size={19} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-ink">
+              Solo standard ufficiali
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-gray-warm">
+              {SOLO_STANDARD_UFFICIALI}
+            </p>
+            <p className="mt-1.5 text-xs text-gray-light">
+              UNI EN ISO, UNI/PdR, GHG Protocol, standard EFRAG, direttive e
+              decreti: ogni documento cita la norma su cui è costruito.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* SIGILLO — registro scuro istituzionale: pino profondo, sigillo
+          tono-su-tono con segmento menta acceso (§11.X) */}
+      <section id="sigillo" className="bg-pine-deep px-5 py-16">
         <Link
           href="/sigillo"
-          className="group mx-auto flex max-w-3xl flex-col items-center gap-6 rounded-2xl bg-white p-6 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift sm:flex-row sm:gap-8"
+          className="group mx-auto flex max-w-3xl flex-col items-center gap-6 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-mint-bright/40 sm:flex-row sm:gap-8"
         >
-          <Sigillo className="h-28 w-28 shrink-0 -rotate-6 transition-transform group-hover:-rotate-3" />
+          <Sigillo tone="dark" className="h-28 w-28 shrink-0" />
           <div className="min-w-0 text-center sm:text-left">
-            <h3 className="font-display text-2xl text-ink md:text-3xl">
-              <ZeroWord>Zero</ZeroWord> scorciatoie: il Sigillo non si compra.{" "}
-              <em className="font-semibold text-terracotta">Si dimostra.</em>
+            <h3 className="font-display text-2xl text-white md:text-3xl">
+              <ZeroWord tone="dark">Zero</ZeroWord> scorciatoie: il Sigillo non
+              si compra. Si dimostra.
             </h3>
-            <p className="mt-2 text-sm text-gray-warm">
+            <p className="mt-2 text-sm text-moss">
               Criteri pubblici, dati verificati, QR di controllo. Millesimato:
               ogni anno va riconquistato.
             </p>
-            <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-pine">
+            <span className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-mint-bright">
               Scopri il Sigillo{" "}
               <ArrowRight
                 size={14}

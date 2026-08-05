@@ -11,14 +11,14 @@ export function SiteFooter() {
           <Logo className="text-lg" />
         </Link>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-gray-warm">
+          <Link href="/chi-siamo" className="hover:text-pine">
+            Chi siamo
+          </Link>
           <Link href="/servizi" className="hover:text-pine">
-            Servizi e prezzi
+            Servizi
           </Link>
           <Link href="/sigillo" className="hover:text-pine">
             Il Sigillo
-          </Link>
-          <Link href="/chi-siamo" className="hover:text-pine">
-            Chi siamo
           </Link>
           <Link href="/partner" className="hover:text-pine">
             Partner

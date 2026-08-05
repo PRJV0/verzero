@@ -1,71 +1,98 @@
 import Link from "next/link";
 import { ArrowRight, Leaf, Mail } from "lucide-react";
 
-import { VETRINA } from "@/lib/catalog";
+import { VETRINA, getServizio } from "@/lib/catalog";
 import {
   GRANDE_IMPRESA,
   RINNOVO_LIBERO,
-  prezzoDa,
   prezzoDettaglio,
 } from "@/lib/pricing";
 import { CANONE_INLINE } from "@/lib/canone";
+
+const eur = (n: number) => n.toLocaleString("it-IT");
+
+/**
+ * Vetrina a catalogo per categorie (SPEC §12.Y): Sostenibilità nei tre
+ * pilastri E/S/G + famiglia Sistemi di gestione.
+ *
+ * Card con spinta: ombre stratificate e sollevamento marcato all'hover,
+ * gerarchia del prezzo (canone grande, ciclo di vita §12.Q leggibile),
+ * badge di famiglia colorato, icona del servizio, CTA sempre presente.
+ * Il Percorso Ver0 domina visivamente la griglia.
+ */
+
+/** Colore del badge di famiglia: un tocco, non un baraccone. */
+const FAMIGLIA_STILE: Record<string, string> = {
+  ambiente: "bg-mint/15 text-pine",
+  sociale: "bg-amber-soft text-amber-ink",
+  governance: "bg-moss text-pine-dark",
+  "sistemi-di-gestione": "bg-pine/10 text-pine",
+};
+
+const FAMIGLIA_LABEL: Record<string, string> = {
+  ambiente: "Ambiente · E",
+  sociale: "Sociale · S",
+  governance: "Governance · G",
+  "sistemi-di-gestione": "Sistemi di gestione",
+};
 
 /** Riga compatta del ciclo di vita per le card (§12.Q), fascia micro. */
 function cicloVitaCompatto(slug: string): string | null {
   const p = prezzoDettaglio(slug, "micro");
   if (!p) return null;
   return p.rinnovoTipo === "mantenimento"
-    ? `dal 2° anno ${p.rinnovoMensile.toLocaleString("it-IT")} €/mese`
-    : "−20% al rinnovo";
+    ? `dal 2° anno ${eur(p.rinnovoMensile)} €/mese`
+    : `−20% al rinnovo (${eur(p.rinnovoMensile)} €/mese)`;
 }
 
-/**
- * Vetrina a catalogo per categorie (SPEC §12.Y): Sostenibilità nei tre
- * pilastri E/S/G + famiglia Sistemi di gestione. Voci attive con
- * "da X €/mese" (X = fascia micro dalla matrice §12.X) e link al dettaglio;
- * voci di roadmap marcate "In arrivo", non cliccabili verso l'acquisto.
- * Il Percorso Ver0 resta in evidenza come bundle sopra il catalogo;
- * sotto, l'aggancio sartoriale per la grande impresa.
- */
 export function CatalogoVetrina() {
+  const percorso = prezzoDettaglio("percorso-ver0", "micro");
+
   return (
     <div>
-      {/* Bundle in evidenza */}
+      {/* Bundle in evidenza — dominante sulla griglia */}
       <Link
         href="/servizi/percorso-ver0"
-        className="group flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-white p-5 shadow-soft ring-2 ring-pine transition-all hover:-translate-y-0.5 hover:shadow-lift"
+        className="group relative block overflow-hidden rounded-3xl bg-pine-deep p-6 shadow-lift transition-all hover:-translate-y-1 sm:p-8"
       >
-        <div className="flex min-w-0 items-center gap-4">
-          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-moss text-pine">
-            <Leaf size={20} />
-          </span>
-          <div className="min-w-0">
-            <span className="rounded-full bg-pine px-2.5 py-0.5 text-xs font-medium text-white">
-              Il più scelto
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-10 -top-16 select-none font-display text-[16rem] leading-none text-white/[0.04]"
+        >
+          0
+        </span>
+        <div className="relative flex flex-wrap items-end justify-between gap-6">
+          <div className="min-w-0 max-w-md">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-mint-bright/20 px-3 py-1 text-xs font-semibold text-mint-bright">
+              <Leaf size={13} /> Il più scelto
             </span>
-            <p className="mt-1 font-display text-xl text-ink">Percorso Ver0</p>
-            <p className="text-sm text-gray-warm">
+            <p className="mt-3 font-display text-3xl text-white md:text-4xl">
+              Percorso Ver0
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-moss">
               Carbon Light + bilancio VSME + miglioramento score rating. La via
-              diretta al Sigillo.
+              diretta al Sigillo, con un solo inserimento dati.
             </p>
           </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="font-display text-lg tabular-nums text-pine">
-              {prezzoDa("percorso-ver0")}
-            </p>
-            <p className="text-xs text-gray-warm">
-              {cicloVitaCompatto("percorso-ver0")}
-            </p>
+          <div className="min-w-0 shrink-0">
+            {percorso && (
+              <>
+                <p className="font-display text-4xl tabular-nums text-white">
+                  {eur(percorso.mensile)} €
+                  <span className="text-lg text-moss">/mese</span>
+                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-moss">
+                  {cicloVitaCompatto("percorso-ver0")}
+                  <br />
+                  oppure {eur(percorso.annuale)} €/anno · −10% · risparmi{" "}
+                  {eur(percorso.risparmio)} €
+                </p>
+              </>
+            )}
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-pine transition-transform group-hover:translate-x-0.5">
+              Scopri il Percorso <ArrowRight size={15} />
+            </span>
           </div>
-          <span className="inline-flex items-center gap-1 rounded-lg bg-pine px-3.5 py-2 text-sm font-medium text-white">
-            Scopri{" "}
-            <ArrowRight
-              size={14}
-              className="transition-transform group-hover:translate-x-0.5"
-            />
-          </span>
         </div>
       </Link>
 
@@ -76,24 +103,47 @@ export function CatalogoVetrina() {
             key={cat.key}
             className="rounded-2xl border border-line/70 bg-white shadow-soft"
           >
-            <header className="border-b border-line/70 px-5 py-3.5">
-              <h3 className="font-display text-lg text-ink">{cat.title}</h3>
-              <p className="text-xs text-gray-warm">{cat.sub}</p>
+            <header className="flex items-center justify-between gap-3 border-b border-line/70 px-5 py-3.5">
+              <div>
+                <h3 className="font-display text-lg text-ink">{cat.title}</h3>
+                <p className="text-xs text-gray-warm">{cat.sub}</p>
+              </div>
+              <span
+                className={
+                  "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold " +
+                  (FAMIGLIA_STILE[cat.key] ?? "bg-moss text-pine")
+                }
+              >
+                {FAMIGLIA_LABEL[cat.key] ?? cat.title}
+              </span>
             </header>
             <ul>
               {cat.voci.map((v, i) => {
+                const servizio = v.slug ? getServizio(v.slug) : undefined;
+                const Icon = servizio?.icon;
+                const p = v.slug ? prezzoDettaglio(v.slug, "micro") : null;
+
                 const inner = (
                   <>
-                    <div className="min-w-0">
-                      <p
-                        className={
-                          "text-sm font-medium " +
-                          (v.roadmap ? "text-gray-warm" : "text-ink")
-                        }
-                      >
-                        {v.name}
-                      </p>
-                      <p className="text-xs text-gray-warm">{v.benefit}</p>
+                    <div className="flex min-w-0 items-start gap-3">
+                      {Icon && !v.roadmap && (
+                        <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-moss text-pine transition-colors group-hover/row:bg-pine group-hover/row:text-white">
+                          <Icon size={16} />
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <p
+                          className={
+                            "text-sm font-semibold " +
+                            (v.roadmap ? "text-gray-warm" : "text-ink")
+                          }
+                        >
+                          {v.name}
+                        </p>
+                        <p className="text-xs leading-relaxed text-gray-warm">
+                          {v.benefit}
+                        </p>
+                      </div>
                     </div>
                     <div className="shrink-0 text-right">
                       {v.roadmap ? (
@@ -102,20 +152,32 @@ export function CatalogoVetrina() {
                         </span>
                       ) : (
                         <>
-                          <span className="block text-sm font-medium tabular-nums text-pine">
-                            {v.slug ? prezzoDa(v.slug) : null}
+                          <span className="block font-display text-lg tabular-nums text-pine">
+                            {p ? `${eur(p.mensile)} €` : null}
+                            <span className="text-xs text-gray-warm">
+                              /mese
+                            </span>
                           </span>
                           <span className="block text-xs text-gray-warm">
                             {v.slug ? cicloVitaCompatto(v.slug) : null}
+                          </span>
+                          <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-pine">
+                            Scopri
+                            <ArrowRight
+                              size={12}
+                              className="transition-transform group-hover/row:translate-x-0.5"
+                            />
                           </span>
                         </>
                       )}
                     </div>
                   </>
                 );
+
                 const rowClass =
-                  "flex items-center justify-between gap-3 px-5 py-3" +
+                  "group/row flex items-center justify-between gap-3 px-5 py-3.5" +
                   (i > 0 ? " border-t border-line/60" : "");
+
                 return (
                   <li key={v.name}>
                     {v.slug && !v.roadmap ? (

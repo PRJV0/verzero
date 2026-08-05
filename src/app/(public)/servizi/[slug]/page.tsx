@@ -3,13 +3,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
+  BookMarked,
+  ClipboardList,
   FileCheck2,
   Info,
   ListOrdered,
   Sparkles,
 } from "lucide-react";
 
-import { SERVIZI, getServizio } from "@/lib/catalog";
+import { SERVIZI, SOLO_STANDARD_UFFICIALI, getServizio } from "@/lib/catalog";
 
 import { PrezzoBox } from "./prezzo-box";
 
@@ -101,6 +103,29 @@ export default async function ServizioPage({
             </ol>
           </div>
 
+          {/* Cosa ti chiederemo — raccolta documentale guidata (§12.P) */}
+          <div className="mb-3 rounded-xl border border-line bg-white p-4">
+            <p className="mb-1 flex items-center gap-2 text-sm font-semibold text-ink">
+              <ClipboardList size={15} className="text-pine" /> Cosa ti
+              chiederemo
+            </p>
+            <p className="mb-2 text-xs text-gray-warm">
+              Il Motore Ver0 non accetta documenti qualsiasi: per questo
+              percorso chiede esattamente questi, li legge e segnala cosa manca.
+            </p>
+            <ul className="space-y-1.5 text-sm text-gray-warm">
+              {s.documenti.map((d) => (
+                <li key={d} className="flex items-start gap-2">
+                  <ClipboardList
+                    size={15}
+                    className="mt-0.5 shrink-0 text-mint"
+                  />
+                  {d}
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* Cosa ottieni */}
           <div className="mb-3 rounded-xl border border-line bg-white p-4">
             <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">
@@ -132,6 +157,26 @@ export default async function ServizioPage({
                 </p>
               ))}
             </div>
+          </div>
+
+          {/* Riferimenti normativi — solo standard ufficiali (§12.P) */}
+          <div className="mb-3 rounded-xl border border-pine/20 bg-white p-4">
+            <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">
+              <BookMarked size={15} className="text-pine" /> Riferimenti
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {s.riferimenti.map((r) => (
+                <span
+                  key={r}
+                  className="rounded-full border border-line bg-paper px-2.5 py-1 text-xs text-pine"
+                >
+                  {r}
+                </span>
+              ))}
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-gray-warm">
+              {SOLO_STANDARD_UFFICIALI}
+            </p>
           </div>
 
           {/* Opportunità (resta in ogni pagina, §12.Q) */}
