@@ -16,3 +16,6 @@ next-env.d.ts
 
 # Foto originali del fondatore (pesanti): sul sito vanno i .jpg ottimizzati
 public/photos/*.png
+
+# Metadati locali del link CLI Supabase
+supabase/.temp/

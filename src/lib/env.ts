@@ -44,14 +44,18 @@ export const publicEnv = {
  * la build, ed è voluto: la service role key non deve mai raggiungere il browser.
  */
 export function serverEnv() {
+  // Getter lazy per chiave: ogni segreto è richiesto solo quando serve
+  // davvero (l'admin client non deve fallire perché manca la chiave AI,
+  // che entra in gioco solo con l'estrazione documenti di fase 2).
   return {
-    supabaseServiceRoleKey: required(
-      "SUPABASE_SERVICE_ROLE_KEY",
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-    ),
-    anthropicApiKey: required(
-      "ANTHROPIC_API_KEY",
-      process.env.ANTHROPIC_API_KEY,
-    ),
+    get supabaseServiceRoleKey() {
+      return required(
+        "SUPABASE_SERVICE_ROLE_KEY",
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+      );
+    },
+    get anthropicApiKey() {
+      return required("ANTHROPIC_API_KEY", process.env.ANTHROPIC_API_KEY);
+    },
   };
 }

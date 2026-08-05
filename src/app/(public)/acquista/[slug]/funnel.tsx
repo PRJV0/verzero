@@ -79,6 +79,9 @@ type FunnelState = {
   formula: Formula;
   azienda: Azienda;
   registrato: boolean;
+  /** Id utente dalla signUp: serve alle API quando la sessione non c'è ancora
+      (progetti Supabase con conferma email obbligatoria). */
+  userId?: string;
   /** L'account richiede conferma email (impostazione Supabase). */
   emailDaConfermare: boolean;
   consensi: { tos: boolean; bancheDati: boolean; acceptedAt?: string };
@@ -295,24 +298,39 @@ export function FunnelAcquisto({
               state={state}
               set={set}
               indietro={() => goTo(3)}
-              completa={() => {
+              completa={async () => {
+                // Fase 1: ordine, consensi e attivazione si scrivono a database.
                 try {
-                  localStorage.setItem(
-                    "vz-ordine",
-                    JSON.stringify({
+                  const r = await fetch("/api/funnel/ordine", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      userId: state.userId,
                       slug,
-                      nome,
                       dimensione: state.dimensione,
                       formula: state.formula,
-                      stato: "in_attivazione",
-                      data: new Date().toISOString(),
+                      tosAcceptedAt: state.consensi.acceptedAt,
+                      mandatoAcceptedAt: state.consensi.acceptedAt,
                     }),
-                  );
-                  localStorage.removeItem(storageKey(slug));
+                  });
+                  if (!r.ok && r.status !== 207) {
+                    const j = (await r.json().catch(() => ({}))) as {
+                      error?: string;
+                    };
+                    return j.error ?? "Salvataggio non riuscito: riprova.";
+                  }
                 } catch {
-                  /* senza storage l'ordine resta solo in sessione */
+                  return "Rete non raggiungibile: l'ordine non è stato salvato, riprova.";
+                }
+                // La bozza locale ha finito il suo compito.
+                try {
+                  localStorage.removeItem(storageKey(slug));
+                  localStorage.removeItem("vz-ordine");
+                } catch {
+                  /* niente storage, nessun problema */
                 }
                 goTo(5);
+                return null;
               }}
             />
           )}
@@ -638,8 +656,8 @@ function StepRegistrazione({
           },
         },
       });
-      setInvio(false);
       if (error) {
+        setInvio(false);
         if (/already|registered|exists/i.test(error.message)) {
           setErroreServer(
             "Questa email ha già un account: usa «Ho già un account» qui sotto per accedere.",
@@ -649,9 +667,36 @@ function StepRegistrazione({
         }
         return;
       }
+      // Fase 1: l'impresa nasce a database (organizations + profiles).
+      try {
+        const r = await fetch("/api/funnel/registrazione", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: data.user?.id,
+            ragioneSociale: form.ragioneSociale.trim(),
+            piva: form.piva.replace(/\s/g, ""),
+            dimensione: state.dimensione,
+          }),
+        });
+        if (!r.ok) {
+          const j = (await r.json().catch(() => ({}))) as { error?: string };
+          setInvio(false);
+          setErroreServer(
+            j.error ?? "Registrazione impresa non riuscita, riprova.",
+          );
+          return;
+        }
+      } catch {
+        setInvio(false);
+        setErroreServer("Rete non raggiungibile: riprova tra poco.");
+        return;
+      }
+      setInvio(false);
       set({
         azienda: form,
         registrato: true,
+        userId: data.user?.id,
         emailDaConfermare: !data.session,
       });
       avanti();
@@ -1037,10 +1082,21 @@ function StepPagamento({
   state: FunnelState;
   set: (p: Partial<FunnelState>) => void;
   indietro: () => void;
-  completa: () => void;
+  /** Salva l'ordine a database; restituisce un messaggio d'errore o null. */
+  completa: () => Promise<string | null>;
 }) {
   const [metodo, setMetodo] = useState<"carta" | "sepa">("carta");
+  const [invio, setInvio] = useState(false);
+  const [errore, setErrore] = useState<string | null>(null);
   const p = prezzoDettaglio(slug, state.dimensione);
+
+  async function onCompleta() {
+    setInvio(true);
+    setErrore(null);
+    const err = await completa();
+    setInvio(false);
+    if (err) setErrore(err);
+  }
 
   return (
     <section aria-labelledby="step4-h">
@@ -1148,6 +1204,15 @@ function StepPagamento({
         </p>
       </fieldset>
 
+      {errore && (
+        <p
+          role="alert"
+          className="mt-4 max-w-md rounded-lg border border-amber-ink/30 bg-amber-soft px-3 py-2.5 text-sm text-amber-ink"
+        >
+          {errore}
+        </p>
+      )}
+
       <div className="mt-6 flex gap-2">
         <button
           type="button"
@@ -1158,10 +1223,12 @@ function StepPagamento({
         </button>
         <button
           type="button"
-          onClick={completa}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-pine px-5 py-2.5 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
+          onClick={onCompleta}
+          disabled={invio}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-pine px-5 py-2.5 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-soft disabled:opacity-60"
         >
-          Completa l&apos;ordine (senza pagamento) <ArrowRight size={15} />
+          {invio ? "Salvataggio…" : "Completa l'ordine (senza pagamento)"}
+          {!invio && <ArrowRight size={15} />}
         </button>
       </div>
     </section>
