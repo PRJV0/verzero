@@ -153,7 +153,8 @@ export async function POST(request: NextRequest) {
       dimensione,
       formula,
       prezzo_canone: formula === "mensile" ? prezzo.mensile : prezzo.annuale,
-      prezzo_una_tantum: prezzo.unaTantum ?? null,
+      // Formato unico §12.Q: niente più quote una tantum, tutto nel canone.
+      prezzo_una_tantum: null,
       stato: "in_attivazione",
     })
     .select("id")

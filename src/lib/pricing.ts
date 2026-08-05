@@ -1,18 +1,21 @@
 /**
- * Matrice prezzi per dimensione d'azienda — FONTE DATI UNICA (SPEC §12.X,
- * revisione finale listino §12.R). Mai prezzi cablati nelle pagine.
+ * Matrice prezzi per dimensione d'azienda — FONTE DATI UNICA
+ * (SPEC §12.X fasce, §12.Q formato unico e ciclo di vita del canone).
  *
- * Regole:
- * - Fasce: micro = listino, piccola = +20%, media = +50%, grande = sempre
- *   "su richiesta" con contatto. Ogni passaggio di fascia cambia il prezzo.
- * - DOPPIA ESPOSIZIONE (§12.R, vincolante): ogni canone si mostra in due
- *   forme — MENSILE in evidenza (impegno minimo 12 mesi, dichiarato) e
- *   UNICA SOLUZIONE ANNUALE con sconto 10% e badge "-10%". Gli annuali di
- *   fascia micro sono i valori espliciti decisi in SPEC (già arrotondati).
- * - Il Kit Comunicazione Ver0 è incluso di default in ogni abbonamento
- *   (quinto beneficio del "canone include", v. src/lib/canone.ts).
+ * FORMATO UNICO (§12.Q): ogni servizio ricorrente si espone SOLO come canone
+ * mensile (impegno minimo 12 mesi) + opzione annuale in unica soluzione con
+ * sconto 10%. Le vecchie parti una tantum sono spalmate nel canone del primo
+ * anno e NON compaiono più.
  *
- * La struttura è pronta a diventare la tabella `price_plans` a database.
+ * CICLO DI VITA (§12.Q, sempre dichiarato in interfaccia):
+ * - servizi con produzione iniziale (Manuali ISO, UNI/PdR 125): anno 1 pieno,
+ *   dal 2° anno solo mantenimento;
+ * - servizi documentali annuali (Carbon, VSME, Percorso, Rating): rinnovo dal
+ *   2° anno a −20% ("i tuoi dati sono già nel Motore");
+ * - il rinnovo è sempre libero: nessun vincolo dopo i primi 12 mesi.
+ *
+ * Fasce: micro = listino, piccola +20%, media +50%, grande su richiesta.
+ * Struttura pronta a diventare la tabella `price_plans` a database.
  */
 
 export const DIMENSIONI = ["micro", "piccola", "media", "grande"] as const;
@@ -43,26 +46,38 @@ const MULTIPLIER: Record<Exclude<Dimensione, "grande">, number> = {
   media: 1.5,
 };
 
-/**
- * Listino base fascia micro (SPEC §12.R). `mensile`/`annuale` sono il canone
- * nelle due formule (annuale = unica soluzione, −10% già applicato e
- * arrotondato in SPEC); `unaTantum` è l'eventuale quota di generazione.
- */
-type Voce = { mensile: number; annuale: number; unaTantum?: number };
+/** Ciclo di vita del canone dal 2° anno. */
+type Rinnovo =
+  | { tipo: "mantenimento"; mensile: number } // produzione iniziale → solo mantenimento
+  | { tipo: "sconto20" }; // documentale annuale → −20%, dati già nel Motore
+
+/** Listino base fascia micro (§12.Q): canone anno 1 mensile/annuale + rinnovo. */
+type Voce = { mensile: number; annuale: number; rinnovo: Rinnovo };
 
 const LISTINO: Record<string, Voce> = {
-  "percorso-ver0": { mensile: 119, annuale: 1290 },
-  "carbon-light": { mensile: 45, annuale: 490 },
-  "carbon-completa": { mensile: 75, annuale: 810 },
-  "bilancio-vsme-base": { mensile: 89, annuale: 960 },
-  "manuale-iso-9001": { mensile: 59, annuale: 640, unaTantum: 990 },
-  "manuale-iso-14001": { mensile: 59, annuale: 640, unaTantum: 990 },
-  "parita-di-genere-pdr-125": { mensile: 39, annuale: 420, unaTantum: 990 },
-  // Non toccata dalla §12.R: canone precedente, annuale derivato (−10%).
-  "rating-economia-circolare": { mensile: 129, annuale: 1390 },
+  "percorso-ver0": { mensile: 119, annuale: 1290, rinnovo: { tipo: "sconto20" } },
+  "carbon-light": { mensile: 45, annuale: 490, rinnovo: { tipo: "sconto20" } },
+  "carbon-completa": { mensile: 75, annuale: 810, rinnovo: { tipo: "sconto20" } },
+  "bilancio-vsme-base": { mensile: 89, annuale: 960, rinnovo: { tipo: "sconto20" } },
+  "manuale-iso-9001": {
+    mensile: 139,
+    annuale: 1500,
+    rinnovo: { tipo: "mantenimento", mensile: 59 },
+  },
+  "manuale-iso-14001": {
+    mensile: 139,
+    annuale: 1500,
+    rinnovo: { tipo: "mantenimento", mensile: 59 },
+  },
+  "parita-di-genere-pdr-125": {
+    mensile: 119,
+    annuale: 1290,
+    rinnovo: { tipo: "mantenimento", mensile: 39 },
+  },
+  "rating-economia-circolare": { mensile: 129, annuale: 1390, rinnovo: { tipo: "sconto20" } },
 };
 
-/** Canoni all'euro; annuali e una tantum alla decina. */
+/** Canoni all'euro; annuali alla decina. */
 function scala(base: number, dim: Exclude<Dimensione, "grande">, decina = false) {
   const v = base * MULTIPLIER[dim];
   return decina ? Math.round(v / 10) * 10 : Math.round(v);
@@ -71,12 +86,16 @@ function scala(base: number, dim: Exclude<Dimensione, "grande">, decina = false)
 const eur = (n: number) => n.toLocaleString("it-IT");
 
 export type PrezzoDettaglio = {
-  /** Canone mensile scalato per fascia (€/mese). */
+  /** Canone mensile del primo anno, scalato per fascia (€/mese). */
   mensile: number;
-  /** Unica soluzione annuale scalata (−10% già incluso). */
+  /** Unica soluzione annuale del primo anno (−10% già incluso). */
   annuale: number;
-  /** Quota una tantum scalata, se prevista. */
-  unaTantum?: number;
+  /** Euro risparmiati scegliendo l'annuale (12 × mensile − annuale). */
+  risparmio: number;
+  /** Canone mensile dal 2° anno. */
+  rinnovoMensile: number;
+  /** Perché il rinnovo costa meno. */
+  rinnovoTipo: "mantenimento" | "sconto20";
 };
 
 /** Prezzi per servizio e dimensione. `null` = su richiesta (fascia grande). */
@@ -86,12 +105,33 @@ export function prezzoDettaglio(
 ): PrezzoDettaglio | null {
   const v = LISTINO[slug];
   if (!v || dim === "grande") return null;
+  const mensile = scala(v.mensile, dim);
+  const annuale = scala(v.annuale, dim, true);
+  const rinnovoMensile =
+    v.rinnovo.tipo === "mantenimento"
+      ? scala(v.rinnovo.mensile, dim)
+      : Math.round(mensile * 0.8);
   return {
-    mensile: scala(v.mensile, dim),
-    annuale: scala(v.annuale, dim, true),
-    unaTantum: v.unaTantum ? scala(v.unaTantum, dim, true) : undefined,
+    mensile,
+    annuale,
+    risparmio: mensile * 12 - annuale,
+    rinnovoMensile,
+    rinnovoTipo: v.rinnovo.tipo,
   };
 }
+
+/** Riga del ciclo di vita per card e riepiloghi (§12.Q). */
+export function rinnovoLabel(slug: string, dim: Dimensione): string | null {
+  const p = prezzoDettaglio(slug, dim);
+  if (!p) return null;
+  return p.rinnovoTipo === "mantenimento"
+    ? `dal 2° anno: ${eur(p.rinnovoMensile)} €/mese`
+    : `dal 2° anno: ${eur(p.rinnovoMensile)} €/mese (−20% al rinnovo: i tuoi dati sono già nel Motore)`;
+}
+
+/** Nota sempre presente accanto al ciclo di vita (§12.Q.c). */
+export const RINNOVO_LIBERO =
+  "Rinnovi solo se vuoi: nessun vincolo dopo i primi 12 mesi.";
 
 /** Etichetta compatta del prezzo per formula scelta (es. nel riepilogo). */
 export function prezzoLabel(
@@ -101,18 +141,21 @@ export function prezzoLabel(
 ): string | null {
   const p = prezzoDettaglio(slug, dim);
   if (!p) return null;
-  const canone =
-    formula === "mensile" ? `${eur(p.mensile)} €/mese` : `${eur(p.annuale)} €/anno`;
-  return p.unaTantum ? `${eur(p.unaTantum)} € + ${canone}` : canone;
+  return formula === "mensile"
+    ? `${eur(p.mensile)} €/mese`
+    : `${eur(p.annuale)} €/anno`;
 }
 
-/** Etichetta "da X €/mese" per la vetrina (X = mensile fascia micro). */
+/** Etichetta "da X €/mese" per la vetrina (X = mensile anno 1, fascia micro). */
 export function prezzoDa(slug: string): string | null {
   const v = LISTINO[slug];
   if (!v) return null;
-  return v.unaTantum
-    ? `da ${eur(v.unaTantum)} € + ${eur(v.mensile)} €/mese`
-    : `da ${eur(v.mensile)} €/mese`;
+  return `da ${eur(v.mensile)} €/mese`;
+}
+
+/** Ciclo di vita in fascia micro, per le card della vetrina. */
+export function rinnovoDa(slug: string): string | null {
+  return rinnovoLabel(slug, "micro");
 }
 
 /** Micro-copy dell'aggancio sartoriale per la fascia grande (SPEC §12.X). */

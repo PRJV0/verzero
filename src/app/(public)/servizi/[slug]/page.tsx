@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, FileCheck2, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  FileCheck2,
+  Info,
+  ListOrdered,
+  Sparkles,
+} from "lucide-react";
 
 import { SERVIZI, getServizio } from "@/lib/catalog";
 
 import { PrezzoBox } from "./prezzo-box";
 
-/** Pre-genera le sei pagine di dettaglio a build time. */
+/** Pre-genera le pagine di dettaglio a build time. */
 export function generateStaticParams() {
   return SERVIZI.map((s) => ({ slug: s.slug }));
 }
@@ -22,10 +28,15 @@ export async function generateMetadata({
   if (!s) return { title: "Servizio non trovato — Ver0" };
   return {
     title: `${s.name} — Ver0`,
-    description: s.desc,
+    description: s.cosE,
   };
 }
 
+/**
+ * Pagina servizio con la struttura fissa §12.Q:
+ * cos'è / come funziona con Ver0 / cosa ottieni / requisiti e vincoli /
+ * Opportunità (che resta in ogni pagina).
+ */
 export default async function ServizioPage({
   params,
 }: {
@@ -62,31 +73,74 @@ export default async function ServizioPage({
               ))}
             </div>
           )}
-          <p className="mb-4 text-sm text-gray-warm">{s.desc}</p>
+
+          {/* Cos'è */}
+          <p className="mb-4 text-sm leading-relaxed text-gray-warm">
+            {s.cosE}
+          </p>
+
+          {/* Come funziona con Ver0 */}
+          <div className="mb-3 rounded-xl border border-line bg-white p-4">
+            <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">
+              <ListOrdered size={15} className="text-pine" /> Come funziona con
+              Ver0
+            </p>
+            <ol className="space-y-1.5 text-sm text-gray-warm">
+              {s.comeFunziona.map((x, i) => (
+                <li key={x} className="flex items-start gap-2">
+                  <span
+                    aria-hidden
+                    className="mt-0.5 inline-flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-moss text-[10px] font-semibold text-pine"
+                    style={{ height: 18, width: 18 }}
+                  >
+                    {i + 1}
+                  </span>
+                  {x}
+                </li>
+              ))}
+            </ol>
+          </div>
 
           {/* Cosa ottieni */}
           <div className="mb-3 rounded-xl border border-line bg-white p-4">
-            <p className="mb-2 text-sm font-semibold text-ink">Cosa ottieni</p>
+            <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">
+              <FileCheck2 size={15} className="text-pine" /> Cosa ottieni
+            </p>
             <div className="space-y-1.5 text-sm text-gray-warm">
               {s.output.map((x) => (
                 <p key={x} className="flex items-start gap-2">
-                  <FileCheck2
-                    size={15}
-                    className="mt-0.5 shrink-0 text-pine"
-                  />{" "}
+                  <FileCheck2 size={15} className="mt-0.5 shrink-0 text-pine" />{" "}
                   {x}
                 </p>
               ))}
             </div>
           </div>
 
-          {/* Perché conviene adesso (ganci) */}
-          <div className="mb-3 rounded-xl bg-moss p-4">
-            <p className="mb-2 text-sm font-semibold text-pine-dark">
-              Perché conviene adesso
+          {/* Requisiti e vincoli */}
+          <div className="mb-3 rounded-xl border border-line bg-paper p-4">
+            <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">
+              <Info size={15} className="text-gray-warm" /> Requisiti e vincoli
+            </p>
+            <div className="space-y-1.5 text-sm text-gray-warm">
+              {s.requisiti.map((x) => (
+                <p key={x} className="flex items-start gap-2">
+                  <span
+                    aria-hidden
+                    className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gray-warm"
+                  />
+                  {x}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          {/* Opportunità (resta in ogni pagina, §12.Q) */}
+          <div className="rounded-xl bg-moss p-4">
+            <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-pine-dark">
+              <Sparkles size={15} className="text-mint" /> Opportunità
             </p>
             <div className="space-y-1.5 text-sm text-pine">
-              {s.ganci.map((x) => (
+              {s.opportunita.map((x) => (
                 <p key={x} className="flex items-start gap-2">
                   <Sparkles size={15} className="mt-0.5 shrink-0 text-mint" />{" "}
                   {x}
@@ -94,17 +148,9 @@ export default async function ServizioPage({
               ))}
             </div>
           </div>
-
-          {/* Quanto tempo ti chiede */}
-          <div className="rounded-xl border border-line bg-white p-4">
-            <p className="mb-2 text-sm font-semibold text-ink">
-              Quanto tempo ti chiede
-            </p>
-            <p className="text-sm text-gray-warm">{s.effort}</p>
-          </div>
         </div>
 
-        {/* Box prezzo con selettore di dimensione (matrice §12.X) */}
+        {/* Box prezzo con selettore di dimensione (matrice §12.X, ciclo §12.Q) */}
         <div>
           <PrezzoBox slug={s.slug} />
           <p className="mt-3 text-center text-xs text-gray-light">

@@ -9,7 +9,9 @@ import {
   DIMENSIONE_LABEL,
   DIMENSIONE_RANGE,
   GRANDE_IMPRESA,
+  RINNOVO_LIBERO,
   prezzoDettaglio,
+  rinnovoLabel,
   type Dimensione,
 } from "@/lib/pricing";
 import { CANONE_INLINE } from "@/lib/canone";
@@ -17,10 +19,10 @@ import { CANONE_INLINE } from "@/lib/canone";
 const eur = (n: number) => n.toLocaleString("it-IT");
 
 /**
- * Box prezzo con selettore di dimensione (SPEC §12.X) e DOPPIA ESPOSIZIONE
- * del canone (§12.R, vincolante): mensile in evidenza con "impegno minimo
- * 12 mesi" dichiarato, e subito sotto l'unica soluzione annuale con badge
- * −10%. La CTA porta al funnel di acquisto (§12.T) propagando la dimensione.
+ * Box prezzo con selettore di dimensione (SPEC §12.X) nel FORMATO UNICO
+ * §12.Q: solo canone mensile in evidenza (impegno minimo 12 mesi) + annuale
+ * −10% con risparmio assoluto in euro; ciclo di vita sempre dichiarato
+ * (canone dal 2° anno) e rinnovo libero. La CTA porta al funnel (§12.T).
  */
 export function PrezzoBox({ slug }: { slug: string }) {
   const [dim, setDim] = useState<Dimensione>("micro");
@@ -83,26 +85,32 @@ export function PrezzoBox({ slug }: { slug: string }) {
 
       {p ? (
         <div key={dim} className="vz-price-in">
-          {/* Canone mensile in evidenza (§12.R) */}
-          <p className="mt-4 text-xs text-gray-warm">Canone</p>
+          {/* Canone mensile in evidenza (formato unico §12.Q) */}
+          <p className="mt-4 text-xs text-gray-warm">Canone primo anno</p>
           <p className="font-display text-3xl tabular-nums text-pine">
-            {p.unaTantum ? `${eur(p.unaTantum)} € + ` : ""}
             {eur(p.mensile)} €/mese
           </p>
           <p className="text-xs text-gray-light">
             impegno minimo 12 mesi · IVA esclusa
           </p>
-          {/* Unica soluzione annuale, subito sotto (§12.R) */}
+          {/* Annuale con risparmio assoluto (§12.Q) */}
           <p className="mt-2 flex flex-wrap items-center gap-1.5 text-sm text-gray-warm">
             <span className="rounded-full bg-mint/15 px-2 py-0.5 text-xs font-semibold text-pine">
-              −10%
+              −10% · risparmi {eur(p.risparmio)} €
             </span>
             oppure{" "}
             <span className="font-semibold tabular-nums text-ink">
-              {p.unaTantum ? `${eur(p.unaTantum)} € + ` : ""}
               {eur(p.annuale)} €/anno
             </span>{" "}
             in unica soluzione
+          </p>
+          {/* Ciclo di vita del canone (§12.Q) */}
+          <p className="mt-3 border-t border-line/70 pt-3 text-xs leading-relaxed text-gray-warm">
+            <span className="font-semibold text-pine">
+              {rinnovoLabel(slug, dim)}
+            </span>
+            <br />
+            {RINNOVO_LIBERO}
           </p>
           <Link
             href={`/acquista/${slug}?dimensione=${dim}`}

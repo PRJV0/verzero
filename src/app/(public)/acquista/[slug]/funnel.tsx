@@ -26,6 +26,8 @@ import {
   DIMENSIONE_RANGE,
   FORMULE,
   prezzoDettaglio,
+  rinnovoLabel,
+  RINNOVO_LIBERO,
   type Dimensione,
   type Formula,
 } from "@/lib/pricing";
@@ -416,17 +418,11 @@ function RiepilogoPanel({
 
       {p && (
         <div key={state.dimensione + state.formula} className="vz-price-in mt-3 border-t border-line/70 pt-3">
-          {p.unaTantum && (
-            <p className="flex justify-between text-xs text-gray-warm">
-              <span>Generazione (una tantum)</span>
-              <span className="font-medium tabular-nums text-ink">
-                {eur(p.unaTantum)} €
-              </span>
-            </p>
-          )}
           <p className="mt-1 flex items-baseline justify-between">
             <span className="text-xs text-gray-warm">
-              {state.formula === "mensile" ? "Canone mensile" : "Canone annuale"}
+              {state.formula === "mensile"
+                ? "Canone primo anno"
+                : "Canone annuale (1° anno)"}
             </span>
             <span className="font-display text-2xl tabular-nums text-pine">
               {state.formula === "mensile"
@@ -437,7 +433,15 @@ function RiepilogoPanel({
           <p className="text-right text-xs text-gray-light">
             {state.formula === "mensile"
               ? "impegno minimo 12 mesi · IVA esclusa"
-              : "sconto 10% applicato · IVA esclusa"}
+              : `−10% · risparmi ${eur(p.risparmio)} € · IVA esclusa`}
+          </p>
+          {/* Ciclo di vita del canone (§12.Q) */}
+          <p className="mt-2 text-xs leading-relaxed text-gray-warm">
+            <span className="font-semibold text-pine">
+              {rinnovoLabel(slug, state.dimensione)}
+            </span>
+            <br />
+            {RINNOVO_LIBERO}
           </p>
         </div>
       )}
@@ -1145,7 +1149,9 @@ function StepPagamento({
                 <span className="block text-xs text-gray-warm">
                   {f === "mensile"
                     ? "impegno minimo 12 mesi"
-                    : "unica soluzione · −10% applicato"}
+                    : p
+                      ? `unica soluzione · −10% · risparmi ${eur(p.risparmio)} €`
+                      : "unica soluzione · −10% applicato"}
                 </span>
               </button>
             );

@@ -2,8 +2,22 @@ import Link from "next/link";
 import { ArrowRight, Leaf, Mail } from "lucide-react";
 
 import { VETRINA } from "@/lib/catalog";
-import { GRANDE_IMPRESA, prezzoDa } from "@/lib/pricing";
+import {
+  GRANDE_IMPRESA,
+  RINNOVO_LIBERO,
+  prezzoDa,
+  prezzoDettaglio,
+} from "@/lib/pricing";
 import { CANONE_INLINE } from "@/lib/canone";
+
+/** Riga compatta del ciclo di vita per le card (§12.Q), fascia micro. */
+function cicloVitaCompatto(slug: string): string | null {
+  const p = prezzoDettaglio(slug, "micro");
+  if (!p) return null;
+  return p.rinnovoTipo === "mantenimento"
+    ? `dal 2° anno ${p.rinnovoMensile.toLocaleString("it-IT")} €/mese`
+    : "−20% al rinnovo";
+}
 
 /**
  * Vetrina a catalogo per categorie (SPEC §12.Y): Sostenibilità nei tre
@@ -37,9 +51,14 @@ export function CatalogoVetrina() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <p className="font-display text-lg tabular-nums text-pine">
-            {prezzoDa("percorso-ver0")}
-          </p>
+          <div className="text-right">
+            <p className="font-display text-lg tabular-nums text-pine">
+              {prezzoDa("percorso-ver0")}
+            </p>
+            <p className="text-xs text-gray-warm">
+              {cicloVitaCompatto("percorso-ver0")}
+            </p>
+          </div>
           <span className="inline-flex items-center gap-1 rounded-lg bg-pine px-3.5 py-2 text-sm font-medium text-white">
             Scopri{" "}
             <ArrowRight
@@ -82,9 +101,14 @@ export function CatalogoVetrina() {
                           In arrivo
                         </span>
                       ) : (
-                        <span className="text-sm font-medium tabular-nums text-pine">
-                          {v.slug ? prezzoDa(v.slug) : null}
-                        </span>
+                        <>
+                          <span className="block text-sm font-medium tabular-nums text-pine">
+                            {v.slug ? prezzoDa(v.slug) : null}
+                          </span>
+                          <span className="block text-xs text-gray-warm">
+                            {v.slug ? cicloVitaCompatto(v.slug) : null}
+                          </span>
+                        </>
                       )}
                     </div>
                   </>
@@ -112,9 +136,9 @@ export function CatalogoVetrina() {
         ))}
       </div>
 
-      {/* Il pacchetto abbonato accanto ai prezzi /mese (SPEC §12.V) */}
+      {/* Il pacchetto abbonato accanto ai prezzi /mese (§12.V) + rinnovo libero (§12.Q) */}
       <p className="mt-4 text-center text-xs leading-relaxed text-gray-warm">
-        {CANONE_INLINE}{" "}
+        {RINNOVO_LIBERO} {CANONE_INLINE}{" "}
         <Link href="/#canone" className="font-medium text-pine hover:underline">
           Perché l&apos;abbonamento
         </Link>
