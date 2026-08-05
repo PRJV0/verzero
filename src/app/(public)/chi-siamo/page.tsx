@@ -8,8 +8,10 @@ import {
   Database,
   Eye,
   FileSearch,
+  Gauge,
   Globe,
   ShieldCheck,
+  Tag,
   UserCheck,
   Users,
 } from "lucide-react";
@@ -21,31 +23,44 @@ import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
 export const metadata: Metadata = {
   title: "Chi siamo — Ver0",
   description:
-    "Abbiamo costruito il Motore Ver0 per unire la potenza dell'AI alle competenze di professionisti veri: raccolta documentale guidata, banche dati ufficiali, solo standard riconosciuti, verifica umana. Zero protagonismo: il team dietro lo schermo, i risultati davanti.",
+    "Abbiamo costruito la consulenza che avremmo voluto trovare: chiara nei prezzi, rapida nei tempi, aperta a ogni impresa. Il Motore Ver0 e professionisti veri, su standard ufficiali riconosciuti.",
 };
 
 /**
  * Chi siamo — Registro A pieno: tipografia drammatica, foto duotone, fondi
  * alternati (salvia / bianco / pino profondo), reveal allo scroll.
  *
- * VINCOLI (decisione del fondatore): nessun claim di primato assoluto, solo
- * formule di identità; nessun dato societario finché la società non esiste;
- * nessun numero inventato; per il team nessun nome, foto o riferimento
- * personale/geografico — racconto collettivo.
+ * REGOLA DI TONO (vincolante, decisione del fondatore): la pagina è sempre
+ * propositiva. Non si apre mai dal problema, non esistono sezioni negative e
+ * non si generalizza mai in negativo sulla categoria dei consulenti: sono
+ * partner del modello (v. programma partner), non un bersaglio.
+ *
+ * Varianti di apertura considerate (scelta: la prima, la più concreta —
+ * mette il beneficio del cliente in testa e chiude sull'apertura a tutti):
+ * 1. "La qualifica della tua impresa, alla velocità della tua impresa."
+ * 2. "La qualifica che la tua impresa merita, nei tempi che la tua impresa ha."
+ * 3. "Rendiamo la qualifica d'impresa una cosa che si fa, non una cosa che si aspetta."
+ *
+ * ALTRI VINCOLI: nessun claim di primato assoluto, solo formule di identità;
+ * nessun dato societario finché la società non esiste; nessun numero
+ * inventato; per il team nessun nome, foto o riferimento personale.
  */
 
-const PROBLEMA = [
+const POSSIBILE = [
   {
-    t: "Tempi",
-    d: "Settimane per un preventivo, mesi per un documento: quando arriva, la gara è chiusa o la banca ha già deciso.",
+    icon: Gauge,
+    t: "Giorni, non mesi",
+    d: "Documenti conformi pronti in pochi giorni e aggiornati in tempo reale quando cambia una norma: la qualifica cammina alla velocità con cui decidi.",
   },
   {
-    t: "Costi",
-    d: "Parcelle costruite sulle ore di un professionista, non sul valore del documento: migliaia di euro per output standardizzati.",
+    icon: Tag,
+    t: "Il prezzo del valore",
+    d: "Prezzi pubblici costruiti sul risultato che ricevi, visibili prima di iniziare: sai esattamente cosa spendi e cosa ottieni, dal primo minuto.",
   },
   {
-    t: "Imprese escluse",
-    d: "Chi sta sotto una certa soglia di fatturato resta fuori: non perché non serva, ma perché non conviene a chi vende consulenza a ore.",
+    icon: Users,
+    t: "Per ogni impresa",
+    d: "Dalla micro alla grande: percorsi e fasce di prezzo pensati perché la qualifica sia alla portata di chi finora ne restava fuori.",
   },
 ];
 
@@ -103,7 +118,7 @@ const PRINCIPI = [
 export default function ChiSiamoPage() {
   return (
     <main>
-      {/* 1. LA MISSIONE — apertura editoriale con foto a lato */}
+      {/* 1. APERTURA — aspirazionale, mai dal problema */}
       <section className="bg-gradient-to-b from-moss via-moss to-paper px-5 py-16 md:py-20">
         <div className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-10 md:grid-cols-[1.15fr_1fr]">
           <div>
@@ -111,41 +126,54 @@ export default function ChiSiamoPage() {
               CHI SIAMO
             </p>
             <h1 className="font-display text-4xl leading-[1.05] text-pine-dark md:text-6xl">
-              Abbattere tempi e costi del sistema consulenziale italiano, un
-              settore alla volta.
+              La qualifica della tua impresa, alla velocità della tua impresa.
             </h1>
-            <p className="mt-6 font-display text-2xl text-pine">
-              L&apos;AI è il motore di tutto.
+            <p className="mt-6 max-w-xl text-base leading-relaxed text-pine md:text-lg">
+              Abbiamo costruito la consulenza che avremmo voluto trovare: chiara
+              nei prezzi, rapida nei tempi, aperta a ogni azienda — dalla micro
+              alla grande.
             </p>
             <p className="mt-4 max-w-xl text-sm leading-relaxed text-gray-warm">
-              La consulenza tradizionale è lenta e costosa. Il risultato è che
-              chi più avrebbe bisogno di qualificarsi — verso banche, clienti
-              capofiliera, stazioni appaltanti — resta fuori. Abbiamo scelto di
-              partire da lì.
+              Un motore proprietario che lavora sui documenti d&apos;impresa,
+              professionisti che verificano ogni output, standard ufficiali come
+              unico riferimento. È così che una qualifica diventa una cosa che
+              si fa — e si dimostra.
             </p>
           </div>
+          {/* Foto: la più luminosa e propositiva del set (natura + dati).
+              Per sostituirla basta cambiare il file mantenendo il path. */}
           <PhotoDuotone
-            src="/photos/sito1.jpg"
+            src="/photos/sito3.jpg"
+            intensity="soft"
             className="aspect-[4/3] rounded-3xl shadow-lift md:aspect-[4/5]"
           />
         </div>
       </section>
 
-      {/* 2. IL PROBLEMA — tre colonne su bianco */}
+      {/* 2. CHE COSA RENDIAMO POSSIBILE — tre card propositive */}
       <section className="bg-white px-5 py-16">
         <div className="mx-auto max-w-4xl">
           <h2 className="font-display text-3xl text-ink md:text-4xl">
-            Che cosa non funziona, oggi
+            Che cosa rendiamo possibile
           </h2>
-          <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
-            {PROBLEMA.map((p) => (
-              <div key={p.t} className="vz-reveal">
-                <p className="font-display text-xl text-pine">{p.t}</p>
-                <p className="mt-2 text-sm leading-relaxed text-gray-warm">
-                  {p.d}
-                </p>
-              </div>
-            ))}
+          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {POSSIBILE.map((p) => {
+              const Icon = p.icon;
+              return (
+                <article
+                  key={p.t}
+                  className="vz-reveal rounded-2xl border border-line/70 bg-white p-5 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift"
+                >
+                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-moss text-pine">
+                    <Icon size={20} />
+                  </span>
+                  <p className="mt-3 font-display text-xl text-pine">{p.t}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-warm">
+                    {p.d}
+                  </p>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -166,9 +194,9 @@ export default function ChiSiamoPage() {
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-moss">
               Abbiamo costruito il Motore Ver0 per unire la potenza dell&apos;AI
-              alle competenze di professionisti veri. Non è un&apos;AI generica:
-              è un motore proprietario specializzato nei documenti e nei settori
-              d&apos;impresa, e lavora sempre in questo ordine.
+              alle competenze di professionisti veri: un motore proprietario
+              specializzato nei documenti e nei settori d&apos;impresa, che
+              lavora sempre in questo ordine.
             </p>
           </div>
 
