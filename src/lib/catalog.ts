@@ -259,7 +259,7 @@ export const SERVIZI: Servizio[] = [
     riferimenti: ["UNI EN ISO 9001:2015 (struttura HLS, punti 4-10)"],
     opportunita: [
       "La certificazione 9001 è requisito o premialità in bandi pubblici e qualifiche fornitori",
-      "Impianto generato sui tuoi processi, non da template riciclati",
+      "Impianto costruito sui tuoi processi reali: manuale e procedure rispecchiano come lavori davvero",
       "Percorso qualificante per il Sigillo Ver0",
     ],
   },

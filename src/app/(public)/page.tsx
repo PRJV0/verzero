@@ -242,8 +242,8 @@ export default function HomePage() {
             </p>
             <p className="mt-4 max-w-lg text-sm text-gray-warm">
               Il Motore Ver0 fa il lavoro pesante, le persone verificano, tu
-              raccogli il risultato — a una frazione del prezzo della consulenza
-              tradizionale.
+              raccogli il risultato — con prezzi pubblici e tempi che si misurano
+              in giorni.
             </p>
 
             <div className="mt-8">
