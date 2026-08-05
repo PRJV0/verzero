@@ -7,6 +7,7 @@ const NAV = [
   { label: "Come funziona", href: "/#come-funziona" },
   { label: "Servizi e prezzi", href: "/servizi" },
   { label: "Il Sigillo", href: "/sigillo" },
+  { label: "Chi siamo", href: "/chi-siamo" },
   { label: "Partner", href: "/partner" },
 ];
 

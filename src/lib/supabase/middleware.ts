@@ -17,6 +17,7 @@ const PUBLIC_PREFIXES = [
   "/termini",
   "/sigillo",
   "/bollino",
+  "/chi-siamo",
   "/partner",
   "/verifica",
   "/registro",

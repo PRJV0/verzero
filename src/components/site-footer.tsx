@@ -17,6 +17,9 @@ export function SiteFooter() {
           <Link href="/sigillo" className="hover:text-pine">
             Il Sigillo
           </Link>
+          <Link href="/chi-siamo" className="hover:text-pine">
+            Chi siamo
+          </Link>
           <Link href="/partner" className="hover:text-pine">
             Partner
           </Link>
