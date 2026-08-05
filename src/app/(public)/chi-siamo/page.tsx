@@ -118,26 +118,23 @@ const PRINCIPI = [
 export default function ChiSiamoPage() {
   return (
     <main>
-      {/* 1. APERTURA — aspirazionale, mai dal problema */}
-      <section className="bg-gradient-to-b from-moss via-moss to-paper px-5 py-16 md:py-20">
+      {/* 1. APERTURA — primissimo contenuto: l'origine raccontata in chiave
+          Zero. Registro A pieno: Fraunces grande, salvia in gradiente, foto
+          duotone affiancata, reveal discreto. */}
+      <section className="bg-gradient-to-b from-moss via-moss to-paper px-5 py-16 md:py-24">
         <div className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-10 md:grid-cols-[1.15fr_1fr]">
-          <div>
+          <div className="vz-reveal">
             <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
               CHI SIAMO
             </p>
-            <h1 className="font-display text-4xl leading-[1.05] text-pine-dark md:text-6xl">
-              La qualifica della tua impresa, alla velocità della tua impresa.
+            <h1 className="font-display text-5xl leading-[1.02] text-pine-dark md:text-7xl">
+              Siamo partiti da{" "}
+              <em className="font-semibold text-mint">zero</em>. Letteralmente.
             </h1>
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-pine md:text-lg">
-              Abbiamo costruito la consulenza che avremmo voluto trovare: chiara
-              nei prezzi, rapida nei tempi, aperta a ogni azienda — dalla micro
-              alla grande.
-            </p>
-            <p className="mt-4 max-w-xl text-sm leading-relaxed text-gray-warm">
-              Un motore proprietario che lavora sui documenti d&apos;impresa,
-              professionisti che verificano ogni output, standard ufficiali come
-              unico riferimento. È così che una qualifica diventa una cosa che
-              si fa — e si dimostra.
+            <p className="mt-7 max-w-xl font-display text-xl leading-snug text-pine md:text-2xl">
+              E da zero abbiamo ricostruito la consulenza: un motore AI,
+              professionisti veri, standard ufficiali, prezzi che si leggono
+              prima di firmare.
             </p>
           </div>
           {/* Foto: la più luminosa e propositiva del set (natura + dati).
@@ -145,8 +142,30 @@ export default function ChiSiamoPage() {
           <PhotoDuotone
             src="/photos/sito3.jpg"
             intensity="soft"
-            className="aspect-[4/3] rounded-3xl shadow-lift md:aspect-[4/5]"
+            className="vz-reveal aspect-[4/3] rounded-3xl shadow-lift md:aspect-[4/5]"
           />
+        </div>
+      </section>
+
+      {/* 2. LA PROMESSA — il manifesto che apriva la pagina, ora sotto
+          l'origine: stesso tono propositivo, senza foto per non ripetere
+          l'impaginato dell'hero. */}
+      <section className="bg-paper px-5 py-16">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="font-display text-4xl leading-[1.08] text-pine-dark md:text-5xl">
+            La qualifica della tua impresa, alla velocità della tua impresa.
+          </h2>
+          <p className="mt-6 max-w-2xl text-base leading-relaxed text-pine md:text-lg">
+            Abbiamo costruito la consulenza che avremmo voluto trovare: chiara
+            nei prezzi, rapida nei tempi, aperta a ogni azienda — dalla micro
+            alla grande.
+          </p>
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-gray-warm">
+            Un motore proprietario che lavora sui documenti d&apos;impresa,
+            professionisti che verificano ogni output, standard ufficiali come
+            unico riferimento. È così che una qualifica diventa una cosa che si
+            fa — e si dimostra.
+          </p>
         </div>
       </section>
 
