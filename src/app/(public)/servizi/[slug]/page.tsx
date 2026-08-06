@@ -3,15 +3,23 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
+  ArrowRight,
   BookMarked,
   ClipboardList,
   FileCheck2,
   Info,
+  LifeBuoy,
   ListOrdered,
   Sparkles,
 } from "lucide-react";
 
-import { SERVIZI, SOLO_STANDARD_UFFICIALI, getServizio } from "@/lib/catalog";
+import {
+  RICHIAMO_SUPPORTO_AUDIT,
+  SERVIZI,
+  SERVIZI_CERTIFICABILI,
+  SOLO_STANDARD_UFFICIALI,
+  getServizio,
+} from "@/lib/catalog";
 
 import { PrezzoBox } from "./prezzo-box";
 
@@ -203,6 +211,32 @@ export default async function ServizioPage({
           </p>
         </div>
       </div>
+
+      {/* Richiamo al supporto all'audit sui soli percorsi certificabili:
+          l'audit lo fa un organismo terzo, noi adeguiamo i documenti. */}
+      {SERVIZI_CERTIFICABILI.includes(s.slug) && (
+        <section className="mx-auto mt-12 max-w-5xl px-5">
+          <div className="flex flex-col gap-4 rounded-2xl border border-line bg-paper p-5 sm:flex-row sm:items-center">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-moss text-pine">
+              <LifeBuoy size={20} />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-ink">
+                {RICHIAMO_SUPPORTO_AUDIT.titolo}
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-gray-warm">
+                {RICHIAMO_SUPPORTO_AUDIT.testo}
+              </p>
+            </div>
+            <Link
+              href={`/servizi/${RICHIAMO_SUPPORTO_AUDIT.slug}`}
+              className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-pine px-4 py-2 text-sm font-medium text-pine transition-all hover:-translate-y-0.5 hover:shadow-soft sm:self-auto"
+            >
+              {RICHIAMO_SUPPORTO_AUDIT.cta} <ArrowRight size={15} />
+            </Link>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

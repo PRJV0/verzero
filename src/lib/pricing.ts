@@ -51,8 +51,13 @@ type Rinnovo =
   | { tipo: "mantenimento"; mensile: number } // produzione iniziale → solo mantenimento
   | { tipo: "sconto20" }; // documentale annuale → −20%, dati già nel Motore
 
-/** Listino base fascia micro (§12.Q): canone anno 1 mensile/annuale + rinnovo. */
-type Voce = { mensile: number; annuale: number; rinnovo: Rinnovo };
+/** Listino base fascia micro (§12.Q): canone anno 1 mensile/annuale + rinnovo,
+ *  oppure servizio one-shot senza canone (es. supporto all'audit). */
+type Voce =
+  | { mensile: number; annuale: number; rinnovo: Rinnovo }
+  | { unaTantum: number };
+
+const isOneShot = (v: Voce): v is { unaTantum: number } => "unaTantum" in v;
 
 const LISTINO: Record<string, Voce> = {
   "percorso-ver0": { mensile: 119, annuale: 1290, rinnovo: { tipo: "sconto20" } },
@@ -75,6 +80,8 @@ const LISTINO: Record<string, Voce> = {
     rinnovo: { tipo: "mantenimento", mensile: 39 },
   },
   "rating-economia-circolare": { mensile: 129, annuale: 1390, rinnovo: { tipo: "sconto20" } },
+  // One shot, nessun canone: si paga per l'intervento, non per il tempo.
+  "supporto-audit": { unaTantum: 390 },
 };
 
 /** Canoni all'euro; annuali alla decina. */
@@ -104,7 +111,7 @@ export function prezzoDettaglio(
   dim: Dimensione,
 ): PrezzoDettaglio | null {
   const v = LISTINO[slug];
-  if (!v || dim === "grande") return null;
+  if (!v || isOneShot(v) || dim === "grande") return null;
   const mensile = scala(v.mensile, dim);
   const annuale = scala(v.annuale, dim, true);
   const rinnovoMensile =
@@ -118,6 +125,20 @@ export function prezzoDettaglio(
     rinnovoMensile,
     rinnovoTipo: v.rinnovo.tipo,
   };
+}
+
+/** Il servizio si paga una tantum, senza canone? (es. supporto all'audit) */
+export function isUnaTantum(slug: string): boolean {
+  const v = LISTINO[slug];
+  return !!v && isOneShot(v);
+}
+
+/** Importo una tantum scalato per fascia. `null` se non è un one-shot o se
+ *  la fascia è "grande" (sempre su richiesta). */
+export function prezzoUnaTantum(slug: string, dim: Dimensione): number | null {
+  const v = LISTINO[slug];
+  if (!v || !isOneShot(v) || dim === "grande") return null;
+  return scala(v.unaTantum, dim);
 }
 
 /** Riga del ciclo di vita per card e riepiloghi (§12.Q). */
@@ -139,6 +160,8 @@ export function prezzoLabel(
   dim: Dimensione,
   formula: Formula,
 ): string | null {
+  const unaTantum = prezzoUnaTantum(slug, dim);
+  if (unaTantum !== null) return `${eur(unaTantum)} € una tantum`;
   const p = prezzoDettaglio(slug, dim);
   if (!p) return null;
   return formula === "mensile"
@@ -146,11 +169,13 @@ export function prezzoLabel(
     : `${eur(p.annuale)} €/anno`;
 }
 
-/** Etichetta "da X €/mese" per la vetrina (X = mensile anno 1, fascia micro). */
+/** Etichetta "da X €/mese" (o "da X € una tantum") per la vetrina, fascia micro. */
 export function prezzoDa(slug: string): string | null {
   const v = LISTINO[slug];
   if (!v) return null;
-  return `da ${eur(v.mensile)} €/mese`;
+  return isOneShot(v)
+    ? `da ${eur(v.unaTantum)} € una tantum`
+    : `da ${eur(v.mensile)} €/mese`;
 }
 
 /** Ciclo di vita in fascia micro, per le card della vetrina. */

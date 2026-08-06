@@ -6,7 +6,9 @@ import { validaPartitaIva } from "@/lib/piva";
 import {
   DIMENSIONI,
   FORMULE,
+  isUnaTantum,
   prezzoDettaglio,
+  prezzoUnaTantum,
   type Dimensione,
   type Formula,
 } from "@/lib/pricing";
@@ -55,15 +57,24 @@ export async function POST(request: NextRequest) {
   const dimensione = DIMENSIONI.includes(body.dimensione as Dimensione)
     ? (body.dimensione as Dimensione)
     : null;
-  const formula = FORMULE.includes(body.formula as Formula)
-    ? (body.formula as Formula)
-    : null;
   const tosAt = Date.parse(body.tosAcceptedAt ?? "");
   const mandatoAt = Date.parse(body.mandatoAcceptedAt ?? "");
 
-  if (!servizio || !dimensione || dimensione === "grande" || !formula) {
+  if (!servizio || !dimensione || dimensione === "grande") {
     return NextResponse.json({ error: "Ordine non valido." }, { status: 400 });
   }
+
+  // La forma di pagamento discende dal servizio, non da ciò che manda il
+  // client: i one-shot non hanno canone e i servizi a canone non hanno
+  // una tantum. La formula ricevuta conta solo per i secondi.
+  const oneShot = isUnaTantum(servizio.slug);
+  const formula = FORMULE.includes(body.formula as Formula)
+    ? (body.formula as Formula)
+    : null;
+  if (!oneShot && !formula) {
+    return NextResponse.json({ error: "Ordine non valido." }, { status: 400 });
+  }
+
   if (Number.isNaN(tosAt) || Number.isNaN(mandatoAt)) {
     return NextResponse.json(
       { error: "Consensi mancanti: torna allo step precedente." },
@@ -71,8 +82,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const prezzo = prezzoDettaglio(servizio.slug, dimensione);
-  if (!prezzo) {
+  const unaTantum = oneShot ? prezzoUnaTantum(servizio.slug, dimensione) : null;
+  const prezzo = oneShot ? null : prezzoDettaglio(servizio.slug, dimensione);
+  if (oneShot ? unaTantum === null : !prezzo) {
     return NextResponse.json({ error: "Prezzo non disponibile." }, { status: 400 });
   }
 
@@ -151,10 +163,16 @@ export async function POST(request: NextRequest) {
       servizio_slug: servizio.slug,
       taglio: TAGLIO[servizio.slug] ?? null,
       dimensione,
-      formula,
-      prezzo_canone: formula === "mensile" ? prezzo.mensile : prezzo.annuale,
-      // Formato unico §12.Q: niente più quote una tantum, tutto nel canone.
-      prezzo_una_tantum: null,
+      // `formula` è già validata sopra: non nulla quando non è un one-shot.
+      formula: oneShot ? ("una_tantum" as const) : formula!,
+      // Formato unico §12.Q: per i servizi a canone niente quote una tantum,
+      // tutto nel canone. Per i one-shot vale l'opposto: solo l'una tantum.
+      prezzo_canone: oneShot
+        ? null
+        : formula === "mensile"
+          ? prezzo!.mensile
+          : prezzo!.annuale,
+      prezzo_una_tantum: unaTantum,
       stato: "in_attivazione",
     })
     .select("id")

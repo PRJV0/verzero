@@ -1,6 +1,7 @@
 import {
   Leaf,
   FileText,
+  LifeBuoy,
   Scale,
   ShieldCheck,
   Building2,
@@ -375,7 +376,69 @@ export const SERVIZI: Servizio[] = [
       "Un argomento distintivo in gare e presentazioni commerciali",
     ],
   },
+  {
+    slug: "supporto-audit",
+    name: "Supporto all'audit di certificazione",
+    icon: LifeBuoy,
+    short:
+      "Hai ricevuto rilievi dall'organismo? Adeguiamo i documenti, anche se non li abbiamo fatti noi.",
+    cosE: "L'intervento mirato dopo la visita dell'organismo di certificazione: carichi i rilievi che hai ricevuto — osservazioni, raccomandazioni, non conformità maggiori o minori — e adeguiamo la documentazione del sistema di gestione perché risponda punto per punto. Si paga una volta, per l'intervento: nessun canone.",
+    copre: [
+      "Osservazioni e raccomandazioni",
+      "Non conformità minori e maggiori",
+      "Anche documenti non prodotti da noi",
+    ],
+    comeFunziona: [
+      "Carichi il rapporto di audit dell'organismo con i rilievi, e i documenti del sistema di gestione a cui si riferiscono.",
+      "Il Motore Ver0 associa ogni rilievo al requisito di norma richiamato e individua i documenti da modificare.",
+      "La documentazione viene revisionata dove serve e viene redatta una nota di risposta, rilievo per rilievo.",
+      "Un professionista del team tecnico verifica l'intero pacchetto prima della consegna: è un passaggio obbligatorio, non opzionale.",
+    ],
+    output: [
+      "Documentazione del sistema di gestione revisionata nei punti oggetto di rilievo",
+      "Nota di risposta ai rilievi, con il riferimento puntuale al requisito di norma richiamato",
+      "Verifica umana obbligatoria su tutto il pacchetto, con firma del professionista",
+    ],
+    requisiti: [
+      "Serve il rapporto di audit dell'organismo: senza i rilievi formalizzati non è possibile lavorare",
+      "Non promettiamo l'esito dell'audit: la decisione appartiene esclusivamente all'organismo di certificazione",
+      "Non contattiamo l'ente per tuo conto e non interloquiamo con gli auditor: l'indipendenza della parte terza resta intatta",
+      "Adeguiamo la documentazione; l'attuazione delle azioni correttive in azienda resta a carico tuo",
+    ],
+    documenti: [
+      "Rapporto di audit dell'organismo di certificazione con i rilievi formalizzati",
+      "Documentazione del sistema di gestione in vigore (manuale, procedure, moduli)",
+      "Eventuale piano di azioni correttive già concordato con l'organismo",
+      "Scadenza entro cui la risposta va trasmessa all'organismo",
+    ],
+    riferimenti: [
+      "UNI CEI EN ISO/IEC 17021-1:2015 (requisiti per gli organismi di certificazione dei sistemi di gestione)",
+      "La norma oggetto dell'audit: UNI EN ISO 9001, UNI EN ISO 14001, UNI/PdR 125 e altre",
+    ],
+    opportunita: [
+      "Le risposte ai rilievi hanno scadenze strette: intervenire subito evita la sospensione dell'iter",
+      "Funziona anche sui sistemi di gestione che non abbiamo prodotto noi: non serve rifare tutto da capo",
+      "Si paga una volta sola, per l'intervento: nessun canone e nessun impegno successivo",
+    ],
+  },
 ];
+
+/** Percorsi certificabili: pagine su cui compare il richiamo al supporto
+ *  all'audit (l'audit lo fa un organismo terzo, noi adeguiamo i documenti). */
+export const SERVIZI_CERTIFICABILI = [
+  "manuale-iso-9001",
+  "manuale-iso-14001",
+  "parita-di-genere-pdr-125",
+];
+
+/** Il richiamo, in formula unica per sito e area riservata. */
+export const RICHIAMO_SUPPORTO_AUDIT = {
+  slug: "supporto-audit",
+  titolo: "Hai già un audit in corso?",
+  testo:
+    "Possiamo aiutarti anche se i documenti non li abbiamo fatti noi: carichi i rilievi ricevuti dall'organismo e adeguiamo la documentazione.",
+  cta: "Scopri il supporto all'audit",
+};
 
 export function getServizio(slug: string): Servizio | undefined {
   return SERVIZI.find((s) => s.slug === slug);
@@ -515,6 +578,19 @@ export const VETRINA: CategoriaVetrina[] = [
         name: "ISO 26000 e ISO 20400 — aderenza",
         benefit: "Allineamento alle norme guida, spendibile verso le filiere.",
         roadmap: true,
+      },
+    ],
+  },
+  {
+    key: "trasversali",
+    title: "Trasversali",
+    sub: "Interventi mirati, senza canone",
+    voci: [
+      {
+        slug: "supporto-audit",
+        name: "Supporto all'audit di certificazione",
+        benefit:
+          "Rilievi ricevuti dall'organismo? Adeguiamo i documenti, anche se non li abbiamo fatti noi.",
       },
     ],
   },

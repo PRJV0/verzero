@@ -10,7 +10,9 @@ import {
   DIMENSIONE_RANGE,
   GRANDE_IMPRESA,
   RINNOVO_LIBERO,
+  isUnaTantum,
   prezzoDettaglio,
+  prezzoUnaTantum,
   rinnovoLabel,
   type Dimensione,
 } from "@/lib/pricing";
@@ -27,6 +29,9 @@ const eur = (n: number) => n.toLocaleString("it-IT");
 export function PrezzoBox({ slug }: { slug: string }) {
   const [dim, setDim] = useState<Dimensione>("micro");
   const p = prezzoDettaglio(slug, dim);
+  // Servizi one-shot: si paga l'intervento, non il tempo. Niente canone,
+  // niente ciclo di vita, niente pacchetto dell'abbonamento.
+  const unaTantum = prezzoUnaTantum(slug, dim);
 
   return (
     <div className="rounded-xl border-2 border-pine bg-white p-4">
@@ -83,7 +88,28 @@ export function PrezzoBox({ slug }: { slug: string }) {
         })}
       </div>
 
-      {p ? (
+      {unaTantum !== null ? (
+        <div key={`una-tantum-${dim}`} className="vz-price-in">
+          <p className="mt-4 text-xs text-gray-warm">Intervento</p>
+          <p className="font-display text-3xl tabular-nums text-pine">
+            {eur(unaTantum)} €
+          </p>
+          <p className="text-xs text-gray-light">una tantum · IVA esclusa</p>
+          <p className="mt-3 border-t border-line/70 pt-3 text-xs leading-relaxed text-gray-warm">
+            <span className="font-semibold text-pine">
+              Nessun canone e nessun rinnovo
+            </span>
+            <br />
+            Si paga una volta sola, per l&apos;intervento.
+          </p>
+          <Link
+            href={`/acquista/${slug}?dimensione=${dim}`}
+            className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg bg-pine px-4 py-2.5 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
+          >
+            Procedi all&apos;acquisto <ArrowRight size={15} />
+          </Link>
+        </div>
+      ) : p ? (
         <div key={dim} className="vz-price-in">
           {/* Canone mensile in evidenza (formato unico §12.Q) */}
           <p className="mt-4 text-xs text-gray-warm">Canone primo anno</p>
@@ -133,13 +159,19 @@ export function PrezzoBox({ slug }: { slug: string }) {
         </div>
       )}
 
-      {/* Il pacchetto abbonato, sempre visibile accanto al prezzo (SPEC §12.V) */}
-      <p className="mt-3 border-t border-line/70 pt-3 text-xs leading-relaxed text-gray-warm">
-        {CANONE_INLINE}{" "}
-        <Link href="/#canone" className="font-medium text-pine hover:underline">
-          Scopri perché l&apos;abbonamento
-        </Link>
-      </p>
+      {/* Il pacchetto abbonato, accanto al prezzo (SPEC §12.V): non vale per
+          i one-shot, dove non esiste alcun canone da spiegare. */}
+      {!isUnaTantum(slug) && (
+        <p className="mt-3 border-t border-line/70 pt-3 text-xs leading-relaxed text-gray-warm">
+          {CANONE_INLINE}{" "}
+          <Link
+            href="/#canone"
+            className="font-medium text-pine hover:underline"
+          >
+            Scopri perché l&apos;abbonamento
+          </Link>
+        </p>
+      )}
     </div>
   );
 }

@@ -25,13 +25,16 @@ import {
   DIMENSIONE_LABEL,
   DIMENSIONE_RANGE,
   FORMULE,
+  isUnaTantum,
   prezzoDettaglio,
+  prezzoUnaTantum,
   rinnovoLabel,
   RINNOVO_LIBERO,
   type Dimensione,
   type Formula,
 } from "@/lib/pricing";
 import { CANONE_INCLUDE } from "@/lib/canone";
+import { getServizio } from "@/lib/catalog";
 import {
   PASSWORD_REGOLE,
   passwordValida,
@@ -171,6 +174,8 @@ export function FunnelAcquisto({
   );
 
   const prezzo = prezzoDettaglio(slug, state.dimensione);
+  // Servizi one-shot (es. supporto all'audit): nessun canone, nessuna formula.
+  const unaTantum = prezzoUnaTantum(slug, state.dimensione);
   const tagli = TAGLI[slug];
 
   const riepilogo = (
@@ -256,11 +261,13 @@ export function FunnelAcquisto({
             <details className="mb-5 rounded-xl border border-line bg-white lg:hidden">
               <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-ink">
                 Riepilogo · {nome} ·{" "}
-                {prezzo
-                  ? state.formula === "mensile"
-                    ? `${eur(prezzo.mensile)} €/mese`
-                    : `${eur(prezzo.annuale)} €/anno`
-                  : ""}
+                {unaTantum !== null
+                  ? `${eur(unaTantum)} € una tantum`
+                  : prezzo
+                    ? state.formula === "mensile"
+                      ? `${eur(prezzo.mensile)} €/mese`
+                      : `${eur(prezzo.annuale)} €/anno`
+                    : ""}
               </summary>
               <div className="border-t border-line px-4 py-3">{riepilogo}</div>
             </details>
@@ -269,6 +276,7 @@ export function FunnelAcquisto({
           {state.step === 1 && (
             <StepRiepilogo
               headingRef={stepHeadingRef}
+              slug={slug}
               state={state}
               set={set}
               avanti={() => goTo(2)}
@@ -375,6 +383,7 @@ function RiepilogoPanel({
   tagli?: { slug: string; label: string }[];
 }) {
   const p = prezzoDettaglio(slug, state.dimensione);
+  const unaTantum = prezzoUnaTantum(slug, state.dimensione);
   return (
     <div className="text-sm">
       <p className="font-semibold text-ink">{nome}</p>
@@ -409,12 +418,38 @@ function RiepilogoPanel({
         <div className="flex justify-between">
           <dt>Formula</dt>
           <dd className="font-medium text-ink">
-            {state.formula === "mensile"
-              ? "Canone mensile"
-              : "Unica soluzione annuale (−10%)"}
+            {unaTantum !== null
+              ? "Una tantum"
+              : state.formula === "mensile"
+                ? "Canone mensile"
+                : "Unica soluzione annuale (−10%)"}
           </dd>
         </div>
       </dl>
+
+      {unaTantum !== null && (
+        <div
+          key={state.dimensione}
+          className="vz-price-in mt-3 border-t border-line/70 pt-3"
+        >
+          <p className="mt-1 flex items-baseline justify-between">
+            <span className="text-xs text-gray-warm">Intervento</span>
+            <span className="font-display text-2xl tabular-nums text-pine">
+              {eur(unaTantum)} €
+            </span>
+          </p>
+          <p className="text-right text-xs text-gray-light">
+            una tantum · IVA esclusa
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-gray-warm">
+            <span className="font-semibold text-pine">
+              Nessun canone e nessun rinnovo
+            </span>
+            <br />
+            Si paga una volta sola, per l&apos;intervento.
+          </p>
+        </div>
+      )}
 
       {p && (
         <div key={state.dimensione + state.formula} className="vz-price-in mt-3 border-t border-line/70 pt-3">
@@ -447,15 +482,22 @@ function RiepilogoPanel({
       )}
 
       <div className="mt-3 border-t border-line/70 pt-3">
-        <p className="text-xs font-semibold text-pine">Il canone include</p>
+        <p className="text-xs font-semibold text-pine">
+          {unaTantum !== null ? "L'intervento include" : "Il canone include"}
+        </p>
+        {/* I benefici del canone non valgono per un one-shot: lì l'elenco
+            giusto è ciò che l'intervento consegna. */}
         <ul className="mt-1.5 space-y-1">
-          {CANONE_INCLUDE.map((b) => (
+          {(unaTantum !== null
+            ? (getServizio(slug)?.output ?? [])
+            : CANONE_INCLUDE.map((b) => b.title)
+          ).map((voce) => (
             <li
-              key={b.title}
+              key={voce}
               className="flex items-start gap-1.5 text-xs text-gray-warm"
             >
               <Check size={12} className="mt-0.5 shrink-0 text-mint" />
-              {b.title}
+              {voce}
             </li>
           ))}
         </ul>
@@ -470,15 +512,18 @@ function RiepilogoPanel({
 
 function StepRiepilogo({
   headingRef,
+  slug,
   state,
   set,
   avanti,
 }: {
   headingRef: React.RefObject<HTMLHeadingElement | null>;
+  slug: string;
   state: FunnelState;
   set: (p: Partial<FunnelState>) => void;
   avanti: () => void;
 }) {
+  const oneShot = isUnaTantum(slug);
   return (
     <section aria-labelledby="step1-h">
       <h2
@@ -487,7 +532,7 @@ function StepRiepilogo({
         tabIndex={-1}
         className="font-display text-2xl text-ink outline-none"
       >
-        Componi il tuo abbonamento
+        {oneShot ? "Componi il tuo intervento" : "Componi il tuo abbonamento"}
       </h2>
       <p className="mt-1 text-sm text-gray-warm">
         Controlla le scelte nel riepilogo: si aggiorna a ogni modifica.
@@ -541,45 +586,55 @@ function StepRiepilogo({
         </p>
       </fieldset>
 
-      <fieldset className="mt-6">
-        <legend className="text-sm font-medium text-ink">
-          Formula di pagamento
-        </legend>
-        <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-          {FORMULE.map((f) => {
-            const selected = f === state.formula;
-            return (
-              <button
-                key={f}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                onClick={() => set({ formula: f })}
-                className={
-                  "rounded-lg border px-3 py-2.5 text-left transition-all " +
-                  (selected
-                    ? "border-pine bg-moss shadow-soft"
-                    : "border-line bg-white hover:border-pine/40")
-                }
-              >
-                <span
+      {/* I one-shot non hanno formula da scegliere: si paga l'intervento. */}
+      {oneShot ? (
+        <p className="mt-6 rounded-xl border border-line bg-paper px-4 py-3 text-sm text-gray-warm">
+          Intervento <strong className="font-semibold text-pine">una tantum</strong>:
+          nessun canone, nessun rinnovo, nessun impegno successivo.
+        </p>
+      ) : (
+        <fieldset className="mt-6">
+          <legend className="text-sm font-medium text-ink">
+            Formula di pagamento
+          </legend>
+          <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+            {FORMULE.map((f) => {
+              const selected = f === state.formula;
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => set({ formula: f })}
                   className={
-                    "block text-sm font-semibold " +
-                    (selected ? "text-pine-dark" : "text-ink")
+                    "rounded-lg border px-3 py-2.5 text-left transition-all " +
+                    (selected
+                      ? "border-pine bg-moss shadow-soft"
+                      : "border-line bg-white hover:border-pine/40")
                   }
                 >
-                  {f === "mensile" ? "Canone mensile" : "Unica soluzione annuale"}
-                </span>
-                <span className="block text-xs text-gray-warm">
-                  {f === "mensile"
-                    ? "impegno minimo 12 mesi"
-                    : "sconto 10% applicato"}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </fieldset>
+                  <span
+                    className={
+                      "block text-sm font-semibold " +
+                      (selected ? "text-pine-dark" : "text-ink")
+                    }
+                  >
+                    {f === "mensile"
+                      ? "Canone mensile"
+                      : "Unica soluzione annuale"}
+                  </span>
+                  <span className="block text-xs text-gray-warm">
+                    {f === "mensile"
+                      ? "impegno minimo 12 mesi"
+                      : "sconto 10% applicato"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      )}
 
       <button
         type="button"
@@ -1093,6 +1148,7 @@ function StepPagamento({
   const [invio, setInvio] = useState(false);
   const [errore, setErrore] = useState<string | null>(null);
   const p = prezzoDettaglio(slug, state.dimensione);
+  const unaTantum = prezzoUnaTantum(slug, state.dimensione);
 
   async function onCompleta() {
     setInvio(true);
@@ -1113,51 +1169,61 @@ function StepPagamento({
         Pagamento
       </h2>
 
-      <fieldset className="mt-5 max-w-md">
-        <legend className="text-sm font-medium text-ink">Formula</legend>
-        <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
-          {FORMULE.map((f) => {
-            const selected = f === state.formula;
-            return (
-              <button
-                key={f}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                onClick={() => set({ formula: f })}
-                className={
-                  "rounded-lg border px-3 py-2.5 text-left transition-all " +
-                  (selected
-                    ? "border-pine bg-moss shadow-soft"
-                    : "border-line bg-white hover:border-pine/40")
-                }
-              >
-                <span
+      {unaTantum !== null ? (
+        <p className="mt-5 max-w-md rounded-lg border border-line bg-paper px-4 py-3 text-sm text-gray-warm">
+          Importo dell&apos;intervento:{" "}
+          <strong className="font-semibold tabular-nums text-pine">
+            {eur(unaTantum)} €
+          </strong>{" "}
+          una tantum, IVA esclusa. Nessun canone e nessun rinnovo.
+        </p>
+      ) : (
+        <fieldset className="mt-5 max-w-md">
+          <legend className="text-sm font-medium text-ink">Formula</legend>
+          <div className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+            {FORMULE.map((f) => {
+              const selected = f === state.formula;
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => set({ formula: f })}
                   className={
-                    "block text-sm font-semibold " +
-                    (selected ? "text-pine-dark" : "text-ink")
+                    "rounded-lg border px-3 py-2.5 text-left transition-all " +
+                    (selected
+                      ? "border-pine bg-moss shadow-soft"
+                      : "border-line bg-white hover:border-pine/40")
                   }
                 >
-                  {f === "mensile"
-                    ? p
-                      ? `${eur(p.mensile)} €/mese`
-                      : "Mensile"
-                    : p
-                      ? `${eur(p.annuale)} €/anno`
-                      : "Annuale"}
-                </span>
-                <span className="block text-xs text-gray-warm">
-                  {f === "mensile"
-                    ? "impegno minimo 12 mesi"
-                    : p
-                      ? `unica soluzione · −10% · risparmi ${eur(p.risparmio)} €`
-                      : "unica soluzione · −10% applicato"}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </fieldset>
+                  <span
+                    className={
+                      "block text-sm font-semibold " +
+                      (selected ? "text-pine-dark" : "text-ink")
+                    }
+                  >
+                    {f === "mensile"
+                      ? p
+                        ? `${eur(p.mensile)} €/mese`
+                        : "Mensile"
+                      : p
+                        ? `${eur(p.annuale)} €/anno`
+                        : "Annuale"}
+                  </span>
+                  <span className="block text-xs text-gray-warm">
+                    {f === "mensile"
+                      ? "impegno minimo 12 mesi"
+                      : p
+                        ? `unica soluzione · −10% · risparmi ${eur(p.risparmio)} €`
+                        : "unica soluzione · −10% applicato"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+      )}
 
       <fieldset className="mt-6 max-w-md">
         <legend className="text-sm font-medium text-ink">

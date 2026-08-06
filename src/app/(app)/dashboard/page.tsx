@@ -1,8 +1,13 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { PackageCheck, Boxes } from "lucide-react";
+import { ArrowRight, PackageCheck, Boxes, LifeBuoy } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
-import { getServizio } from "@/lib/catalog";
+import {
+  RICHIAMO_SUPPORTO_AUDIT,
+  SERVIZI_CERTIFICABILI,
+  getServizio,
+} from "@/lib/catalog";
 import { DIMENSIONE_LABEL } from "@/lib/pricing";
 
 /**
@@ -84,13 +89,13 @@ export default async function DashboardPage() {
                     {nomeServizio(o.servizio_slug)}
                   </p>
                   <p className="text-xs text-gray-warm">
-                    {DIMENSIONE_LABEL[o.dimensione] ?? o.dimensione} · formula{" "}
-                    {o.formula} ·{" "}
-                    {o.prezzo_una_tantum
-                      ? `${o.prezzo_una_tantum.toLocaleString("it-IT")} € + `
-                      : ""}
-                    {o.prezzo_canone.toLocaleString("it-IT")} €/
-                    {o.formula === "mensile" ? "mese" : "anno"}
+                    {DIMENSIONE_LABEL[o.dimensione] ?? o.dimensione} ·{" "}
+                    {/* Una tantum e canone si escludono a vicenda. */}
+                    {o.formula === "una_tantum" || o.prezzo_canone === null
+                      ? `una tantum · ${(o.prezzo_una_tantum ?? 0).toLocaleString("it-IT")} €`
+                      : `formula ${o.formula} · ${o.prezzo_canone.toLocaleString("it-IT")} €/${
+                          o.formula === "mensile" ? "mese" : "anno"
+                        }`}
                   </p>
                 </div>
                 <span
@@ -121,19 +126,41 @@ export default async function DashboardPage() {
             {(moduli ?? []).map((m) => (
               <div
                 key={m.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-white p-4"
+                className="rounded-xl border border-line bg-white p-4"
               >
-                <p className="text-sm font-semibold text-ink">
-                  {nomeServizio(m.module)}
-                </p>
-                <span
-                  className={
-                    "rounded-full px-3 py-1 text-xs font-medium " +
-                    (STATO_BADGE[m.stato] ?? "bg-paper text-gray-warm")
-                  }
-                >
-                  {STATO_LABEL[m.stato] ?? m.stato}
-                </span>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-ink">
+                    {nomeServizio(m.module)}
+                  </p>
+                  <span
+                    className={
+                      "rounded-full px-3 py-1 text-xs font-medium " +
+                      (STATO_BADGE[m.stato] ?? "bg-paper text-gray-warm")
+                    }
+                  >
+                    {STATO_LABEL[m.stato] ?? m.stato}
+                  </span>
+                </div>
+
+                {/* Azione contestuale sui percorsi certificabili: l'audit lo
+                    fa un organismo terzo, i rilievi però si adeguano qui.
+                    Fase 2: al posto dell'acquisto arriverà il caricamento
+                    vero dei rilievi, con il resto della pipeline documentale. */}
+                {SERVIZI_CERTIFICABILI.includes(m.module) && (
+                  <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-line pt-3">
+                    <LifeBuoy size={16} className="shrink-0 text-pine" />
+                    <p className="min-w-0 flex-1 text-xs text-gray-warm">
+                      Hai ricevuto rilievi dall&apos;ente? Caricali qui: li
+                      associamo ai requisiti di norma e adeguiamo i documenti.
+                    </p>
+                    <Link
+                      href={`/acquista/${RICHIAMO_SUPPORTO_AUDIT.slug}`}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-pine px-3 py-1.5 text-xs font-medium text-pine transition-colors hover:bg-moss"
+                    >
+                      Carica i rilievi <ArrowRight size={13} />
+                    </Link>
+                  </div>
+                )}
               </div>
             ))}
           </div>

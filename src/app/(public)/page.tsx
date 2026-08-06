@@ -137,7 +137,7 @@ const ZERI = [
   {
     accent: "Zero",
     tail: "effort",
-    m: "Mai un dato che sappiamo già: il Motore Ver0 fa il lavoro pesante, tu confermi.",
+    m: "Non zero coinvolgimento: ti chiediamo solo i documenti che hai già — circa un'ora del tuo tempo. Il resto lo fa il Motore.",
   },
   {
     accent: "Zero",
@@ -205,12 +205,15 @@ export default function HomePage() {
               <ZeroWord>
                 <span className="text-3xl md:text-4xl">zero</span>
               </ZeroWord>{" "}
-              effort: mai un dato che sappiamo già.
+              effort: ti chiediamo solo i documenti che hai già.
             </p>
+            {/* §12.O: «zero effort» non si dichiara mai da solo — segue sempre
+                la definizione, e dove possibile la quantificazione. */}
             <p className="mt-4 max-w-lg text-sm text-gray-warm">
-              Il Motore Ver0 fa il lavoro pesante, le persone verificano, tu
-              raccogli il risultato — con prezzi pubblici e tempi che si misurano
-              in giorni.
+              Zero effort non vuol dire zero coinvolgimento: circa un&apos;ora
+              del tuo tempo per ciò che solo tu puoi darci, il resto lo fa il
+              Motore Ver0 — con le persone che verificano, prezzi pubblici e
+              tempi che si misurano in giorni.
             </p>
 
             <div className="mt-8">
@@ -527,6 +530,12 @@ export default function HomePage() {
             <ZeroWord tone="dark">zero</ZeroWord> scorciatoie sul Sigillo. E per
             la direzione di marcia: <ZeroWord tone="dark">verso zero</ZeroWord>{" "}
             sprechi, <ZeroWord tone="dark">verso zero</ZeroWord> emissioni.
+          </p>
+          {/* §12.O: la formula «zero effort» non resta mai senza definizione. */}
+          <p className="mx-auto mt-6 max-w-xl text-sm leading-relaxed text-moss/90">
+            Zero effort non vuol dire zero coinvolgimento: ti chiediamo solo ciò
+            che solo tu puoi darci — i documenti che hai già — e ci occupiamo di
+            tutto il resto.
           </p>
           <p className="mt-7 font-display text-2xl text-moss md:text-3xl">
             Lo Zero, da noi, non è il niente — è il traguardo.

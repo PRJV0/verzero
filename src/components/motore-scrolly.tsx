@@ -1,4 +1,14 @@
-import { MOTORE_FASI } from "@/lib/motore";
+import { Check, CircleAlert, Database, FileText, PenLine } from "lucide-react";
+
+import {
+  CAMPI_ESTRATTI,
+  DOCUMENTI_RICHIESTI,
+  DOCUMENTO_GENERATO,
+  MOTORE_FASI,
+  VERIFICA_UMANA,
+  ZERO_EFFORT_DEFINIZIONE,
+  ZERO_EFFORT_TEMPO,
+} from "@/lib/motore";
 
 import {
   Scrolly,
@@ -9,17 +19,205 @@ import {
 } from "./scrolly";
 
 /**
- * Sezione narrativa del Motore Ver0 (home e chi-siamo): il visual resta
- * fermo e le fasi si avvicendano allo scorrimento — documenti richiesti →
- * lettura → incrocio banche dati → generazione → verifica umana.
+ * Sezione del Motore Ver0 (home e chi-siamo).
  *
- * Registro scuro istituzionale. Avvicendamento: v. scrolly.tsx.
+ * SPEC §12.O — CONCRETEZZA: niente «zero da cui succedono cose». Ogni fase
+ * mostra un artefatto reale — la checklist dei documenti, i campi estratti
+ * con i loro valori, il documento generato con la norma citata, l'esito
+ * della verifica umana — e dichiara cosa entra, cosa esce e su quale norma.
+ * Le animazioni servono solo a passare da una fase all'altra.
  *
- * Attenzione: la sezione NON deve avere overflow nascosto. Un antenato che
+ * Ogni fase è una RIGA COMPLETA (artefatto + spiegazione): così quando lo
+ * scrollytelling degrada — su mobile, senza JS, con «riduci movimento» — la
+ * sequenza statica resta accoppiata e leggibile invece di separare i
+ * documenti dai loro testi.
+ *
+ * Attenzione: la sezione non deve avere overflow nascosto. Un antenato che
  * ritaglia diventa il contenitore di scorrimento del palco sticky e della
- * ViewTimeline, e li disattiva entrambi. I bagliori si ritagliano da sé,
- * dentro il proprio strato.
+ * ViewTimeline, e li disattiva entrambi (v. scrolly.tsx).
  */
+
+/** Cornice comune degli artefatti: una superficie chiara sul fondo scuro,
+ *  che li fa leggere come documenti veri e non come decorazioni. */
+function Foglio({
+  titolo,
+  icona: Icona,
+  children,
+}: {
+  titolo: string;
+  icona: typeof FileText;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl bg-white p-4 shadow-lift sm:p-5">
+      <div className="flex items-center gap-2 border-b border-line pb-3">
+        <Icona size={15} className="shrink-0 text-pine" />
+        <p className="text-xs font-semibold text-ink">{titolo}</p>
+        <span className="ml-auto shrink-0 text-[10px] uppercase tracking-widest text-gray-light">
+          esempio
+        </span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+const STATO = {
+  caricato: {
+    label: "caricato",
+    className: "bg-mint/10 text-mint",
+    Icona: Check,
+  },
+  recuperato: {
+    label: "recuperato da noi",
+    className: "bg-moss text-pine",
+    Icona: Database,
+  },
+  manca: {
+    label: "manca",
+    className: "bg-amber-soft text-amber-ink",
+    Icona: CircleAlert,
+  },
+} as const;
+
+/** Fase 1 — la checklist del percorso, con lo stato documento per documento. */
+function FoglioRichiesta() {
+  return (
+    <Foglio titolo="Percorso Carbon — documenti richiesti" icona={FileText}>
+      <ul className="mt-3 space-y-2.5">
+        {DOCUMENTI_RICHIESTI.map((d) => {
+          const s = STATO[d.stato];
+          return (
+            <li key={d.nome} className="flex items-start gap-3">
+              <span
+                className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${s.className}`}
+              >
+                <s.Icona size={13} />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-ink">
+                  {d.nome}
+                </span>
+                <span className="block text-xs text-gray-warm">
+                  {d.dettaglio}
+                </span>
+              </span>
+              <span
+                className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${s.className}`}
+              >
+                {s.label}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="mt-4 border-t border-line pt-3 text-xs text-gray-warm">
+        Il Motore ti dice esattamente cosa manca, prima che diventi un problema.
+      </p>
+    </Foglio>
+  );
+}
+
+/** Fase 2 — i campi estratti, con il valore in evidenza. */
+function FoglioLettura() {
+  return (
+    <Foglio titolo="Campi estratti dai tuoi documenti" icona={FileText}>
+      <div className="mt-3 space-y-3.5">
+        {CAMPI_ESTRATTI.map((d) => (
+          <div key={d.doc}>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-light">
+              {d.doc}
+            </p>
+            <dl className="mt-1.5 space-y-1">
+              {d.campi.map((c) => (
+                <div
+                  key={c.campo}
+                  className="flex items-baseline justify-between gap-3"
+                >
+                  <dt className="shrink-0 text-xs text-gray-warm">{c.campo}</dt>
+                  <dd className="min-w-0 truncate rounded bg-mint/10 px-1.5 py-0.5 text-xs font-medium tabular-nums text-pine">
+                    {c.valore}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ))}
+      </div>
+    </Foglio>
+  );
+}
+
+/** Fase 3 — il documento in uscita, con la norma citata in chiaro. */
+function FoglioGenerazione() {
+  return (
+    <Foglio titolo={DOCUMENTO_GENERATO.titolo} icona={FileText}>
+      <p className="mt-3 text-[11px] leading-relaxed text-pine">
+        Redatto secondo {DOCUMENTO_GENERATO.norma}
+      </p>
+      <table className="mt-3 w-full text-xs">
+        <tbody>
+          {DOCUMENTO_GENERATO.righe.map((r) => (
+            <tr key={r.voce} className="border-t border-line/70">
+              <td className="py-1.5 pr-2 text-gray-warm">
+                {r.voce}
+                <span className="block text-[10px] text-gray-light">
+                  fattore: {r.fonte}
+                </span>
+              </td>
+              <td className="py-1.5 text-right font-medium tabular-nums text-ink">
+                {r.valore}
+              </td>
+            </tr>
+          ))}
+          <tr className="border-t-2 border-pine">
+            <td className="py-2 pr-2 text-sm font-semibold text-ink">
+              {DOCUMENTO_GENERATO.totale.voce}
+            </td>
+            <td className="py-2 text-right text-sm font-semibold tabular-nums text-pine">
+              {DOCUMENTO_GENERATO.totale.valore}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p className="mt-3 text-xs text-gray-warm">{DOCUMENTO_GENERATO.nota}</p>
+    </Foglio>
+  );
+}
+
+/** Fase 4 — l'esito della verifica umana, rilievo compreso. */
+function FoglioVerifica() {
+  return (
+    <Foglio titolo="Verifica tecnica" icona={PenLine}>
+      <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-mint/10 px-2.5 py-1 text-xs font-medium text-mint">
+        <Check size={13} /> {VERIFICA_UMANA.esito}
+      </span>
+      <ul className="mt-3 space-y-1.5">
+        {VERIFICA_UMANA.controlli.map((c) => (
+          <li key={c} className="flex items-start gap-2 text-xs text-gray-warm">
+            <Check size={13} className="mt-0.5 shrink-0 text-mint" />
+            {c}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 rounded-lg bg-amber-soft px-3 py-2 text-xs leading-relaxed text-amber-ink">
+        <strong className="font-semibold">Rilievo: </strong>
+        {VERIFICA_UMANA.rilievo}
+      </p>
+      <p className="mt-3 border-t border-line pt-3 text-xs text-gray-warm">
+        {VERIFICA_UMANA.firma}
+      </p>
+    </Foglio>
+  );
+}
+
+const FOGLI = [
+  FoglioRichiesta,
+  FoglioLettura,
+  FoglioGenerazione,
+  FoglioVerifica,
+];
+
 export function MotoreScrolly() {
   return (
     <section className="relative bg-pine-deep px-5 py-16">
@@ -38,88 +236,61 @@ export function MotoreScrolly() {
             IL NOSTRO MOTORE
           </p>
           <h2 className="font-display text-4xl text-white md:text-5xl">
-            Raccolta documentale guidata
+            Che cosa succede ai tuoi documenti
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-moss">
-            Il Motore Ver0 ti chiede esattamente ciò che serve, lo legge, lo
-            incrocia con le fonti ufficiali e lo trasforma in documenti
-            conformi. Poi una persona verifica.
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-moss">
+            {ZERO_EFFORT_DEFINIZIONE} {ZERO_EFFORT_TEMPO} Qui sotto, fase per
+            fase, che cosa entra, che cosa esce e su quale norma.
           </p>
         </div>
 
-        <Scrolly steps={5} className="mt-10">
+        <Scrolly steps={4} className="mt-10">
           <ScrollyStage>
-            <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-2 md:gap-12">
-              {/* Palco: il Motore, sempre al centro della scena */}
-              <div className="relative mx-auto flex h-56 w-56 items-center justify-center md:h-72 md:w-72">
-                {/* Anello punteggiato di contesto */}
-                <span
-                  aria-hidden
-                  className="absolute inset-0 rounded-full border-2 border-dotted border-mint-bright/25"
-                />
-                {/* Alone che respira */}
-                <span className="vz-motore-glow absolute inset-8 rounded-full border border-mint-bright/40 bg-pine/60" />
-                {/* Zero canonico E1 */}
-                <svg
-                  viewBox="0 0 30 40"
-                  className="relative h-24 w-auto md:h-32"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <ellipse
-                    cx="15"
-                    cy="20"
-                    rx="11"
-                    ry="15"
-                    stroke="#2FCF9A"
-                    strokeWidth="3.5"
-                  />
-                </svg>
+            <ScrollySteps>
+              {MOTORE_FASI.map((f, i) => {
+                const Icona = f.icon;
+                const Foglio = FOGLI[i];
+                return (
+                  <ScrollyStep key={f.titolo} index={i + 1}>
+                    <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-2 md:gap-10">
+                      <Foglio />
 
-                {/* Icona della fase corrente, in orbita sul Motore */}
-                <div className="absolute -bottom-2 grid">
-                  {MOTORE_FASI.map((f, i) => {
-                    const Icon = f.icon;
-                    return (
-                      <ScrollyStep
-                        key={f.titolo}
-                        index={i + 1}
-                        className="col-start-1 row-start-1"
-                      >
-                        <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-mint-bright/40 bg-pine-deep text-mint-bright shadow-lift">
-                          <Icon size={24} />
-                        </span>
-                      </ScrollyStep>
-                    );
-                  })}
-                </div>
-              </div>
+                      <div>
+                        <p className="flex items-center gap-2 text-xs font-semibold tracking-widest text-mint-bright">
+                          <Icona size={15} /> FASE {i + 1} DI{" "}
+                          {MOTORE_FASI.length}
+                        </p>
+                        <h3 className="mt-2 font-display text-2xl leading-tight text-white md:text-3xl">
+                          {f.titolo}
+                        </h3>
+                        <p className="mt-3 max-w-md text-sm leading-relaxed text-moss">
+                          {f.desc}
+                        </p>
 
-              {/* Fasi: si avvicendano accanto al palco */}
-              <div>
-                <ScrollySteps className="min-h-[15rem] md:min-h-[16rem]">
-                  {MOTORE_FASI.map((f, i) => (
-                    <ScrollyStep key={f.titolo} index={i + 1}>
-                      <p className="text-xs font-semibold tracking-widest text-mint-bright">
-                        FASE {i + 1} DI {MOTORE_FASI.length}
-                      </p>
-                      <h3 className="mt-2 font-display text-2xl leading-tight text-white md:text-3xl">
-                        {f.titolo}
-                      </h3>
-                      <p className="mt-3 max-w-md text-sm leading-relaxed text-moss">
-                        {f.desc}
-                      </p>
-                      <p className="mt-4 inline-block rounded-full border border-mint-bright/25 bg-white/5 px-3.5 py-1.5 text-xs text-moss">
-                        {f.esempio}
-                      </p>
-                    </ScrollyStep>
-                  ))}
-                </ScrollySteps>
+                        {/* Il contratto della fase: entra / esce / norma */}
+                        <dl className="mt-5 space-y-2 border-t border-white/15 pt-4 text-xs">
+                          {[
+                            ["Entra", f.entra],
+                            ["Esce", f.esce],
+                            ["Norma", f.norma],
+                          ].map(([k, v]) => (
+                            <div key={k} className="flex gap-3">
+                              <dt className="w-12 shrink-0 font-semibold uppercase tracking-wider text-mint-bright">
+                                {k}
+                              </dt>
+                              <dd className="min-w-0 text-moss">{v}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </div>
+                    </div>
+                  </ScrollyStep>
+                );
+              })}
+            </ScrollySteps>
 
-                <div className="mt-8">
-                  <ScrollyProgress tone="dark" />
-                </div>
-              </div>
+            <div className="mx-auto mt-8 max-w-md">
+              <ScrollyProgress tone="dark" />
             </div>
           </ScrollyStage>
         </Scrolly>

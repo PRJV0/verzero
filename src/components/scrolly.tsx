@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+
+/** Sotto questa soglia la narrazione non parte mai (SPEC §12.O — mobile):
+ *  su schermo stretto il palco sticky ruba spazio alla lettura e lo
+ *  scorrimento lungo pesa. Meglio la sequenza statica, completa e fluida. */
+const SOGLIA_NARRAZIONE = "(min-width: 768px)";
 
 /**
  * Scrollytelling — impalcatura condivisa delle tre sezioni narrative
@@ -64,15 +69,29 @@ export function Scrolly({
   children,
 }: {
   /** Numero di fasi: guida l'altezza di scorrimento e le finestre. */
-  steps: 5 | 6;
+  steps: 4 | 5 | 6;
   className?: string;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  /** Larghezza sufficiente per la narrazione: si rivaluta al ridimensionamento
+   *  e alla rotazione, così passare a schermo stretto la disattiva davvero. */
+  const [largo, setLargo] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia(SOGLIA_NARRAZIONE);
+    const aggiorna = () => setLargo(mq.matches);
+    aggiorna();
+    mq.addEventListener("change", aggiorna);
+    return () => mq.removeEventListener("change", aggiorna);
+  }, []);
 
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
+
+    // Su mobile la sezione resta una sequenza statica impilata.
+    if (!largo) return;
 
     // Chi ha chiesto meno movimento resta sulla versione statica completa.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -164,14 +183,17 @@ export function Scrolly({
       window.removeEventListener("scroll", sorveglia);
     };
     window.addEventListener("scroll", sorveglia, { passive: true });
-    sorveglia();
+    // Primo controllo al fotogramma successivo: attivando la modalità narrata
+    // la sezione cambia altezza, e va confrontata a layout assestato.
+    const primo = requestAnimationFrame(sorveglia);
 
     return () => {
+      cancelAnimationFrame(primo);
       window.removeEventListener("scroll", sorveglia);
       animazioni.forEach((a) => a.cancel());
       delete root.dataset.live;
     };
-  }, [steps]);
+  }, [steps, largo]);
 
   return (
     <div

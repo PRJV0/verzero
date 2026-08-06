@@ -45,8 +45,11 @@ type Order = {
   servizio_slug: string;
   taglio: string | null;
   dimensione: Dimensione;
-  formula: Formula;
-  prezzo_canone: number;
+  /** "una_tantum" per i servizi one-shot senza canone (supporto all'audit). */
+  formula: Formula | "una_tantum";
+  /** Nullo sugli ordini una tantum: lì il prezzo sta in prezzo_una_tantum.
+   *  Il vincolo prezzo_coerente a database tiene le due forme esclusive. */
+  prezzo_canone: number | null;
   prezzo_una_tantum: number | null;
   stato: "in_attivazione" | "attivo" | "disdetto";
   created_at: string;
