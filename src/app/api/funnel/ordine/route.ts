@@ -19,8 +19,11 @@ import { DOC_VERSION, risolviUtente } from "../_lib";
 const TAGLIO: Record<string, string> = {
   "carbon-light": "light",
   "carbon-completa": "completa",
+  "bilancio-vsme-base": "base",
+  "bilancio-vsme-avanzato": "avanzato",
   "manuale-iso-9001": "9001",
   "manuale-iso-14001": "14001",
+  "manuale-iso-45001": "45001",
 };
 
 /**

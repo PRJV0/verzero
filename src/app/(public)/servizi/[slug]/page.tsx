@@ -89,6 +89,18 @@ export default async function ServizioPage({
             {s.cosE}
           </p>
 
+          {/* Perimetro del servizio: quando c'è un confine, si dichiara qui,
+              subito, non in fondo tra i vincoli (§12.M — DVR escluso). */}
+          {s.perimetro && (
+            <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-ink/25 bg-amber-soft p-4">
+              <Info size={16} className="mt-0.5 shrink-0 text-amber-ink" />
+              <p className="text-sm leading-relaxed text-amber-ink">
+                <strong className="font-semibold">Perimetro del servizio: </strong>
+                {s.perimetro}
+              </p>
+            </div>
+          )}
+
           {/* Come funziona con Ver0 */}
           <div className="mb-3 rounded-xl border border-line bg-white p-4">
             <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">

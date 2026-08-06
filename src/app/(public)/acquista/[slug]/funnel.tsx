@@ -64,13 +64,28 @@ const TAGLI: Record<string, { slug: string; label: string }[]> = {
     { slug: "carbon-light", label: "Light · Scope 1+2" },
     { slug: "carbon-completa", label: "Completa · Scope 1-2-3" },
   ],
+  "bilancio-vsme-base": [
+    { slug: "bilancio-vsme-base", label: "Base · modulo base" },
+    { slug: "bilancio-vsme-avanzato", label: "Avanzato · + modulo completo" },
+  ],
+  "bilancio-vsme-avanzato": [
+    { slug: "bilancio-vsme-base", label: "Base · modulo base" },
+    { slug: "bilancio-vsme-avanzato", label: "Avanzato · + modulo completo" },
+  ],
+  "manuale-iso-45001": [
+    { slug: "manuale-iso-9001", label: "ISO 9001 · qualità" },
+    { slug: "manuale-iso-14001", label: "ISO 14001 · ambiente" },
+    { slug: "manuale-iso-45001", label: "ISO 45001 · sicurezza" },
+  ],
   "manuale-iso-9001": [
     { slug: "manuale-iso-9001", label: "ISO 9001 · qualità" },
     { slug: "manuale-iso-14001", label: "ISO 14001 · ambiente" },
+    { slug: "manuale-iso-45001", label: "ISO 45001 · sicurezza" },
   ],
   "manuale-iso-14001": [
     { slug: "manuale-iso-9001", label: "ISO 9001 · qualità" },
     { slug: "manuale-iso-14001", label: "ISO 14001 · ambiente" },
+    { slug: "manuale-iso-45001", label: "ISO 45001 · sicurezza" },
   ],
 };
 
@@ -406,6 +421,13 @@ function RiepilogoPanel({
             </Link>
           ))}
         </div>
+      )}
+
+      {/* Il perimetro si dichiara anche qui: è il punto in cui si compra. */}
+      {getServizio(slug)?.perimetro && (
+        <p className="mt-2 rounded-lg bg-amber-soft px-3 py-2 text-xs leading-relaxed text-amber-ink">
+          {getServizio(slug)!.perimetro}
+        </p>
       )}
 
       <dl className="mt-3 space-y-1 text-xs text-gray-warm">

@@ -64,6 +64,12 @@ const LISTINO: Record<string, Voce> = {
   "carbon-light": { mensile: 45, annuale: 490, rinnovo: { tipo: "sconto20" } },
   "carbon-completa": { mensile: 75, annuale: 810, rinnovo: { tipo: "sconto20" } },
   "bilancio-vsme-base": { mensile: 89, annuale: 960, rinnovo: { tipo: "sconto20" } },
+  // Modulo base + modulo completo dello standard EFRAG (§12.L).
+  "bilancio-vsme-avanzato": {
+    mensile: 129,
+    annuale: 1390,
+    rinnovo: { tipo: "sconto20" },
+  },
   "manuale-iso-9001": {
     mensile: 139,
     annuale: 1500,
@@ -78,6 +84,31 @@ const LISTINO: Record<string, Voce> = {
     mensile: 119,
     annuale: 1290,
     rinnovo: { tipo: "mantenimento", mensile: 39 },
+  },
+  // Famiglia A, allineato agli altri manuali ISO (§12.M).
+  "manuale-iso-45001": {
+    mensile: 139,
+    annuale: 1500,
+    rinnovo: { tipo: "mantenimento", mensile: 59 },
+  },
+  // Famiglia B — linee guida non certificabili, venduti come add-on di
+  // UNI/PdR 125 e ISO 45001: prezzo ridotto (§12.M).
+  "iso-45003": {
+    mensile: 59,
+    annuale: 640,
+    rinnovo: { tipo: "mantenimento", mensile: 29 },
+  },
+  "iso-30415": {
+    mensile: 59,
+    annuale: 640,
+    rinnovo: { tipo: "mantenimento", mensile: 29 },
+  },
+  // Schema accreditato di parte terza: impianto più oneroso (catena di
+  // fornitura, evidenze sul personale). Prezzo da validare sul mercato.
+  sa8000: {
+    mensile: 179,
+    annuale: 1930,
+    rinnovo: { tipo: "mantenimento", mensile: 79 },
   },
   "rating-economia-circolare": { mensile: 129, annuale: 1390, rinnovo: { tipo: "sconto20" } },
   // One shot, nessun canone: si paga per l'intervento, non per il tempo.

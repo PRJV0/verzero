@@ -5,6 +5,7 @@ import {
   Scale,
   ShieldCheck,
   Building2,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 
@@ -36,6 +37,15 @@ export type Servizio = {
   requisiti: string[];
   /** Opportunità: perché conviene adesso (resta in ogni pagina). */
   opportunita: string[];
+  /**
+   * Perimetro del servizio, quando c'è un confine da dichiarare senza
+   * equivoci (es. ISO 45001: il DVR resta obbligo del datore di lavoro).
+   * Va mostrato IN EVIDENZA in ogni punto di contatto: scheda, vetrina,
+   * funnel d'acquisto.
+   */
+  perimetro?: string;
+  /** Lo stesso confine in una riga, per la vetrina e gli spazi stretti. */
+  perimetroBreve?: string;
   /** Badge "cosa copre": mostrati sotto il titolo del dettaglio. */
   copre?: string[];
   /**
@@ -228,6 +238,51 @@ export const SERVIZI: Servizio[] = [
     ],
   },
   {
+    slug: "bilancio-vsme-avanzato",
+    name: "Bilancio VSME Avanzato",
+    icon: FileText,
+    short:
+      "Il VSME completo: modulo base più il modulo comprehensive, per partner e finanziatori esigenti.",
+    cosE: "Il bilancio di sostenibilità VSME nella versione estesa: al modulo base si aggiunge il modulo completo dello standard EFRAG — politiche, azioni e obiettivi, più le informazioni richieste da partner commerciali e finanziatori quando il modulo base non basta a chiudere la richiesta.",
+    copre: [
+      "Tutto il modulo base",
+      "Modulo completo: politiche, azioni, obiettivi",
+      "Upgrade dal Base pagando la differenza",
+    ],
+    comeFunziona: [
+      "Si parte dal modulo base: anagrafica e dati economici precompilati, indicatori ambientali dai moduli carbon se attivi.",
+      "Il questionario guidato prosegue sulle sezioni del modulo completo: politiche adottate, azioni in corso, obiettivi con orizzonte temporale.",
+      "Il Motore Ver0 genera la narrativa estesa sui tuoi dati; la rivedi e la approvi sezione per sezione.",
+      "Il team tecnico valida il bilancio prima dell'emissione.",
+    ],
+    output: [
+      "Bilancio conforme allo standard VSME (modulo base e modulo completo), in PDF e in versione online condivisibile",
+      "Sezione politiche, azioni e obiettivi compilata secondo le definizioni dello standard",
+      "Informazioni aggiuntive per partner commerciali e finanziatori",
+      "Importazione automatica degli indicatori dagli altri moduli attivi",
+    ],
+    requisiti: [
+      "Oltre ai dati del modulo base servono politiche e obiettivi formalizzati: dove non esistono, il percorso aiuta a definirli ma la decisione resta dell'impresa",
+      "Lo standard VSME è volontario: non sostituisce obblighi di rendicontazione eventualmente applicabili alla tua impresa",
+    ],
+    documenti: [
+      "Tutti i documenti previsti per il VSME Base",
+      "Politiche formalizzate su ambiente, personale, catena di fornitura",
+      "Obiettivi di sostenibilità già deliberati, con orizzonte temporale",
+      "Evidenze delle azioni in corso (progetti, investimenti, iniziative)",
+      "Informazioni su rapporti con partner commerciali e finanziatori",
+    ],
+    riferimenti: [
+      "Standard VSME (EFRAG), modulo base e modulo completo",
+      "GHG Protocol e UNI EN ISO 14064-1 per gli indicatori ambientali",
+    ],
+    opportunita: [
+      "Quando il modulo base non basta, evita di rifare il lavoro: il completo si costruisce sugli stessi dati",
+      "Le informazioni del modulo completo sono quelle che banche e capofiliera chiedono in seconda battuta",
+      "Percorso qualificante per il Sigillo Ver0",
+    ],
+  },
+  {
     slug: "manuale-iso-9001",
     name: "Manuale ISO 9001",
     icon: Scale,
@@ -340,6 +395,204 @@ export const SERVIZI: Servizio[] = [
     ],
   },
   {
+    slug: "manuale-iso-45001",
+    name: "Manuale ISO 45001",
+    icon: ShieldCheck,
+    short:
+      "Il sistema di gestione della sicurezza sul lavoro, integrato con il tuo DVR.",
+    cosE: "L'impianto documentale del sistema di gestione della salute e sicurezza sul lavoro secondo UNI ISO 45001:2018: politica, analisi del contesto, ruoli e responsabilità, procedure operative, gestione delle emergenze, monitoraggio, audit interni e riesame della direzione. Il sistema si innesta sulla valutazione dei rischi che l'impresa ha già.",
+    // Il confine va detto prima di ogni cosa: è la differenza tra un
+    // servizio corretto e una promessa che non possiamo mantenere.
+    perimetro:
+      "Produciamo il sistema di gestione e lo integriamo con il tuo DVR. Il DVR resta un obbligo indelegabile del datore di lavoro (artt. 17, 28 e 29 D.Lgs. 81/2008): lo redigi tu con il tuo RSPP e non rientra in questo servizio.",
+    perimetroBreve:
+      "Il DVR non è incluso: resta obbligo del datore di lavoro.",
+    copre: [
+      "Sistema di gestione UNI ISO 45001:2018",
+      "Integrazione con il DVR esistente",
+      "DVR escluso: resta del datore di lavoro",
+    ],
+    comeFunziona: [
+      "Il Motore Ver0 raccoglie visura, organigramma della sicurezza (datore di lavoro, RSPP, medico competente, RLS), DVR in vigore e documentazione già presente.",
+      "Legge il DVR e ne riprende pericoli, misure e scadenze per costruire il sistema attorno alla valutazione dei rischi che hai già, senza duplicarla.",
+      "Genera manuale, politica, procedure, modulistica, piano di audit interni e riesame della direzione secondo la struttura HLS della norma.",
+      "Un professionista del team tecnico verifica l'impianto prima della consegna; il fascicolo è pronto per l'audit dell'organismo accreditato.",
+    ],
+    output: [
+      "Manuale del sistema di gestione SSL secondo UNI ISO 45001:2018",
+      "Politica per la salute e sicurezza, procedure e modulistica operativa",
+      "Piano di audit interni, indicatori di monitoraggio e verbale di riesame della direzione",
+      "Matrice di correlazione tra requisiti della norma e documenti prodotti, per l'audit dell'ente",
+    ],
+    requisiti: [
+      "Serve un DVR in vigore: senza la valutazione dei rischi il sistema non può essere costruito",
+      "Il DVR non rientra nel servizio ed è obbligo indelegabile del datore di lavoro (artt. 17, 28 e 29 D.Lgs. 81/2008)",
+      "La certificazione è rilasciata esclusivamente da organismi accreditati: Verzero prepara il fascicolo e accompagna, non certifica",
+      "Il sistema produce effetti solo se attuato: la documentazione è la base, l'applicazione quotidiana resta dell'impresa",
+    ],
+    documenti: [
+      "Visura camerale aggiornata",
+      "DVR in vigore e relativi allegati",
+      "Organigramma della sicurezza: datore di lavoro, dirigenti, preposti, RSPP, medico competente, RLS",
+      "Registro della formazione e attestati in corso di validità",
+      "Elenco degli infortuni e dei mancati infortuni degli ultimi anni",
+      "Procedure, istruzioni operative e DUVRI già in uso, se esistenti",
+    ],
+    riferimenti: [
+      "UNI ISO 45001:2018 (sistemi di gestione per la salute e sicurezza sul lavoro)",
+      "D.Lgs. 81/2008, in particolare artt. 17, 28, 29 e 30",
+      "D.Lgs. 231/2001 per la responsabilità amministrativa degli enti",
+    ],
+    opportunita: [
+      "L'art. 30 comma 5 del D.Lgs. 81/2008 riconosce la presunzione di conformità ai modelli definiti secondo le linee guida UNI-INAIL o BS OHSAS 18001:2007 «per le parti corrispondenti»: ISO 45001 ne ha preso il posto come riferimento di mercato. Attenzione: l'efficacia esimente ex D.Lgs. 231/2001 dipende dall'attuazione effettiva del sistema e dalla vigilanza sul suo funzionamento — non è mai automatica e nessuno può prometterla",
+      "Riduzione del premio INAIL tramite il modello OT23, che attribuisce punteggio agli interventi di miglioramento documentati",
+      "Qualifica fornitori: nelle filiere industriali e negli appalti la certificazione SSL è spesso un requisito di ammissione",
+    ],
+  },
+  {
+    slug: "iso-45003",
+    name: "Aderenza UNI ISO 45003",
+    icon: ShieldCheck,
+    short:
+      "Rischi psicosociali e benessere organizzativo: aderenza documentata, non certificabile.",
+    cosE: "Il percorso di aderenza documentata alla UNI ISO 45003:2021, la linea guida per la gestione dei rischi psicosociali sul lavoro. Non è una norma certificabile: produce un impianto documentale che dimostra come l'organizzazione identifica, valuta e gestisce i fattori di rischio psicosociale, spendibile verso committenti e filiere.",
+    copre: [
+      "Linea guida: nessuna certificazione possibile",
+      "Add-on di UNI/PdR 125 e ISO 45001",
+      "Aderenza documentata e dimostrabile",
+    ],
+    comeFunziona: [
+      "Il Motore Ver0 riprende organigramma, dati di organico e — se attivi — i documenti dei percorsi UNI/PdR 125 e ISO 45001, evitando di richiedere due volte le stesse cose.",
+      "Un questionario guidato mappa i fattori di rischio psicosociale previsti dalla linea guida: carichi, autonomia, relazioni, cambiamento organizzativo.",
+      "La piattaforma genera politica, procedura di gestione dei rischi psicosociali, piano di miglioramento e indicatori di monitoraggio.",
+      "Il team tecnico verifica la coerenza dell'impianto prima della consegna.",
+    ],
+    output: [
+      "Politica e procedura per la gestione dei rischi psicosociali secondo UNI ISO 45003:2021",
+      "Mappa dei fattori di rischio con misure di gestione associate",
+      "Piano di miglioramento con indicatori e responsabilità",
+      "Relazione di aderenza: come l'organizzazione risponde ai punti della linea guida",
+    ],
+    requisiti: [
+      "UNI ISO 45003 è una linea guida: non esiste certificazione accreditata di conformità e nessuno può rilasciarla",
+      "Il percorso documenta l'aderenza, non sostituisce la valutazione dei rischi da stress lavoro-correlato prevista dal D.Lgs. 81/2008",
+      "I dati sul personale si trattano in forma aggregata: nessun profilo individuale",
+    ],
+    documenti: [
+      "Organigramma e dati di organico aggregati",
+      "Valutazione del rischio da stress lavoro-correlato in vigore",
+      "Politiche su orari, conciliazione, lavoro da remoto, se esistenti",
+      "Esiti di eventuali indagini di clima già svolte",
+    ],
+    riferimenti: [
+      "UNI ISO 45003:2021 (gestione dei rischi psicosociali sul lavoro — linee guida)",
+      "D.Lgs. 81/2008 per la valutazione del rischio da stress lavoro-correlato",
+    ],
+    opportunita: [
+      "Completa il sistema sicurezza dove ISO 45001 si ferma: il rischio psicosociale è la parte che le imprese documentano meno",
+      "Si costruisce sui dati già raccolti per UNI/PdR 125 e ISO 45001: il percorso aggiuntivo è breve",
+      "Evidenza utile nei questionari ESG e nelle richieste dei capofiliera sulla dimensione sociale",
+    ],
+  },
+  {
+    slug: "iso-30415",
+    name: "Aderenza UNI ISO 30415",
+    icon: Users,
+    short:
+      "Diversità e inclusione: aderenza documentata alla linea guida, non certificabile.",
+    cosE: "Il percorso di aderenza documentata alla UNI ISO 30415:2021, la linea guida sulla gestione della diversità e dell'inclusione nelle risorse umane. Non è certificabile: produce l'impianto documentale che mostra come l'organizzazione presidia responsabilità, processi e indicatori di D&I lungo il ciclo di vita delle persone.",
+    copre: [
+      "Linea guida: nessuna certificazione possibile",
+      "Add-on naturale di UNI/PdR 125",
+      "Aderenza documentata e dimostrabile",
+    ],
+    comeFunziona: [
+      "Se il percorso UNI/PdR 125 è attivo, il Motore Ver0 riusa KPI, politiche e procedure già prodotti: non ti chiede due volte gli stessi dati.",
+      "Un questionario guidato copre le aree della linea guida: governance della D&I, selezione, sviluppo, retribuzione, ambiente di lavoro, rapporti con la catena di fornitura.",
+      "La piattaforma genera politica, procedure e piano d'azione con indicatori e responsabilità assegnate.",
+      "Il team tecnico verifica l'impianto prima della consegna.",
+    ],
+    output: [
+      "Politica e procedure di diversità e inclusione secondo UNI ISO 30415:2021",
+      "Matrice di responsabilità sulle aree della linea guida",
+      "Set di indicatori D&I con baseline e obiettivi",
+      "Relazione di aderenza, spendibile verso committenti e filiere",
+    ],
+    requisiti: [
+      "UNI ISO 30415 è una linea guida: non esiste certificazione accreditata di conformità",
+      "Non sostituisce la certificazione della parità di genere UNI/PdR 125, che è invece certificabile da organismo accreditato",
+      "I dati su genere, retribuzioni e caratteristiche personali si trattano solo in forma aggregata",
+    ],
+    documenti: [
+      "Organigramma e dati di organico aggregati per genere, inquadramento e anzianità",
+      "Politiche di selezione, sviluppo e retribuzione, se formalizzate",
+      "Documentazione del percorso UNI/PdR 125, se attivo",
+      "Codice etico e procedure di segnalazione, se esistenti",
+    ],
+    riferimenti: [
+      "UNI ISO 30415:2021 (gestione delle risorse umane — diversità e inclusione)",
+      "UNI/PdR 125:2022 per la parte certificabile sulla parità di genere",
+    ],
+    opportunita: [
+      "Estende il lavoro della UNI/PdR 125 alle dimensioni di inclusione che la prassi non copre",
+      "Risponde alle sezioni sociali dei questionari ESG con documenti, non con dichiarazioni",
+      "Argomento di posizionamento nelle gare e nelle relazioni con i grandi committenti",
+    ],
+  },
+  {
+    slug: "sa8000",
+    name: "Preparazione SA8000",
+    icon: Users,
+    short:
+      "Lo schema internazionale di responsabilità sociale: preparazione documentale e accompagnamento all'audit.",
+    cosE: "La preparazione alla certificazione SA8000, lo schema di responsabilità sociale di Social Accountability International: sistema di gestione, presidio dei requisiti su lavoro minorile, lavoro forzato, salute e sicurezza, libertà di associazione, discriminazione, pratiche disciplinari, orario di lavoro e retribuzione. Verzero prepara il fascicolo e accompagna fino all'audit dell'organismo.",
+    // SA8000 non è una norma UNI/ISO: va detto, non lasciato intendere.
+    perimetro:
+      "SA8000 non è una norma UNI o ISO: è uno schema privato internazionale di Social Accountability International, certificabile da organismi accreditati SAAS. Lo trattiamo come schema riconosciuto di parte terza, distinto dalle norme UNI/ISO del resto del catalogo.",
+    perimetroBreve:
+      "Schema internazionale accreditato, non una norma UNI/ISO.",
+    copre: [
+      "Schema SAI, non norma UNI/ISO",
+      "Certificabile da organismo accreditato SAAS",
+      "Rilevante nelle filiere labour-intensive",
+    ],
+    comeFunziona: [
+      "Il Motore Ver0 raccoglie la documentazione su personale, orari, retribuzioni, salute e sicurezza e catena di fornitura, e segnala subito le lacune rispetto ai requisiti dello schema.",
+      "Genera il sistema di gestione della responsabilità sociale: politica, procedure, gestione delle segnalazioni, riesame e social performance team.",
+      "Costruisce il presidio della catena di fornitura, che nello schema è il punto più spesso carente: criteri di selezione, monitoraggio e azioni sui fornitori.",
+      "Un professionista del team tecnico verifica il fascicolo; l'audit e la certificazione restano dell'organismo accreditato.",
+    ],
+    output: [
+      "Sistema di gestione della responsabilità sociale secondo i requisiti SA8000",
+      "Procedure sui nove requisiti dello schema e sul funzionamento del social performance team",
+      "Impianto di monitoraggio della catena di fornitura, con criteri e registrazioni",
+      "Fascicolo pronto per l'audit dell'organismo accreditato",
+    ],
+    requisiti: [
+      "Lo schema richiede evidenze reali su orari, retribuzioni e trattamento del personale: la documentazione senza pratiche coerenti non supera l'audit",
+      "Verzero prepara e accompagna: la certificazione è rilasciata esclusivamente da organismi accreditati SAAS",
+      "I requisiti si estendono ai fornitori: serve la disponibilità a raccogliere informazioni lungo la filiera",
+      "I dati sul personale si trattano in forma aggregata, salvo quanto lo schema richiede espressamente",
+    ],
+    documenti: [
+      "Visura camerale e organigramma aggiornato",
+      "Contratti applicati, tabelle retributive e registri delle presenze",
+      "Documentazione su salute e sicurezza, incluso il DVR in vigore",
+      "Elenco dei fornitori con categoria merceologica e paese",
+      "Codice etico, procedure disciplinari e canale di segnalazione, se esistenti",
+    ],
+    riferimenti: [
+      "SA8000:2014 (Social Accountability International), certificabile da organismi accreditati SAAS",
+      "Convenzioni fondamentali dell'Organizzazione Internazionale del Lavoro richiamate dallo schema",
+      "D.Lgs. 81/2008 per la parte salute e sicurezza",
+    ],
+    opportunita: [
+      "Nelle filiere labour-intensive — tessile, agroalimentare, logistica, servizi — è spesso richiesta dai committenti come requisito di fornitura",
+      "Copre la dimensione sociale che i questionari ESG chiedono e che molte imprese documentano peggio",
+      "Il presidio sulla catena di fornitura resta utile anche per la due diligence richiesta dalle nuove normative europee",
+    ],
+  },
+  {
     slug: "rating-economia-circolare",
     name: "Rating economia circolare",
     icon: Building2,
@@ -428,7 +681,10 @@ export const SERVIZI: Servizio[] = [
 export const SERVIZI_CERTIFICABILI = [
   "manuale-iso-9001",
   "manuale-iso-14001",
+  "manuale-iso-45001",
   "parita-di-genere-pdr-125",
+  // Schema accreditato di parte terza: l'audit c'è, quindi i rilievi anche.
+  "sa8000",
 ];
 
 /** Il richiamo, in formula unica per sito e area riservata. */
@@ -461,6 +717,13 @@ export type VoceVetrina = {
   /** Presente solo per i servizi attivi: punta a /servizi/[slug]. */
   slug?: string;
   roadmap?: boolean;
+  /**
+   * Etichetta FATTUALE (§12.M). Ammesse solo diciture verificabili:
+   * "Novità", "In arrivo", "Spesso richiesto insieme a X" (se vero nel
+   * catalogo), "Premiante nei bandi" (se documentabile). Vietate le
+   * diciture di domanda ("in forte richiesta", "il più richiesto").
+   */
+  etichetta?: string;
 };
 
 export type CategoriaVetrina = {
@@ -519,6 +782,34 @@ export const VETRINA: CategoriaVetrina[] = [
         slug: "parita-di-genere-pdr-125",
         name: "Parità di genere UNI/PdR 125",
         benefit: "KPI e fascicolo pronti per l'audit; esonero contributivo.",
+        etichetta: "Premiante nei bandi",
+      },
+      {
+        slug: "manuale-iso-45001",
+        name: "Manuale ISO 45001 — sicurezza",
+        benefit:
+          "Il sistema sicurezza pronto per l'audit, integrato con il tuo DVR.",
+        etichetta: "Novità",
+      },
+      {
+        slug: "sa8000",
+        name: "Preparazione SA8000",
+        benefit:
+          "Lo schema internazionale di responsabilità sociale, fascicolo e accompagnamento all'audit.",
+        etichetta: "Novità",
+      },
+      {
+        slug: "iso-45003",
+        name: "Aderenza UNI ISO 45003",
+        benefit:
+          "Rischi psicosociali e benessere organizzativo: aderenza documentata.",
+        etichetta: "Spesso richiesto insieme a ISO 45001",
+      },
+      {
+        slug: "iso-30415",
+        name: "Aderenza UNI ISO 30415",
+        benefit: "Diversità e inclusione: aderenza documentata alla linea guida.",
+        etichetta: "Spesso richiesto insieme a UNI/PdR 125",
       },
       {
         name: "Ospitalità sostenibile UNI ISO 21401",
@@ -539,8 +830,15 @@ export const VETRINA: CategoriaVetrina[] = [
     voci: [
       {
         slug: "bilancio-vsme-base",
-        name: "Bilancio VSME",
+        name: "Bilancio VSME Base",
         benefit: "Un solo report standard al posto di dieci questionari.",
+      },
+      {
+        slug: "bilancio-vsme-avanzato",
+        name: "Bilancio VSME Avanzato",
+        benefit:
+          "Base più modulo completo: politiche, azioni e obiettivi per finanziatori esigenti.",
+        etichetta: "Novità",
       },
       {
         slug: "manuale-iso-9001",
@@ -570,9 +868,21 @@ export const VETRINA: CategoriaVetrina[] = [
         benefit: "Analisi ambientale precompilata dai tuoi dati carbon.",
       },
       {
+        slug: "manuale-iso-45001",
+        name: "ISO 45001 — sicurezza sul lavoro",
+        benefit:
+          "Sistema SSL integrato con il DVR, che resta del datore di lavoro.",
+        etichetta: "Novità",
+      },
+      {
         slug: "parita-di-genere-pdr-125",
         name: "UNI/PdR 125 — parità di genere",
         benefit: "Sistema di gestione della parità e fascicolo per l'audit.",
+      },
+      {
+        slug: "sa8000",
+        name: "SA8000 — responsabilità sociale",
+        benefit: "Schema internazionale accreditato: non è una norma UNI/ISO.",
       },
       {
         name: "ISO 26000 e ISO 20400 — aderenza",

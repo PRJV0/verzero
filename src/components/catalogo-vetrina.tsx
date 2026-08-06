@@ -6,6 +6,7 @@ import {
   GRANDE_IMPRESA,
   RINNOVO_LIBERO,
   prezzoDettaglio,
+  prezzoUnaTantum,
 } from "@/lib/pricing";
 import { CANONE_INLINE } from "@/lib/canone";
 
@@ -63,8 +64,10 @@ export function CatalogoVetrina() {
         </span>
         <div className="relative flex flex-wrap items-end justify-between gap-6">
           <div className="min-w-0 max-w-md">
+            {/* Etichetta fattuale (§12.M): mai diciture di domanda non
+                verificabili — qui il fatto è che il bundle unisce tre servizi. */}
             <span className="inline-flex items-center gap-1.5 rounded-full bg-mint-bright/20 px-3 py-1 text-xs font-semibold text-mint-bright">
-              <Leaf size={13} /> Il più scelto
+              <Leaf size={13} /> Tre servizi in uno
             </span>
             <p className="mt-3 font-display text-3xl text-white md:text-4xl">
               Percorso Ver0
@@ -122,6 +125,9 @@ export function CatalogoVetrina() {
                 const servizio = v.slug ? getServizio(v.slug) : undefined;
                 const Icon = servizio?.icon;
                 const p = v.slug ? prezzoDettaglio(v.slug, "micro") : null;
+                const unaTantum = v.slug
+                  ? prezzoUnaTantum(v.slug, "micro")
+                  : null;
 
                 const inner = (
                   <>
@@ -143,6 +149,19 @@ export function CatalogoVetrina() {
                         <p className="text-xs leading-relaxed text-gray-warm">
                           {v.benefit}
                         </p>
+                        {/* Etichette solo fattuali (§12.M) */}
+                        {v.etichetta && (
+                          <span className="mt-1.5 inline-block rounded-full bg-moss px-2 py-0.5 text-[10px] font-semibold text-pine">
+                            {v.etichetta}
+                          </span>
+                        )}
+                        {/* Perimetro dichiarato anche qui, in forma breve:
+                            è un punto di contatto come gli altri. */}
+                        {servizio?.perimetroBreve && (
+                          <span className="mt-1 block text-[11px] leading-relaxed text-amber-ink">
+                            {servizio.perimetroBreve}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="shrink-0 text-right">
@@ -152,14 +171,26 @@ export function CatalogoVetrina() {
                         </span>
                       ) : (
                         <>
+                          {/* Canone oppure one-shot: mai un "/mese" orfano. */}
                           <span className="block font-display text-lg tabular-nums text-pine">
-                            {p ? `${eur(p.mensile)} €` : null}
-                            <span className="text-xs text-gray-warm">
-                              /mese
-                            </span>
+                            {p ? (
+                              <>
+                                {eur(p.mensile)} €
+                                <span className="text-xs text-gray-warm">
+                                  /mese
+                                </span>
+                              </>
+                            ) : unaTantum !== null ? (
+                              <>
+                                {eur(unaTantum)} €
+                                <span className="block text-xs text-gray-warm">
+                                  una tantum
+                                </span>
+                              </>
+                            ) : null}
                           </span>
                           <span className="block text-xs text-gray-warm">
-                            {v.slug ? cicloVitaCompatto(v.slug) : null}
+                            {p && v.slug ? cicloVitaCompatto(v.slug) : null}
                           </span>
                           <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-pine">
                             Scopri
