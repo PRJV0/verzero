@@ -1,4 +1,13 @@
+import type { Metadata } from "next";
+
 import { LoginForm } from "./login-form";
+
+/** Fuori dall'indice: pagina di accesso, nessun valore organico. */
+export const metadata: Metadata = {
+  title: "Accedi",
+  description: "Accedi alla tua area riservata Ver0.",
+  robots: { index: false, follow: false },
+};
 
 /** Codici brevi dalla callback -> messaggi leggibili. */
 const ERROR_MESSAGES: Record<string, string> = {

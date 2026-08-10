@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   Leaf,
@@ -26,9 +27,11 @@ import {
   ScrollyStep,
   ScrollySteps,
 } from "@/components/scrolly";
+import { JsonLd } from "@/components/json-ld";
 import { PhotoDuotone } from "@/components/photo-duotone";
 import { CANONE_INCLUDE } from "@/lib/canone";
 import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
+import { SITO, jsonLdOrganization } from "@/lib/seo";
 
 /**
  * Home del sito pubblico — direzione grafica a tre registri (SPEC §12.W):
@@ -178,9 +181,33 @@ const PILASTRI = [
   "Qualifica verificabile da chiunque",
 ];
 
+/**
+ * La home tiene il titolo pieno del marchio (senza suffisso, che altrimenti
+ * lo ripeterebbe) ma dichiara comunque canonical e social come le altre.
+ */
+export const metadata: Metadata = {
+  title: { absolute: "Ver0 — la piattaforma che qualifica la tua impresa" },
+  description:
+    "Sostenibilità, sistemi di gestione e consulenza con il Motore Ver0: documenti conformi in giorni, verificati da professionisti, con prezzi pubblici.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "it_IT",
+    siteName: SITO.nome,
+    title: "Ver0 — la piattaforma che qualifica la tua impresa",
+    description:
+      "Sostenibilità, sistemi di gestione e consulenza con il Motore Ver0: documenti conformi in giorni, verificati da professionisti, con prezzi pubblici.",
+    url: "/",
+    images: [{ url: SITO.ogImage, width: 1200, height: 630, alt: SITO.nome }],
+  },
+};
+
 export default function HomePage() {
   return (
     <>
+      {/* Dati strutturati dell'organizzazione: una volta sola, in home. */}
+      <JsonLd dati={jsonLdOrganization()} />
+
       {/* HERO — Registro A pieno: apertura editoriale asimmetrica, display
           Fraunces grande, parola-Zero in evidenza, foto duotone già sopra la
           piega (a lato su desktop, a fascia su mobile). */}
@@ -239,7 +266,9 @@ export default function HomePage() {
               in palette; con uno scatto fotografico passare intensity="full") */}
           <PhotoDuotone
             src="/photos/hero.jpg"
+            alt="Paesaggio produttivo italiano: capannoni e campi coltivati, le imprese che Ver0 accompagna verso la qualifica."
             intensity="soft"
+            priority
             className="aspect-[16/10] rounded-3xl shadow-lift md:aspect-[4/5]"
           />
         </div>
@@ -343,6 +372,7 @@ export default function HomePage() {
           {/* SLOT FOTO 2 — consulenza (duotone soft; scatti veri: stesso path) */}
           <PhotoDuotone
             src="/photos/consulenza.jpg"
+            alt="Due professionisti al lavoro su documenti d'impresa: la verifica umana che chiude ogni percorso Ver0."
             intensity="soft"
             className="vz-reveal aspect-[4/3] rounded-2xl shadow-lift"
           />

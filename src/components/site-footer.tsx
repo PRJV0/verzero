@@ -10,7 +10,13 @@ export function SiteFooter() {
         <Link href="/" aria-label="Ver0 — home">
           <Logo className="text-lg" />
         </Link>
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-gray-warm">
+        <nav
+          aria-label="Navigazione footer"
+          className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-gray-warm"
+        >
+          <Link href="/" className="hover:text-pine">
+            Home
+          </Link>
           <Link href="/chi-siamo" className="hover:text-pine">
             Chi siamo
           </Link>
@@ -23,7 +29,10 @@ export function SiteFooter() {
           <Link href="/partner" className="hover:text-pine">
             Partner
           </Link>
-        </div>
+          <Link href="/contatti" className="hover:text-pine">
+            Contatti
+          </Link>
+        </nav>
       </div>
       <div className="mx-auto mt-4 flex max-w-5xl flex-wrap items-center justify-between gap-2 text-xs text-gray-light">
         <span className="flex flex-wrap gap-x-4 gap-y-1">

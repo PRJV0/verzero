@@ -2,13 +2,19 @@ import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
 
-/** Voci di navigazione del sito pubblico. */
+/**
+ * Voci di navigazione del sito pubblico. "Home" apre il menu anche se il
+ * logo resta cliccabile: chi legge una voce di menu non deve indovinare
+ * che il marchio sia un link.
+ */
 const NAV = [
+  { label: "Home", href: "/" },
   { label: "Chi siamo", href: "/chi-siamo" },
   { label: "Come funziona", href: "/#come-funziona" },
   { label: "Servizi", href: "/servizi" },
   { label: "Il Sigillo", href: "/sigillo" },
   { label: "Partner", href: "/partner" },
+  { label: "Contatti", href: "/contatti" },
 ];
 
 /** Header condiviso da tutte le pagine pubbliche. */

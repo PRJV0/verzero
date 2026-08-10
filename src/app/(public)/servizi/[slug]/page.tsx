@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { JsonLd } from "@/components/json-ld";
 import {
   RICHIAMO_SUPPORTO_AUDIT,
   SERVIZI,
@@ -20,6 +21,8 @@ import {
   SOLO_STANDARD_UFFICIALI,
   getServizio,
 } from "@/lib/catalog";
+import { prezzoDa, prezzoDettaglio, prezzoUnaTantum } from "@/lib/pricing";
+import { jsonLdBreadcrumb, jsonLdService, metadataPagina } from "@/lib/seo";
 
 import { PrezzoBox } from "./prezzo-box";
 
@@ -35,11 +38,20 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const s = getServizio(slug);
-  if (!s) return { title: "Servizio non trovato — Ver0" };
-  return {
-    title: `${s.name} — Ver0`,
-    description: s.cosE,
-  };
+  if (!s) return { title: "Servizio non trovato" };
+  // La description nasce dalla riga breve del catalogo, non dal paragrafo
+  // "cos'è": quello supera i 300 caratteri e verrebbe troncato a metà frase.
+  const prezzo = prezzoDa(s.slug);
+  const descrizione = `${s.short}${prezzo ? ` Prezzo pubblico ${prezzo}, per fascia dimensionale.` : ""}`;
+  // I nomi brevi da soli fanno un titolo povero: si allungano con ciò che
+  // la pagina offre davvero. Quelli già lunghi restano come sono.
+  const titolo =
+    s.name.length >= 30 ? s.name : `${s.name} — prezzi e come funziona`;
+  return metadataPagina({
+    title: titolo,
+    description: descrizione.slice(0, 160),
+    path: `/servizi/${s.slug}`,
+  });
 }
 
 /**
@@ -56,8 +68,35 @@ export default async function ServizioPage({
   const s = getServizio(slug);
   if (!s) notFound();
 
+  // Prezzo di partenza (fascia micro): è quello che dichiariamo nei dati
+  // strutturati, coerente con il "da" mostrato in vetrina.
+  const canone = prezzoDettaglio(s.slug, "micro");
+  const unaTantum = prezzoUnaTantum(s.slug, "micro");
+
   return (
     <main className="mx-auto max-w-3xl px-4 pb-12 pt-6">
+      {/* Dati strutturati: il servizio con la sua offerta in fascia micro,
+          la stessa esposta in pagina come prezzo di partenza. */}
+      <JsonLd
+        dati={jsonLdService({
+          nome: s.name,
+          descrizione: s.short,
+          path: `/servizi/${s.slug}`,
+          offerta: canone
+            ? { tipo: "canone", mensile: canone.mensile }
+            : unaTantum !== null
+              ? { tipo: "una-tantum", importo: unaTantum }
+              : null,
+        })}
+      />
+      <JsonLd
+        dati={jsonLdBreadcrumb([
+          { nome: "Home", path: "/" },
+          { nome: "Servizi", path: "/servizi" },
+          { nome: s.name, path: `/servizi/${s.slug}` },
+        ])}
+      />
+
       <Link
         href="/servizi"
         className="mb-4 flex items-center gap-1.5 text-xs text-gray-warm hover:text-pine"
@@ -221,6 +260,31 @@ export default async function ServizioPage({
           <p className="mt-3 text-center text-xs text-gray-light">
             Dati ospitati in UE · dietro lo schermo ci sono sempre persone
           </p>
+
+          {/* Link interni verso le pagine correlate (regola SEO §seo.ts) */}
+          <nav
+            aria-label="Pagine correlate"
+            className="mt-4 flex flex-col gap-1.5 border-t border-line pt-4 text-sm"
+          >
+            <Link
+              href="/sigillo"
+              className="font-medium text-pine hover:underline"
+            >
+              Come si ottiene il Sigillo Ver0
+            </Link>
+            <Link
+              href="/chi-siamo"
+              className="font-medium text-pine hover:underline"
+            >
+              Chi verifica i documenti
+            </Link>
+            <Link
+              href="/contatti"
+              className="font-medium text-pine hover:underline"
+            >
+              Hai una domanda su questo servizio?
+            </Link>
+          </nav>
         </div>
       </div>
 

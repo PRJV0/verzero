@@ -11,13 +11,16 @@ import {
 
 import { Sigillo } from "@/components/brand/sigillo";
 import { TargaVerifica } from "@/components/brand/targa";
+import { JsonLd } from "@/components/json-ld";
 import { SigilloScrolly } from "@/components/sigillo-scrolly";
+import { jsonLdBreadcrumb, jsonLdFaq, metadataPagina } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Il Sigillo Ver0 — non si compra, si dimostra",
+export const metadata: Metadata = metadataPagina({
+  title: "Il Sigillo Ver0: non si compra, si dimostra",
   description:
-    "Il Sigillo Ver0: marchio di verifica della piattaforma. Criteri pubblici, dati verificati dal team tecnico, ogni Sigillo verificabile pubblicamente con QR, millesimato ogni anno. Coerente con la direttiva UE 2024/825. Verzero prepara e accompagna; certificano gli enti terzi accreditati.",
-};
+    "Il marchio di verifica Ver0: criteri pubblici, dati validati da persone, QR di verifica e millesimo annuale. Coerente con la direttiva UE 2024/825.",
+  path: "/sigillo",
+});
 
 const PERCORSI = [
   "Carbon footprint con le categorie obbligatorie confermate",
@@ -45,9 +48,41 @@ const VERIFICA = [
   },
 ];
 
+/** Domande vere, con risposte già presenti in pagina: il markup FAQPage
+ *  descrive contenuto visibile, mai contenuto inventato per il motore. */
+const DOMANDE = [
+  {
+    domanda: "Il Sigillo Ver0 è una certificazione?",
+    risposta:
+      "No. È il marchio di verifica della piattaforma: attesta percorsi completati e validati dal team tecnico. Le certificazioni di norma le rilasciano esclusivamente gli enti terzi accreditati; Verzero prepara e accompagna.",
+  },
+  {
+    domanda: "Il Sigillo si può comprare?",
+    risposta:
+      "No. Non è mai una voce di prezzo: si ottiene completando percorsi qualificanti con criteri pubblici, e i dati vengono verificati prima del rilascio.",
+  },
+  {
+    domanda: "Quanto dura il Sigillo?",
+    risposta:
+      "Dodici mesi. Porta l'anno di rilascio e alla scadenza decade: chi lo espone è verificato oggi, non una volta nel passato.",
+  },
+  {
+    domanda: "Chi può verificare un Sigillo?",
+    risposta:
+      "Chiunque, senza login: il QR sul Sigillo apre la pagina pubblica di verifica dell'impresa, con ambito, anno, metodologia e data della verifica.",
+  },
+];
+
 export default function SigilloPage() {
   return (
     <main>
+      <JsonLd
+        dati={jsonLdBreadcrumb([
+          { nome: "Home", path: "/" },
+          { nome: "Il Sigillo", path: "/sigillo" },
+        ])}
+      />
+      <JsonLd dati={jsonLdFaq(DOMANDE)} />
       {/* Hero — registro scuro istituzionale (§11.X): pino profondo, sigillo
           tono-su-tono bianco con segmento menta acceso. */}
       <section className="bg-pine-deep px-5 py-16 text-center">
@@ -240,6 +275,28 @@ export default function SigilloPage() {
         </div>
       </section>
 
+      {/* Domande frequenti: le stesse marcate in JSON-LD */}
+      <section className="bg-paper px-5 py-16">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="font-display text-4xl text-ink md:text-5xl">
+            Domande frequenti
+          </h2>
+          <dl className="mt-8 space-y-5">
+            {DOMANDE.map((d) => (
+              <div
+                key={d.domanda}
+                className="rounded-2xl border border-line/70 bg-white p-5"
+              >
+                <dt className="font-display text-xl text-ink">{d.domanda}</dt>
+                <dd className="mt-2 text-sm leading-relaxed text-gray-warm">
+                  {d.risposta}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
       {/* CTA + nota conformità */}
       <section className="bg-white px-5 py-16 text-center">
         <h2 className="font-display text-4xl text-ink md:text-5xl">
@@ -258,6 +315,28 @@ export default function SigilloPage() {
             Scopri il Percorso Ver0 <ArrowRight size={15} />
           </Link>
         </div>
+        {/* Link interni verso le pagine correlate (regola SEO §seo.ts) */}
+        <nav
+          aria-label="Pagine correlate"
+          className="mx-auto mt-8 flex max-w-xl flex-wrap justify-center gap-x-5 gap-y-2 text-sm"
+        >
+          <Link href="/servizi" className="font-medium text-pine hover:underline">
+            Tutti i percorsi qualificanti
+          </Link>
+          <Link
+            href="/chi-siamo"
+            className="font-medium text-pine hover:underline"
+          >
+            Chi verifica i dati
+          </Link>
+          <Link
+            href="/contatti"
+            className="font-medium text-pine hover:underline"
+          >
+            Domande sul Sigillo? Scrivici
+          </Link>
+        </nav>
+
         <p className="mx-auto mt-8 max-w-xl text-xs leading-relaxed text-gray-light">
           Marchio di verifica conforme alla direttiva UE 2024/825: criteri
           pubblici per ogni percorso, verifica da parte del team tecnico,

@@ -18,21 +18,34 @@ export function PhotoDuotone({
   className = "",
   imgClassName = "",
   intensity = "full",
+  priority = false,
 }: {
   src: string;
-  /** Vuoto per immagini decorative (default). */
+  /**
+   * Descrittivo su ogni immagine che porta significato (regola SEO e
+   * accessibilità, v. src/lib/seo.ts). Vuoto SOLO se davvero decorativa:
+   * in quel caso l'immagine viene anche nascosta alle tecnologie
+   * assistive, che è la cosa corretta da fare.
+   */
   alt?: string;
   className?: string;
   imgClassName?: string;
   intensity?: "full" | "soft";
+  /** Sopra la piega: caricamento immediato, è la candidata LCP. */
+  priority?: boolean;
 }) {
   const soft = intensity === "soft";
+  const decorativa = alt.trim() === "";
   return (
     <div className={`relative overflow-hidden ${className}`}>
       {/* eslint-disable-next-line @next/next/no-img-element -- asset statico locale con filtri CSS; nessuna ottimizzazione runtime necessaria */}
       <img
         src={src}
         alt={alt}
+        aria-hidden={decorativa || undefined}
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
+        decoding="async"
         className={
           "h-full w-full object-cover " +
           (soft ? "saturate-[0.85] " : "grayscale contrast-110 ") +

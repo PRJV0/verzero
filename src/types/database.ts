@@ -80,6 +80,21 @@ type ModuleActivation = {
   updated_at: string;
 };
 
+/** Messaggi dal modulo pubblico /contatti: tabella chiusa, solo service_role. */
+type ContactMessage = {
+  id: string;
+  nome: string;
+  azienda: string | null;
+  email: string;
+  oggetto: "informazioni" | "servizi" | "partnership";
+  messaggio: string;
+  /** Hash con pepper: serve solo al rate limiting, mai l'IP in chiaro. */
+  ip_hash: string | null;
+  user_agent: string | null;
+  stato: "nuovo" | "in_lavorazione" | "chiuso";
+  created_at: string;
+};
+
 type Row<T> = {
   Row: T;
   Insert: Partial<T>;
@@ -95,6 +110,7 @@ export type Database = {
       orders: Row<Order>;
       consents: Row<Consent>;
       module_activations: Row<ModuleActivation>;
+      contact_messages: Row<ContactMessage>;
     };
     Views: Record<string, never>;
     Functions: {

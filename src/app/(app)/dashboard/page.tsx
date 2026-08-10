@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowRight, PackageCheck, Boxes, LifeBuoy } from "lucide-react";
@@ -9,6 +10,12 @@ import {
   getServizio,
 } from "@/lib/catalog";
 import { DIMENSIONE_LABEL } from "@/lib/pricing";
+
+/** Fuori dall'indice: area riservata, visibile solo dopo l'accesso. */
+export const metadata: Metadata = {
+  title: "Area riservata",
+  robots: { index: false, follow: false },
+};
 
 /**
  * Area riservata — fase 1: legge organizzazione, ordini e moduli dal

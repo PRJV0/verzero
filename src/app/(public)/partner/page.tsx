@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Handshake, Repeat, Users } from "lucide-react";
 
-export const metadata: Metadata = {
-  title: "Programma partner — Ver0",
+import { JsonLd } from "@/components/json-ld";
+import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
+
+export const metadata: Metadata = metadataPagina({
+  title: "Programma partner per commercialisti e consulenti",
   description:
-    "Il programma partner Ver0 per commercialisti e consulenti: provvigione ricorrente sul canone incassato. In arrivo.",
-};
+    "Provvigione ricorrente sul canone incassato, uno schema unico e il cliente che resta tuo: il programma partner Ver0 per chi affianca già le imprese.",
+  path: "/partner",
+});
 
 const PUNTI = [
   {
@@ -29,6 +33,12 @@ const PUNTI = [
 export default function PartnerPage() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-16 text-center">
+      <JsonLd
+        dati={jsonLdBreadcrumb([
+          { nome: "Home", path: "/" },
+          { nome: "Partner", path: "/partner" },
+        ])}
+      />
       <span className="inline-flex items-center gap-2 rounded-full bg-moss px-3.5 py-1.5 text-xs font-medium text-pine">
         <Handshake size={14} /> In arrivo
       </span>

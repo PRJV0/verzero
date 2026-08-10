@@ -17,15 +17,18 @@ import {
 } from "lucide-react";
 
 import { Sigillo } from "@/components/brand/sigillo";
+import { JsonLd } from "@/components/json-ld";
 import { MotoreScrolly } from "@/components/motore-scrolly";
 import { PhotoDuotone } from "@/components/photo-duotone";
 import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
+import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Chi siamo — Ver0",
+export const metadata: Metadata = metadataPagina({
+  title: "Chi siamo: siamo partiti da zero, letteralmente",
   description:
-    "Abbiamo costruito la consulenza che avremmo voluto trovare: chiara nei prezzi, rapida nei tempi, aperta a ogni impresa. Il Motore Ver0 e professionisti veri, su standard ufficiali riconosciuti.",
-};
+    "Abbiamo ricostruito la consulenza: un motore che lavora sui documenti, professionisti che verificano, standard ufficiali e prezzi leggibili prima di firmare.",
+  path: "/chi-siamo",
+});
 
 /**
  * Chi siamo — Registro A pieno: tipografia drammatica, foto duotone, fondi
@@ -92,6 +95,12 @@ const PRINCIPI = [
 export default function ChiSiamoPage() {
   return (
     <main>
+      <JsonLd
+        dati={jsonLdBreadcrumb([
+          { nome: "Home", path: "/" },
+          { nome: "Chi siamo", path: "/chi-siamo" },
+        ])}
+      />
       {/* 1. APERTURA — primissimo contenuto: l'origine raccontata in chiave
           Zero. Registro A pieno: Fraunces grande, salvia in gradiente, foto
           duotone affiancata, reveal discreto. */}
@@ -115,7 +124,9 @@ export default function ChiSiamoPage() {
               Per sostituirla basta cambiare il file mantenendo il path. */}
           <PhotoDuotone
             src="/photos/sito3.jpg"
+            alt="Natura e dati insieme: l'immagine che apre il racconto di come è nata Ver0."
             intensity="soft"
+            priority
             className="vz-reveal aspect-[4/3] rounded-3xl shadow-lift md:aspect-[4/5]"
           />
         </div>
@@ -181,6 +192,7 @@ export default function ChiSiamoPage() {
         <div className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-10 md:grid-cols-2">
           <PhotoDuotone
             src="/photos/sito2.jpg"
+            alt="Il lavoro dietro lo schermo: ingegneri e analisti che validano i documenti prima della consegna."
             intensity="soft"
             className="vz-reveal order-2 aspect-[4/3] rounded-2xl shadow-lift md:order-1"
           />

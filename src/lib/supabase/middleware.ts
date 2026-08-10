@@ -18,9 +18,14 @@ const PUBLIC_PREFIXES = [
   "/sigillo",
   "/bollino",
   "/chi-siamo",
+  "/contatti",
   "/partner",
   "/verifica",
   "/registro",
+  // File per i motori di ricerca: senza questi due il proxy li reindirizzava
+  // alla pagina di login, rendendoli invisibili ai crawler.
+  "/robots.txt",
+  "/sitemap.xml",
 ];
 
 function isPublic(pathname: string) {

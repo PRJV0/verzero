@@ -18,10 +18,15 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const s = getServizio(slug);
-  if (!s) return { title: "Acquisto — Ver0" };
+  // Pagine transazionali fuori dall'indice (regola SEO, v. src/lib/seo.ts):
+  // non portano traffico organico e diluiscono la scansione. Restano
+  // "follow" perché i link interni verso il catalogo hanno valore.
+  const fuoriIndice = { index: false, follow: true } as const;
+  if (!s) return { title: "Acquisto", robots: fuoriIndice };
   return {
-    title: `Acquista ${s.name} — Ver0`,
+    title: `Acquista ${s.name}`,
     description: `Attiva ${s.name} in pochi passaggi: riepilogo, registrazione, consensi e pagamento. Prezzi in chiaro per fascia dimensionale.`,
+    robots: fuoriIndice,
   };
 }
 

@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Condizioni di servizio — Ver0",
+import { metadataPagina } from "@/lib/seo";
+
+export const metadata: Metadata = metadataPagina({
+  title: "Condizioni di servizio",
   description:
-    "Condizioni di servizio della piattaforma Ver0: testo in preparazione, versione definitiva prima dell'attivazione dei pagamenti.",
-};
+    "Le condizioni di servizio della piattaforma Ver0. Testo in preparazione: la versione definitiva sarà pubblicata prima dell'attivazione dei pagamenti.",
+  path: "/termini",
+});
 
 /**
  * Stub delle condizioni di servizio: il funnel di acquisto le linka già
