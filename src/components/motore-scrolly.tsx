@@ -1,13 +1,12 @@
-import { Check, CircleAlert, Database, FileText, PenLine } from "lucide-react";
+import { Check, FileText, PenLine } from "lucide-react";
 
+import { FascicoloPercorso } from "@/components/fascicolo-percorso";
 import {
   CAMPI_ESTRATTI,
-  DOCUMENTI_RICHIESTI,
   DOCUMENTO_GENERATO,
   MOTORE_FASI,
   VERIFICA_UMANA,
   ZERO_EFFORT_DEFINIZIONE,
-  ZERO_EFFORT_TEMPO,
 } from "@/lib/motore";
 
 import {
@@ -21,10 +20,12 @@ import {
 /**
  * Sezione del Motore Ver0 (home e chi-siamo).
  *
- * SPEC §12.O — CONCRETEZZA: niente «zero da cui succedono cose». Ogni fase
- * mostra un artefatto reale — la checklist dei documenti, i campi estratti
- * con i loro valori, il documento generato con la norma citata, l'esito
- * della verifica umana — e dichiara cosa entra, cosa esce e su quale norma.
+ * SPEC §12.O — CONCRETEZZA: niente «zero da cui succedono cose». In testa
+ * IL FASCICOLO DEL PERCORSO (fascicolo-percorso.tsx): l'anteprima fedele
+ * della dashboard, con tab per percorso e lo stato dei documenti. Sotto,
+ * le tre fasi del racconto — i campi estratti con i loro valori, il
+ * documento generato con la norma citata, l'esito della verifica umana —
+ * ognuna con cosa entra, cosa esce e su quale norma.
  * Le animazioni servono solo a passare da una fase all'altra.
  *
  * Ogni fase è una RIGA COMPLETA (artefatto + spiegazione): così quando lo
@@ -62,63 +63,7 @@ function Foglio({
   );
 }
 
-const STATO = {
-  caricato: {
-    label: "caricato",
-    className: "bg-mint/10 text-mint",
-    Icona: Check,
-  },
-  recuperato: {
-    label: "recuperato da noi",
-    className: "bg-moss text-pine",
-    Icona: Database,
-  },
-  manca: {
-    label: "manca",
-    className: "bg-amber-soft text-amber-ink",
-    Icona: CircleAlert,
-  },
-} as const;
-
-/** Fase 1 — la checklist del percorso, con lo stato documento per documento. */
-function FoglioRichiesta() {
-  return (
-    <Foglio titolo="Percorso Carbon — documenti richiesti" icona={FileText}>
-      <ul className="mt-3 space-y-2.5">
-        {DOCUMENTI_RICHIESTI.map((d) => {
-          const s = STATO[d.stato];
-          return (
-            <li key={d.nome} className="flex items-start gap-3">
-              <span
-                className={`mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${s.className}`}
-              >
-                <s.Icona size={13} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-medium text-ink">
-                  {d.nome}
-                </span>
-                <span className="block text-xs text-gray-warm">
-                  {d.dettaglio}
-                </span>
-              </span>
-              <span
-                className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${s.className}`}
-              >
-                {s.label}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-      <p className="mt-4 border-t border-line pt-3 text-xs text-gray-warm">
-        Il Motore ti dice esattamente cosa manca, prima che diventi un problema.
-      </p>
-    </Foglio>
-  );
-}
-
-/** Fase 2 — i campi estratti, con il valore in evidenza. */
+/** I campi estratti, con il valore in evidenza. */
 function FoglioLettura() {
   return (
     <Foglio titolo="Campi estratti dai tuoi documenti" icona={FileText}>
@@ -211,12 +156,7 @@ function FoglioVerifica() {
   );
 }
 
-const FOGLI = [
-  FoglioRichiesta,
-  FoglioLettura,
-  FoglioGenerazione,
-  FoglioVerifica,
-];
+const FOGLI = [FoglioLettura, FoglioGenerazione, FoglioVerifica];
 
 export function MotoreScrolly() {
   return (
@@ -239,12 +179,19 @@ export function MotoreScrolly() {
             Che cosa succede ai tuoi documenti
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-moss">
-            {ZERO_EFFORT_DEFINIZIONE} {ZERO_EFFORT_TEMPO} Qui sotto, fase per
-            fase, che cosa entra, che cosa esce e su quale norma.
+            {ZERO_EFFORT_DEFINIZIONE} Qui sotto, che cosa entra, che cosa esce
+            e su quale norma.
           </p>
         </div>
 
-        <Scrolly steps={4} className="mt-10">
+        {/* IL FASCICOLO DEL PERCORSO — l'anteprima fedele della dashboard:
+            cosa ti chiediamo, percorso per percorso, con lo stato reale. */}
+        <div className="mx-auto mt-10 max-w-3xl">
+          <FascicoloPercorso />
+        </div>
+
+        {/* Poi il racconto: cosa succede al fascicolo, fase per fase. */}
+        <Scrolly steps={3} className="mt-12">
           <ScrollyStage>
             <ScrollySteps>
               {MOTORE_FASI.map((f, i) => {

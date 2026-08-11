@@ -43,5 +43,6 @@ Vale per ogni pagina nuova e per ogni pagina modificata. Le utilità stanno in
   `supabase_migrations.schema_migrations`. Mai `supabase db push`.
 - **Etichette di catalogo**: solo fattuali (Novità, In arrivo, Spesso richiesto
   insieme a X, Premiante nei bandi). Mai diciture di domanda non verificabili.
-- **«Zero effort»**: non si dichiara mai da solo, sempre con la definizione e,
-  dove possibile, la quantificazione (SPEC §12.O).
+- **«Zero effort»**: non si dichiara mai da solo, sempre con la definizione.
+  VIETATE le quantificazioni di tempo o impegno del cliente («un'ora del tuo
+  tempo» e simili): ogni numero promesso è un ostaggio (SPEC §12.O).

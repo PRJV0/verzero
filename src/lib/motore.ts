@@ -1,5 +1,4 @@
 import {
-  ClipboardList,
   FileCheck2,
   ScanLine,
   UserCheck,
@@ -7,7 +6,7 @@ import {
 } from "lucide-react";
 
 /**
- * Le quattro fasi del Motore Ver0 — fonte unica per la sezione narrativa,
+ * Il Motore Ver0 — fonte unica per la sezione narrativa,
  * usata sia in home sia in chi-siamo.
  *
  * REGOLA (SPEC §12.O — concretezza del Motore): niente astrazioni. Ogni fase
@@ -34,14 +33,6 @@ export type FaseMotore = {
 
 export const MOTORE_FASI: FaseMotore[] = [
   {
-    icon: ClipboardList,
-    titolo: "Cosa ti chiediamo",
-    desc: "Per ogni percorso il Motore indica la lista puntuale dei documenti previsti dalla norma — non «carica quello che vuoi». Sono documenti che hai già: è l'unica parte che tocca a te.",
-    entra: "I documenti che l'azienda ha già in archivio",
-    esce: "La checklist del percorso, con in evidenza ciò che manca",
-    norma: "UNI EN ISO 14064-1:2019 — dati di attività richiesti",
-  },
-  {
     icon: ScanLine,
     titolo: "Cosa leggiamo",
     desc: "Il Motore estrae i campi che servono — anche da una foto della bolletta — li normalizza e li incrocia con le banche dati ufficiali. Ogni valore resta etichettato per qualità: misurato, da documento, stimato.",
@@ -67,30 +58,122 @@ export const MOTORE_FASI: FaseMotore[] = [
   },
 ];
 
-/** Fase 1 — i documenti richiesti dal percorso, con lo stato di raccolta. */
-export type StatoDocumento = "caricato" | "recuperato" | "manca";
+/* ------------------------------------------------------------------ */
+/* IL FASCICOLO DEL PERCORSO — anteprima fedele della dashboard        */
+/* ------------------------------------------------------------------ */
 
-export const DOCUMENTI_RICHIESTI: {
+/**
+ * Tre stati con gerarchia visiva forte (SPEC §12.O + decisione design):
+ * - "caricato": spunta piena pino — fatto;
+ * - "recuperato": LO RECUPERIAMO NOI, badge menta con l'icona del Motore
+ *   («basta la P.IVA») — è il momento-magia e va valorizzato;
+ * - "da-caricare": ambra, mai rosso — è un invito, non un errore.
+ */
+export type StatoDocumento = "caricato" | "recuperato" | "da-caricare";
+
+export type DocumentoFascicolo = {
   nome: string;
-  dettaglio: string;
+  /** Il requisito preciso, in piccolo: es. "12 mesi, tutti i POD attivi". */
+  requisito: string;
   stato: StatoDocumento;
-}[] = [
+};
+
+export type FascicoloPercorso = {
+  id: string;
+  /** Etichetta del tab. */
+  label: string;
+  /** La norma su cui il percorso lavora (contratto entra/esce/norma). */
+  norma: string;
+  documenti: DocumentoFascicolo[];
+};
+
+/**
+ * Un fascicolo per percorso: cambiare tab mostra la trasversalità del
+ * Motore — stessa grammatica, documenti diversi. Gli stati sono un
+ * esempio dichiarato, coerente con la scena dell'officina meccanica.
+ */
+export const FASCICOLI: FascicoloPercorso[] = [
   {
-    nome: "Bolletta elettrica",
-    dettaglio: "12 mesi, tutti i POD attivi",
-    stato: "caricato",
+    id: "carbon",
+    label: "Carbon",
+    norma: "UNI EN ISO 14064-1:2019 · GHG Protocol",
+    documenti: [
+      {
+        nome: "Bolletta elettrica",
+        requisito: "12 mesi, tutti i POD attivi",
+        stato: "caricato",
+      },
+      {
+        nome: "Visura camerale",
+        requisito: "basta la P.IVA",
+        stato: "recuperato",
+      },
+      {
+        nome: "Ultimo bilancio depositato",
+        requisito: "per l'intensità emissiva",
+        stato: "recuperato",
+      },
+      {
+        nome: "Registro carburanti",
+        requisito: "mezzi e impianti, litri per periodo",
+        stato: "da-caricare",
+      },
+    ],
   },
   {
-    nome: "Visura camerale",
-    dettaglio: "basta la P.IVA: la recuperiamo noi",
-    stato: "recuperato",
+    id: "iso-9001",
+    label: "ISO 9001",
+    norma: "UNI EN ISO 9001:2015 — struttura HLS",
+    documenti: [
+      {
+        nome: "Visura camerale",
+        requisito: "basta la P.IVA",
+        stato: "recuperato",
+      },
+      {
+        nome: "Organigramma",
+        requisito: "ruoli e responsabilità attuali",
+        stato: "caricato",
+      },
+      {
+        nome: "Mappa dei processi",
+        requisito: "anche in bozza: la strutturiamo noi",
+        stato: "da-caricare",
+      },
+      {
+        nome: "Procedure esistenti",
+        requisito: "se ci sono, si riusano",
+        stato: "da-caricare",
+      },
+    ],
   },
   {
-    nome: "Registro carburanti",
-    dettaglio: "mezzi e impianti, litri per periodo",
-    stato: "manca",
+    id: "pdr-125",
+    label: "PdR 125",
+    norma: "UNI/PdR 125:2022 — sei aree di KPI",
+    documenti: [
+      {
+        nome: "Visura camerale",
+        requisito: "basta la P.IVA",
+        stato: "recuperato",
+      },
+      {
+        nome: "Dati di organico aggregati",
+        requisito: "per genere e inquadramento, mai nominativi",
+        stato: "caricato",
+      },
+      {
+        nome: "Politiche HR formalizzate",
+        requisito: "selezione, crescita, conciliazione",
+        stato: "da-caricare",
+      },
+    ],
   },
 ];
+
+/** La chiusa del fascicolo: resta identica in ogni percorso. */
+export const FASCICOLO_CHIUSA =
+  "Il Motore ti dice esattamente cosa manca, prima che diventi un problema.";
 
 /** Fase 2 — i campi estratti da ciascun documento, con valori d'esempio. */
 export const CAMPI_ESTRATTI: {
@@ -165,10 +248,8 @@ export const VERIFICA_UMANA = {
 };
 
 /** Definizione obbligatoria dello «zero effort» (SPEC §12.O): non si dichiara
- *  mai da sola la formula, sempre accompagnata da questa spiegazione. */
+ *  mai da sola la formula, sempre accompagnata da questa spiegazione.
+ *  VIETATE le quantificazioni di tempo o impegno («un'ora del tuo tempo»):
+ *  l'impegno varia per percorso e impresa, ogni numero promesso è un ostaggio. */
 export const ZERO_EFFORT_DEFINIZIONE =
   "Zero effort non vuol dire zero coinvolgimento: vuol dire che ti chiediamo solo ciò che solo tu puoi darci — i documenti che hai già — e ci occupiamo di tutto il resto.";
-
-/** Quantificazione da usare dove serve concretezza (SPEC §12.O). */
-export const ZERO_EFFORT_TEMPO =
-  "Circa un'ora del tuo tempo: il resto lo fa il Motore.";

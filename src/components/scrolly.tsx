@@ -69,7 +69,7 @@ export function Scrolly({
   children,
 }: {
   /** Numero di fasi: guida l'altezza di scorrimento e le finestre. */
-  steps: 4 | 5 | 6;
+  steps: 3 | 4 | 5 | 6;
   className?: string;
   children: ReactNode;
 }) {

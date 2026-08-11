@@ -140,7 +140,7 @@ const ZERI = [
   {
     accent: "Zero",
     tail: "effort",
-    m: "Non zero coinvolgimento: ti chiediamo solo i documenti che hai già — circa un'ora del tuo tempo. Il resto lo fa il Motore.",
+    m: "Non zero coinvolgimento: ti chiediamo solo i documenti che hai già. Di tutto il resto si occupa il Motore.",
   },
   {
     accent: "Zero",
@@ -235,12 +235,12 @@ export default function HomePage() {
               effort: ti chiediamo solo i documenti che hai già.
             </p>
             {/* §12.O: «zero effort» non si dichiara mai da solo — segue sempre
-                la definizione, e dove possibile la quantificazione. */}
+                la definizione, MAI quantificazioni di tempo o impegno. */}
             <p className="mt-4 max-w-lg text-sm text-gray-warm">
-              Zero effort non vuol dire zero coinvolgimento: circa un&apos;ora
-              del tuo tempo per ciò che solo tu puoi darci, il resto lo fa il
-              Motore Ver0 — con le persone che verificano, prezzi pubblici e
-              tempi che si misurano in giorni.
+              Zero effort non vuol dire zero coinvolgimento: ti chiediamo solo
+              ciò che solo tu puoi darci, di tutto il resto si occupa il Motore
+              Ver0 — con le persone che verificano, prezzi pubblici e tempi che
+              si misurano in giorni.
             </p>
 
             <div className="mt-8">
