@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
+import { MobileMenu } from "@/components/mobile-menu";
 
 /**
  * Voci di navigazione del sito pubblico. "Home" apre il menu anche se il
@@ -17,26 +18,36 @@ const NAV = [
   { label: "Contatti", href: "/contatti" },
 ];
 
-/** Header condiviso da tutte le pagine pubbliche. */
+/**
+ * Header condiviso da tutte le pagine pubbliche. "Accedi" è sempre
+ * visibile, su desktop e mobile (SPEC §12.K): è la porta dell'ecosistema.
+ * Sotto i 768px la navigazione passa dal menu a scomparsa.
+ */
 export function SiteHeader() {
   return (
-    <header className="flex items-center justify-between border-b border-line bg-white px-5 py-3">
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-line bg-white px-5 py-3">
       <Link href="/" aria-label="Ver0 — home">
         <Logo />
       </Link>
-      <nav className="hidden gap-5 text-xs text-gray-warm sm:flex">
+      <nav
+        aria-label="Navigazione principale"
+        className="hidden gap-5 text-xs text-gray-warm md:flex"
+      >
         {NAV.map((n) => (
           <Link key={n.href} href={n.href} className="hover:text-pine">
             {n.label}
           </Link>
         ))}
       </nav>
-      <Link
-        href="/login"
-        className="rounded-lg bg-pine px-3.5 py-2 text-xs font-medium text-white"
-      >
-        Inizia ora
-      </Link>
+      <div className="flex items-center gap-2">
+        <Link
+          href="/login"
+          className="rounded-lg bg-pine px-3.5 py-2 text-xs font-medium text-white"
+        >
+          Accedi
+        </Link>
+        <MobileMenu voci={NAV} />
+      </div>
     </header>
   );
 }

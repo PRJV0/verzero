@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 
 import { LoginForm } from "./login-form";
 
-/** Fuori dall'indice: pagina di accesso, nessun valore organico. */
+/** Fuori dall'indice: pagina di accesso, nessun valore organico.
+ *  Copy in chiave ecosistema (SPEC §12.K), mai "area riservata". */
 export const metadata: Metadata = {
-  title: "Accedi",
-  description: "Accedi alla tua area riservata Ver0.",
+  title: "Accedi al tuo ecosistema",
+  description:
+    "Entra nell'ecosistema Ver0: moduli, documenti e Sigillo per la tua impresa, o la dashboard clienti se sei un consulente partner.",
   robots: { index: false, follow: false },
 };
 

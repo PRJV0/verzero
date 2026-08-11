@@ -32,6 +32,10 @@ export function SiteFooter() {
           <Link href="/contatti" className="hover:text-pine">
             Contatti
           </Link>
+          {/* Richiamo all'ecosistema (SPEC §12.K) */}
+          <Link href="/login" className="font-medium text-pine hover:underline">
+            Accedi
+          </Link>
         </nav>
       </div>
       <div className="mx-auto mt-4 flex max-w-5xl flex-wrap items-center justify-between gap-2 text-xs text-gray-light">
@@ -46,6 +50,9 @@ export function SiteFooter() {
           >
             Grande impresa? Percorsi su misura: parliamone
           </a>
+          <Link href="/login" className="hover:text-pine">
+            Sei già cliente o consulente partner? Accedi al tuo ecosistema
+          </Link>
         </span>
         <span>
           verzero.it · dati ospitati in UE · dietro lo schermo ci sono sempre

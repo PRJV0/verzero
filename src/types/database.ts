@@ -31,9 +31,24 @@ type Organization = {
 
 type Profile = {
   id: string;
-  organization_id: string;
+  /** Nullo solo per i consulenti: le imprese ne hanno sempre una. */
+  organization_id: string | null;
   full_name: string | null;
+  /** Ruolo dentro l'organizzazione. */
   role: "owner" | "member";
+  /** Profilo di accesso all'ecosistema (SPEC §12.K). */
+  ruolo: "impresa" | "consulente";
+  created_at: string;
+  updated_at: string;
+};
+
+/** Mandato consulente ↔ organizzazione (SPEC §12.K): il consulente legge i
+ *  dati del cliente solo con stato attivo; l'impresa vede e revoca. */
+type ConsultantOrganization = {
+  id: string;
+  consultant_id: string;
+  organization_id: string;
+  stato: "attivo" | "revocato";
   created_at: string;
   updated_at: string;
 };
@@ -111,6 +126,7 @@ export type Database = {
       consents: Row<Consent>;
       module_activations: Row<ModuleActivation>;
       contact_messages: Row<ContactMessage>;
+      consultant_organizations: Row<ConsultantOrganization>;
     };
     Views: Record<string, never>;
     Functions: {

@@ -101,8 +101,18 @@ export async function POST(request: NextRequest) {
     .eq("id", utente.id)
     .maybeSingle();
 
-  if (profilo) {
+  if (profilo?.organization_id) {
     organizationId = profilo.organization_id;
+  } else if (profilo) {
+    // Profilo senza organizzazione: è un consulente partner (SPEC §12.K).
+    // Gli acquisti per conto del cliente arrivano con le fasi successive.
+    return NextResponse.json(
+      {
+        error:
+          "Questo account è un profilo consulente: gli acquisti per conto dei clienti non sono ancora attivi.",
+      },
+      { status: 403 },
+    );
   } else {
     const ragioneSociale = String(utente.metadata.ragione_sociale ?? "").trim();
     const piva = String(utente.metadata.partita_iva ?? "").replace(/\s/g, "");

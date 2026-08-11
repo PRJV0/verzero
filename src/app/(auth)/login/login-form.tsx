@@ -6,8 +6,29 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { publicEnv } from "@/lib/env";
 
+/** I due profili di accesso all'ecosistema (SPEC §12.K). La scelta orienta
+ *  il copy: l'autenticazione è la stessa, il ruolo vive nel database. */
+const PROFILI = [
+  {
+    id: "impresa",
+    label: "Impresa",
+    titolo: "Accedi al tuo ecosistema",
+    sotto:
+      "Moduli attivi, documenti sempre aggiornati e Sigillo: tutto ciò che la tua impresa ha costruito, in un posto solo.",
+  },
+  {
+    id: "consulente",
+    label: "Consulente partner",
+    titolo: "Gestisci i tuoi clienti",
+    sotto:
+      "Un'unica dashboard per tutte le imprese che segui: selezioni il cliente e lavori sul suo ecosistema, con il suo mandato.",
+  },
+] as const;
+
+type Profilo = (typeof PROFILI)[number]["id"];
+
 /**
- * Accesso all'area riservata: email e password (gli account nascono così dal
+ * Accesso all'ecosistema: email e password (gli account nascono così dal
  * funnel di acquisto, SPEC §12.T) oppure link via email (magic link), che
  * resta disponibile per gli accessi successivi.
  *
@@ -21,6 +42,7 @@ export function LoginForm({
   initialError: string | null;
   next: string | null;
 }) {
+  const [profilo, setProfilo] = useState<Profilo>("impresa");
   const [mode, setMode] = useState<"password" | "link">("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -70,12 +92,44 @@ export function LoginForm({
   const input =
     "rounded-lg border border-line bg-white px-3 py-2.5 text-sm outline-none focus:border-mint";
 
+  const scelto = PROFILI.find((p) => p.id === profilo)!;
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center px-5 py-12">
-      <h1 className="font-display text-3xl font-semibold text-pine">
-        Accedi a Ver0
+      {/* Due profili (SPEC §12.K): la scelta orienta, non separa — sotto
+          c'è un solo accesso e il ruolo lo conosce il database. */}
+      <div
+        role="tablist"
+        aria-label="Con che profilo accedi"
+        className="flex rounded-xl border border-line bg-white p-1"
+      >
+        {PROFILI.map((p) => {
+          const attivo = p.id === profilo;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              role="tab"
+              aria-selected={attivo}
+              onClick={() => setProfilo(p.id)}
+              className={
+                "flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors " +
+                (attivo
+                  ? "bg-pine text-white shadow-soft"
+                  : "text-gray-warm hover:text-pine")
+              }
+            >
+              {p.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <h1 className="mt-6 font-display text-3xl font-semibold text-pine">
+        {scelto.titolo}
       </h1>
-      <p className="mt-2 text-sm text-gray-warm">
+      <p className="mt-2 text-sm text-gray-warm">{scelto.sotto}</p>
+      <p className="mt-2 text-xs text-gray-light">
         {mode === "password"
           ? "Entra con l'email e la password del tuo account."
           : "Ti inviamo un link di accesso via email. Nessuna password da ricordare."}
@@ -163,11 +217,29 @@ export function LoginForm({
       )}
 
       <p className="mt-6 text-xs text-gray-light">
-        Non hai ancora un account? Si crea al primo acquisto, dal catalogo{" "}
-        <Link href="/servizi" className="font-medium text-pine hover:underline">
-          servizi
-        </Link>
-        .
+        {profilo === "impresa" ? (
+          <>
+            Non hai ancora un account? Si crea al primo acquisto, dal catalogo{" "}
+            <Link
+              href="/servizi"
+              className="font-medium text-pine hover:underline"
+            >
+              servizi
+            </Link>
+            .
+          </>
+        ) : (
+          <>
+            Non sei ancora partner? Scopri il{" "}
+            <Link
+              href="/partner"
+              className="font-medium text-pine hover:underline"
+            >
+              programma partner
+            </Link>{" "}
+            per commercialisti e consulenti.
+          </>
+        )}
       </p>
     </main>
   );

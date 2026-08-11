@@ -68,15 +68,21 @@ body {
   }
 }
 
-/* Reveal discreti allo scroll: solo dove le scroll-timeline sono supportate e
-   solo se l'utente non ha chiesto meno movimento. Altrove restano visibili. */
+/* Reveal discreti allo scroll — guidati da IntersectionObserver
+   (src/components/reveal-observer.tsx), NON da animation-timeline.
+   Perché: esistono browser (mobile e in-app) che dichiarano il supporto
+   alle scroll-timeline ma le lasciano inerti — con `animation: ... both`
+   l'elemento resterebbe a opacity 0, cioè contenuto mancante.
+   Qui lo stato nascosto lo applica SOLO il JS quando l'observer è attivo:
+   senza JS, senza IntersectionObserver o con «riduci movimento», tutto
+   resta semplicemente visibile. */
 @media (prefers-reduced-motion: no-preference) {
-  @supports (animation-timeline: view()) {
-    .vz-reveal {
-      animation: vz-reveal-in both;
-      animation-timeline: view();
-      animation-range: entry 4% cover 20%;
-    }
+  .vz-reveal[data-reveal="attesa"] {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  .vz-reveal[data-reveal="visibile"] {
+    animation: vz-reveal-in 0.65s cubic-bezier(0.22, 0.9, 0.34, 1) both;
   }
 }
 

@@ -182,6 +182,104 @@ async function main() {
       (data ?? []).every((o) => o.organization_id === B.org.id) && data.length === 1,
     );
   }
+
+  console.log("\n— test due profili (consulente partner, SPEC §12.K) —");
+
+  // Consulente C: profilo con ruolo 'consulente', nessuna organizzazione
+  // propria, mandato ATTIVO solo verso l'organizzazione di A.
+  const emailC = `rls-test-c-${stamp}@example.com`;
+  const { data: uc, error: euc } = await admin.auth.admin.createUser({
+    email: emailC,
+    password: PASSWORD,
+    email_confirm: true,
+  });
+  if (euc) throw new Error("createUser C: " + euc.message);
+  daPulire.userIds.push(uc.user.id);
+
+  const { error: epc } = await admin
+    .from("profiles")
+    .insert({ id: uc.user.id, ruolo: "consulente", role: "owner" });
+  if (epc) throw new Error("insert profile C: " + epc.message);
+
+  const { data: mandato, error: emc } = await admin
+    .from("consultant_organizations")
+    .insert({ consultant_id: uc.user.id, organization_id: A.org.id })
+    .select()
+    .single();
+  if (emc) throw new Error("insert mandato: " + emc.message);
+
+  const C = createClient(URL_, ANON, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { error: elc } = await C.auth.signInWithPassword({
+    email: emailC,
+    password: PASSWORD,
+  });
+  if (elc) throw new Error("login C: " + elc.message);
+
+  {
+    const { data } = await C.from("organizations").select("id");
+    check(
+      "consulente con mandato attivo vede l'organizzazione del cliente",
+      (data ?? []).length === 1 && data[0].id === A.org.id,
+      `viste: ${data?.length}`,
+    );
+  }
+  {
+    const { data } = await C.from("orders").select("organization_id");
+    check(
+      "consulente vede gli ordini del cliente con mandato",
+      (data ?? []).length === 1 && data[0].organization_id === A.org.id,
+    );
+  }
+  {
+    const { data } = await C.from("organizations").select("id").eq("id", B.org.id);
+    check("consulente NON vede organizzazioni senza mandato", (data ?? []).length === 0);
+  }
+  {
+    // La lettura resta lettura: il consulente non scrive sui dati del cliente.
+    const { data } = await C.from("organizations")
+      .update({ settore: "hack-consulente" })
+      .eq("id", A.org.id)
+      .select();
+    check("consulente non aggiorna i dati del cliente", (data ?? []).length === 0);
+  }
+  {
+    // L'impresa è titolare: vede il collegamento che la riguarda.
+    const { data } = await A.client
+      .from("consultant_organizations")
+      .select("id, stato");
+    check(
+      "impresa vede il mandato verso di sé",
+      (data ?? []).length === 1 && data[0].stato === "attivo",
+    );
+  }
+  {
+    // ...e B, estraneo, non lo vede.
+    const { data } = await B.client.from("consultant_organizations").select("id");
+    check("impresa estranea non vede mandati altrui", (data ?? []).length === 0);
+  }
+  {
+    // Revoca dall'impresa: da quel momento il consulente non vede più nulla.
+    const { error } = await A.client
+      .from("consultant_organizations")
+      .update({ stato: "revocato" })
+      .eq("id", mandato.id);
+    const { data: dopoOrg } = await C.from("organizations").select("id");
+    const { data: dopoOrd } = await C.from("orders").select("id");
+    check(
+      "dopo la revoca il consulente non vede più il cliente",
+      !error && (dopoOrg ?? []).length === 0 && (dopoOrd ?? []).length === 0,
+    );
+  }
+  {
+    // L'impresa resta intatta: vede sempre e solo sé stessa.
+    const { data } = await A.client.from("organizations").select("id");
+    check(
+      "l'impresa vede sempre solo sé stessa",
+      (data ?? []).length === 1 && data[0].id === A.org.id,
+    );
+  }
 }
 
 async function cleanup() {
