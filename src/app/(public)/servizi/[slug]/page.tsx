@@ -148,7 +148,7 @@ export default async function ServizioPage({
 
           {/* Come funziona con Ver0 */}
           <div className="mb-3 rounded-xl border border-line bg-white p-4">
-            <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">
+            <p className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
               <ListOrdered size={15} className="text-pine" /> Come funziona con
               Ver0
             </p>
@@ -170,7 +170,7 @@ export default async function ServizioPage({
 
           {/* Cosa ti chiederemo — raccolta documentale guidata (§12.P) */}
           <div className="mb-3 rounded-xl border border-line bg-white p-4">
-            <p className="mb-1 flex items-center gap-2 text-sm font-semibold text-ink">
+            <p className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
               <ClipboardList size={15} className="text-pine" /> Cosa ti
               chiederemo
             </p>
@@ -193,7 +193,7 @@ export default async function ServizioPage({
 
           {/* Cosa ottieni */}
           <div className="mb-3 rounded-xl border border-line bg-white p-4">
-            <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">
+            <p className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
               <FileCheck2 size={15} className="text-pine" /> Cosa ottieni
             </p>
             <div className="space-y-1.5 text-sm text-gray-warm">
@@ -208,7 +208,7 @@ export default async function ServizioPage({
 
           {/* Requisiti e vincoli */}
           <div className="mb-3 rounded-xl border border-line bg-paper p-4">
-            <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">
+            <p className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
               <Info size={15} className="text-gray-warm" /> Requisiti e vincoli
             </p>
             <div className="space-y-1.5 text-sm text-gray-warm">
@@ -226,7 +226,7 @@ export default async function ServizioPage({
 
           {/* Riferimenti normativi — solo standard ufficiali (§12.P) */}
           <div className="mb-3 rounded-xl border border-pine/20 bg-white p-4">
-            <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-ink">
+            <p className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
               <BookMarked size={15} className="text-pine" /> Riferimenti
             </p>
             <div className="flex flex-wrap gap-1.5">

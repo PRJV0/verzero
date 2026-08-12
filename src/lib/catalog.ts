@@ -668,7 +668,7 @@ export const SERVIZI: Servizio[] = [
     output: [
       "Documentazione del sistema di gestione revisionata nei punti oggetto di rilievo",
       "Nota di risposta ai rilievi, con il riferimento puntuale al requisito di norma richiamato",
-      "Verifica umana obbligatoria su tutto il pacchetto, con firma del professionista",
+      "Verifica umana obbligatoria su tutto il pacchetto, con validazione del professionista",
     ],
     requisiti: [
       "Serve il rapporto di audit dell'organismo: senza i rilievi formalizzati non è possibile lavorare",

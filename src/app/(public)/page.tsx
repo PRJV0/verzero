@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, FileText, Leaf, PenLine } from "lucide-react";
+import { ArrowRight, Check, FileText, Leaf, UserCheck } from "lucide-react";
 
 import { Sigillo } from "@/components/brand/sigillo";
 import { CatalogoVetrina } from "@/components/catalogo-vetrina";
@@ -110,7 +110,7 @@ const ZERI = [
   {
     accent: "Zero",
     tail: "effort",
-    m: "Ti chiediamo solo i documenti che hai già. Il resto lo fa il Motore.",
+    m: "Bastano i documenti che hai già: il Motore li trasforma, un professionista valida.",
   },
   {
     accent: "Zero",
@@ -144,7 +144,7 @@ const ZERI = [
 const BATTUTE = [
   { icon: FileText, t: "Solo il necessario." },
   { icon: null, t: "Il Motore lavora." }, // icona: lo zero E1, disegnato sotto
-  { icon: PenLine, t: "Un professionista firma." },
+  { icon: UserCheck, t: "Un professionista valida." },
 ];
 
 export const metadata: Metadata = {
@@ -169,7 +169,7 @@ export default function HomePage() {
     <>
       <JsonLd dati={jsonLdOrganization()} />
 
-      {/* HERO — il claim di firma, alla scala massima. Fondo piatto. */}
+      {/* HERO — il claim del marchio, alla scala massima. Fondo piatto. */}
       <section className="relative overflow-hidden bg-moss px-5 py-16 md:py-24">
         <ZeroWatermark
           tone="pine"
@@ -189,10 +189,12 @@ export default function HomePage() {
               La crescita della tua azienda, in abbonamento. Con{" "}
               <ZeroWord>zero</ZeroWord> effort.
             </p>
-            {/* §12.O: la definizione, mai numeri. Due righe, non di più. */}
+            {/* §12.O: la formula canonica — documenti esistenti, Motore,
+                validazione umana. Mai numeri, mai il verbo "firmare". */}
             <p className="mt-5 max-w-lg text-sm leading-relaxed text-gray-warm md:text-base">
-              Zero effort non vuol dire zero coinvolgimento: ti chiediamo solo
-              ciò che solo tu puoi darci — i documenti che hai già.
+              Zero effort, sul serio: bastano i documenti che hai già in
+              azienda. Il Motore Ver0 li trasforma in qualifiche, un
+              professionista le valida.
             </p>
 
             <div className="mt-9 flex flex-wrap gap-3">
@@ -272,7 +274,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* LO ZERO DI VER0 — la sezione-firma: statements per natura. */}
+      {/* LO ZERO DI VER0 — la sezione distintiva: statements per natura. */}
       <section className="relative bg-moss px-5 py-16 md:py-24">
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
           <ZeroWatermark tone="pine" className="-bottom-24 -left-10 text-[26rem]" />
@@ -378,11 +380,12 @@ export default function HomePage() {
       <section id="canone" className="bg-white px-5 pb-16 md:pb-24">
         <div className="mx-auto max-w-4xl bg-moss px-6 py-14 md:px-12">
           <h2 className="text-center font-display text-4xl text-ink md:text-6xl">
-            Il canone tiene vivo il documento.
+            I tuoi documenti non invecchiano mai.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-center text-sm text-gray-warm md:text-base">
-            Non un affitto sul PDF: aggiornamento continuo, Sigillo, bandi e
-            assistenza, inclusi in ogni abbonamento.
+            Quando una norma cambia, il Motore aggiorna i tuoi documenti. Il
+            Sigillo resta valido, i bandi ti vengono segnalati,
+            l&apos;assistenza risponde. Tutto incluso nell&apos;abbonamento.
           </p>
 
           <ul className="mx-auto mt-8 grid max-w-2xl grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">

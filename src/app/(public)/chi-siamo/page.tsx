@@ -26,7 +26,7 @@ import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 export const metadata: Metadata = metadataPagina({
   title: "Chi siamo: siamo partiti da zero, letteralmente",
   description:
-    "Abbiamo ricostruito la consulenza: un motore che lavora sui documenti, professionisti che verificano, standard ufficiali e prezzi leggibili prima di firmare.",
+    "Abbiamo ricostruito la consulenza: un motore che lavora sui documenti, professionisti che verificano, standard ufficiali e prezzi leggibili prima di attivare.",
   path: "/chi-siamo",
 });
 
@@ -117,7 +117,7 @@ export default function ChiSiamoPage() {
             <p className="mt-7 max-w-xl font-display text-xl leading-snug text-pine md:text-2xl">
               E da zero abbiamo ricostruito la consulenza: un motore AI,
               professionisti veri, standard ufficiali, prezzi che si leggono
-              prima di firmare.
+              prima di attivare.
             </p>
           </div>
           {/* Foto: la più luminosa e propositiva del set (natura + dati).

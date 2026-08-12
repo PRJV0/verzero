@@ -1,4 +1,4 @@
-import { Check, FileText, PenLine } from "lucide-react";
+import { Check, FileText, UserCheck } from "lucide-react";
 
 import { FascicoloPercorso } from "@/components/fascicolo-percorso";
 import {
@@ -133,7 +133,7 @@ function FoglioGenerazione() {
 /** Fase 4 — l'esito della verifica umana, rilievo compreso. */
 function FoglioVerifica() {
   return (
-    <Foglio titolo="Verifica tecnica" icona={PenLine}>
+    <Foglio titolo="Verifica tecnica" icona={UserCheck}>
       <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-mint/10 px-2.5 py-1 text-xs font-medium text-mint">
         <Check size={13} /> {VERIFICA_UMANA.esito}
       </span>
@@ -150,7 +150,7 @@ function FoglioVerifica() {
         {VERIFICA_UMANA.rilievo}
       </p>
       <p className="mt-3 border-t border-line pt-3 text-xs text-gray-warm">
-        {VERIFICA_UMANA.firma}
+        {VERIFICA_UMANA.responsabilita}
       </p>
     </Foglio>
   );

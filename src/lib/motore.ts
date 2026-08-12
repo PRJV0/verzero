@@ -53,7 +53,7 @@ export const MOTORE_FASI: FaseMotore[] = [
     titolo: "Chi verifica",
     desc: "Prima dell'emissione un professionista del team tecnico controlla perimetro, fattori e completezza, e mette per iscritto i rilievi. La responsabilità resta di una persona, non di un algoritmo.",
     entra: "Il documento generato e l'intera catena dei dati",
-    esce: "Esito della verifica, rilievi dichiarati e firma del professionista",
+    esce: "Esito della verifica, rilievi dichiarati e validazione del professionista",
     norma: "Verifica interna Ver0 — indipendente dalla certificazione di terza parte",
   },
 ];
@@ -243,7 +243,7 @@ export const VERIFICA_UMANA = {
   rilievo:
     "Dicembre mancante sul gasolio: stimato sulla media dei mesi precedenti ed etichettato «stimato» nel report.",
   esito: "Verificato dal team tecnico",
-  firma:
+  responsabilita:
     "Nome, ruolo e data di chi verifica restano sul documento e nel tuo archivio.",
 };
 
@@ -252,4 +252,4 @@ export const VERIFICA_UMANA = {
  *  VIETATE le quantificazioni di tempo o impegno («un'ora del tuo tempo»):
  *  l'impegno varia per percorso e impresa, ogni numero promesso è un ostaggio. */
 export const ZERO_EFFORT_DEFINIZIONE =
-  "Zero effort non vuol dire zero coinvolgimento: vuol dire che ti chiediamo solo ciò che solo tu puoi darci — i documenti che hai già — e ci occupiamo di tutto il resto.";
+  "Zero effort, sul serio: bastano i documenti che hai già in azienda. Il Motore Ver0 li trasforma in qualifiche, un professionista le valida.";

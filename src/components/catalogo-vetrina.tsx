@@ -23,19 +23,22 @@ const eur = (n: number) => n.toLocaleString("it-IT");
  * Il Percorso Ver0 domina visivamente la griglia.
  */
 
-/** Colore del badge di famiglia: un tocco, non un baraccone. */
-const FAMIGLIA_STILE: Record<string, string> = {
-  ambiente: "bg-mint/15 text-pine",
-  sociale: "bg-amber-soft text-amber-ink",
-  governance: "bg-moss text-pine-dark",
-  "sistemi-di-gestione": "bg-pine/10 text-pine",
+/** Il segno di colore della famiglia: barra nell'intestazione di fascia.
+ *  Un colore per pilastro, coerente in tutto il listino. */
+const FAMIGLIA_BARRA: Record<string, string> = {
+  ambiente: "bg-mint",
+  sociale: "bg-amber-ink",
+  governance: "bg-pine",
+  "sistemi-di-gestione": "bg-pine-dark",
+  trasversali: "bg-gray-warm",
 };
 
 const FAMIGLIA_LABEL: Record<string, string> = {
-  ambiente: "Ambiente · E",
-  sociale: "Sociale · S",
-  governance: "Governance · G",
-  "sistemi-di-gestione": "Sistemi di gestione",
+  ambiente: "Pilastro E",
+  sociale: "Pilastro S",
+  governance: "Pilastro G",
+  "sistemi-di-gestione": "Famiglia certificabile",
+  trasversali: "Senza canone",
 };
 
 /** Riga compatta del ciclo di vita per le card (§12.Q), fascia micro. */
@@ -107,19 +110,22 @@ export function CatalogoVetrina() {
             key={cat.key}
             className="rounded-2xl border border-line/70 bg-white shadow-soft"
           >
-            <header className="flex items-center justify-between gap-3 border-b border-line/70 px-5 py-3.5">
-              <div>
-                <h3 className="font-display text-lg text-ink">{cat.title}</h3>
-                <p className="text-xs text-gray-warm">{cat.sub}</p>
-              </div>
+            <header className="flex items-stretch gap-4 border-b-2 border-line px-5 py-4">
+              {/* Il segno di colore della famiglia */}
               <span
+                aria-hidden
                 className={
-                  "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold " +
-                  (FAMIGLIA_STILE[cat.key] ?? "bg-moss text-pine")
+                  "w-1.5 shrink-0 rounded-full " +
+                  (FAMIGLIA_BARRA[cat.key] ?? "bg-pine")
                 }
-              >
-                {FAMIGLIA_LABEL[cat.key] ?? cat.title}
-              </span>
+              />
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-light">
+                  {FAMIGLIA_LABEL[cat.key] ?? ""}
+                </p>
+                <h3 className="font-display text-2xl text-ink">{cat.title}</h3>
+                <p className="mt-0.5 text-xs text-gray-warm">{cat.sub}</p>
+              </div>
             </header>
             <ul>
               {cat.voci.map((v, i) => {
@@ -144,18 +150,18 @@ export function CatalogoVetrina() {
                             voce vetrina resta solo per le voci di roadmap. */}
                         <p
                           className={
-                            "text-sm font-semibold " +
+                            "text-[15px] font-bold leading-snug " +
                             (v.roadmap ? "text-gray-warm" : "text-ink")
                           }
                         >
                           {servizio?.name ?? v.name}
                         </p>
                         {servizio?.taglio && (
-                          <p className="text-[11px] font-semibold uppercase tracking-wide text-pine">
+                          <p className="mt-0.5 text-xs font-medium text-gray-warm">
                             {servizio.taglio}
                           </p>
                         )}
-                        <p className="mt-0.5 text-xs leading-relaxed text-gray-warm">
+                        <p className="mt-1 text-xs leading-relaxed text-gray-light">
                           {v.benefit}
                         </p>
                         {/* Etichette solo fattuali (§12.M) */}
@@ -181,19 +187,19 @@ export function CatalogoVetrina() {
                       ) : (
                         <>
                           {/* Canone oppure one-shot: mai un "/mese" orfano. */}
-                          <span className="block font-display text-lg tabular-nums text-pine">
+                          <span className="block font-display text-2xl leading-none tabular-nums text-pine">
                             {p ? (
                               <>
-                                {eur(p.mensile)} €
-                                <span className="text-xs text-gray-warm">
-                                  /mese
+                                {eur(p.mensile)}{" "}
+                                <span className="text-sm text-gray-warm">
+                                  €/mese
                                 </span>
                               </>
                             ) : unaTantum !== null ? (
                               <>
-                                {eur(unaTantum)} €
-                                <span className="block text-xs text-gray-warm">
-                                  una tantum
+                                {eur(unaTantum)}{" "}
+                                <span className="text-sm text-gray-warm">
+                                  € una tantum
                                 </span>
                               </>
                             ) : null}
@@ -218,7 +224,7 @@ export function CatalogoVetrina() {
                 // sotto il nome, allineato al testo — mai una parola per riga.
                 const rowClass =
                   "group/row flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-5 py-4" +
-                  (i > 0 ? " border-t border-line/60" : "");
+                  (i > 0 ? " border-t border-line" : "");
 
                 return (
                   <li key={v.name}>

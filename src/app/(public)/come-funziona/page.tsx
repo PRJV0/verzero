@@ -8,9 +8,9 @@ import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
 import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
 export const metadata: Metadata = metadataPagina({
-  title: "Come funziona: il Motore, i documenti, la firma",
+  title: "Come funziona: il Motore, i documenti, la validazione",
   description:
-    "Il fascicolo del percorso documento per documento, cosa legge il Motore Ver0, cosa genera e chi firma la verifica: la profondità tecnica, con le norme citate.",
+    "Il fascicolo del percorso documento per documento, cosa legge il Motore Ver0, cosa genera e chi valida: la profondità tecnica, con le norme citate.",
   path: "/come-funziona",
 });
 
@@ -43,8 +43,8 @@ export default function ComeFunzionaPage() {
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-gray-warm md:text-base">
             Questa pagina mostra il lavoro da vicino: quali documenti chiede il
-            Motore Ver0, che cosa ne estrae, che cosa genera e chi mette la
-            firma. Tutto su norme citate una per una.
+            Motore Ver0, che cosa ne estrae, che cosa genera e chi valida.
+            Tutto su norme citate una per una.
           </p>
         </div>
       </section>
@@ -53,7 +53,7 @@ export default function ComeFunzionaPage() {
           entra/esce/norma. Vive qui, non in home (§12.J). */}
       <MotoreScrolly />
 
-      {/* La firma umana e il principio delle norme: i due pilastri del metodo */}
+      {/* La validazione umana e il principio delle norme: i due pilastri del metodo */}
       <section className="bg-white px-5 py-16">
         <div className="mx-auto grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="border-2 border-line p-6">
