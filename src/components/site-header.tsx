@@ -11,7 +11,7 @@ import { MobileMenu } from "@/components/mobile-menu";
 const NAV = [
   { label: "Home", href: "/" },
   { label: "Chi siamo", href: "/chi-siamo" },
-  { label: "Come funziona", href: "/#come-funziona" },
+  { label: "Come funziona", href: "/come-funziona" },
   { label: "Servizi", href: "/servizi" },
   { label: "Il Sigillo", href: "/sigillo" },
   { label: "Partner", href: "/partner" },

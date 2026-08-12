@@ -20,6 +20,9 @@ export function SiteFooter() {
           <Link href="/chi-siamo" className="hover:text-pine">
             Chi siamo
           </Link>
+          <Link href="/come-funziona" className="hover:text-pine">
+            Come funziona
+          </Link>
           <Link href="/servizi" className="hover:text-pine">
             Servizi
           </Link>

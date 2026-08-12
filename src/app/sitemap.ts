@@ -23,6 +23,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: url("/come-funziona"),
+      lastModified: oggi,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: url("/sigillo"),
       lastModified: oggi,
       changeFrequency: "monthly",

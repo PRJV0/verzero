@@ -277,6 +277,11 @@ Regola di comunicazione: ogni prezzo "/mese" sul sito deve rendere visibile ques
 - Ogni voce: nome, una riga di beneficio, "da X €/mese" (o "da X € una tantum"), link alla pagina servizio.
 - I servizi di roadmap compaiono marcati "IN ARRIVO" (ampliano l'offerta percepita, non acquistabili); nessuna voce puo suggerire che Verzero certifichi.
 
+**12.J — HOME COME MANIFESTO, PROFONDITA ALL'INTERNO (regola di comunicazione e design).**
+- La HOMEPAGE vende la potenza del Motore proprietario e il risultato — NON spiega il processo: niente fascicoli dettagliati, niente fasi tecniche estese, niente spoiler del metodo (che e anche protezione del know-how: il "come" dettagliato non si regala ai concorrenti in home). Ogni sezione della home: UN titolo grande e deciso + massimo 2 righe di testo + una CTA. La profondita tecnica vive nelle pagine interne (come-funziona, pagine servizio, dashboard).
+- TIPOGRAFIA "SHOCK": display molto piu grande e coraggioso (statement di 2-5 parole che circoscrivono e indirizzano), contrasto netto pino/bianco, meno gradienti e morbidezze "patinate", bordi e blocchi decisi, bottoni grandi con verbi imperativi. Meno elementi, piu grandi: se una sezione ha piu di un messaggio, si spezza o si taglia.
+- La sezione documenti in home si comprime a TRE battute visive secche (il necessario → il Motore → la firma) con rimando "guarda come funziona" alla pagina interna dove vive il fascicolo completo.
+
 **12.K — ACCESSO ALL'ECOSISTEMA: DUE PROFILI (decisione del fondatore).**
 - L'area riservata si comunica come ECOSISTEMA del cliente, non come semplice login: dal sito si accede con pulsante "Accedi" sempre visibile in header (e richiami nel footer e nelle CTA), che porta a una pagina di accesso con DUE PROFILI distinti:
   (a) IMPRESA: l'azienda che ha attivato i servizi — vede il proprio ecosistema (moduli, documenti, Sigillo, bandi, corner).
