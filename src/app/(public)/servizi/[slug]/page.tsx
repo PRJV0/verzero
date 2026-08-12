@@ -110,6 +110,12 @@ export default async function ServizioPage({
           <h1 className="mb-1 font-display text-3xl text-ink md:text-4xl">
             {s.name}
           </h1>
+          {/* §12.I: il taglio è la riga secondaria, mai parte del nome. */}
+          {s.taglio && (
+            <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-pine">
+              {s.taglio}
+            </p>
+          )}
           {s.copre && (
             <div className="mb-2 mt-2 flex flex-wrap gap-1.5">
               {s.copre.map((c) => (

@@ -25,7 +25,7 @@ const PERCORSI_SEGMENTI = [
     to: -22,
   },
   {
-    titolo: "Bilancio VSME",
+    titolo: "Bilancio di Sostenibilità (VSME)",
     desc: "Il bilancio di sostenibilità completo e validato aggiunge il suo ambito alla pagina pubblica di verifica.",
     from: -14,
     to: 54,

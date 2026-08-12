@@ -277,6 +277,10 @@ Regola di comunicazione: ogni prezzo "/mese" sul sito deve rendere visibile ques
 - Ogni voce: nome, una riga di beneficio, "da X €/mese" (o "da X € una tantum"), link alla pagina servizio.
 - I servizi di roadmap compaiono marcati "IN ARRIVO" (ampliano l'offerta percepita, non acquistabili); nessuna voce puo suggerire che Verzero certifichi.
 
+**12.I — NOMENCLATURA UFFICIALE DEI SERVIZI (precisione tecnica, regola vincolante).**
+- Ogni servizio si espone col NOME TECNICO COMPLETO; i tagli commerciali sono SOTTOTITOLI, mai il nome da soli: "Carbon Footprint di Organizzazione — Scope 1 e 2" e "Carbon Footprint di Organizzazione — Scope 1, 2 e 3" (mai "Carbon Light/Completa" da soli); "Bilancio di Sostenibilita (VSME) — Base" e "— Avanzato"; "Manuale del Sistema di Gestione ISO 9001"; e cosi via per tutto il catalogo. Nelle card compatte: nome tecnico in evidenza + taglio come riga secondaria. Un addetto ai lavori deve riconoscere il servizio esatto dal nome.
+- ESTENSIBILITA DICHIARATA: Verzero e una piattaforma di consulenza destinata ad ampliarsi oltre gli ambiti attuali (es. Modello di Organizzazione e Gestione ex D.Lgs. 231/01, altre consulenze specialistiche): architettura, copy e categorie del catalogo non devono mai presupporre che gli ambiti siano solo quelli di oggi.
+
 **12.J — HOME COME MANIFESTO, PROFONDITA ALL'INTERNO (regola di comunicazione e design).**
 - La HOMEPAGE vende la potenza del Motore proprietario e il risultato — NON spiega il processo: niente fascicoli dettagliati, niente fasi tecniche estese, niente spoiler del metodo (che e anche protezione del know-how: il "come" dettagliato non si regala ai concorrenti in home). Ogni sezione della home: UN titolo grande e deciso + massimo 2 righe di testo + una CTA. La profondita tecnica vive nelle pagine interne (come-funziona, pagine servizio, dashboard).
 - TIPOGRAFIA "SHOCK": display molto piu grande e coraggioso (statement di 2-5 parole che circoscrivono e indirizzano), contrasto netto pino/bianco, meno gradienti e morbidezze "patinate", bordi e blocchi decisi, bottoni grandi con verbi imperativi. Meno elementi, piu grandi: se una sezione ha piu di un messaggio, si spezza o si taglia.
@@ -510,4 +514,5 @@ Ogni servizio pensato, con il suo stato. Questo indice si AGGIORNA a ogni modifi
 **Sostenibilita roadmap (sez. 13.1-13.4):** Compensazione "contributo climatico" (crediti + GO) | Carbon footprint di prodotto / LCA / ISO 14067 / EPD via partner | Academy formazione | Supporto certificazioni (ISO 14064 di parte terza)
 **Efficienza energetica (sez. 13.9-13.10):** Check-up energetico | Monitoraggio continuo | Fattibilita fotovoltaico | Diagnosi ex D.Lgs. 102 con EGE | CER
 **Servizi ad alto margine:** Supporto all'audit di certificazione (one shot, 12.N) | Kit Comunicazione Ver0 (claim verificati anti-greenwashing + verifica claim; 12.S)
+**Estensioni future dichiarate:** Modello organizzativo ex D.Lgs. 231/01 e altre consulenze specialistiche (12.I)
 **Capacita trasversali:** Arricchimento camerale (13.7) | Banche dati e benchmark interno (13.8) | Documenti pregressi e continuita (17) | Corner consulenti affiliati 30/60 min (18) | Albo Imprese Ver0 (19, non esposto fino a massa critica) | Osservatorio finanza agevolata (20)

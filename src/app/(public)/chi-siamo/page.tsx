@@ -168,7 +168,7 @@ export default function ChiSiamoPage() {
                   key={p.t}
                   className="vz-reveal rounded-2xl border border-line/70 bg-white p-5 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift"
                 >
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-moss text-pine">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-moss text-pine">
                     <Icon size={20} />
                   </span>
                   <p className="mt-3 font-display text-xl text-pine">{p.t}</p>
@@ -188,7 +188,7 @@ export default function ChiSiamoPage() {
 
 
       {/* 4. LE PERSONE — racconto collettivo con foto */}
-      <section className="bg-white px-5 py-20">
+      <section className="bg-white px-5 py-16 md:py-24">
         <div className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-10 md:grid-cols-2">
           <PhotoDuotone
             src="/photos/sito2.jpg"
@@ -197,7 +197,7 @@ export default function ChiSiamoPage() {
             className="vz-reveal order-2 aspect-[4/3] rounded-2xl shadow-lift md:order-1"
           />
           <div className="order-1 md:order-2">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-moss text-pine">
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-moss text-pine">
               <Users size={22} />
             </span>
             <h2 className="mt-4 font-display text-4xl text-ink md:text-5xl">
@@ -218,7 +218,7 @@ export default function ChiSiamoPage() {
       </section>
 
       {/* 5. I PRINCIPI — quattro card su salvia */}
-      <section className="bg-gradient-to-b from-paper via-moss to-moss px-5 py-20">
+      <section className="bg-gradient-to-b from-paper via-moss to-moss px-5 py-16 md:py-24">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-center font-display text-4xl text-ink md:text-5xl">
             I principi
@@ -231,7 +231,7 @@ export default function ChiSiamoPage() {
                   key={p.title}
                   className="vz-reveal rounded-2xl bg-white p-5 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift"
                 >
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-moss text-pine">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-moss text-pine">
                     <Icon size={20} />
                   </span>
                   <p className="mt-3 font-display text-lg text-ink">
@@ -249,7 +249,7 @@ export default function ChiSiamoPage() {
 
       {/* 6. IL METODO SI DIMOSTRA — registro scuro istituzionale con foto in
           filigrana e sigillo tono-su-tono */}
-      <section className="relative overflow-hidden bg-pine-deep px-5 py-20 text-center">
+      <section className="relative overflow-hidden bg-pine-deep px-5 py-16 md:py-24 text-center">
         <PhotoDuotone
           src="/photos/sito4.jpg"
           className="absolute inset-0 opacity-15"

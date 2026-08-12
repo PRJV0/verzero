@@ -15,7 +15,7 @@ export const metadata: Metadata = metadataPagina({
 /** Indice dei servizi: catalogo per categorie (SPEC §12.Y), prezzi dalla matrice. */
 export default function ServiziPage() {
   return (
-    <main className="mx-auto max-w-4xl px-5 py-10">
+    <main className="mx-auto max-w-4xl px-5 py-16">
       <JsonLd
         dati={jsonLdBreadcrumb([
           { nome: "Home", path: "/" },

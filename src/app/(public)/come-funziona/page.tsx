@@ -33,7 +33,7 @@ export default function ComeFunzionaPage() {
       />
 
       {/* Apertura: qui si spiega, e lo si dichiara. */}
-      <section className="bg-moss px-5 py-16 md:py-20">
+      <section className="bg-moss px-5 py-16 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
           <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
             COME FUNZIONA
@@ -57,7 +57,7 @@ export default function ComeFunzionaPage() {
       <section className="bg-white px-5 py-16">
         <div className="mx-auto grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="border-2 border-line p-6">
-            <span className="inline-flex h-11 w-11 items-center justify-center bg-moss text-pine">
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-moss text-pine">
               <UserCheck size={20} />
             </span>
             <h2 className="mt-4 font-display text-2xl text-ink">
@@ -76,7 +76,7 @@ export default function ComeFunzionaPage() {
             </Link>
           </div>
           <div className="border-2 border-line p-6">
-            <span className="inline-flex h-11 w-11 items-center justify-center bg-moss text-pine">
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-moss text-pine">
               <BookMarked size={20} />
             </span>
             <h2 className="mt-4 font-display text-2xl text-ink">
@@ -108,7 +108,7 @@ export default function ComeFunzionaPage() {
         <div className="mt-7 flex justify-center">
           <Link
             href="/servizi"
-            className="inline-flex items-center gap-2 rounded-xl bg-pine px-7 py-4 text-base font-semibold text-white transition-transform hover:-translate-y-0.5"
+            className="vz-press inline-flex items-center gap-2 rounded-xl bg-pine px-7 py-4 text-base font-semibold text-white hover:-translate-y-0.5"
           >
             Calcola il prezzo <ArrowRight size={18} />
           </Link>

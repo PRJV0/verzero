@@ -92,7 +92,7 @@ function CtaGrande({
     <Link
       href={href}
       className={
-        "inline-flex items-center gap-2 rounded-xl px-7 py-4 text-base font-semibold transition-transform hover:-translate-y-0.5 " +
+        "vz-press inline-flex items-center gap-2 rounded-xl px-7 py-4 text-base font-semibold hover:-translate-y-0.5 " +
         (tone === "pine"
           ? "bg-pine text-white"
           : "bg-white text-pine")
@@ -199,7 +199,7 @@ export default function HomePage() {
               <CtaGrande href="/servizi">Calcola il prezzo</CtaGrande>
               <Link
                 href="/come-funziona"
-                className="inline-flex items-center gap-2 rounded-xl border-2 border-pine px-7 py-4 text-base font-semibold text-pine transition-transform hover:-translate-y-0.5"
+                className="vz-press inline-flex items-center gap-2 rounded-xl border-2 border-pine px-7 py-4 text-base font-semibold text-pine hover:-translate-y-0.5"
               >
                 Guarda come funziona
               </Link>
@@ -218,11 +218,14 @@ export default function HomePage() {
 
       {/* IL MOTORE — manifesto della potenza, senza fasi né meccanismi
           (§12.J: il «come» vive dentro, in /come-funziona). */}
-      <section className="relative overflow-hidden bg-pine-deep px-5 py-20 md:py-28">
+      <section className="relative overflow-hidden bg-pine-deep px-5 py-16 md:py-24">
         <ZeroWatermark
           tone="light"
           className="-left-20 top-1/2 -translate-y-1/2 text-[28rem]"
         />
+        {/* Glow menta discreti: profondità sulle superfici scure */}
+        <span aria-hidden className="pointer-events-none absolute -right-32 -top-24 h-96 w-96 rounded-full bg-mint-bright/10 blur-3xl" />
+        <span aria-hidden className="pointer-events-none absolute -bottom-32 left-1/4 h-80 w-80 rounded-full bg-mint-bright/[0.07] blur-3xl" />
         <div className="relative mx-auto max-w-4xl text-center">
           {/* Mai "VER0" in maiuscoletto: si legge "VERO" (decisione già presa). */}
           <p className="mb-6 text-xs font-semibold tracking-widest text-mint-bright">
@@ -243,7 +246,7 @@ export default function HomePage() {
               return (
                 <div
                   key={b.t}
-                  className="border-2 border-white/15 px-5 py-8"
+                  className="border border-white/15 bg-white/[0.03] px-5 py-8"
                 >
                   <span className="mx-auto flex h-12 w-12 items-center justify-center text-mint-bright">
                     {Icon ? (
@@ -270,7 +273,7 @@ export default function HomePage() {
       </section>
 
       {/* LO ZERO DI VER0 — la sezione-firma: statements per natura. */}
-      <section className="relative bg-moss px-5 py-20">
+      <section className="relative bg-moss px-5 py-16 md:py-24">
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
           <ZeroWatermark tone="pine" className="-bottom-24 -left-10 text-[26rem]" />
         </div>
@@ -325,7 +328,7 @@ export default function HomePage() {
       </section>
 
       {/* CONSULENZA — statement + due righe + CTA. Il dettaglio vive dentro. */}
-      <section className="bg-white px-5 py-20 md:py-24">
+      <section className="bg-white px-5 py-16 md:py-24">
         <div className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-10 md:grid-cols-2">
           <PhotoDuotone
             src="/photos/consulenza.jpg"
@@ -349,7 +352,7 @@ export default function HomePage() {
       </section>
 
       {/* SERVIZI E PREZZI — il cuore della conversione: statement + vetrina. */}
-      <section id="servizi" className="border-t-2 border-line bg-white px-5 py-20">
+      <section id="servizi" className="border-t-2 border-line bg-white px-5 py-16 md:py-24">
         <div className="mx-auto max-w-4xl">
           <div className="text-center">
             <h2 className="font-display text-5xl text-ink md:text-6xl">
@@ -372,7 +375,7 @@ export default function HomePage() {
       </section>
 
       {/* IL CANONE — blocco pieno, titoli soltanto: il dettaglio è dentro. */}
-      <section id="canone" className="bg-white px-5 pb-20">
+      <section id="canone" className="bg-white px-5 pb-16 md:pb-24">
         <div className="mx-auto max-w-4xl bg-moss px-6 py-14 md:px-12">
           <h2 className="text-center font-display text-4xl text-ink md:text-6xl">
             Il canone tiene vivo il documento.
@@ -421,7 +424,7 @@ export default function HomePage() {
       </section>
 
       {/* SIGILLO — registro scuro istituzionale (§11.X). */}
-      <section id="sigillo" className="bg-pine-deep px-5 py-20">
+      <section id="sigillo" className="bg-pine-deep px-5 py-16 md:py-24">
         <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 text-center sm:flex-row sm:gap-10 sm:text-left">
           <Sigillo tone="dark" className="h-32 w-32 shrink-0 md:h-40 md:w-40" />
           <div className="min-w-0">
@@ -442,7 +445,7 @@ export default function HomePage() {
       </section>
 
       {/* MANIFESTO DELLO ZERO — chiusa su pino scuro, foto in filigrana. */}
-      <section className="relative overflow-hidden bg-pine-dark px-5 py-24 text-center">
+      <section className="relative overflow-hidden bg-pine-dark px-5 py-16 md:py-24 text-center">
         <PhotoDuotone
           src="/photos/impresa.jpg"
           className="absolute inset-0 opacity-20"

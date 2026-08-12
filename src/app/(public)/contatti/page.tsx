@@ -90,7 +90,7 @@ export default function ContattiPage() {
                 key={g.titolo}
                 className="rounded-2xl border border-line/70 bg-paper p-4"
               >
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-moss text-pine">
+                <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-moss text-pine">
                   <Icona size={18} />
                 </span>
                 <h3 className="mt-2.5 text-sm font-semibold text-ink">

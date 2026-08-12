@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Leaf, Mail } from "lucide-react";
 
+import { ContaNumero } from "@/components/conta-numero";
 import { VETRINA, getServizio } from "@/lib/catalog";
 import {
   GRANDE_IMPRESA,
@@ -73,15 +74,15 @@ export function CatalogoVetrina() {
               Percorso Ver0
             </p>
             <p className="mt-2 text-sm leading-relaxed text-moss">
-              Carbon Light + bilancio VSME + miglioramento score rating. La via
-              diretta al Sigillo, con un solo inserimento dati.
+              Carbon Footprint Scope 1 e 2 + Bilancio di Sostenibilità (VSME) +
+              miglioramento score rating. Un solo inserimento dati.
             </p>
           </div>
           <div className="min-w-0 shrink-0">
             {percorso && (
               <>
                 <p className="font-display text-4xl tabular-nums text-white">
-                  {eur(percorso.mensile)} €
+                  <ContaNumero valore={percorso.mensile} /> €
                   <span className="text-lg text-moss">/mese</span>
                 </p>
                 <p className="mt-0.5 text-xs leading-relaxed text-moss">
@@ -138,15 +139,23 @@ export function CatalogoVetrina() {
                         </span>
                       )}
                       <div className="min-w-0">
+                        {/* §12.I: nome tecnico completo dal catalogo (fonte
+                            unica), taglio come riga secondaria. Il nome della
+                            voce vetrina resta solo per le voci di roadmap. */}
                         <p
                           className={
                             "text-sm font-semibold " +
                             (v.roadmap ? "text-gray-warm" : "text-ink")
                           }
                         >
-                          {v.name}
+                          {servizio?.name ?? v.name}
                         </p>
-                        <p className="text-xs leading-relaxed text-gray-warm">
+                        {servizio?.taglio && (
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-pine">
+                            {servizio.taglio}
+                          </p>
+                        )}
+                        <p className="mt-0.5 text-xs leading-relaxed text-gray-warm">
                           {v.benefit}
                         </p>
                         {/* Etichette solo fattuali (§12.M) */}
@@ -164,7 +173,7 @@ export function CatalogoVetrina() {
                         )}
                       </div>
                     </div>
-                    <div className="shrink-0 text-right">
+                    <div className="w-full shrink-0 pl-11 text-left sm:w-auto sm:pl-0 sm:text-right">
                       {v.roadmap ? (
                         <span className="rounded-full border border-line bg-paper px-2.5 py-1 text-xs text-gray-warm">
                           In arrivo
@@ -205,8 +214,10 @@ export function CatalogoVetrina() {
                   </>
                 );
 
+                // Nomi tecnici lunghi (§12.I): su mobile il prezzo scende
+                // sotto il nome, allineato al testo — mai una parola per riga.
                 const rowClass =
-                  "group/row flex items-center justify-between gap-3 px-5 py-3.5" +
+                  "group/row flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-5 py-4" +
                   (i > 0 ? " border-t border-line/60" : "");
 
                 return (

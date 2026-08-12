@@ -22,7 +22,11 @@ import {
  */
 export type Servizio = {
   slug: string;
+  /** NOME TECNICO COMPLETO (§12.I): un addetto ai lavori deve riconoscere
+   *  il servizio esatto dal nome. I tagli commerciali stanno in `taglio`. */
   name: string;
+  /** Il taglio, come riga secondaria: "Scope 1 e 2", "Base", "Avanzato"… */
+  taglio?: string;
   icon: LucideIcon;
   featured?: boolean;
   /** Riga breve per le card di home e indice. */
@@ -66,13 +70,14 @@ export const SERVIZI: Servizio[] = [
   {
     slug: "percorso-ver0",
     name: "Percorso Ver0",
+    taglio: "Carbon Scope 1 e 2 + VSME Base + rating",
     icon: Leaf,
     featured: true,
     short:
-      "Carbon Light + bilancio VSME + miglioramento score rating. La via diretta al Sigillo.",
+      "Carbon Footprint Scope 1 e 2 + Bilancio di Sostenibilità (VSME) Base + miglioramento score rating. La via diretta al Sigillo.",
     cosE: "Il percorso integrato che unisce inventario delle emissioni (Scope 1 e 2), bilancio di sostenibilità in formato VSME e preparazione ai rating richiesti da banche e capofiliera. Un solo inserimento dati alimenta tutti e tre gli output, con un'unica scadenza annuale.",
     copre: [
-      "Include Carbon Light (Scope 1+2)",
+      "Include Carbon Footprint Scope 1 e 2",
       "Bilancio VSME",
       "Miglioramento score rating",
     ],
@@ -112,8 +117,9 @@ export const SERVIZI: Servizio[] = [
     ],
   },
   {
-    slug: "carbon-light",
-    name: "Carbon Light",
+    slug: "carbon-footprint-scope-1-2",
+    name: "Carbon Footprint di Organizzazione",
+    taglio: "Scope 1 e 2",
     icon: Leaf,
     short: "Scope 1 e 2 secondo GHG Protocol e UNI EN ISO 14064-1.",
     cosE: "L'inventario delle emissioni dirette (Scope 1) e da energia acquistata (Scope 2) della tua organizzazione, calcolato dai documenti reali di consumo con fattori di emissione pubblici e tracciabili.",
@@ -149,12 +155,13 @@ export const SERVIZI: Servizio[] = [
     opportunita: [
       "È il documento che i clienti strutturati chiedono per primo nella qualifica fornitori",
       "Primo percorso qualificante verso il Sigillo Ver0",
-      "L'upgrade a Carbon Completa è sempre possibile pagando la differenza: i dati inseriti restano",
+      "L'upgrade al taglio Scope 1, 2 e 3 è sempre possibile pagando la differenza: i dati inseriti restano",
     ],
   },
   {
-    slug: "carbon-completa",
-    name: "Carbon Completa",
+    slug: "carbon-footprint-scope-1-2-3",
+    name: "Carbon Footprint di Organizzazione",
+    taglio: "Scope 1, 2 e 3",
     icon: Leaf,
     short: "Scope 1, 2 e 3: l'inventario completo, filiera compresa.",
     cosE: "L'inventario completo delle emissioni: oltre a Scope 1 e 2, le emissioni indirette di filiera (Scope 3) — beni e servizi acquistati, trasporti, uso dei prodotti — raccolte e stimate con metodi dichiarati categoria per categoria.",
@@ -164,7 +171,7 @@ export const SERVIZI: Servizio[] = [
       "Scope 3 — filiera e indirette",
     ],
     comeFunziona: [
-      "Parti dalla stessa lista di Carbon Light; il Motore Ver0 legge i documenti, incrocia le banche dati ufficiali e segnala gli scostamenti.",
+      "Parti dalla stessa lista del taglio Scope 1 e 2; il Motore Ver0 legge i documenti, incrocia le banche dati ufficiali e segnala gli scostamenti.",
       "La piattaforma mappa le categorie Scope 3 applicabili alla tua attività e guida la raccolta dei dati di filiera (acquisti, trasporti, rifiuti).",
       "Dove il dato primario non è disponibile si applicano stime spend-based o da benchmark, sempre etichettate e approvate da te.",
       "Il team tecnico valida metodologia e risultati prima dell'emissione.",
@@ -181,7 +188,7 @@ export const SERVIZI: Servizio[] = [
       "Inventario di parte prima; la verifica di terza parte resta un percorso separato tramite organismi accreditati",
     ],
     documenti: [
-      "Tutti i documenti di Carbon Light (bollette, carburanti, visura)",
+      "Tutti i documenti del taglio Scope 1 e 2 (bollette, carburanti, visura)",
       "Estrazione dei fornitori per categoria di spesa dalla contabilità",
       "Documenti di trasporto e logistica in ingresso e uscita",
       "Registri dei rifiuti (MUD o formulari) dell'anno di riferimento",
@@ -194,13 +201,14 @@ export const SERVIZI: Servizio[] = [
     ],
     opportunita: [
       "I capofiliera devono rendicontare lo Scope 3: i fornitori con dati pronti entrano prima nei loro perimetri",
-      "Include tutto Carbon Light; partendo da Light si paga solo la differenza",
+      "Include tutto il taglio Scope 1 e 2; partendo da lì si paga solo la differenza",
       "La base più solida per obiettivi di riduzione credibili e per il Sigillo",
     ],
   },
   {
-    slug: "bilancio-vsme-base",
-    name: "Bilancio VSME Base",
+    slug: "bilancio-sostenibilita-vsme-base",
+    name: "Bilancio di Sostenibilità (VSME)",
+    taglio: "Base",
     icon: FileText,
     short: "Il bilancio di sostenibilità nel formato europeo VSME.",
     cosE: "Il bilancio di sostenibilità redatto secondo lo standard volontario VSME pubblicato da EFRAG per le imprese non quotate: un documento unico e standardizzato che risponde alle richieste di banche, clienti e bandi senza rifare il lavoro per ogni questionario.",
@@ -238,8 +246,9 @@ export const SERVIZI: Servizio[] = [
     ],
   },
   {
-    slug: "bilancio-vsme-avanzato",
-    name: "Bilancio VSME Avanzato",
+    slug: "bilancio-sostenibilita-vsme-avanzato",
+    name: "Bilancio di Sostenibilità (VSME)",
+    taglio: "Avanzato",
     icon: FileText,
     short:
       "Il VSME completo: modulo base più il modulo comprehensive, per partner e finanziatori esigenti.",
@@ -266,7 +275,7 @@ export const SERVIZI: Servizio[] = [
       "Lo standard VSME è volontario: non sostituisce obblighi di rendicontazione eventualmente applicabili alla tua impresa",
     ],
     documenti: [
-      "Tutti i documenti previsti per il VSME Base",
+      "Tutti i documenti previsti per il taglio Base",
       "Politiche formalizzate su ambiente, personale, catena di fornitura",
       "Obiettivi di sostenibilità già deliberati, con orizzonte temporale",
       "Evidenze delle azioni in corso (progetti, investimenti, iniziative)",
@@ -283,8 +292,9 @@ export const SERVIZI: Servizio[] = [
     ],
   },
   {
-    slug: "manuale-iso-9001",
-    name: "Manuale ISO 9001",
+    slug: "manuale-sistema-gestione-iso-9001",
+    name: "Manuale del Sistema di Gestione ISO 9001",
+    taglio: "UNI EN ISO 9001:2015 — qualità",
     icon: Scale,
     short: "Il sistema qualità documentato, pronto per l'audit dell'ente terzo.",
     cosE: "L'impianto documentale completo di un sistema di gestione per la qualità conforme a UNI EN ISO 9001:2015, generato sui dati e sui processi reali della tua azienda: manuale, politica, procedure e modulistica secondo la struttura di alto livello della norma (punti 4–10).",
@@ -320,8 +330,9 @@ export const SERVIZI: Servizio[] = [
     ],
   },
   {
-    slug: "manuale-iso-14001",
-    name: "Manuale ISO 14001",
+    slug: "manuale-sistema-gestione-iso-14001",
+    name: "Manuale del Sistema di Gestione ISO 14001",
+    taglio: "UNI EN ISO 14001:2015 — ambiente",
     icon: Scale,
     short:
       "Il sistema di gestione ambientale documentato, pronto per l'audit dell'ente terzo.",
@@ -359,7 +370,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "parita-di-genere-pdr-125",
-    name: "Parità di genere UNI/PdR 125",
+    name: "Sistema di Gestione per la Parità di Genere",
+    taglio: "UNI/PdR 125:2022",
     icon: ShieldCheck,
     short: "KPI, sistema di gestione e fascicolo per l'audit UNI/PdR 125:2022.",
     cosE: "La preparazione alla certificazione della parità di genere secondo la prassi di riferimento UNI/PdR 125:2022: autovalutazione sui KPI delle sei aree previste, sistema di gestione della parità e fascicolo documentale pronto per l'audit dell'organismo accreditato.",
@@ -395,8 +407,9 @@ export const SERVIZI: Servizio[] = [
     ],
   },
   {
-    slug: "manuale-iso-45001",
-    name: "Manuale ISO 45001",
+    slug: "manuale-sistema-gestione-iso-45001",
+    name: "Manuale del Sistema di Gestione ISO 45001",
+    taglio: "UNI ISO 45001:2018 — sicurezza, DVR escluso",
     icon: ShieldCheck,
     short:
       "Il sistema di gestione della sicurezza sul lavoro, integrato con il tuo DVR.",
@@ -451,7 +464,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "iso-45003",
-    name: "Aderenza UNI ISO 45003",
+    name: "Percorso di Aderenza UNI ISO 45003",
+    taglio: "Rischi psicosociali — linea guida, non certificabile",
     icon: ShieldCheck,
     short:
       "Rischi psicosociali e benessere organizzativo: aderenza documentata, non certificabile.",
@@ -496,7 +510,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "iso-30415",
-    name: "Aderenza UNI ISO 30415",
+    name: "Percorso di Aderenza UNI ISO 30415",
+    taglio: "Diversità e inclusione — linea guida, non certificabile",
     icon: Users,
     short:
       "Diversità e inclusione: aderenza documentata alla linea guida, non certificabile.",
@@ -541,7 +556,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "sa8000",
-    name: "Preparazione SA8000",
+    name: "Preparazione alla Certificazione SA8000",
+    taglio: "Responsabilità sociale — schema SAI",
     icon: Users,
     short:
       "Lo schema internazionale di responsabilità sociale: preparazione documentale e accompagnamento all'audit.",
@@ -594,7 +610,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "rating-economia-circolare",
-    name: "Rating economia circolare",
+    name: "Rating di Economia Circolare",
+    taglio: "Metodologia UNI/TS 11820",
     icon: Building2,
     short: "La misura della circolarità: materiali, rifiuti, riuso, energia.",
     cosE: "La valutazione strutturata di quanto la tua impresa è circolare: flussi di materiali, gestione dei rifiuti, riuso e recupero, energia. Un punteggio per area con il dettaglio dei criteri e un piano di miglioramento ordinato per impatto.",
@@ -631,7 +648,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "supporto-audit",
-    name: "Supporto all'audit di certificazione",
+    name: "Supporto all'Audit di Certificazione",
+    taglio: "Una tantum, senza canone",
     icon: LifeBuoy,
     short:
       "Hai ricevuto rilievi dall'organismo? Adeguiamo i documenti, anche se non li abbiamo fatti noi.",
@@ -679,9 +697,9 @@ export const SERVIZI: Servizio[] = [
 /** Percorsi certificabili: pagine su cui compare il richiamo al supporto
  *  all'audit (l'audit lo fa un organismo terzo, noi adeguiamo i documenti). */
 export const SERVIZI_CERTIFICABILI = [
-  "manuale-iso-9001",
-  "manuale-iso-14001",
-  "manuale-iso-45001",
+  "manuale-sistema-gestione-iso-9001",
+  "manuale-sistema-gestione-iso-14001",
+  "manuale-sistema-gestione-iso-45001",
   "parita-di-genere-pdr-125",
   // Schema accreditato di parte terza: l'audit c'è, quindi i rilievi anche.
   "sa8000",
@@ -742,12 +760,12 @@ export const VETRINA: CategoriaVetrina[] = [
     sub: "Sostenibilità · pilastro E",
     voci: [
       {
-        slug: "carbon-light",
+        slug: "carbon-footprint-scope-1-2",
         name: "Carbon Light",
         benefit: "Scope 1 e 2: la misura ufficiale, dai documenti reali.",
       },
       {
-        slug: "carbon-completa",
+        slug: "carbon-footprint-scope-1-2-3",
         name: "Carbon Completa",
         benefit: "Scope 1, 2 e 3: l'inventario completo, filiera compresa.",
       },
@@ -757,7 +775,7 @@ export const VETRINA: CategoriaVetrina[] = [
         benefit: "Quanto sei circolare, in un punteggio chiaro e migliorabile.",
       },
       {
-        slug: "manuale-iso-14001",
+        slug: "manuale-sistema-gestione-iso-14001",
         name: "Manuale ISO 14001",
         benefit: "Il sistema ambientale pronto per l'audit dell'ente terzo.",
       },
@@ -785,7 +803,7 @@ export const VETRINA: CategoriaVetrina[] = [
         etichetta: "Premiante nei bandi",
       },
       {
-        slug: "manuale-iso-45001",
+        slug: "manuale-sistema-gestione-iso-45001",
         name: "Manuale ISO 45001 — sicurezza",
         benefit:
           "Il sistema sicurezza pronto per l'audit, integrato con il tuo DVR.",
@@ -829,19 +847,19 @@ export const VETRINA: CategoriaVetrina[] = [
     sub: "Sostenibilità · pilastro G",
     voci: [
       {
-        slug: "bilancio-vsme-base",
+        slug: "bilancio-sostenibilita-vsme-base",
         name: "Bilancio VSME Base",
         benefit: "Un solo report standard al posto di dieci questionari.",
       },
       {
-        slug: "bilancio-vsme-avanzato",
+        slug: "bilancio-sostenibilita-vsme-avanzato",
         name: "Bilancio VSME Avanzato",
         benefit:
           "Base più modulo completo: politiche, azioni e obiettivi per finanziatori esigenti.",
         etichetta: "Novità",
       },
       {
-        slug: "manuale-iso-9001",
+        slug: "manuale-sistema-gestione-iso-9001",
         name: "Manuale ISO 9001",
         benefit: "Il sistema qualità pronto per l'audit dell'ente terzo.",
       },
@@ -858,17 +876,17 @@ export const VETRINA: CategoriaVetrina[] = [
     sub: "Manuali e procedure generati sui tuoi dati",
     voci: [
       {
-        slug: "manuale-iso-9001",
+        slug: "manuale-sistema-gestione-iso-9001",
         name: "Manuale ISO 9001 — qualità",
         benefit: "Impianto documentale completo, pronto per l'audit.",
       },
       {
-        slug: "manuale-iso-14001",
+        slug: "manuale-sistema-gestione-iso-14001",
         name: "Manuale ISO 14001 — ambiente",
         benefit: "Analisi ambientale precompilata dai tuoi dati carbon.",
       },
       {
-        slug: "manuale-iso-45001",
+        slug: "manuale-sistema-gestione-iso-45001",
         name: "ISO 45001 — sicurezza sul lavoro",
         benefit:
           "Sistema SSL integrato con il DVR, che resta del datore di lavoro.",

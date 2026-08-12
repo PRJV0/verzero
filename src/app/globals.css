@@ -24,7 +24,10 @@
   --color-pine-deep: #0a2e1f; /* fondo del registro scuro istituzionale */
 
   /* Transizioni uniformi in tutto il sito (Registro A). */
+  /* Micro-interazioni: UNA durata e UNA curva per tutto il sito. Le
+     transizioni Tailwind senza duration/easing espliciti ereditano queste. */
   --default-transition-duration: 200ms;
+  --default-transition-timing-function: cubic-bezier(0.22, 0.9, 0.34, 1);
 
   --font-display: var(--font-fraunces), Georgia, serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;
@@ -40,6 +43,34 @@ html,
 body {
   background: var(--color-paper);
   color: var(--color-ink);
+}
+
+/* ---------------------------------------------------------------------
+ * Micro-interazioni condivise (rifinitura §craft).
+ * Un solo linguaggio per TUTTI gli elementi cliccabili:
+ * - focus visibile identico ovunque (anello menta, mai il default blu);
+ * - feedback tattile alla pressione sui controlli pieni (vz-press);
+ * - la curva e la durata vivono nel tema: qui non si ridefiniscono mai.
+ * ------------------------------------------------------------------- */
+
+:where(a, button, [role="button"], input, textarea, select, summary):focus-visible {
+  outline: 2px solid var(--color-mint);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Stato premuto: il bottone "cede" di un pixel. Applicato ai CTA pieni.
+   Durata e curva arrivano dal tema: le custom property di Tailwind valgono
+   solo per le utility, quindi qui vanno richiamate esplicitamente. */
+.vz-press {
+  transition-property: transform, box-shadow, background-color, color,
+    border-color, opacity;
+  transition-duration: var(--default-transition-duration);
+  transition-timing-function: var(--default-transition-timing-function);
+}
+.vz-press:active {
+  transform: translateY(1px) scale(0.99);
+  transition-duration: 80ms;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -24,7 +24,7 @@ export const metadata: Metadata = metadataPagina({
 
 const PERCORSI = [
   "Carbon footprint con le categorie obbligatorie confermate",
-  "Bilancio VSME completo e validato",
+  "Bilancio di Sostenibilità (VSME) completo e validato",
   "Sistema di gestione ISO completato (famiglia certificabile)",
   "Fascicolo UNI/PdR 125 pronto per l'audit",
   "Check-up energetico con monitoraggio attivo",
@@ -105,7 +105,7 @@ export default function SigilloPage() {
       </section>
 
       {/* Cos'è */}
-      <section className="bg-white px-5 py-14">
+      <section className="bg-white px-5 py-16">
         <div className="mx-auto max-w-3xl">
           <h2 className="font-display text-4xl text-ink md:text-5xl">
             Una qualifica, non un logo
@@ -237,7 +237,7 @@ export default function SigilloPage() {
                   key={v.title}
                   className="rounded-2xl border border-white/15 bg-white/5 p-5 backdrop-blur-sm"
                 >
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-mint-bright/15 text-mint-bright">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-mint-bright/15 text-mint-bright">
                     <Icon size={20} />
                   </span>
                   <p className="mt-3 text-sm font-semibold text-white">

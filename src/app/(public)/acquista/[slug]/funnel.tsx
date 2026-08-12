@@ -56,36 +56,36 @@ const eur = (n: number) => n.toLocaleString("it-IT");
 
 /** Coppie di "taglio" alternativo dello stesso servizio (switch nel riepilogo). */
 const TAGLI: Record<string, { slug: string; label: string }[]> = {
-  "carbon-light": [
-    { slug: "carbon-light", label: "Light · Scope 1+2" },
-    { slug: "carbon-completa", label: "Completa · Scope 1-2-3" },
+  "carbon-footprint-scope-1-2": [
+    { slug: "carbon-footprint-scope-1-2", label: "Scope 1 e 2" },
+    { slug: "carbon-footprint-scope-1-2-3", label: "Scope 1, 2 e 3" },
   ],
-  "carbon-completa": [
-    { slug: "carbon-light", label: "Light · Scope 1+2" },
-    { slug: "carbon-completa", label: "Completa · Scope 1-2-3" },
+  "carbon-footprint-scope-1-2-3": [
+    { slug: "carbon-footprint-scope-1-2", label: "Scope 1 e 2" },
+    { slug: "carbon-footprint-scope-1-2-3", label: "Scope 1, 2 e 3" },
   ],
-  "bilancio-vsme-base": [
-    { slug: "bilancio-vsme-base", label: "Base · modulo base" },
-    { slug: "bilancio-vsme-avanzato", label: "Avanzato · + modulo completo" },
+  "bilancio-sostenibilita-vsme-base": [
+    { slug: "bilancio-sostenibilita-vsme-base", label: "Base · modulo base VSME" },
+    { slug: "bilancio-sostenibilita-vsme-avanzato", label: "Avanzato · base + modulo completo" },
   ],
-  "bilancio-vsme-avanzato": [
-    { slug: "bilancio-vsme-base", label: "Base · modulo base" },
-    { slug: "bilancio-vsme-avanzato", label: "Avanzato · + modulo completo" },
+  "bilancio-sostenibilita-vsme-avanzato": [
+    { slug: "bilancio-sostenibilita-vsme-base", label: "Base · modulo base VSME" },
+    { slug: "bilancio-sostenibilita-vsme-avanzato", label: "Avanzato · base + modulo completo" },
   ],
-  "manuale-iso-45001": [
-    { slug: "manuale-iso-9001", label: "ISO 9001 · qualità" },
-    { slug: "manuale-iso-14001", label: "ISO 14001 · ambiente" },
-    { slug: "manuale-iso-45001", label: "ISO 45001 · sicurezza" },
+  "manuale-sistema-gestione-iso-45001": [
+    { slug: "manuale-sistema-gestione-iso-9001", label: "ISO 9001 · qualità" },
+    { slug: "manuale-sistema-gestione-iso-14001", label: "ISO 14001 · ambiente" },
+    { slug: "manuale-sistema-gestione-iso-45001", label: "ISO 45001 · sicurezza" },
   ],
-  "manuale-iso-9001": [
-    { slug: "manuale-iso-9001", label: "ISO 9001 · qualità" },
-    { slug: "manuale-iso-14001", label: "ISO 14001 · ambiente" },
-    { slug: "manuale-iso-45001", label: "ISO 45001 · sicurezza" },
+  "manuale-sistema-gestione-iso-9001": [
+    { slug: "manuale-sistema-gestione-iso-9001", label: "ISO 9001 · qualità" },
+    { slug: "manuale-sistema-gestione-iso-14001", label: "ISO 14001 · ambiente" },
+    { slug: "manuale-sistema-gestione-iso-45001", label: "ISO 45001 · sicurezza" },
   ],
-  "manuale-iso-14001": [
-    { slug: "manuale-iso-9001", label: "ISO 9001 · qualità" },
-    { slug: "manuale-iso-14001", label: "ISO 14001 · ambiente" },
-    { slug: "manuale-iso-45001", label: "ISO 45001 · sicurezza" },
+  "manuale-sistema-gestione-iso-14001": [
+    { slug: "manuale-sistema-gestione-iso-9001", label: "ISO 9001 · qualità" },
+    { slug: "manuale-sistema-gestione-iso-14001", label: "ISO 14001 · ambiente" },
+    { slug: "manuale-sistema-gestione-iso-45001", label: "ISO 45001 · sicurezza" },
   ],
 };
 
@@ -203,9 +203,23 @@ export function FunnelAcquisto({
   );
 
   if (!pronto) {
+    // Skeleton con la stessa geometria del funnel: niente salti di layout
+    // quando lo stato salvato viene ripristinato.
     return (
-      <main className="mx-auto max-w-5xl px-5 py-10">
-        <p className="text-sm text-gray-warm">Caricamento…</p>
+      <main aria-busy className="mx-auto max-w-5xl px-5 py-8">
+        <span className="sr-only">Caricamento del funnel…</span>
+        <div className="h-4 w-40 animate-pulse rounded bg-line/60" />
+        <div className="mt-3 h-9 w-72 max-w-full animate-pulse rounded bg-line/60" />
+        <div className="mt-4 h-4 w-56 animate-pulse rounded bg-line/40" />
+        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
+          <div className="space-y-3">
+            <div className="h-7 w-64 animate-pulse rounded bg-line/60" />
+            <div className="h-24 animate-pulse rounded-xl bg-line/40" />
+            <div className="h-24 animate-pulse rounded-xl bg-line/40" />
+            <div className="h-12 w-40 animate-pulse rounded-lg bg-line/60" />
+          </div>
+          <div className="hidden h-72 animate-pulse rounded-xl bg-line/40 lg:block" />
+        </div>
       </main>
     );
   }

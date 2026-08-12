@@ -17,13 +17,13 @@ import { DOC_VERSION, risolviUtente } from "../_lib";
 
 /** Taglio memorizzato sull'ordine, derivato dallo slug (mai dal client). */
 const TAGLIO: Record<string, string> = {
-  "carbon-light": "light",
-  "carbon-completa": "completa",
-  "bilancio-vsme-base": "base",
-  "bilancio-vsme-avanzato": "avanzato",
-  "manuale-iso-9001": "9001",
-  "manuale-iso-14001": "14001",
-  "manuale-iso-45001": "45001",
+  "carbon-footprint-scope-1-2": "light",
+  "carbon-footprint-scope-1-2-3": "completa",
+  "bilancio-sostenibilita-vsme-base": "base",
+  "bilancio-sostenibilita-vsme-avanzato": "avanzato",
+  "manuale-sistema-gestione-iso-9001": "9001",
+  "manuale-sistema-gestione-iso-14001": "14001",
+  "manuale-sistema-gestione-iso-45001": "45001",
 };
 
 /**

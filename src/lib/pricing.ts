@@ -61,21 +61,21 @@ const isOneShot = (v: Voce): v is { unaTantum: number } => "unaTantum" in v;
 
 const LISTINO: Record<string, Voce> = {
   "percorso-ver0": { mensile: 119, annuale: 1290, rinnovo: { tipo: "sconto20" } },
-  "carbon-light": { mensile: 45, annuale: 490, rinnovo: { tipo: "sconto20" } },
-  "carbon-completa": { mensile: 75, annuale: 810, rinnovo: { tipo: "sconto20" } },
-  "bilancio-vsme-base": { mensile: 89, annuale: 960, rinnovo: { tipo: "sconto20" } },
+  "carbon-footprint-scope-1-2": { mensile: 45, annuale: 490, rinnovo: { tipo: "sconto20" } },
+  "carbon-footprint-scope-1-2-3": { mensile: 75, annuale: 810, rinnovo: { tipo: "sconto20" } },
+  "bilancio-sostenibilita-vsme-base": { mensile: 89, annuale: 960, rinnovo: { tipo: "sconto20" } },
   // Modulo base + modulo completo dello standard EFRAG (§12.L).
-  "bilancio-vsme-avanzato": {
+  "bilancio-sostenibilita-vsme-avanzato": {
     mensile: 129,
     annuale: 1390,
     rinnovo: { tipo: "sconto20" },
   },
-  "manuale-iso-9001": {
+  "manuale-sistema-gestione-iso-9001": {
     mensile: 139,
     annuale: 1500,
     rinnovo: { tipo: "mantenimento", mensile: 59 },
   },
-  "manuale-iso-14001": {
+  "manuale-sistema-gestione-iso-14001": {
     mensile: 139,
     annuale: 1500,
     rinnovo: { tipo: "mantenimento", mensile: 59 },
@@ -86,7 +86,7 @@ const LISTINO: Record<string, Voce> = {
     rinnovo: { tipo: "mantenimento", mensile: 39 },
   },
   // Famiglia A, allineato agli altri manuali ISO (§12.M).
-  "manuale-iso-45001": {
+  "manuale-sistema-gestione-iso-45001": {
     mensile: 139,
     annuale: 1500,
     rinnovo: { tipo: "mantenimento", mensile: 59 },

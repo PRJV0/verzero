@@ -17,7 +17,7 @@ export const metadata: Metadata = metadataPagina({
  */
 export default function TerminiPage() {
   return (
-    <main className="mx-auto max-w-2xl px-5 py-14">
+    <main className="mx-auto max-w-2xl px-5 py-16">
       <h1 className="font-display text-4xl text-ink md:text-5xl">
         Condizioni di servizio
       </h1>

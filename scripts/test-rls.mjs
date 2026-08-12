@@ -71,7 +71,7 @@ async function setupUno({ email, piva, nome }) {
     .insert({
       organization_id: org.id,
       created_by: u.user.id,
-      servizio_slug: "carbon-light",
+      servizio_slug: "carbon-footprint-scope-1-2",
       dimensione: "micro",
       formula: "mensile",
       prezzo_canone: 45,
@@ -159,7 +159,7 @@ async function main() {
     // Insert nell'org di B: la policy with check deve rifiutare.
     const { error } = await A.client.from("orders").insert({
       organization_id: B.org.id,
-      servizio_slug: "carbon-light",
+      servizio_slug: "carbon-footprint-scope-1-2",
       dimensione: "micro",
       formula: "mensile",
       prezzo_canone: 1,
