@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validaContatto, type DatiContatto } from "@/lib/contatti";
+import { NOTIFICHE_INTERNE, inviaEmail } from "@/lib/email";
 
 /**
  * Modulo di contatto pubblico (/contatti).
@@ -17,8 +18,8 @@ import { validaContatto, type DatiContatto } from "@/lib/contatti";
  *      regge su serverless, dove la memoria di processo non è condivisa
  *      tra istanze e si azzera a ogni cold start.
  *
- * Nessun invio email per ora: arriverà con Resend. Il messaggio è
- * comunque salvato, quindi nulla va perso nel frattempo.
+ * Il messaggio viene SEMPRE salvato a database; la notifica via Resend è
+ * un di più che non può far fallire l'invio (SPEC §12.E).
  */
 
 /** Finestra e soglia del rate limiting. */
@@ -103,12 +104,15 @@ export async function POST(request: NextRequest) {
   }
 
   const azienda = (body.azienda ?? "").trim();
+  const nome = body.nome!.trim();
+  const emailMittente = body.email!.trim().toLowerCase();
+  const messaggio = body.messaggio!.trim();
   const { error } = await admin.from("contact_messages").insert({
-    nome: body.nome!.trim(),
+    nome,
     azienda: azienda === "" ? null : azienda,
-    email: body.email!.trim().toLowerCase(),
+    email: emailMittente,
     oggetto: body.oggetto as "informazioni" | "servizi" | "partnership",
-    messaggio: body.messaggio!.trim(),
+    messaggio,
     ip_hash: ipHash,
     user_agent: request.headers.get("user-agent")?.slice(0, 500) ?? null,
   });
@@ -119,6 +123,22 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
+
+  // Notifica interna: il messaggio è già salvo, questa è comodità. Se
+  // Resend non è configurato o risponde male, non cambia nulla per chi
+  // ha scritto — per questo l'esito non viene nemmeno controllato.
+  await inviaEmail({
+    a: NOTIFICHE_INTERNE,
+    oggetto: `Nuovo contatto dal sito — ${body.oggetto}`,
+    rispondiA: emailMittente,
+    testo: [
+      `Da: ${nome}${azienda ? ` (${azienda})` : ""}`,
+      `Email: ${emailMittente}`,
+      `Oggetto: ${body.oggetto}`,
+      "",
+      messaggio,
+    ].join("\n"),
+  });
 
   return NextResponse.json({ ok: true });
 }

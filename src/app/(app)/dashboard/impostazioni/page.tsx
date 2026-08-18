@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { caricaContesto } from "../_contesto";
 import { IntestazioneSezione } from "../_ui";
 import { revocaMandato } from "../azioni";
+import { AccountAzioni } from "./account";
 
 export const metadata: Metadata = {
   title: "Impostazioni — il tuo ecosistema",
@@ -75,6 +76,9 @@ export default async function ImpostazioniPage() {
               </dd>
             </div>
           </dl>
+
+          {/* Cambio password e uscita (SPEC §12.E) */}
+          <AccountAzioni email={contesto.email} />
         </section>
 
         {/* Consensi registrati (reali, dal database) */}

@@ -19,10 +19,12 @@ import type { Database } from "@/types/database";
  * la sessione non si stabilisce e si finisce in loop sul login.
  */
 
-/** Solo path relativi: evita open redirect via `?next=`. */
-function safePath(next: string | null): string {
-  if (!next) return "/dashboard";
-  return next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+/** Solo path relativi: evita open redirect via `?next=`.
+ *  `predefinito` cambia per il recupero password: chi arriva da lì non va
+ *  in dashboard ma alla scelta della nuova password (SPEC §12.E). */
+function safePath(next: string | null, predefinito = "/dashboard"): string {
+  if (!next) return predefinito;
+  return next.startsWith("/") && !next.startsWith("//") ? next : predefinito;
 }
 
 /**
@@ -56,7 +58,12 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = safePath(searchParams.get("next"));
+  // Il link di recupero apre una sessione buona solo per cambiare la
+  // password: la sua destinazione naturale è quella pagina, non il portale.
+  const next = safePath(
+    searchParams.get("next"),
+    type === "recovery" ? "/reset-password" : "/dashboard",
+  );
 
   const loginWithError = (reason: string) =>
     NextResponse.redirect(`${base}/login?error=${encodeURIComponent(reason)}`);

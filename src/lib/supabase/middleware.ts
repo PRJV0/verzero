@@ -8,6 +8,11 @@ const PUBLIC_PREFIXES = [
   "/",
   "/login",
   "/auth",
+  // Recupero password: la richiesta è pubblica per definizione, e la pagina
+  // della nuova password deve poter dire «link scaduto» invece di rimbalzare
+  // al login lasciando la persona senza spiegazione (SPEC §12.E).
+  "/password-dimenticata",
+  "/reset-password",
   // Le route API gestiscono da sole l'autenticazione e devono rispondere
   // JSON (401), MAI un redirect HTML alla pagina di login: un redirect
   // seguito da fetch() torna 200 e maschera l'errore al chiamante.

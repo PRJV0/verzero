@@ -34,7 +34,7 @@ export default function TerminiPage() {
         </li>
         <li>
           · L&apos;autorizzazione all&apos;accesso alle banche dati è sempre
-          revocabile dall&apos;area riservata; alla revoca la piattaforma
+          revocabile dal tuo ecosistema; alla revoca la piattaforma
           continua a funzionare con inserimento manuale.
         </li>
         <li>

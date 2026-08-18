@@ -45,7 +45,7 @@ import {
  * Funnel di acquisto in step (SPEC §12.T):
  * riepilogo persistente e vivo → registrazione azienda con email e password
  * (o login rapido) → consensi espliciti mai pre-spuntati → pagamento con
- * provider dichiaratamente disattivato → conferma e area riservata.
+ * provider dichiaratamente disattivato → conferma ed ecosistema.
  *
  * Lo stato è persistito in localStorage: chi esce riprende dallo step in cui
  * era. I consensi registrati qui (timestamp) migreranno nella tabella
@@ -1117,7 +1117,7 @@ function StepConsensi({
             al solo fine di reperire le informazioni necessarie a erogare i
             servizi acquistati (anagrafica, ATECO, addetti, dati economici e
             consumi). L&apos;autorizzazione è revocabile in ogni momento
-            dall&apos;area riservata: alla revoca la piattaforma continua a
+            dal tuo ecosistema: alla revoca la piattaforma continua a
             funzionare con inserimento manuale dei dati.
           </span>
         </label>
@@ -1377,7 +1377,7 @@ function StepConferma({
       </p>
       <p className="mx-auto mt-4 max-w-md text-sm text-gray-warm">
         Nessun addebito è stato effettuato: ti ricontattiamo per l&apos;attivazione
-        del pagamento. Intanto la tua area riservata è pronta.
+        del pagamento. Intanto il tuo ecosistema è già pronto.
       </p>
       {state.emailDaConfermare && (
         <p
@@ -1385,7 +1385,7 @@ function StepConferma({
           className="mx-auto mt-3 max-w-md rounded-lg border border-line bg-paper px-3 py-2.5 text-xs text-gray-warm"
         >
           Ti abbiamo inviato una email di conferma: aprila per attivare
-          l&apos;accesso all&apos;area riservata.
+          l&apos;accesso al tuo ecosistema.
         </p>
       )}
       <div className="mt-7">
@@ -1393,7 +1393,7 @@ function StepConferma({
           href="/dashboard"
           className="inline-flex items-center gap-1.5 rounded-lg bg-pine px-5 py-2.5 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
         >
-          Vai alla tua area riservata <ArrowRight size={15} />
+          Vai al tuo ecosistema <ArrowRight size={15} />
         </Link>
       </div>
     </section>
