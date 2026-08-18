@@ -280,6 +280,119 @@ async function main() {
       (data ?? []).length === 1 && data[0].id === A.org.id,
     );
   }
+
+  console.log("\n— test scheda impresa (company_fields, SPEC §12.H) —");
+
+  // Riattivo il mandato di C su A per il perimetro di lettura.
+  await admin
+    .from("consultant_organizations")
+    .update({ stato: "attivo" })
+    .eq("id", mandato.id);
+
+  {
+    const { error } = await A.client.from("company_fields").insert({
+      organization_id: A.org.id,
+      campo: "pec",
+      valore: "test@pec.example.com",
+      fonte: "registrazione",
+    });
+    check("l'impresa scrive i campi della propria scheda", !error, error?.message ?? "");
+  }
+  {
+    const { error } = await A.client.from("company_fields").insert({
+      organization_id: B.org.id,
+      campo: "pec",
+      valore: "intruso@pec.example.com",
+    });
+    check("l'impresa NON scrive sulla scheda altrui", !!error, error?.code ?? "");
+  }
+  {
+    const { data } = await B.client.from("company_fields").select("id");
+    check("un'impresa estranea non legge la scheda di A", (data ?? []).length === 0);
+  }
+  {
+    const { data } = await C.from("company_fields").select("campo, valore");
+    check(
+      "il consulente con mandato legge la scheda del cliente",
+      (data ?? []).length === 1 && data[0].campo === "pec",
+    );
+  }
+  {
+    const { data } = await C.from("company_fields")
+      .update({ valore: "hack@pec.example.com" })
+      .eq("organization_id", A.org.id)
+      .select();
+    check("il consulente non scrive la scheda del cliente", (data ?? []).length === 0);
+  }
+  {
+    // Dopo la revoca, neanche la lettura.
+    await admin
+      .from("consultant_organizations")
+      .update({ stato: "revocato" })
+      .eq("id", mandato.id);
+    const { data } = await C.from("company_fields").select("id");
+    check("dopo la revoca il consulente non legge la scheda", (data ?? []).length === 0);
+  }
+  {
+    // Il consulente aggiorna il proprio profilo (fix IS NOT DISTINCT FROM).
+    const { data, error } = await C.from("profiles")
+      .update({ wizard_visto_at: new Date().toISOString() })
+      .eq("id", uc.user.id)
+      .select();
+    check(
+      "il consulente aggiorna il proprio profilo (wizard)",
+      !error && (data ?? []).length === 1,
+      error?.message ?? "",
+    );
+  }
+
+  console.log("\n— test chiusure di sicurezza (permessi di colonna) —");
+
+  {
+    // Auto-promozione vietata: ruolo e role non sono colonne concesse.
+    const { error } = await A.client
+      .from("profiles")
+      .update({ ruolo: "consulente" })
+      .eq("id", A.userId);
+    check("l'impresa NON si auto-promuove a consulente", !!error, error?.code ?? "");
+  }
+  {
+    // Falsa auto-certificazione vietata: provenienza='motore' dal client.
+    const { error } = await A.client.from("company_fields").insert({
+      organization_id: A.org.id,
+      campo: "ateco",
+      valore: "99.99.99",
+      provenienza: "motore",
+      fonte: "Registro Imprese",
+    });
+    check(
+      "l'impresa NON spaccia un dato come recuperato dal Motore",
+      !!error,
+      error?.code ?? "",
+    );
+  }
+  {
+    // La provenienza di un campo esistente non si riscrive dal client.
+    const { error } = await A.client
+      .from("company_fields")
+      .update({ provenienza: "motore" })
+      .eq("organization_id", A.org.id)
+      .eq("campo", "pec");
+    check("l'impresa NON riscrive la provenienza", !!error, error?.code ?? "");
+  }
+  {
+    // La revoca è a senso unico: nessuna riattivazione dal client.
+    const { error, data } = await A.client
+      .from("consultant_organizations")
+      .update({ stato: "attivo" })
+      .eq("id", mandato.id)
+      .select();
+    check(
+      "l'impresa NON riattiva un mandato revocato",
+      !!error || (data ?? []).length === 0,
+      error?.code ?? "",
+    );
+  }
 }
 
 async function cleanup() {

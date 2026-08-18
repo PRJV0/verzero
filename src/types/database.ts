@@ -38,6 +38,8 @@ type Profile = {
   role: "owner" | "member";
   /** Profilo di accesso all'ecosistema (SPEC §12.K). */
   ruolo: "impresa" | "consulente";
+  /** Quando il wizard di primo accesso è stato visto (o saltato). */
+  wizard_visto_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -110,6 +112,21 @@ type ContactMessage = {
   created_at: string;
 };
 
+/** Scheda impresa estesa (SPEC §12.H): un record per campo, con
+ *  provenienza, fonte e stato di conferma. */
+type CompanyField = {
+  id: string;
+  organization_id: string;
+  campo: string;
+  valore: string | null;
+  provenienza: "utente" | "motore";
+  fonte: string | null;
+  stato: "confermato" | "da_confermare";
+  confirmed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 type Row<T> = {
   Row: T;
   Insert: Partial<T>;
@@ -127,6 +144,7 @@ export type Database = {
       module_activations: Row<ModuleActivation>;
       contact_messages: Row<ContactMessage>;
       consultant_organizations: Row<ConsultantOrganization>;
+      company_fields: Row<CompanyField>;
     };
     Views: Record<string, never>;
     Functions: {

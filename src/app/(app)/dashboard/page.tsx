@@ -1,382 +1,232 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import {
   ArrowRight,
-  PackageCheck,
-  Boxes,
-  Briefcase,
-  LifeBuoy,
-  Users,
+  Building2,
+  CalendarDays,
+  FolderOpen,
+  Megaphone,
+  ShieldCheck,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
-import {
-  RICHIAMO_SUPPORTO_AUDIT,
-  SERVIZI_CERTIFICABILI,
-  getServizio,
-} from "@/lib/catalog";
-import { DIMENSIONE_LABEL } from "@/lib/pricing";
+import { getServizio } from "@/lib/catalog";
 
-/** Fuori dall'indice: l'ecosistema è visibile solo dopo l'accesso. */
+import { caricaContesto } from "./_contesto";
+import {
+  CardOpportunita,
+  IntestazioneSezione,
+  STATO_BADGE,
+  STATO_LABEL,
+  SelettoreCliente,
+} from "./_ui";
+import { WizardPrimoAccesso } from "./wizard";
+
 export const metadata: Metadata = {
-  title: "Il tuo ecosistema",
+  title: "Panoramica — il tuo ecosistema",
   robots: { index: false, follow: false },
 };
 
-const STATO_BADGE: Record<string, string> = {
-  in_attivazione: "bg-amber-soft text-amber-ink",
-  attivo: "bg-moss text-pine",
-  sospeso: "bg-paper text-gray-warm",
-  disdetto: "bg-paper text-gray-light",
-};
-const STATO_LABEL: Record<string, string> = {
-  in_attivazione: "In attivazione",
-  attivo: "Attivo",
-  sospeso: "Sospeso",
-  disdetto: "Disdetto",
-};
-
-const nomeServizio = (slug: string) => getServizio(slug)?.name ?? slug;
-
 /**
- * L'ecosistema (SPEC §12.K) — due profili sulla stessa pagina:
- * - IMPRESA: vede il proprio ecosistema (la RLS filtra da sola sulla
- *   organizzazione del profilo, nessun filtro manuale da ricordare);
- * - CONSULENTE PARTNER: selettore cliente sui mandati attivi e vista
- *   filtrata sull'organizzazione scelta. Il filtro esplicito qui è di
- *   presentazione: il perimetro vero lo impone la RLS, che mostra al
- *   consulente solo le organizzazioni con mandato attivo.
+ * PANORAMICA (SPEC §12.H, sezione 1 di 8): l'evidenza in chiaro dei
+ * servizi in corso — stato, prossima azione, avanzamento del fascicolo —
+ * e le altre sezioni come opportunità eleganti quando non attive.
  */
-export default async function DashboardPage({
+export default async function PanoramicaPage({
   searchParams,
 }: {
   searchParams: Promise<{ cliente?: string }>;
 }) {
+  const { cliente } = await searchParams;
+  const contesto = await caricaContesto(cliente, "/dashboard");
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
-  if (!user) redirect("/login");
+  // Il selettore cliente viaggia con OGNI link del portale (mai l'id grezzo
+  // dell'URL: quello validato dal contesto).
+  const conCliente = (href: string) =>
+    contesto.ruolo === "consulente" && contesto.org
+      ? `${href}?cliente=${contesto.org.id}`
+      : href;
 
-  const { data: profilo } = await supabase
-    .from("profiles")
-    .select("ruolo")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [{ data: moduli }, { data: ordini }] = contesto.org
+    ? await Promise.all([
+        supabase
+          .from("module_activations")
+          .select("*")
+          .eq("organization_id", contesto.org.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("orders")
+          .select("*")
+          .eq("organization_id", contesto.org.id)
+          .order("created_at", { ascending: false }),
+      ])
+    : [{ data: [] }, { data: [] }];
 
-  /* ------------------------------------------------------------------ */
-  /* Consulente partner: selettore cliente + vista filtrata              */
-  /* ------------------------------------------------------------------ */
-  if (profilo?.ruolo === "consulente") {
-    const { cliente } = await searchParams;
+  const attivi = moduli ?? [];
+  const percorsiNomi = attivi.map(
+    (m) => getServizio(m.module)?.name ?? m.module,
+  );
+  const documentiPrimo =
+    attivi.length > 0 ? (getServizio(attivi[0].module)?.documenti ?? []) : [];
 
-    // Le organizzazioni con mandato attivo (la RLS non ne mostra altre).
-    const { data: clienti } = await supabase
-      .from("organizations")
-      .select("id, ragione_sociale, partita_iva, dimensione")
-      .order("ragione_sociale");
-
-    const selezionato =
-      (cliente && (clienti ?? []).find((c) => c.id === cliente)) ||
-      (clienti ?? [])[0] ||
-      null;
-
-    const [{ data: ordini }, { data: moduli }] = selezionato
-      ? await Promise.all([
-          supabase
-            .from("orders")
-            .select("*")
-            .eq("organization_id", selezionato.id)
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("module_activations")
-            .select("*")
-            .eq("organization_id", selezionato.id)
-            .order("created_at", { ascending: false }),
-        ])
-      : [{ data: [] }, { data: [] }];
-
-    return (
-      <main className="mx-auto max-w-3xl px-5 py-12">
-        <p className="flex items-center gap-2 text-xs font-semibold tracking-widest text-pine">
-          <Briefcase size={14} /> CONSULENTE PARTNER
-        </p>
-        <h1 className="mt-2 font-display text-3xl font-semibold text-pine">
-          I tuoi clienti
-        </h1>
-        <p className="mt-2 text-sm text-gray-warm">
-          Accesso come{" "}
-          <strong className="font-medium text-ink">{user.email}</strong>. Vedi
-          solo le imprese che ti hanno dato mandato; ogni mandato è revocabile
-          dall&apos;impresa in qualsiasi momento.
-        </p>
-
-        {(clienti ?? []).length === 0 ? (
-          <div className="mt-8 rounded-xl border border-line bg-white p-5">
-            <p className="text-sm text-gray-warm">
-              Nessun cliente collegato: quando un&apos;impresa ti darà mandato,
-              il suo ecosistema comparirà qui. Nel frattempo puoi scoprire il{" "}
-              <Link
-                href="/partner"
-                className="font-medium text-pine hover:underline"
-              >
-                programma partner
-              </Link>
-              .
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* Selettore cliente: filtra tutta la vista */}
-            <nav aria-label="Seleziona il cliente" className="mt-6">
-              <p className="flex items-center gap-2 text-sm font-semibold text-ink">
-                <Users size={16} className="text-pine" /> Cliente selezionato
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {(clienti ?? []).map((c) => {
-                  const attivo = c.id === selezionato?.id;
-                  return (
-                    <Link
-                      key={c.id}
-                      href={`/dashboard?cliente=${c.id}`}
-                      aria-current={attivo ? "true" : undefined}
-                      className={
-                        "rounded-full border px-3.5 py-1.5 text-sm transition-colors " +
-                        (attivo
-                          ? "border-pine bg-pine font-medium text-white"
-                          : "border-line bg-white text-gray-warm hover:border-pine/40")
-                      }
-                    >
-                      {c.ragione_sociale}
-                    </Link>
-                  );
-                })}
-              </div>
-            </nav>
-
-            {selezionato && (
-              <section className="mt-6 rounded-2xl border border-line bg-white p-5">
-                <h2 className="font-display text-xl text-ink">
-                  {selezionato.ragione_sociale}
-                </h2>
-                <p className="mt-1 text-xs text-gray-warm">
-                  P.IVA {selezionato.partita_iva} · impresa{" "}
-                  {DIMENSIONE_LABEL[selezionato.dimensione] ??
-                    selezionato.dimensione}
-                </p>
-
-                <h3 className="mt-5 flex items-center gap-2 text-sm font-semibold text-ink">
-                  <PackageCheck size={15} className="text-pine" /> Ordini
-                </h3>
-                {(ordini ?? []).length > 0 ? (
-                  <div className="mt-2 space-y-2">
-                    {(ordini ?? []).map((o) => (
-                      <div
-                        key={o.id}
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line/70 bg-paper px-3.5 py-2.5"
-                      >
-                        <p className="text-sm font-medium text-ink">
-                          {nomeServizio(o.servizio_slug)}
-                        </p>
-                        <span
-                          className={
-                            "rounded-full px-2.5 py-0.5 text-xs font-medium " +
-                            (STATO_BADGE[o.stato] ?? "bg-paper text-gray-warm")
-                          }
-                        >
-                          {STATO_LABEL[o.stato] ?? o.stato}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-2 text-sm text-gray-warm">
-                    Nessun ordine per questo cliente.
-                  </p>
-                )}
-
-                <h3 className="mt-5 flex items-center gap-2 text-sm font-semibold text-ink">
-                  <Boxes size={15} className="text-pine" /> Moduli
-                </h3>
-                {(moduli ?? []).length > 0 ? (
-                  <div className="mt-2 space-y-2">
-                    {(moduli ?? []).map((m) => (
-                      <div
-                        key={m.id}
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line/70 bg-paper px-3.5 py-2.5"
-                      >
-                        <p className="text-sm font-medium text-ink">
-                          {nomeServizio(m.module)}
-                        </p>
-                        <span
-                          className={
-                            "rounded-full px-2.5 py-0.5 text-xs font-medium " +
-                            (STATO_BADGE[m.stato] ?? "bg-paper text-gray-warm")
-                          }
-                        >
-                          {STATO_LABEL[m.stato] ?? m.stato}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-2 text-sm text-gray-warm">
-                    Nessun modulo attivo per questo cliente.
-                  </p>
-                )}
-
-                <p className="mt-5 border-t border-line pt-3 text-xs text-gray-light">
-                  In questa fase la vista del consulente è in sola lettura: le
-                  attivazioni per conto del cliente arrivano con le prossime
-                  fasi del programma partner.
-                </p>
-              </section>
-            )}
-          </>
-        )}
-      </main>
-    );
-  }
-
-  /* ------------------------------------------------------------------ */
-  /* Impresa: il proprio ecosistema (la RLS filtra da sola)              */
-  /* ------------------------------------------------------------------ */
-  const [{ data: org }, { data: ordini }, { data: moduli }] = await Promise.all([
-    supabase.from("organizations").select("*").maybeSingle(),
-    supabase
-      .from("orders")
-      .select("*")
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("module_activations")
-      .select("*")
-      .order("created_at", { ascending: false }),
-  ]);
+  /** La prossima azione, onesta: dipende dallo stato reale del modulo. */
+  const prossimaAzione = (stato: string) => {
+    switch (stato) {
+      case "in_attivazione":
+        return "Ti ricontattiamo noi per l'attivazione del pagamento: nessun addebito è stato fatto.";
+      case "sospeso":
+        return "Il percorso è in pausa: scrivici dalla sezione Consulenza per riprenderlo.";
+      case "disdetto":
+        return "Il percorso è chiuso. Il lavoro fatto resta tuo: puoi riattivarlo dal catalogo quando vuoi.";
+      default:
+        return "Prepara i documenti del fascicolo: il Motore ti dice esattamente quali.";
+    }
+  };
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-12">
-      <h1 className="font-display text-3xl font-semibold text-pine">
-        {org ? org.ragione_sociale : "Il tuo ecosistema"}
-      </h1>
-      <p className="mt-2 text-sm text-gray-warm">
-        {org ? (
-          <>
-            P.IVA {org.partita_iva} · impresa{" "}
-            {DIMENSIONE_LABEL[org.dimensione] ?? org.dimensione} · accesso come{" "}
-            <strong className="font-medium text-ink">{user.email}</strong>
-          </>
-        ) : (
-          <>
-            Sei autenticato come{" "}
-            <strong className="font-medium text-ink">{user.email}</strong>. La
-            tua impresa non è ancora registrata: completa un acquisto dal
-            catalogo per creare il tuo ecosistema.
-          </>
-        )}
-      </p>
-
-      {/* Ordini */}
-      {(ordini ?? []).length > 0 && (
-        <section className="mt-8">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
-            <PackageCheck size={16} className="text-pine" /> I tuoi ordini
-          </h2>
-          <div className="mt-3 space-y-2">
-            {(ordini ?? []).map((o) => (
-              <div
-                key={o.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-white p-4"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-ink">
-                    {nomeServizio(o.servizio_slug)}
-                  </p>
-                  <p className="text-xs text-gray-warm">
-                    {DIMENSIONE_LABEL[o.dimensione] ?? o.dimensione} ·{" "}
-                    {/* Una tantum e canone si escludono a vicenda. */}
-                    {o.formula === "una_tantum" || o.prezzo_canone === null
-                      ? `una tantum · ${(o.prezzo_una_tantum ?? 0).toLocaleString("it-IT")} €`
-                      : `formula ${o.formula} · ${o.prezzo_canone.toLocaleString("it-IT")} €/${
-                          o.formula === "mensile" ? "mese" : "anno"
-                        }`}
-                  </p>
-                </div>
-                <span
-                  className={
-                    "rounded-full px-3 py-1 text-xs font-medium " +
-                    (STATO_BADGE[o.stato] ?? "bg-paper text-gray-warm")
-                  }
-                >
-                  {STATO_LABEL[o.stato] ?? o.stato}
-                </span>
-              </div>
-            ))}
-          </div>
-          <p className="mt-2 text-xs text-gray-light">
-            Gli ordini «in attivazione» non hanno generato alcun addebito: ti
-            ricontattiamo per l&apos;attivazione del pagamento.
-          </p>
-        </section>
+    <main>
+      {/* Wizard di primo accesso: una sola volta, sempre saltabile. */}
+      {contesto.ruolo === "impresa" && !contesto.wizardVisto && contesto.org && (
+        <WizardPrimoAccesso
+          ragioneSociale={contesto.org.ragione_sociale}
+          partitaIva={contesto.org.partita_iva}
+          percorsi={percorsiNomi}
+          documenti={documentiPrimo}
+        />
       )}
 
-      {/* Moduli */}
-      <section className="mt-8">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
-          <Boxes size={16} className="text-pine" /> I tuoi moduli
-        </h2>
-        {(moduli ?? []).length > 0 ? (
-          <div className="mt-3 space-y-2">
-            {(moduli ?? []).map((m) => (
-              <div
-                key={m.id}
-                className="rounded-xl border border-line bg-white p-4"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-ink">
-                    {nomeServizio(m.module)}
-                  </p>
-                  <span
-                    className={
-                      "rounded-full px-3 py-1 text-xs font-medium " +
-                      (STATO_BADGE[m.stato] ?? "bg-paper text-gray-warm")
-                    }
-                  >
-                    {STATO_LABEL[m.stato] ?? m.stato}
-                  </span>
-                </div>
+      <IntestazioneSezione
+        eyebrow="PANORAMICA"
+        titolo={
+          contesto.org ? contesto.org.ragione_sociale : "Il tuo ecosistema"
+        }
+        sotto={
+          contesto.org
+            ? `P.IVA ${contesto.org.partita_iva} · accesso come ${contesto.email}`
+            : contesto.ruolo === "consulente"
+              ? `Accesso come ${contesto.email}. I tuoi clienti compariranno qui con il primo mandato.`
+              : `Accesso come ${contesto.email}. Il tuo ecosistema nasce con il primo percorso attivato.`
+        }
+      />
 
-                {/* Azione contestuale sui percorsi certificabili: l'audit lo
-                    fa un organismo terzo, i rilievi però si adeguano qui.
-                    Fase 2: al posto dell'acquisto arriverà il caricamento
-                    vero dei rilievi, con il resto della pipeline documentale. */}
-                {SERVIZI_CERTIFICABILI.includes(m.module) && (
-                  <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-line pt-3">
-                    <LifeBuoy size={16} className="shrink-0 text-pine" />
-                    <p className="min-w-0 flex-1 text-xs text-gray-warm">
-                      Hai ricevuto rilievi dall&apos;ente? Caricali qui: li
-                      associamo ai requisiti di norma e adeguiamo i documenti.
-                    </p>
-                    <Link
-                      href={`/acquista/${RICHIAMO_SUPPORTO_AUDIT.slug}`}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-pine px-3 py-1.5 text-xs font-medium text-pine transition-colors hover:bg-moss"
+      <SelettoreCliente contesto={contesto} base="/dashboard" />
+
+      {/* I servizi in corso, in chiaro */}
+      <section className="mt-8">
+        <h2 className="text-sm font-semibold text-ink">Servizi in corso</h2>
+        {attivi.length > 0 ? (
+          <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
+            {attivi.map((m) => {
+              const s = getServizio(m.module);
+              const nDocumenti = s?.documenti.length ?? 0;
+              return (
+                <article
+                  key={m.id}
+                  className="rounded-2xl border border-line bg-white p-5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h3 className="text-[15px] font-bold leading-snug text-ink">
+                        {s?.name ?? m.module}
+                      </h3>
+                      {s?.taglio && (
+                        <p className="mt-0.5 text-xs font-medium text-gray-warm">
+                          {s.taglio}
+                        </p>
+                      )}
+                    </div>
+                    <span
+                      className={
+                        "shrink-0 rounded-full px-3 py-1 text-xs font-medium " +
+                        (STATO_BADGE[m.stato] ?? "bg-paper text-gray-warm")
+                      }
                     >
-                      Carica i rilievi <ArrowRight size={13} />
-                    </Link>
+                      {STATO_LABEL[m.stato] ?? m.stato}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {/* Avanzamento fascicolo: onesto — l'upload arriva con la
+                      2.2, quindi oggi il conteggio parte da zero. */}
+                  {nDocumenti > 0 && (
+                    <div className="mt-4">
+                      <div className="flex items-baseline justify-between text-xs text-gray-warm">
+                        <span>Fascicolo del percorso</span>
+                        <span className="font-semibold tabular-nums text-pine">
+                          0 di {nDocumenti} documenti
+                        </span>
+                      </div>
+                      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line/60">
+                        <div className="h-full w-0 rounded-full bg-mint" />
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="mt-4 border-t border-line pt-3 text-xs leading-relaxed text-gray-warm">
+                    <strong className="font-semibold text-ink">
+                      Prossima azione:{" "}
+                    </strong>
+                    {prossimaAzione(m.stato)}
+                  </p>
+
+                  <Link
+                    href={conCliente("/dashboard/percorsi")}
+                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-pine hover:underline"
+                  >
+                    Apri il percorso <ArrowRight size={15} />
+                  </Link>
+                </article>
+              );
+            })}
           </div>
         ) : (
-          <div className="mt-3 rounded-xl border border-line bg-white p-5">
-            <p className="text-sm text-gray-warm">
-              Nessun modulo ancora attivo: gli spazi di lavoro (carbon, VSME,
-              sistemi di gestione) compaiono qui dopo l&apos;acquisto.
-            </p>
+          <div className="mt-3">
+            <CardOpportunita
+              icona={Building2}
+              titolo="Il primo percorso apre l'ecosistema"
+              testo="Prezzi pubblici per fascia dimensionale, documenti che hai già, validazione umana su tutto: scegli da dove cominciare."
+              cta={{ href: "/servizi", label: "Apri il catalogo" }}
+            />
           </div>
         )}
+        {(ordini ?? []).some((o) => o.stato === "in_attivazione") && (
+          <p className="mt-2 text-xs text-gray-light">
+            Gli ordini «in attivazione» non hanno generato alcun addebito.
+          </p>
+        )}
+      </section>
+
+      {/* Le altre sezioni come opportunità: mai vuoti tristi. */}
+      <section className="mt-10">
+        <h2 className="text-sm font-semibold text-ink">
+          Il resto del tuo ecosistema
+        </h2>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <CardOpportunita
+            icona={ShieldCheck}
+            titolo="Il Sigillo Ver0"
+            testo="Si conquista completando un percorso qualificante: criteri pubblici, dati verificati, millesimo annuale."
+            cta={{ href: conCliente("/dashboard/sigillo"), label: "Vedi a che punto sei" }}
+          />
+          <CardOpportunita
+            icona={FolderOpen}
+            titolo="I tuoi documenti"
+            testo="L'archivio unico di bollette, visure e report: si popola con il fascicolo del tuo percorso."
+            cta={{ href: conCliente("/dashboard/documenti"), label: "Apri l'archivio" }}
+          />
+          <CardOpportunita
+            icona={Megaphone}
+            titolo="Bandi per il tuo profilo"
+            testo="L'osservatorio incluso nell'abbonamento: segnaliamo noi le opportunità che premiano le tue qualifiche."
+            cta={{ href: conCliente("/dashboard/bandi"), label: "Scopri l'osservatorio" }}
+          />
+          <CardOpportunita
+            icona={CalendarDays}
+            titolo="Consulenza quando serve"
+            testo="Specialisti veri, prenotabili sulla tua pratica. E un'assistenza che risponde."
+            cta={{ href: conCliente("/dashboard/consulenza"), label: "Vedi come funziona" }}
+          />
+        </div>
       </section>
     </main>
   );
