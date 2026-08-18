@@ -46,12 +46,13 @@ export function NavPortale() {
 
   return (
     <>
-      {/* Desktop: colonna laterale fissa */}
+      {/* Desktop: pannello in pino pieno; la voce attiva è marcata dal
+          segmento menta del Sigillo, non da una barretta qualunque. */}
       <nav
         aria-label="Sezioni dell'ecosistema"
         className="hidden w-56 shrink-0 md:block"
       >
-        <ul className="sticky top-20 space-y-1">
+        <ul className="sticky top-20 space-y-0.5 rounded-2xl bg-pine p-2.5 shadow-soft">
           {voci.map((s) => {
             const Icon = s.icon;
             return (
@@ -60,12 +61,19 @@ export function NavPortale() {
                   href={conCliente(s.href)}
                   aria-current={s.attiva ? "page" : undefined}
                   className={
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors " +
+                    "relative flex items-center gap-3 rounded-lg py-2.5 pl-4 pr-3 text-sm transition-colors " +
                     (s.attiva
-                      ? "bg-pine font-semibold text-white"
-                      : "text-gray-warm hover:bg-moss hover:text-pine")
+                      ? "bg-pine-dark font-semibold text-white"
+                      : "text-moss hover:bg-pine-dark/60 hover:text-white")
                   }
                 >
+                  {/* Il segmento del Sigillo sulla voce attiva */}
+                  {s.attiva && (
+                    <span
+                      aria-hidden
+                      className="absolute left-1 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full bg-mint-bright"
+                    />
+                  )}
                   <Icon size={17} className="shrink-0" />
                   {s.label}
                 </Link>
@@ -78,7 +86,7 @@ export function NavPortale() {
       {/* Mobile: barra inferiore fissa, scorrevole in orizzontale */}
       <nav
         aria-label="Sezioni dell'ecosistema"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white md:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-pine-deep md:hidden"
       >
         <ul className="flex overflow-x-auto px-1 pb-[max(env(safe-area-inset-bottom),0.25rem)] pt-1">
           {voci.map((s) => {
@@ -89,14 +97,21 @@ export function NavPortale() {
                   href={conCliente(s.href)}
                   aria-current={s.attiva ? "page" : undefined}
                   className={
-                    "flex w-[4.5rem] flex-col items-center gap-1 rounded-lg px-1 py-1.5 text-center transition-colors " +
-                    (s.attiva ? "text-pine" : "text-gray-warm")
+                    "relative flex w-[4.5rem] flex-col items-center gap-1 rounded-lg px-1 py-1.5 text-center transition-colors " +
+                    (s.attiva ? "text-mint-bright" : "text-moss")
                   }
                 >
+                  {/* Il segmento del Sigillo, orizzontale, sopra la voce attiva */}
+                  {s.attiva && (
+                    <span
+                      aria-hidden
+                      className="absolute -top-1 left-1/2 h-1 w-6 -translate-x-1/2 rounded-full bg-mint-bright"
+                    />
+                  )}
                   <span
                     className={
                       "flex h-8 w-8 items-center justify-center rounded-lg " +
-                      (s.attiva ? "bg-moss" : "")
+                      (s.attiva ? "bg-white/10" : "")
                     }
                   >
                     <Icon size={18} />

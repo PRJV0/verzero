@@ -12,6 +12,8 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { getServizio } from "@/lib/catalog";
 
+import { bozzaPercorso, completamentoBozza } from "@/lib/bozza";
+
 import { caricaContesto } from "./_contesto";
 import {
   CardOpportunita,
@@ -119,7 +121,10 @@ export default async function PanoramicaPage({
           <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
             {attivi.map((m) => {
               const s = getServizio(m.module);
-              const nDocumenti = s?.documenti.length ?? 0;
+              const bozza = contesto.org
+                ? bozzaPercorso(m.module, contesto.org)
+                : null;
+              const percentuale = bozza ? completamentoBozza(bozza) : 0;
               return (
                 <article
                   key={m.id}
@@ -146,18 +151,28 @@ export default async function PanoramicaPage({
                     </span>
                   </div>
 
-                  {/* Avanzamento fascicolo: onesto — l'upload arriva con la
-                      2.2, quindi oggi il conteggio parte da zero. */}
-                  {nDocumenti > 0 && (
+                  {/* Il lavoro già svolto, mai il compito da fare (§12.G):
+                      la bozza del documento è già composta in parte. */}
+                  {bozza && (
                     <div className="mt-4">
                       <div className="flex items-baseline justify-between text-xs text-gray-warm">
-                        <span>Fascicolo del percorso</span>
-                        <span className="font-semibold tabular-nums text-pine">
-                          0 di {nDocumenti} documenti
+                        <span>{bozza.intestazione}</span>
+                        <span className="font-semibold tabular-nums text-mint">
+                          bozza al {percentuale}%
                         </span>
                       </div>
-                      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line/60">
-                        <div className="h-full w-0 rounded-full bg-mint" />
+                      <div className="mt-1.5 flex gap-1">
+                        {bozza.sezioni.map((sez, i) => (
+                          <span
+                            key={i}
+                            className={
+                              "h-1.5 flex-1 rounded-full " +
+                              (sez.stato !== "in-attesa"
+                                ? "bg-mint"
+                                : "bg-line/60")
+                            }
+                          />
+                        ))}
                       </div>
                     </div>
                   )}
