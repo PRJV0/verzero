@@ -9,8 +9,10 @@ import {
   getServizio,
 } from "@/lib/catalog";
 import {
-  bozzaPercorso,
+  componentiPercorso,
   completamentoBozza,
+  documentiAttivi,
+  type ComponentePercorso,
   type SezioneBozza,
 } from "@/lib/bozza";
 
@@ -18,8 +20,10 @@ import { caricaContesto } from "../_contesto";
 import { AnelloSigillo } from "../_anello";
 import {
   CardOpportunita,
+  ChipDestinazione,
   IntestazioneSezione,
   STATO_BADGE,
+  STATO_FRASE,
   STATO_LABEL,
   SelettoreCliente,
 } from "../_ui";
@@ -44,7 +48,8 @@ function RigheAccennate({ quante = 2 }: { quante?: number }) {
   );
 }
 
-/** Una sezione del foglio-bozza, numerata, con lo stato dichiarato. */
+/** Una sezione del foglio-bozza, numerata, con lo stato dichiarato e la
+ *  spiegazione per chi non è del mestiere (§12.F). */
 function SezioneFoglio({
   sezione,
   numero,
@@ -69,6 +74,12 @@ function SezioneFoglio({
           </span>
         )}
       </div>
+
+      {sezione.spiega && (
+        <p className="mt-1 text-xs leading-snug text-gray-light">
+          {sezione.spiega}
+        </p>
+      )}
 
       {sezione.stato === "popolata" && sezione.righe && (
         <dl className="mt-2 space-y-1">
@@ -102,11 +113,111 @@ function SezioneFoglio({
   );
 }
 
+/** Un documento del percorso: foglio-bozza + anello + «per completare». */
+function FoglioComponente({
+  comp,
+  attiviDocs,
+}: {
+  comp: ComponentePercorso;
+  attiviDocs: Set<string>;
+}) {
+  const bozza = comp.bozza;
+  const percentuale = completamentoBozza(bozza);
+  const composte = bozza.sezioni.filter((x) => x.stato !== "in-attesa").length;
+
+  return (
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_260px]">
+      {/* Il fascicolo come oggetto di carta */}
+      <div className="overflow-hidden rounded-xl border-2 border-line bg-white shadow-soft">
+        <div className="flex items-center justify-between gap-3 border-b-2 border-line bg-paper px-5 py-3 sm:px-6">
+          <p className="font-display text-lg text-ink">{bozza.intestazione}</p>
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-gray-light">
+            Anteprima
+          </span>
+        </div>
+        {bozza.sezioni.map((sez, i) => (
+          <SezioneFoglio key={sez.titolo} sezione={sez} numero={i + 1} />
+        ))}
+      </div>
+
+      {/* Colonna quieta: anello-cruscotto + cosa serve, col perché */}
+      <aside className="space-y-4">
+        <div className="flex flex-col items-center rounded-xl border border-line bg-white p-5 text-center">
+          <AnelloSigillo
+            totale={bozza.sezioni.length}
+            pieni={composte}
+            percentuale={percentuale}
+          />
+          <p className="mt-3 text-xs leading-relaxed text-gray-warm">
+            <span className="font-semibold tabular-nums text-pine">
+              {composte} sezioni su {bozza.sezioni.length}
+            </span>{" "}
+            già composte dal Motore
+          </p>
+        </div>
+
+        <div className="rounded-xl bg-moss/50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-pine">
+            Per completare ci serve
+          </p>
+          {bozza.daFornire.length === 0 && bozza.zeroDocumenti ? (
+            <>
+              <p className="mt-2.5 inline-flex rounded-full bg-mint/15 px-2.5 py-1 text-[11px] font-semibold text-mint">
+                Zero documenti aggiuntivi
+              </p>
+              <p className="mt-2 text-xs leading-relaxed text-gray-warm">
+                {bozza.zeroDocumenti}
+              </p>
+            </>
+          ) : (
+            <>
+              <ul className="mt-2.5 space-y-2">
+                {bozza.daFornire.map((v) => {
+                  // Un dato, più documenti (§12.F): se la stessa cosa serve
+                  // anche a un altro documento in lavorazione, si vede scritto.
+                  const anche = (v.destinazioni ?? []).filter(
+                    (d) => d !== comp.doc && attiviDocs.has(d),
+                  );
+                  return (
+                    <li
+                      key={v.documento}
+                      className="rounded-lg border border-amber-ink/20 bg-amber-soft/70 px-3 py-2.5"
+                    >
+                      <p className="text-xs font-semibold text-ink">
+                        {v.documento}
+                      </p>
+                      <p className="mt-0.5 text-[11px] leading-snug text-gray-warm">
+                        {v.perche}
+                      </p>
+                      {anche.length > 0 && (
+                        <p className="mt-1.5 flex flex-wrap gap-1">
+                          {anche.map((d) => (
+                            <ChipDestinazione key={d} label={`anche ${d}`} />
+                          ))}
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="mt-2.5 text-[11px] leading-relaxed text-gray-light">
+                Quando lo carichi, il Motore lo legge e compila le sezioni in
+                attesa: il caricamento guidato apre con la prossima tappa, ti
+                avvisiamo noi.
+              </p>
+            </>
+          )}
+        </div>
+      </aside>
+    </div>
+  );
+}
+
 /**
- * I TUOI PERCORSI (SPEC §12.G + §12.H): la vista si apre sul LAVORO GIÀ
- * SVOLTO — il foglio-bozza del documento con le sezioni composte dal
- * Motore — con l'anello del Sigillo come cruscotto. La lista di ciò che
- * manca è secondaria, quieta, e ogni voce dice il perché.
+ * I TUOI PERCORSI (SPEC §12.G + §12.F): la vista si apre sul LAVORO GIÀ
+ * SVOLTO — il foglio-bozza di ogni documento — e il Percorso Ver0 si
+ * presenta sempre scomposto nei suoi quattro documenti componenti,
+ * ciascuno con bozza, anello e fascicolo propri.
  */
 export default async function PercorsiPage({
   searchParams,
@@ -126,6 +237,7 @@ export default async function PercorsiPage({
     : { data: [] };
 
   const attivi = moduli ?? [];
+  const attiviDocs = documentiAttivi(attivi.map((m) => m.module));
 
   return (
     <main>
@@ -142,21 +254,18 @@ export default async function PercorsiPage({
           <CardOpportunita
             titolo="Nessun percorso attivo, per ora"
             testo="Dal catalogo attivi quando vuoi: prezzi pubblici, la lista dei documenti dichiarata prima dell'acquisto, validazione umana su tutto."
-            cta={{ href: "/servizi", label: "Scegli il percorso" }}
+            cta={{ href: "/servizi", label: "Apri il catalogo dei percorsi" }}
           />
         </div>
       ) : (
-        <div className="mt-8 space-y-8">
+        <div className="mt-8 space-y-10">
           {attivi.map((m) => {
             const s = getServizio(m.module);
-            const bozza = contesto.org
-              ? bozzaPercorso(m.module, contesto.org)
-              : null;
-            if (!bozza) return null;
-            const percentuale = completamentoBozza(bozza);
-            const composte = bozza.sezioni.filter(
-              (x) => x.stato !== "in-attesa",
-            ).length;
+            const componenti = contesto.org
+              ? componentiPercorso(m.module, contesto.org)
+              : [];
+            if (componenti.length === 0) return null;
+            const bundle = componenti.length > 1;
 
             return (
               <article key={m.id}>
@@ -181,69 +290,46 @@ export default async function PercorsiPage({
                     {STATO_LABEL[m.stato] ?? m.stato}
                   </span>
                 </div>
+                {STATO_FRASE[m.stato] && (
+                  <p className="mt-1 text-xs text-gray-warm">
+                    {STATO_FRASE[m.stato]}
+                  </p>
+                )}
 
-                {/* PRIMA il lavoro svolto: foglio-bozza + anello (§12.G) */}
-                <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_260px]">
-                  {/* Il fascicolo come oggetto di carta */}
-                  <div className="overflow-hidden rounded-xl border-2 border-line bg-white shadow-soft">
-                    <div className="flex items-center justify-between gap-3 border-b-2 border-line bg-paper px-5 py-3 sm:px-6">
-                      <p className="font-display text-lg text-ink">
-                        {bozza.intestazione}
-                      </p>
-                      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-gray-light">
-                        Anteprima
-                      </span>
-                    </div>
-                    {bozza.sezioni.map((sez, i) => (
-                      <SezioneFoglio
-                        key={sez.titolo}
-                        sezione={sez}
-                        numero={i + 1}
-                      />
-                    ))}
-                  </div>
+                {/* Il bundle si presenta SEMPRE scomposto (§12.F) */}
+                {bundle && (
+                  <p className="mt-3 max-w-2xl rounded-lg bg-paper px-4 py-2.5 text-xs leading-relaxed text-gray-warm">
+                    Questo percorso produce{" "}
+                    <strong className="font-semibold text-ink">
+                      {componenti.length} documenti distinti
+                    </strong>
+                    , ognuno col suo fascicolo. I dati si chiedono una volta
+                    sola: quando una cosa serve a due documenti, lo trovi
+                    scritto accanto.
+                  </p>
+                )}
 
-                  {/* Colonna quieta: anello-cruscotto + cosa serve, col perché */}
-                  <aside className="space-y-4">
-                    <div className="flex flex-col items-center rounded-xl border border-line bg-white p-5 text-center">
-                      <AnelloSigillo
-                        totale={bozza.sezioni.length}
-                        pieni={composte}
-                        percentuale={percentuale}
-                      />
-                      <p className="mt-3 text-xs leading-relaxed text-gray-warm">
-                        <span className="font-semibold tabular-nums text-pine">
-                          {composte} sezioni su {bozza.sezioni.length}
-                        </span>{" "}
-                        già composte dal Motore
-                      </p>
-                    </div>
-
-                    <div className="rounded-xl bg-moss/50 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-pine">
-                        Per completare ci serve
-                      </p>
-                      <ul className="mt-2.5 space-y-2">
-                        {bozza.daFornire.map((v) => (
-                          <li
-                            key={v.documento}
-                            className="rounded-lg border border-amber-ink/20 bg-amber-soft/70 px-3 py-2.5"
-                          >
-                            <p className="text-xs font-semibold text-ink">
-                              {v.documento}
-                            </p>
-                            <p className="mt-0.5 text-[11px] leading-snug text-gray-warm">
-                              {v.perche}
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
-                      <p className="mt-2.5 text-[11px] leading-relaxed text-gray-light">
-                        Il caricamento guidato apre con la prossima tappa: ti
-                        avvisiamo noi.
-                      </p>
-                    </div>
-                  </aside>
+                <div className="mt-4 space-y-8">
+                  {componenti.map((comp, idx) => (
+                    <section key={comp.key}>
+                      {bundle && (
+                        <div className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-light">
+                            Documento {idx + 1} di {componenti.length}
+                          </p>
+                          <h3 className="min-w-0 font-display text-lg text-ink">
+                            {comp.nome}
+                            {comp.taglio && (
+                              <span className="ml-2 text-xs font-sans font-medium text-gray-warm">
+                                {comp.taglio}
+                              </span>
+                            )}
+                          </h3>
+                        </div>
+                      )}
+                      <FoglioComponente comp={comp} attiviDocs={attiviDocs} />
+                    </section>
+                  ))}
                 </div>
 
                 {/* Percorsi certificabili: i rilievi si adeguano qui. */}
@@ -251,8 +337,10 @@ export default async function PercorsiPage({
                   <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-white px-4 py-3">
                     <LifeBuoy size={16} className="shrink-0 text-pine" />
                     <p className="min-w-0 flex-1 text-xs text-gray-warm">
-                      Hai ricevuto rilievi dall&apos;ente? Li associamo ai
-                      requisiti di norma e adeguiamo i documenti.
+                      L&apos;organismo di certificazione ti ha lasciato rilievi
+                      (le richieste di correzione dopo la visita)? Li carichi,
+                      noi adeguiamo i documenti e prepariamo la risposta punto
+                      per punto.
                     </p>
                     <Link
                       href={`/acquista/${RICHIAMO_SUPPORTO_AUDIT.slug}`}

@@ -83,6 +83,47 @@ export const GRUPPI_CAMPI: GruppoCampi[] = [
   },
 ];
 
+/* ------------------------------------------------------------------ */
+/* Un dato, più documenti (SPEC §12.F)                                 */
+/* ------------------------------------------------------------------ */
+
+import { DOC_CARBON, DOC_PARITA, DOC_VSME, documentiAttivi } from "./bozza";
+
+/**
+ * A quali documenti contribuisce ciascun campo della scheda. "tutti"
+ * = entra nell'anagrafica di ogni documento in lavorazione. I campi
+ * puramente amministrativi (PEC, email) non hanno destinazioni.
+ */
+const CAMPO_DESTINAZIONI: Record<string, string[] | "tutti"> = {
+  ragione_sociale: "tutti",
+  partita_iva: "tutti",
+  forma_giuridica: "tutti",
+  ateco: [DOC_CARBON, DOC_VSME],
+  sede_legale: [DOC_CARBON, DOC_VSME],
+  unita_locali: [DOC_CARBON],
+  dimensione: [DOC_VSME],
+  dipendenti: [DOC_VSME, DOC_PARITA],
+  capitale_sociale: [DOC_VSME],
+};
+
+/**
+ * I chip di destinazione di un campo, filtrati sui documenti davvero in
+ * lavorazione: il principio «rispondi una volta sola» reso visibile.
+ * `"tutti"` quando il campo entra in ogni documento attivo.
+ */
+export function destinazioniCampo(
+  chiave: string,
+  moduliAttivi: string[],
+): string[] | "tutti" | null {
+  const attivi = documentiAttivi(moduliAttivi);
+  if (attivi.size === 0) return null;
+  const dest = CAMPO_DESTINAZIONI[chiave];
+  if (!dest) return null;
+  if (dest === "tutti") return attivi.size > 1 ? "tutti" : [...attivi];
+  const presenti = dest.filter((d) => attivi.has(d));
+  return presenti.length > 0 ? presenti : null;
+}
+
 export type ProvenienzaCampo = "utente" | "motore" | "in-arrivo";
 
 export type CampoScheda = {

@@ -7,12 +7,14 @@ import {
   FolderOpen,
   Megaphone,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { getServizio } from "@/lib/catalog";
-
-import { bozzaPercorso, completamentoBozza } from "@/lib/bozza";
+import { componentiPercorso, completamentoBozza } from "@/lib/bozza";
+import { isUnaTantum } from "@/lib/pricing";
+import { suggerimenti } from "@/lib/suggerimenti";
 
 import { caricaContesto } from "./_contesto";
 import {
@@ -29,10 +31,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+const eur = (n: number) => n.toLocaleString("it-IT");
+
 /**
- * PANORAMICA (SPEC §12.H, sezione 1 di 8): l'evidenza in chiaro dei
- * servizi in corso — stato, prossima azione, avanzamento del fascicolo —
- * e le altre sezioni come opportunità eleganti quando non attive.
+ * PANORAMICA (SPEC §12.H + §12.F): l'evidenza in chiaro dei servizi in
+ * corso — col bundle sempre scomposto nei suoi documenti — le opportunità
+ * calcolate sui dati già posseduti, e le altre sezioni mai come vuoti.
  */
 export default async function PanoramicaPage({
   searchParams,
@@ -82,9 +86,23 @@ export default async function PanoramicaPage({
       case "disdetto":
         return "Il percorso è chiuso. Il lavoro fatto resta tuo: puoi riattivarlo dal catalogo quando vuoi.";
       default:
-        return "Prepara i documenti del fascicolo: il Motore ti dice esattamente quali.";
+        return "Tieni a portata i documenti del fascicolo: il Motore ti dice esattamente quali e perché.";
     }
   };
+
+  // Suggerimenti (§12.F): con i dati che già abbiamo, cosa costerebbe poco
+  // attivare. Solo per chi ha percorsi, mai invadenti, sconto cliente attivo.
+  const conCanoneAttivo = attivi.some(
+    (m) => m.stato === "attivo" && !isUnaTantum(m.module),
+  );
+  const opportunita =
+    contesto.org && attivi.length > 0
+      ? suggerimenti(
+          attivi.map((m) => m.module),
+          contesto.org.dimensione,
+          conCanoneAttivo,
+        )
+      : [];
 
   return (
     <main>
@@ -121,10 +139,9 @@ export default async function PanoramicaPage({
           <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
             {attivi.map((m) => {
               const s = getServizio(m.module);
-              const bozza = contesto.org
-                ? bozzaPercorso(m.module, contesto.org)
-                : null;
-              const percentuale = bozza ? completamentoBozza(bozza) : 0;
+              const componenti = contesto.org
+                ? componentiPercorso(m.module, contesto.org)
+                : [];
               return (
                 <article
                   key={m.id}
@@ -151,29 +168,40 @@ export default async function PanoramicaPage({
                     </span>
                   </div>
 
-                  {/* Il lavoro già svolto, mai il compito da fare (§12.G):
-                      la bozza del documento è già composta in parte. */}
-                  {bozza && (
-                    <div className="mt-4">
-                      <div className="flex items-baseline justify-between text-xs text-gray-warm">
-                        <span>{bozza.intestazione}</span>
-                        <span className="font-semibold tabular-nums text-mint">
-                          bozza al {percentuale}%
-                        </span>
-                      </div>
-                      <div className="mt-1.5 flex gap-1">
-                        {bozza.sezioni.map((sez, i) => (
-                          <span
-                            key={i}
-                            className={
-                              "h-1.5 flex-1 rounded-full " +
-                              (sez.stato !== "in-attesa"
-                                ? "bg-mint"
-                                : "bg-line/60")
-                            }
-                          />
-                        ))}
-                      </div>
+                  {/* Il lavoro già svolto, mai il compito da fare (§12.G) —
+                      e il bundle sempre scomposto nei suoi documenti (§12.F). */}
+                  {componenti.length > 0 && (
+                    <div className="mt-4 space-y-3">
+                      {componenti.map((comp) => {
+                        const percentuale = completamentoBozza(comp.bozza);
+                        return (
+                          <div key={comp.key}>
+                            <div className="flex items-baseline justify-between gap-3 text-xs text-gray-warm">
+                              <span className="min-w-0 truncate">
+                                {componenti.length > 1
+                                  ? comp.nome
+                                  : comp.bozza.intestazione}
+                              </span>
+                              <span className="shrink-0 font-semibold tabular-nums text-mint">
+                                bozza al {percentuale}%
+                              </span>
+                            </div>
+                            <div className="mt-1.5 flex gap-1">
+                              {comp.bozza.sezioni.map((sez, i) => (
+                                <span
+                                  key={i}
+                                  className={
+                                    "h-1.5 flex-1 rounded-full " +
+                                    (sez.stato !== "in-attesa"
+                                      ? "bg-mint"
+                                      : "bg-line/60")
+                                  }
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
 
@@ -188,7 +216,7 @@ export default async function PanoramicaPage({
                     href={conCliente("/dashboard/percorsi")}
                     className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-pine hover:underline"
                   >
-                    Apri il percorso <ArrowRight size={15} />
+                    Apri il percorso e leggi la bozza <ArrowRight size={15} />
                   </Link>
                 </article>
               );
@@ -211,6 +239,94 @@ export default async function PanoramicaPage({
         )}
       </section>
 
+      {/* Con i dati che già abbiamo (§12.F): opportunità, mai pressione. */}
+      {opportunita.length > 0 && (
+        <section className="mt-10">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-ink">
+            <Sparkles size={15} className="text-mint" />
+            Con i dati che già abbiamo potresti attivare
+          </h2>
+          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {opportunita.map((o) => (
+              <article
+                key={o.slug}
+                className="flex flex-col rounded-2xl border border-line bg-white p-5"
+              >
+                <h3 className="text-[15px] font-bold leading-snug text-ink">
+                  {o.nome}
+                </h3>
+                {o.taglio && (
+                  <p className="mt-0.5 text-xs font-medium text-gray-warm">
+                    {o.taglio}
+                  </p>
+                )}
+                <p className="mt-2.5 text-sm leading-relaxed text-gray-warm">
+                  {o.motivo}
+                </p>
+
+                {/* L'effort residuo, calcolato e dichiarato */}
+                <p className="mt-2.5 text-xs leading-relaxed">
+                  {o.effort === null ? (
+                    <span className="inline-flex rounded-full bg-mint/15 px-2.5 py-1 font-semibold text-mint">
+                      Zero documenti aggiuntivi: abbiamo già tutto
+                    </span>
+                  ) : (
+                    <span className="text-gray-warm">
+                      <strong className="font-semibold text-ink">
+                        Ti serviranno solo:
+                      </strong>{" "}
+                      {o.effort.join(", ")}.
+                    </span>
+                  )}
+                </p>
+                {o.effortNota && (
+                  <p className="mt-1 text-[11px] leading-snug text-gray-light">
+                    {o.effortNota}
+                  </p>
+                )}
+
+                <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2 border-t border-line pt-3">
+                  {o.mensile !== null ? (
+                    <p className="text-sm text-gray-warm">
+                      {o.mensileScontato !== null ? (
+                        <>
+                          <span className="tabular-nums line-through">
+                            {eur(o.mensile)} €
+                          </span>{" "}
+                          <strong className="font-semibold tabular-nums text-ink">
+                            {eur(o.mensileScontato)} €/mese
+                          </strong>{" "}
+                          <span className="text-xs">
+                            con lo sconto cliente attivo −15%, applicato
+                            all&apos;attivazione
+                          </span>
+                        </>
+                      ) : (
+                        <strong className="font-semibold tabular-nums text-ink">
+                          {eur(o.mensile)} €/mese
+                        </strong>
+                      )}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-warm">Prezzo su richiesta</p>
+                  )}
+                  <Link
+                    href={`/servizi/${o.slug}`}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-pine hover:underline"
+                  >
+                    Vedi cosa comprende <ArrowRight size={15} />
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-gray-light">
+            Suggerimenti calcolati sui dati del tuo fascicolo: puoi
+            ignorarli, non li ripetiamo altrove.
+          </p>
+        </section>
+      )}
+
       {/* Le altre sezioni come opportunità: mai vuoti tristi. */}
       <section className="mt-10">
         <h2 className="text-sm font-semibold text-ink">
@@ -220,7 +336,7 @@ export default async function PanoramicaPage({
           <CardOpportunita
             icona={ShieldCheck}
             titolo="Il Sigillo Ver0"
-            testo="Si conquista completando un percorso qualificante: criteri pubblici, dati verificati, millesimo annuale."
+            testo="Si conquista completando un percorso qualificante: criteri pubblici, dati verificati, l'anno sempre stampato sopra. Intanto puoi già dichiarare il percorso avviato."
             cta={{ href: conCliente("/dashboard/sigillo"), label: "Vedi a che punto sei" }}
           />
           <CardOpportunita

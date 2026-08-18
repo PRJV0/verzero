@@ -17,11 +17,15 @@ export function Sigillo({
   segmenti = false,
   tone = "light",
   year = "2026",
+  avvio = false,
 }: {
   className?: string;
   segmenti?: boolean;
   tone?: "light" | "dark";
   year?: string;
+  /** Stato «percorso avviato» (§12.F): solo anello punteggiato, MAI
+   *  segmenti pieni — nemmeno quello d'accento delle superfici scure. */
+  avvio?: boolean;
 }) {
   const dark = tone === "dark";
   const ink = dark ? "#FFFFFF" : "#0E5238";
@@ -67,7 +71,8 @@ export function Sigillo({
           />
         </>
       ) : (
-        dark && (
+        dark &&
+        !avvio && (
           /* Su fondo scuro il sigillo porta sempre il segmento menta acceso (§11.X). */
           <path
             d="M 100 18 A 82 82 0 0 1 169 59"

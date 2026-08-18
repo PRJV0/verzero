@@ -2,10 +2,19 @@ import type { Metadata } from "next";
 import { Check, Sparkles } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
-import { componiScheda, type CampoScheda } from "@/lib/impresa";
+import {
+  componiScheda,
+  destinazioniCampo,
+  type CampoScheda,
+} from "@/lib/impresa";
 
 import { caricaContesto } from "../_contesto";
-import { CardOpportunita, IntestazioneSezione, SelettoreCliente } from "../_ui";
+import {
+  CardOpportunita,
+  ChipDestinazione,
+  IntestazioneSezione,
+  SelettoreCliente,
+} from "../_ui";
 
 export const metadata: Metadata = {
   title: "La tua impresa — il tuo ecosistema",
@@ -69,21 +78,28 @@ export default async function ImpresaPage({
   const contesto = await caricaContesto(cliente, "/dashboard/impresa");
   const supabase = await createClient();
 
-  const { data: righe } = contesto.org
-    ? await supabase
-        .from("company_fields")
-        .select("campo, valore, provenienza, fonte, stato")
-        .eq("organization_id", contesto.org.id)
-    : { data: [] };
+  const [{ data: righe }, { data: moduli }] = contesto.org
+    ? await Promise.all([
+        supabase
+          .from("company_fields")
+          .select("campo, valore, provenienza, fonte, stato")
+          .eq("organization_id", contesto.org.id),
+        supabase
+          .from("module_activations")
+          .select("module")
+          .eq("organization_id", contesto.org.id),
+      ])
+    : [{ data: [] }, { data: [] }];
 
   const scheda = contesto.org ? componiScheda(contesto.org, righe ?? []) : [];
+  const moduliAttivi = (moduli ?? []).map((m) => m.module);
 
   return (
     <main>
       <IntestazioneSezione
         eyebrow="LA TUA IMPRESA"
         titolo="La scheda della tua impresa"
-        sotto="Ogni dato dichiara da dove viene: inserito da te, recuperato dal Motore o in arrivo dalle banche dati ufficiali. Niente da ricopiare: ciò che una fonte pubblica sa già, lo chiediamo a lei."
+        sotto="Ogni dato dichiara da dove viene — inserito da te, recuperato dal Motore o in arrivo dalle banche dati ufficiali — e a quali documenti sta contribuendo: rispondi una volta sola, il resto lo smista il Motore."
       />
 
       <SelettoreCliente contesto={contesto} base="/dashboard/impresa" />
@@ -109,30 +125,48 @@ export default async function ImpresaPage({
                 {gruppo.titolo}
               </h2>
               <dl>
-                {gruppo.campi.map((c, i) => (
-                  <div
-                    key={c.chiave}
-                    className={
-                      "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-5 py-3.5" +
-                      (i > 0 ? " border-t border-line/60" : "")
-                    }
-                  >
-                    <dt className="text-sm text-gray-warm">{c.label}</dt>
-                    <dd className="flex min-w-0 flex-col items-end gap-1 text-right">
-                      <span
-                        className={
-                          "text-sm " +
-                          (c.valore
-                            ? "font-semibold tabular-nums text-ink"
-                            : "text-gray-light")
-                        }
-                      >
-                        {c.valore ?? "—"}
-                      </span>
-                      <BadgeProvenienza campo={c} />
-                    </dd>
-                  </div>
-                ))}
+                {gruppo.campi.map((c, i) => {
+                  // Un dato, più documenti (§12.F): il chip dice a quali
+                  // documenti in lavorazione questo campo contribuisce.
+                  const dest = destinazioniCampo(c.chiave, moduliAttivi);
+                  return (
+                    <div
+                      key={c.chiave}
+                      className={
+                        "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-5 py-3.5" +
+                        (i > 0 ? " border-t border-line/60" : "")
+                      }
+                    >
+                      <dt className="min-w-0 text-sm text-gray-warm">
+                        {c.label}
+                        {dest && (
+                          <span className="mt-1 flex flex-wrap gap-1">
+                            {dest === "tutti" ? (
+                              <ChipDestinazione label="tutti i tuoi documenti" />
+                            ) : (
+                              dest.map((d) => (
+                                <ChipDestinazione key={d} label={d} />
+                              ))
+                            )}
+                          </span>
+                        )}
+                      </dt>
+                      <dd className="flex min-w-0 flex-col items-end gap-1 text-right">
+                        <span
+                          className={
+                            "text-sm " +
+                            (c.valore
+                              ? "font-semibold tabular-nums text-ink"
+                              : "text-gray-light")
+                          }
+                        >
+                          {c.valore ?? "—"}
+                        </span>
+                        <BadgeProvenienza campo={c} />
+                      </dd>
+                    </div>
+                  );
+                })}
               </dl>
             </section>
           ))}

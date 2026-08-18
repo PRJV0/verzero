@@ -25,6 +25,8 @@ type Organization = {
   billing_email: string | null;
   billing_sdi: string | null;
   billing_indirizzo: string | null;
+  /** Codice pubblico non indovinabile della pagina /verifica (§12.F). */
+  codice_verifica: string;
   created_at: string;
   updated_at: string;
 };

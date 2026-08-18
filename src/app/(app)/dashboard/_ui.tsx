@@ -17,6 +17,28 @@ export const STATO_LABEL: Record<string, string> = {
   disdetto: "Disdetto",
 };
 
+/** Lo stato spiegato in una frase (§12.F: mai codici, per non esperti). */
+export const STATO_FRASE: Record<string, string> = {
+  in_attivazione:
+    "Ordine ricevuto: stiamo attivando il percorso e nessun addebito è ancora partito.",
+  attivo: "Il percorso è attivo: il Motore ci sta lavorando.",
+  sospeso: "Il percorso è in pausa: quando riprende, si riparte da dove eri.",
+  disdetto:
+    "Il percorso è chiuso: il lavoro fatto resta tuo e puoi riattivarlo quando vuoi.",
+};
+
+/** Chip di destinazione (§12.F): a quale documento contribuisce un dato. */
+export function ChipDestinazione({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-pine/25 bg-white px-2 py-0.5 text-[10px] font-medium text-pine">
+      <span aria-hidden className="mr-1">
+        →
+      </span>
+      {label}
+    </span>
+  );
+}
+
 /** Intestazione comune delle sezioni del portale. */
 export function IntestazioneSezione({
   eyebrow,
