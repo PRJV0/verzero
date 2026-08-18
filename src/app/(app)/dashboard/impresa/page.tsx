@@ -7,6 +7,7 @@ import {
   destinazioniCampo,
   type CampoScheda,
 } from "@/lib/impresa";
+import { FONTI_DICHIARATE } from "@/lib/arricchimento/orchestratore";
 
 import { caricaContesto } from "../_contesto";
 import {
@@ -15,6 +16,8 @@ import {
   IntestazioneSezione,
   SelettoreCliente,
 } from "../_ui";
+import { AggiornaDati } from "./aggiorna";
+import { confermaCampo } from "./azioni";
 
 export const metadata: Metadata = {
   title: "La tua impresa — il tuo ecosistema",
@@ -64,10 +67,10 @@ function BadgeProvenienza({ campo }: { campo: CampoScheda }) {
 }
 
 /**
- * LA TUA IMPRESA (SPEC §12.H, sezione 2 di 8): la scheda anagrafica
- * strutturata, ogni campo con la sua provenienza. Oggi è popolata dai
- * dati della registrazione; l'architettura (company_fields) è pronta per
- * l'arricchimento automatico della tappa 2.1.
+ * LA TUA IMPRESA (SPEC §12.H, sezioni 2.0 e 2.1): la scheda anagrafica,
+ * ogni campo con la sua provenienza e la sua destinazione. Il Motore la
+ * compila interrogando le banche dati ufficiali; ciò che porta arriva in
+ * stato «da confermare» e diventa definitivo solo quando lo confermi tu.
  */
 export default async function ImpresaPage({
   searchParams,
@@ -93,6 +96,10 @@ export default async function ImpresaPage({
 
   const scheda = contesto.org ? componiScheda(contesto.org, righe ?? []) : [];
   const moduliAttivi = (moduli ?? []).map((m) => m.module);
+  const daConfermare = scheda
+    .flatMap((g) => g.campi)
+    .filter((c) => c.daConfermare).length;
+  const fontiSpente = FONTI_DICHIARATE.filter((f) => f.stato === "spenta");
 
   return (
     <main>
@@ -109,13 +116,34 @@ export default async function ImpresaPage({
           <div className="mt-8">
             <CardOpportunita
               titolo="La scheda nasce con il primo percorso"
-              testo="Alla registrazione la compiliamo con i tuoi dati, e il Motore recupererà il resto dalle fonti ufficiali: niente da ricopiare."
+              testo="Alla registrazione la compiliamo con i tuoi dati, e il Motore recupera il resto dalle fonti ufficiali: niente da ricopiare."
               cta={{ href: "/servizi", label: "Apri il catalogo" }}
             />
           </div>
         ) : null
       ) : (
         <div className="mt-8 space-y-4">
+          {/* Il recupero automatico, con progressione vera per fonte */}
+          <AggiornaDati
+            fonti={FONTI_DICHIARATE}
+            organizationId={
+              contesto.ruolo === "consulente" ? contesto.org.id : undefined
+            }
+          />
+
+          {daConfermare > 0 && (
+            <p className="rounded-xl border border-amber-ink/25 bg-amber-soft/60 px-4 py-3 text-sm leading-relaxed text-amber-ink">
+              <strong className="font-semibold">
+                {daConfermare}{" "}
+                {daConfermare === 1
+                  ? "dato aspetta la tua conferma"
+                  : "dati aspettano la tua conferma"}
+              </strong>
+              : li abbiamo recuperati noi, ma entrano nei tuoi documenti solo
+              quando ci dici che sono giusti.
+            </p>
+          )}
+
           {scheda.map((gruppo) => (
             <section
               key={gruppo.titolo}
@@ -134,7 +162,8 @@ export default async function ImpresaPage({
                       key={c.chiave}
                       className={
                         "flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-5 py-3.5" +
-                        (i > 0 ? " border-t border-line/60" : "")
+                        (i > 0 ? " border-t border-line/60" : "") +
+                        (c.daConfermare ? " bg-amber-soft/25" : "")
                       }
                     >
                       <dt className="min-w-0 text-sm text-gray-warm">
@@ -163,6 +192,23 @@ export default async function ImpresaPage({
                           {c.valore ?? "—"}
                         </span>
                         <BadgeProvenienza campo={c} />
+                        {/* La conferma: il dato diventa tuo, e da lì in poi
+                            nessun recupero successivo lo sovrascrive. */}
+                        {c.daConfermare && contesto.ruolo === "impresa" && (
+                          <form
+                            action={async () => {
+                              "use server";
+                              await confermaCampo(c.chiave);
+                            }}
+                          >
+                            <button
+                              type="submit"
+                              className="mt-0.5 inline-flex items-center gap-1 rounded-lg border border-pine px-2.5 py-1 text-[11px] font-semibold text-pine transition-colors hover:bg-moss"
+                            >
+                              <Check size={11} strokeWidth={3} /> È corretto
+                            </button>
+                          </form>
+                        )}
                       </dd>
                     </div>
                   );
@@ -171,13 +217,29 @@ export default async function ImpresaPage({
             </section>
           ))}
 
-          <p className="text-xs leading-relaxed text-gray-light">
-            I campi «lo recupererà il Motore» si compileranno da soli con
-            l&apos;arricchimento dalle fonti ufficiali — Registro Imprese,
-            INI-PEC, ACCREDIA — grazie al mandato che hai già dato al
-            checkout. Ogni dato recuperato mostrerà la fonte e ti chiederà
-            conferma.
-          </p>
+          {/* Trasparenza sulle fonti che non possiamo ancora interrogare:
+              meglio dire perché che lasciar credere a una dimenticanza. */}
+          {fontiSpente.length > 0 && (
+            <details className="rounded-2xl border border-line bg-white p-5">
+              <summary className="cursor-pointer text-sm font-semibold text-ink">
+                Perché alcune fonti non le interroghiamo ancora
+              </summary>
+              <ul className="mt-3 space-y-3">
+                {fontiSpente.map((f) => (
+                  <li key={f.chiave}>
+                    <p className="text-sm font-medium text-ink">{f.nome}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-gray-warm">
+                      {f.vincolo}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 border-t border-line pt-3 text-xs leading-relaxed text-gray-light">
+                Preferiamo un campo vuoto a un dato preso in modo scorretto:
+                è la stessa disciplina con cui costruiamo i tuoi documenti.
+              </p>
+            </details>
+          )}
         </div>
       )}
     </main>

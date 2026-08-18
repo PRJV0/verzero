@@ -65,6 +65,14 @@ export type Bozza = {
 
 type DatiOrg = { ragione_sociale: string; partita_iva: string };
 
+/**
+ * I campi già noti della scheda impresa (tappa 2.1): inseriti dal cliente
+ * o recuperati dal Motore. Entrano nelle bozze non appena esistono — è
+ * così che l'arricchimento si vede nei documenti e fa salire l'anello,
+ * invece di restare un dettaglio nascosto nella scheda.
+ */
+export type CampiNoti = Record<string, { valore: string; fonte: string | null }>;
+
 const ANNO = 2026;
 
 /* ------------------------------------------------------------------ */
@@ -111,32 +119,80 @@ export function documentiAttivi(moduli: string[]): Set<string> {
 /* Le bozze                                                            */
 /* ------------------------------------------------------------------ */
 
-/** Anagrafica dalla registrazione: la sezione popolata di ogni bozza. */
-function sezioneAnagrafica(org: DatiOrg): SezioneBozza {
+/** Anagrafica: la sezione popolata di ogni bozza, che cresce col Motore. */
+function sezioneAnagrafica(org: DatiOrg, campi: CampiNoti = {}): SezioneBozza {
+  const righe = [
+    { etichetta: "Organizzazione", valore: org.ragione_sociale },
+    { etichetta: "Partita IVA", valore: org.partita_iva },
+    { etichetta: "Anno di riferimento", valore: String(ANNO) },
+  ];
+  // Ogni dato recuperato entra nel documento appena arriva (tappa 2.1).
+  if (campi.forma_giuridica) {
+    righe.push({
+      etichetta: "Forma giuridica",
+      valore: campi.forma_giuridica.valore,
+    });
+  }
+  if (campi.ateco) {
+    righe.push({ etichetta: "Attività (ATECO)", valore: campi.ateco.valore });
+  }
+
+  // Il badge sul foglio deve dire la verità su chi ha composto la sezione.
+  const recuperate = [campi.forma_giuridica, campi.ateco]
+    .map((c) => c?.fonte)
+    .filter((f): f is string => !!f);
+
   return {
     titolo: "Anagrafica e identificazione dell'organizzazione",
     stato: "popolata",
-    fonte: "registrazione",
+    fonte:
+      recuperate.length > 0
+        ? `registrazione · ${[...new Set(recuperate)].join(" · ")}`
+        : "registrazione",
     spiega: "Chi sei: la carta d'identità dell'impresa, già compilata.",
+    righe,
+  };
+}
+
+/**
+ * Perimetro organizzativo: finché non sappiamo dove sei, la sezione è
+ * solo impostata sulla norma. Con la sede legale recuperata diventa
+ * POPOLATA — ed è il momento in cui l'anello del percorso sale davvero.
+ */
+function sezionePerimetro(campi: CampiNoti): SezioneBozza {
+  const sede = campi.sede_legale;
+  if (!sede) {
+    return {
+      titolo: "Perimetro organizzativo e periodo di rendicontazione",
+      stato: "impostata",
+      fonte: "UNI EN ISO 14064-1:2019 §5",
+      spiega: "Quali sedi e attività entrano nel calcolo, e per quale anno.",
+    };
+  }
+  return {
+    titolo: "Perimetro organizzativo e periodo di rendicontazione",
+    stato: "popolata",
+    fonte: sede.fonte
+      ? `${sede.fonte} · UNI EN ISO 14064-1:2019 §5`
+      : "UNI EN ISO 14064-1:2019 §5",
+    spiega: "Quali sedi e attività entrano nel calcolo, e per quale anno.",
     righe: [
-      { etichetta: "Organizzazione", valore: org.ragione_sociale },
-      { etichetta: "Partita IVA", valore: org.partita_iva },
-      { etichetta: "Anno di riferimento", valore: String(ANNO) },
+      { etichetta: "Sede legale", valore: sede.valore },
+      {
+        etichetta: "Periodo di rendicontazione",
+        valore: `1 gennaio – 31 dicembre ${ANNO}`,
+      },
+      { etichetta: "Criterio di consolidamento", valore: "Controllo operativo" },
     ],
   };
 }
 
-function bozzaCarbon(org: DatiOrg, conScope3: boolean): Bozza {
+function bozzaCarbon(org: DatiOrg, conScope3: boolean, campi: CampiNoti = {}): Bozza {
   return {
     intestazione: `Bozza · Inventario GHG ${ANNO}`,
     sezioni: [
-      sezioneAnagrafica(org),
-      {
-        titolo: "Perimetro organizzativo e periodo di rendicontazione",
-        stato: "impostata",
-        fonte: "UNI EN ISO 14064-1:2019 §5",
-        spiega: "Quali sedi e attività entrano nel calcolo, e per quale anno.",
-      },
+      sezioneAnagrafica(org, campi),
+      sezionePerimetro(campi),
       {
         titolo: "Metodologia e fattori di emissione",
         stato: "impostata",
@@ -205,11 +261,11 @@ function bozzaCarbon(org: DatiOrg, conScope3: boolean): Bozza {
   };
 }
 
-function bozzaVsme(org: DatiOrg, avanzato: boolean): Bozza {
+function bozzaVsme(org: DatiOrg, avanzato: boolean, campi: CampiNoti = {}): Bozza {
   return {
     intestazione: `Bozza · Bilancio di Sostenibilità (VSME) ${ANNO}`,
     sezioni: [
-      sezioneAnagrafica(org),
+      sezioneAnagrafica(org, campi),
       {
         titolo: "Struttura del bilancio secondo lo standard EFRAG",
         stato: "impostata",
@@ -279,11 +335,11 @@ function bozzaVsme(org: DatiOrg, avanzato: boolean): Bozza {
 
 /** Miglioramento score (componente del Percorso Ver0): si compone dai
  *  dati degli altri due documenti — l'esempio vivo di «zero documenti». */
-function bozzaScore(org: DatiOrg): Bozza {
+function bozzaScore(org: DatiOrg, campi: CampiNoti = {}): Bozza {
   return {
     intestazione: `Bozza · Profilo Score ESG ${ANNO}`,
     sezioni: [
-      sezioneAnagrafica(org),
+      sezioneAnagrafica(org, campi),
       {
         titolo: "Mappatura dei questionari di banche e capofiliera",
         stato: "impostata",
@@ -317,11 +373,11 @@ function bozzaScore(org: DatiOrg): Bozza {
 }
 
 /** Kit di comunicazione (componente del Percorso Ver0). */
-function bozzaKit(org: DatiOrg): Bozza {
+function bozzaKit(org: DatiOrg, campi: CampiNoti = {}): Bozza {
   return {
     intestazione: `Bozza · Kit di Comunicazione ${ANNO}`,
     sezioni: [
-      sezioneAnagrafica(org),
+      sezioneAnagrafica(org, campi),
       {
         titolo: "Linee d'uso del Sigillo e della targa",
         stato: "impostata",
@@ -352,11 +408,11 @@ function bozzaKit(org: DatiOrg): Bozza {
   };
 }
 
-function bozzaManualeIso(org: DatiOrg, norma: string, ambito: string): Bozza {
+function bozzaManualeIso(org: DatiOrg, norma: string, ambito: string, campi: CampiNoti = {}): Bozza {
   return {
     intestazione: `Bozza · Manuale del Sistema di Gestione ${ambito}`,
     sezioni: [
-      sezioneAnagrafica(org),
+      sezioneAnagrafica(org, campi),
       {
         titolo: "Struttura HLS del manuale e politica",
         stato: "impostata",
@@ -401,11 +457,11 @@ function bozzaManualeIso(org: DatiOrg, norma: string, ambito: string): Bozza {
   };
 }
 
-function bozzaPdr125(org: DatiOrg): Bozza {
+function bozzaPdr125(org: DatiOrg, campi: CampiNoti = {}): Bozza {
   return {
     intestazione: `Bozza · Sistema di Gestione della Parità ${ANNO}`,
     sezioni: [
-      sezioneAnagrafica(org),
+      sezioneAnagrafica(org, campi),
       {
         titolo: "Le sei aree di KPI della prassi",
         stato: "impostata",
@@ -450,13 +506,13 @@ function bozzaPdr125(org: DatiOrg): Bozza {
 
 /** Fallback onesto per i percorsi senza bozza dedicata: struttura dal
  *  catalogo (gli output del servizio come sezioni). */
-function bozzaGenerica(org: DatiOrg, slug: string): Bozza {
+function bozzaGenerica(org: DatiOrg, slug: string, campi: CampiNoti = {}): Bozza {
   const s = getServizio(slug);
   const output = s?.output ?? [];
   return {
     intestazione: `Bozza · ${s?.name ?? "Documento del percorso"}`,
     sezioni: [
-      sezioneAnagrafica(org),
+      sezioneAnagrafica(org, campi),
       ...output.slice(0, 4).map(
         (o, i): SezioneBozza => ({
           titolo: o,
@@ -474,30 +530,34 @@ function bozzaGenerica(org: DatiOrg, slug: string): Bozza {
 }
 
 /** La bozza del singolo documento, con la precompilazione onesta di oggi. */
-export function bozzaPercorso(slug: string, org: DatiOrg): Bozza {
+export function bozzaPercorso(
+  slug: string,
+  org: DatiOrg,
+  campi: CampiNoti = {},
+): Bozza {
   switch (slug) {
     case "carbon-footprint-scope-1-2":
-      return bozzaCarbon(org, false);
+      return bozzaCarbon(org, false, campi);
     case "carbon-footprint-scope-1-2-3":
-      return bozzaCarbon(org, true);
+      return bozzaCarbon(org, true, campi);
     case "bilancio-sostenibilita-vsme-base":
-      return bozzaVsme(org, false);
+      return bozzaVsme(org, false, campi);
     case "bilancio-sostenibilita-vsme-avanzato":
-      return bozzaVsme(org, true);
+      return bozzaVsme(org, true, campi);
     case "manuale-sistema-gestione-iso-9001":
-      return bozzaManualeIso(org, "UNI EN ISO 9001:2015", "ISO 9001");
+      return bozzaManualeIso(org, "UNI EN ISO 9001:2015", "ISO 9001", campi);
     case "manuale-sistema-gestione-iso-14001":
-      return bozzaManualeIso(org, "UNI EN ISO 14001:2015", "ISO 14001");
+      return bozzaManualeIso(org, "UNI EN ISO 14001:2015", "ISO 14001", campi);
     case "manuale-sistema-gestione-iso-45001":
-      return bozzaManualeIso(org, "UNI ISO 45001:2018", "ISO 45001");
+      return bozzaManualeIso(org, "UNI ISO 45001:2018", "ISO 45001", campi);
     case "parita-di-genere-pdr-125":
-      return bozzaPdr125(org);
+      return bozzaPdr125(org, campi);
     case "percorso-ver0":
       // Il bundle non ha una bozza unica: si presenta sempre scomposto
       // (§12.F). Chi chiede la bozza del bundle riceve il primo componente.
-      return bozzaCarbon(org, false);
+      return bozzaCarbon(org, false, campi);
     default:
-      return bozzaGenerica(org, slug);
+      return bozzaGenerica(org, slug, campi);
   }
 }
 
@@ -523,6 +583,7 @@ export type ComponentePercorso = {
 export function componentiPercorso(
   slug: string,
   org: DatiOrg,
+  campi: CampiNoti = {},
 ): ComponentePercorso[] {
   if (slug === "percorso-ver0") {
     return [
@@ -531,26 +592,26 @@ export function componentiPercorso(
         nome: "Carbon Footprint di Organizzazione",
         taglio: "Scope 1 e 2",
         doc: DOC_CARBON,
-        bozza: bozzaCarbon(org, false),
+        bozza: bozzaCarbon(org, false, campi),
       },
       {
         key: "vsme",
         nome: "Bilancio di Sostenibilità (VSME)",
         taglio: "Base",
         doc: DOC_VSME,
-        bozza: bozzaVsme(org, false),
+        bozza: bozzaVsme(org, false, campi),
       },
       {
         key: "score",
         nome: "Miglioramento dello Score di Rating ESG",
         doc: DOC_SCORE,
-        bozza: bozzaScore(org),
+        bozza: bozzaScore(org, campi),
       },
       {
         key: "kit",
         nome: "Kit di Comunicazione",
         doc: DOC_KIT,
-        bozza: bozzaKit(org),
+        bozza: bozzaKit(org, campi),
       },
     ];
   }
@@ -561,15 +622,36 @@ export function componentiPercorso(
       nome: s?.name ?? slug,
       taglio: s?.taglio,
       doc: ETICHETTA_MODULO[slug],
-      bozza: bozzaPercorso(slug, org),
+      bozza: bozzaPercorso(slug, org, campi),
     },
   ];
 }
 
-/** Percentuale di completamento della bozza: sezioni già composte dal
- *  Motore (popolate + impostate) sul totale. Onesta e già significativa,
- *  perché la struttura È lavoro fatto. */
+/**
+ * Percentuale di completamento della bozza — a PESO, non a conteggio.
+ *
+ * Una sezione popolata coi dati veri vale uno; una impostata — struttura
+ * e riferimento normativo, ma ancora senza contenuto — vale mezzo; una in
+ * attesa vale zero. Contare come intera una sezione con la sola ossatura
+ * gonfiava il numero e, peggio, lo INCHIODAVA: quando l'arricchimento
+ * portava la sede legale e il perimetro passava da impostato a popolato,
+ * la percentuale non si muoveva di un punto. Un indicatore che non si
+ * muove quando arrivano dati veri è un indicatore che mente.
+ *
+ * La struttura resta lavoro fatto — per questo pesa mezzo e non zero.
+ */
 export function completamentoBozza(bozza: Bozza): number {
-  const fatte = bozza.sezioni.filter((s) => s.stato !== "in-attesa").length;
-  return Math.round((fatte / bozza.sezioni.length) * 100);
+  const peso = (s: SezioneBozza) =>
+    s.stato === "popolata" ? 1 : s.stato === "impostata" ? 0.5 : 0;
+  const somma = bozza.sezioni.reduce((t, s) => t + peso(s), 0);
+  return Math.round((somma / bozza.sezioni.length) * 100);
+}
+
+/** Il riempimento di ciascun segmento dell'anello, sezione per sezione. */
+export function segmentiBozza(
+  bozza: Bozza,
+): ("piena" | "mezza" | "vuota")[] {
+  return bozza.sezioni.map((s) =>
+    s.stato === "popolata" ? "piena" : s.stato === "impostata" ? "mezza" : "vuota",
+  );
 }

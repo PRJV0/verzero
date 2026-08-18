@@ -12,7 +12,11 @@ import {
 
 import { createClient } from "@/lib/supabase/server";
 import { getServizio } from "@/lib/catalog";
-import { componentiPercorso, completamentoBozza } from "@/lib/bozza";
+import {
+  componentiPercorso,
+  completamentoBozza,
+  type CampiNoti,
+} from "@/lib/bozza";
 import { isUnaTantum } from "@/lib/pricing";
 import { suggerimenti } from "@/lib/suggerimenti";
 
@@ -54,20 +58,31 @@ export default async function PanoramicaPage({
       ? `${href}?cliente=${contesto.org.id}`
       : href;
 
-  const [{ data: moduli }, { data: ordini }] = contesto.org
-    ? await Promise.all([
-        supabase
-          .from("module_activations")
-          .select("*")
-          .eq("organization_id", contesto.org.id)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("orders")
-          .select("*")
-          .eq("organization_id", contesto.org.id)
-          .order("created_at", { ascending: false }),
-      ])
-    : [{ data: [] }, { data: [] }];
+  const [{ data: moduli }, { data: ordini }, { data: righeScheda }] =
+    contesto.org
+      ? await Promise.all([
+          supabase
+            .from("module_activations")
+            .select("*")
+            .eq("organization_id", contesto.org.id)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("orders")
+            .select("*")
+            .eq("organization_id", contesto.org.id)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("company_fields")
+            .select("campo, valore, fonte")
+            .eq("organization_id", contesto.org.id),
+        ])
+      : [{ data: [] }, { data: [] }, { data: [] }];
+
+  const campiNoti: CampiNoti = Object.fromEntries(
+    (righeScheda ?? [])
+      .filter((r) => r.valore)
+      .map((r) => [r.campo, { valore: r.valore as string, fonte: r.fonte }]),
+  );
 
   const attivi = moduli ?? [];
   const percorsiNomi = attivi.map(
@@ -140,7 +155,7 @@ export default async function PanoramicaPage({
             {attivi.map((m) => {
               const s = getServizio(m.module);
               const componenti = contesto.org
-                ? componentiPercorso(m.module, contesto.org)
+                ? componentiPercorso(m.module, contesto.org, campiNoti)
                 : [];
               return (
                 <article

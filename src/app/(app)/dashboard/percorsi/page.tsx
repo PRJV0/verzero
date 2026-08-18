@@ -12,6 +12,8 @@ import {
   componentiPercorso,
   completamentoBozza,
   documentiAttivi,
+  segmentiBozza,
+  type CampiNoti,
   type ComponentePercorso,
   type SezioneBozza,
 } from "@/lib/bozza";
@@ -123,7 +125,9 @@ function FoglioComponente({
 }) {
   const bozza = comp.bozza;
   const percentuale = completamentoBozza(bozza);
-  const composte = bozza.sezioni.filter((x) => x.stato !== "in-attesa").length;
+  const segmenti = segmentiBozza(bozza);
+  const conDati = segmenti.filter((s) => s === "piena").length;
+  const impostate = segmenti.filter((s) => s === "mezza").length;
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_260px]">
@@ -143,16 +147,22 @@ function FoglioComponente({
       {/* Colonna quieta: anello-cruscotto + cosa serve, col perché */}
       <aside className="space-y-4">
         <div className="flex flex-col items-center rounded-xl border border-line bg-white p-5 text-center">
-          <AnelloSigillo
-            totale={bozza.sezioni.length}
-            pieni={composte}
-            percentuale={percentuale}
-          />
+          <AnelloSigillo segmenti={segmenti} percentuale={percentuale} />
           <p className="mt-3 text-xs leading-relaxed text-gray-warm">
             <span className="font-semibold tabular-nums text-pine">
-              {composte} sezioni su {bozza.sezioni.length}
+              {conDati} {conDati === 1 ? "sezione" : "sezioni"}
             </span>{" "}
-            già composte dal Motore
+            {conDati === 1 ? "compilata" : "compilate"} coi tuoi dati
+            {impostate > 0 && (
+              <>
+                ,{" "}
+                <span className="font-semibold tabular-nums text-pine">
+                  {impostate}
+                </span>{" "}
+                {impostate === 1 ? "impostata" : "impostate"} dal Motore
+              </>
+            )}
+            . In tutto {bozza.sezioni.length}.
           </p>
         </div>
 
@@ -228,15 +238,28 @@ export default async function PercorsiPage({
   const contesto = await caricaContesto(cliente, "/dashboard/percorsi");
   const supabase = await createClient();
 
-  const { data: moduli } = contesto.org
-    ? await supabase
-        .from("module_activations")
-        .select("*")
-        .eq("organization_id", contesto.org.id)
-        .order("created_at", { ascending: false })
-    : { data: [] };
+  const [{ data: moduli }, { data: righeScheda }] = contesto.org
+    ? await Promise.all([
+        supabase
+          .from("module_activations")
+          .select("*")
+          .eq("organization_id", contesto.org.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("company_fields")
+          .select("campo, valore, fonte")
+          .eq("organization_id", contesto.org.id),
+      ])
+    : [{ data: [] }, { data: [] }];
 
   const attivi = moduli ?? [];
+  // I dati recuperati dal Motore entrano nelle bozze (tappa 2.1): è qui
+  // che l'arricchimento si vede nei documenti e fa salire l'anello.
+  const campiNoti: CampiNoti = Object.fromEntries(
+    (righeScheda ?? [])
+      .filter((r) => r.valore)
+      .map((r) => [r.campo, { valore: r.valore as string, fonte: r.fonte }]),
+  );
   const attiviDocs = documentiAttivi(attivi.map((m) => m.module));
 
   return (
@@ -262,7 +285,7 @@ export default async function PercorsiPage({
           {attivi.map((m) => {
             const s = getServizio(m.module);
             const componenti = contesto.org
-              ? componentiPercorso(m.module, contesto.org)
+              ? componentiPercorso(m.module, contesto.org, campiNoti)
               : [];
             if (componenti.length === 0) return null;
             const bundle = componenti.length > 1;

@@ -1,21 +1,28 @@
 /**
- * L'anello del Sigillo come cruscotto (SPEC §12.G + identità visiva):
- * il completamento non è una barra qualunque ma l'anello punteggiato
- * che si riempie di segmenti — un segmento per sezione della bozza,
- * pieni quelli già composti dal Motore — con la percentuale al centro.
- * Un solo segno grafico che unisce dashboard e marchio.
+ * L'anello del Sigillo come cruscotto (SPEC §12.G + tappa 2.1).
+ *
+ * Un segmento per sezione della bozza, con tre livelli di riempimento che
+ * raccontano lo stato reale del documento:
+ *   PIENA (menta accesa) — la sezione ha i dati veri dentro;
+ *   MEZZA (menta tenue)  — struttura e norma impostate, contenuto in arrivo;
+ *   VUOTA (grigio)       — sezione ancora in attesa.
+ *
+ * Il livello intermedio non è un vezzo: è ciò che permette all'anello di
+ * SALIRE quando l'arricchimento porta un dato e una sezione passa da
+ * impostata a popolata. Con due soli stati la percentuale restava ferma,
+ * e un indicatore fermo davanti a un progresso vero è un indicatore che
+ * mente. Un solo segno grafico che unisce dashboard e marchio.
  */
 export function AnelloSigillo({
-  totale,
-  pieni,
+  segmenti,
   percentuale,
   dimensione = 112,
 }: {
-  totale: number;
-  pieni: number;
+  segmenti: ("piena" | "mezza" | "vuota")[];
   percentuale: number;
   dimensione?: number;
 }) {
+  const totale = segmenti.length;
   const R = 40;
   const punto = (gradi: number) => [
     50 + R * Math.cos((gradi * Math.PI) / 180),
@@ -31,11 +38,14 @@ export function AnelloSigillo({
     return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${R} ${R} 0 ${ampiezza > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
   };
 
+  const colore = { piena: "#1D9E75", mezza: "#9ED9C2", vuota: "#DCE4DD" };
+  const piene = segmenti.filter((s) => s === "piena").length;
+
   return (
     <svg
       viewBox="0 0 100 100"
       role="img"
-      aria-label={`Bozza al ${percentuale} per cento: ${pieni} sezioni su ${totale} già composte`}
+      aria-label={`Bozza al ${percentuale} per cento: ${piene} sezioni su ${totale} compilate coi tuoi dati`}
       style={{ width: dimensione, height: dimensione }}
       className="shrink-0"
     >
@@ -51,12 +61,12 @@ export function AnelloSigillo({
         strokeDasharray="0.1 6.4"
         strokeLinecap="round"
       />
-      {Array.from({ length: totale }, (_, i) => (
+      {segmenti.map((stato, i) => (
         <path
           key={i}
           d={arco(i)}
           fill="none"
-          stroke={i < pieni ? "#1D9E75" : "#DCE4DD"}
+          stroke={colore[stato]}
           strokeWidth="5"
           strokeLinecap="round"
         />

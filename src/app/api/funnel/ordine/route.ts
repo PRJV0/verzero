@@ -13,6 +13,8 @@ import {
   type Formula,
 } from "@/lib/pricing";
 
+import { arricchiciEBasta } from "@/lib/arricchimento/orchestratore";
+
 import { DOC_VERSION, risolviUtente } from "../_lib";
 
 /** Taglio memorizzato sull'ordine, derivato dallo slug (mai dal client). */
@@ -230,6 +232,19 @@ export async function POST(request: NextRequest) {
           "Ordine registrato ma con un problema su consensi/attivazione: ti ricontattiamo noi.",
       },
       { status: 207 },
+    );
+  }
+
+  // ARRICCHIMENTO ALL'ATTIVAZIONE (SPEC §12.H, tappa 2.1): il mandato
+  // banche dati è stato appena accettato, quindi il Motore può iniziare a
+  // comporre la scheda mentre il cliente arriva al portale. È volutamente
+  // atteso — dura pochi secondi e vogliamo che al primo accesso i dati ci
+  // siano già — ma un suo fallimento non deve mai far fallire l'ordine.
+  try {
+    await arricchiciEBasta(organizationId, "ordine");
+  } catch (e) {
+    console.error(
+      `[arricchimento] avvio all'ordine non riuscito: ${e instanceof Error ? e.message : String(e)}`,
     );
   }
 

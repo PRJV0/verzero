@@ -129,6 +129,20 @@ type CompanyField = {
   updated_at: string;
 };
 
+/** Registro tecnico dell'arricchimento (tappa 2.1): solo back-office —
+ *  RLS attiva senza alcuna policy, ci arriva unicamente la service_role. */
+type EnrichmentRun = {
+  id: string;
+  organization_id: string;
+  innesco: "ordine" | "manuale";
+  fonte: string;
+  esito: "ok" | "nessun_dato" | "errore" | "non_disponibile";
+  dettaglio: string | null;
+  campi_scritti: number;
+  durata_ms: number;
+  created_at: string;
+};
+
 type Row<T> = {
   Row: T;
   Insert: Partial<T>;
@@ -147,6 +161,7 @@ export type Database = {
       contact_messages: Row<ContactMessage>;
       consultant_organizations: Row<ConsultantOrganization>;
       company_fields: Row<CompanyField>;
+      enrichment_runs: Row<EnrichmentRun>;
     };
     Views: Record<string, never>;
     Functions: {
