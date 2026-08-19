@@ -1127,7 +1127,15 @@ function StepConsensi({
             >
               condizioni di servizio
             </Link>{" "}
-            e l&apos;informativa privacy.
+            e l&apos;
+            <Link
+              href="/privacy"
+              target="_blank"
+              className="font-medium text-pine underline"
+            >
+              informativa privacy
+            </Link>
+            .
           </span>
         </label>
 

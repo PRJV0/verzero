@@ -58,6 +58,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "yearly",
       priority: 0.3,
     },
+    {
+      url: url("/privacy"),
+      lastModified: oggi,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: url("/cookie-policy"),
+      lastModified: oggi,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
   ];
 
   const servizi: MetadataRoute.Sitemap = SERVIZI.map((s) => ({

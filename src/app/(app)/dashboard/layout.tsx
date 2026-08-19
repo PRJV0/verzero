@@ -64,10 +64,12 @@ export default async function PortaleLayout({
           0
         </span>
         <div className="relative mx-auto flex max-w-6xl items-center justify-between gap-4">
+          {/* Il marchio riporta al sito pubblico: dal portale si deve
+              poter tornare fuori senza cercare la strada. */}
           <Link
-            href="/dashboard"
-            aria-label="Ver0 — il tuo ecosistema"
-            className="font-display text-xl text-white"
+            href="/"
+            aria-label="Ver0 — vai al sito"
+            className="font-display text-xl text-white transition-opacity hover:opacity-80"
           >
             Ver<span className="text-mint-bright">0</span>
           </Link>

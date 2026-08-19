@@ -1,7 +1,9 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
+import { MenuUtente } from "@/components/menu-utente";
 import { MobileMenu } from "@/components/mobile-menu";
+import type { SessionePubblica } from "@/lib/sessione-pubblica";
 
 /**
  * Voci di navigazione del sito pubblico. "Home" apre il menu anche se il
@@ -22,8 +24,11 @@ const NAV = [
  * Header condiviso da tutte le pagine pubbliche. "Accedi" è sempre
  * visibile, su desktop e mobile (SPEC §12.K): è la porta dell'ecosistema.
  * Sotto i 768px la navigazione passa dal menu a scomparsa.
+ *
+ * Chi è già autenticato non vede «Accedi» ma il proprio nome: lo stato
+ * arriva già risolto dal server, quindi è giusto al primo fotogramma.
  */
-export function SiteHeader() {
+export function SiteHeader({ sessione }: { sessione: SessionePubblica }) {
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-line bg-white px-5 py-3">
       <Link href="/" aria-label="Ver0 — home">
@@ -40,12 +45,20 @@ export function SiteHeader() {
         ))}
       </nav>
       <div className="flex items-center gap-2">
-        <Link
-          href="/login"
-          className="rounded-lg bg-pine px-3.5 py-2 text-xs font-medium text-white"
-        >
-          Accedi
-        </Link>
+        {sessione.autenticato ? (
+          <MenuUtente
+            nome={sessione.nome}
+            iniziale={sessione.iniziale}
+            email={sessione.email}
+          />
+        ) : (
+          <Link
+            href="/login"
+            className="rounded-lg bg-pine px-3.5 py-2 text-xs font-medium text-white"
+          >
+            Accedi
+          </Link>
+        )}
         <MobileMenu voci={NAV} />
       </div>
     </header>
