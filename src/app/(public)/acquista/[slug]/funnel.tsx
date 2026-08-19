@@ -17,6 +17,7 @@ import {
   CreditCard,
   Info,
   Landmark,
+  Mail,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -1412,23 +1413,53 @@ function StepConferma({
         Nessun addebito è stato effettuato: ti ricontattiamo per l&apos;attivazione
         del pagamento. Intanto il tuo ecosistema è già pronto.
       </p>
-      {state.emailDaConfermare && (
-        <p
-          role="status"
-          className="mx-auto mt-3 max-w-md rounded-lg border border-line bg-paper px-3 py-2.5 text-xs text-gray-warm"
-        >
-          Ti abbiamo inviato una email di conferma: aprila per attivare
-          l&apos;accesso al tuo ecosistema.
-        </p>
+      {/* Con la verifica dell'indirizzo attiva la registrazione NON apre una
+          sessione: mandare qui al portale significherebbe farsi rimbalzare
+          al login senza spiegazioni. Il passo successivo è l'email. */}
+      {state.emailDaConfermare ? (
+        <>
+          <div
+            role="status"
+            className="mx-auto mt-5 max-w-md rounded-xl border border-line bg-white px-5 py-4 text-left"
+          >
+            <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+              <Mail size={15} className="text-pine" /> Ultimo passo: conferma
+              l&apos;indirizzo
+            </p>
+            <p className="mt-1.5 text-sm leading-relaxed text-gray-warm">
+              Abbiamo scritto a{" "}
+              <strong className="font-medium text-ink">
+                {state.azienda.email}
+              </strong>
+              . Apri il messaggio e conferma: da quel momento entri con la
+              password che hai appena scelto. Se non lo trovi, guarda nella
+              posta indesiderata.
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-gray-light">
+              Chiediamo la conferma perché il mandato per le banche dati e i
+              consensi che hai appena dato restino legati a un indirizzo che
+              controlli davvero: è ciò che li rende validi.
+            </p>
+          </div>
+          <div className="mt-6">
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-pine px-5 py-2.5 text-sm font-medium text-pine transition-colors hover:bg-moss"
+            >
+              Ho confermato, vai all&apos;accesso <ArrowRight size={15} />
+            </Link>
+          </div>
+        </>
+      ) : (
+        <div className="mt-7">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-pine px-5 py-2.5 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
+          >
+            Vai al tuo ecosistema <ArrowRight size={15} />
+          </Link>
+        </div>
       )}
-      <div className="mt-7">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-pine px-5 py-2.5 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
-        >
-          Vai al tuo ecosistema <ArrowRight size={15} />
-        </Link>
-      </div>
     </section>
   );
 }

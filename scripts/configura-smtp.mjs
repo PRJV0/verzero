@@ -31,7 +31,7 @@ const SMTP = {
 
 const token = process.env.SUPABASE_ACCESS_TOKEN;
 const apiKey = process.env.RESEND_API_KEY;
-const mittente = process.env.RESEND_FROM_EMAIL ?? "no-reply@verzero.it";
+const mittente = process.env.RESEND_FROM_EMAIL ?? "noreply@verzero.it";
 
 if (!token) {
   console.error(
@@ -43,6 +43,8 @@ if (!apiKey) {
   console.error(
     [
       "Manca RESEND_API_KEY in .env.local.",
+      "(Averla su Vercel non basta: questo script gira sul tuo computer",
+      " e legge il file locale.)",
       "",
       "Cosa fare su Resend, nell'ordine:",
       "  1. crea l'account su resend.com;",
@@ -122,7 +124,21 @@ const LINK_ACCESSO =
 const bottone = (href, testo) =>
   `<p style="margin:28px 0"><a href="${href}" style="background:#0E5238;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600">${testo}</a></p>`;
 
+const LINK_CONFERMA =
+  "{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=signup&next=/dashboard";
+
 const testi = {
+  // Conferma dell'indirizzo alla registrazione. Serve perché il mandato
+  // banche dati e i consensi restino legati a un indirizzo che il cliente
+  // controlla davvero: è la prova che rende difendibile tutto il resto.
+  mailer_subjects_confirmation: "Conferma il tuo indirizzo — Ver0",
+  mailer_templates_confirmation_content: [
+    "<h2>Ci siamo quasi</h2>",
+    "<p>Hai creato il tuo accesso a Ver0. Confermando questo indirizzo attivi il tuo ecosistema: da lì entri con la password che hai scelto.</p>",
+    bottone(LINK_CONFERMA, "Conferma il mio indirizzo"),
+    "<p>Il link vale un'ora e una volta sola. Se non hai richiesto tu la registrazione, ignora questo messaggio: senza conferma non succede nulla.</p>",
+    "<p>— Ver0</p>",
+  ].join("\n"),
   mailer_subjects_recovery: "Reimposta la password del tuo accesso Ver0",
   mailer_templates_recovery_content: [
     "<h2>Reimposta la tua password</h2>",
@@ -141,9 +157,14 @@ const testi = {
   ].join("\n"),
 };
 
-await patch(testi, "Testi delle email");
+const finale = await patch(testi, "Testi delle email");
 console.log("");
-console.log("Testi delle email in italiano applicati (recupero e accesso).");
+console.log("Testi in italiano applicati: conferma registrazione, recupero password, link di accesso.");
+console.log("");
+console.log("La conferma dell'indirizzo alla registrazione resta DISATTIVATA");
+console.log("finché non si verifica che le email arrivino davvero: riaccenderla");
+console.log("prima sarebbe tornare al blocco di agosto. Stato attuale:");
+console.log(`  mailer_autoconfirm = ${finale.mailer_autoconfirm} (true = nessuna conferma richiesta)`);
 console.log("");
 console.log(
   "Prova ora il recupero password da /password-dimenticata: l'email deve arrivare dal dominio verificato.",
