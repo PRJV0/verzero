@@ -154,6 +154,38 @@ function sezioneAnagrafica(org: DatiOrg, campi: CampiNoti = {}): SezioneBozza {
   };
 }
 
+/** Le citazioni dal sito possono essere lunghe: nel foglio se ne mostra
+ *  un estratto leggibile, il testo intero resta nella scheda impresa. */
+function estratto(valore: string, massimo = 170): string {
+  const pulito = valore.replace(/\s+/g, " ").trim();
+  return pulito.length <= massimo
+    ? pulito
+    : `${pulito.slice(0, massimo - 1).replace(/[\s,;.]+$/, "")}…`;
+}
+
+/**
+ * Le sezioni QUALITATIVE (SPEC §12.D): quelle che nessuna banca dati
+ * riempie e che il cliente ha già scritto sul proprio sito. Il contenuto
+ * è sempre una CITAZIONE del cliente, mai una nostra sintesi, e la fonte
+ * porta l'indirizzo della pagina — è ciò che rende il documento
+ * difendibile davanti a chi lo legge.
+ */
+function righeDalSito(
+  campi: CampiNoti,
+  chiavi: { chiave: string; etichetta: string }[],
+): { righe: { etichetta: string; valore: string }[]; fonte: string | null } {
+  const righe = chiavi
+    .filter((c) => campi[c.chiave])
+    .map((c) => ({
+      etichetta: c.etichetta,
+      valore: estratto(campi[c.chiave].valore),
+    }));
+  const fonti = chiavi
+    .map((c) => campi[c.chiave]?.fonte)
+    .filter((f): f is string => !!f);
+  return { righe, fonte: fonti.length > 0 ? [...new Set(fonti)][0] : null };
+}
+
 /**
  * Perimetro organizzativo: finché non sappiamo dove sei, la sezione è
  * solo impostata sulla norma. Con la sede legale recuperata diventa
@@ -183,6 +215,84 @@ function sezionePerimetro(campi: CampiNoti): SezioneBozza {
         valore: `1 gennaio – 31 dicembre ${ANNO}`,
       },
       { etichetta: "Criterio di consolidamento", valore: "Controllo operativo" },
+    ],
+  };
+}
+
+/** VSME: chi è l'impresa e cosa fa, con le sue stesse parole. */
+function sezioneProfiloImpresa(campi: CampiNoti): SezioneBozza {
+  const { righe, fonte } = righeDalSito(campi, [
+    { chiave: "descrizione_attivita", etichetta: "Attività" },
+    { chiave: "prodotti_servizi", etichetta: "Prodotti e servizi" },
+    { chiave: "mercati", etichetta: "Mercati" },
+    { chiave: "certificazioni_esposte", etichetta: "Certificazioni dichiarate" },
+  ]);
+  if (righe.length === 0) {
+    return {
+      titolo: "Profilo dell'impresa e modello di business",
+      stato: "impostata",
+      fonte: "Standard VSME · informativa generale",
+      spiega: "Chi sei e cosa fai: la parte narrativa che apre il bilancio.",
+      attende: "le informazioni pubblicate sul tuo sito",
+    };
+  }
+  return {
+    titolo: "Profilo dell'impresa e modello di business",
+    stato: "popolata",
+    fonte: fonte ?? "Sito ufficiale",
+    spiega:
+      "Chi sei e cosa fai, riportato dalle tue stesse pagine: nessuna parola messa in bocca all'impresa.",
+    righe,
+  };
+}
+
+/** Manuali ISO: il contesto dell'organizzazione (punto 4 della norma). */
+function sezioneContesto(campi: CampiNoti): SezioneBozza {
+  const { righe, fonte } = righeDalSito(campi, [
+    { chiave: "descrizione_attivita", etichetta: "Attività" },
+    { chiave: "sedi_operative", etichetta: "Sedi e stabilimenti" },
+    { chiave: "mercati", etichetta: "Mercati" },
+  ]);
+  if (righe.length === 0) {
+    return {
+      titolo: "Contesto dell'organizzazione e parti interessate",
+      stato: "in-attesa",
+      attende: "visura e organigramma",
+      spiega: "Chi sei, chi lavora con te e chi ha interesse in ciò che fai.",
+    };
+  }
+  return {
+    titolo: "Contesto dell'organizzazione e parti interessate",
+    stato: "popolata",
+    fonte: fonte ?? "Sito ufficiale",
+    spiega:
+      "Chi sei, dove operi e su quali mercati: la norma parte da qui, e queste sono le tue parole.",
+    righe,
+  };
+}
+
+/** UNI/PdR 125: le politiche già pubblicate come base di partenza. */
+function sezionePoliticaParita(campi: CampiNoti): SezioneBozza {
+  const policy = campi.policy_pubblicate;
+  if (!policy) {
+    return {
+      titolo: "Politica della parità e piano strategico",
+      stato: "in-attesa",
+      attende: "le politiche HR esistenti",
+      spiega: "Gli impegni scritti e il piano per mantenerli nel tempo.",
+    };
+  }
+  return {
+    titolo: "Politica della parità e piano strategico",
+    stato: "popolata",
+    fonte: policy.fonte ?? "Sito ufficiale",
+    spiega:
+      "Gli impegni scritti e il piano per mantenerli. Partiamo dalle politiche che hai già pubblicato.",
+    righe: [
+      {
+        etichetta: "Politiche già pubblicate",
+        valore: estratto(policy.valore),
+      },
     ],
   };
 }
@@ -273,6 +383,7 @@ function bozzaVsme(org: DatiOrg, avanzato: boolean, campi: CampiNoti = {}): Bozz
         spiega:
           "VSME = il formato europeo standard del bilancio di sostenibilità: una risposta unica alle richieste di banche e clienti.",
       },
+      sezioneProfiloImpresa(campi),
       {
         titolo: "Indicatori ambientali",
         stato: "in-attesa",
@@ -420,12 +531,7 @@ function bozzaManualeIso(org: DatiOrg, norma: string, ambito: string, campi: Cam
         spiega:
           "HLS = la struttura standard dei capitoli, uguale per tutte le norme ISO.",
       },
-      {
-        titolo: "Contesto dell'organizzazione e parti interessate",
-        stato: "in-attesa",
-        attende: "visura e organigramma",
-        spiega: "Chi sei, chi lavora con te e chi ha interesse in ciò che fai.",
-      },
+      sezioneContesto(campi),
       {
         titolo: "Processi, procedure e modulistica operativa",
         stato: "in-attesa",
@@ -475,12 +581,7 @@ function bozzaPdr125(org: DatiOrg, campi: CampiNoti = {}): Bozza {
         attende: "i dati di organico aggregati",
         spiega: "I numeri veri della tua impresa dentro ciascuna area.",
       },
-      {
-        titolo: "Politica della parità e piano strategico",
-        stato: "in-attesa",
-        attende: "le politiche HR esistenti",
-        spiega: "Gli impegni scritti e il piano per mantenerli nel tempo.",
-      },
+      sezionePoliticaParita(campi),
       {
         titolo: "Fascicolo per l'audit dell'organismo",
         stato: "in-attesa",

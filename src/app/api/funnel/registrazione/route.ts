@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validaPartitaIva } from "@/lib/piva";
+import { normalizzaSito } from "@/lib/arricchimento/presenza-web";
 
 import { risolviUtente } from "../_lib";
 
@@ -17,6 +18,7 @@ export async function POST(request: NextRequest) {
     userId?: string;
     ragioneSociale?: string;
     piva?: string;
+    sitoWeb?: string;
     dimensione?: string;
   };
   try {
@@ -45,6 +47,11 @@ export async function POST(request: NextRequest) {
     ["micro", "piccola", "media", "grande"] as const
   ).find((d) => d === body.dimensione) ?? "micro";
 
+  // Il sito è facoltativo e non deve mai bloccare la registrazione: se è
+  // scritto male lo scartiamo in silenzio, il cliente lo aggiungerà dalla
+  // scheda. Normalizzarlo qui evita di conservare stringhe inutilizzabili.
+  const sitoWeb = normalizzaSito(String(body.sitoWeb ?? ""))?.toString() ?? null;
+
   const admin = createAdminClient();
 
   // Già registrato? Idempotente: restituiamo l'organizzazione esistente.
@@ -64,6 +71,7 @@ export async function POST(request: NextRequest) {
       partita_iva: piva,
       dimensione,
       billing_email: utente.email,
+      sito_web: sitoWeb,
     })
     .select("id")
     .single();

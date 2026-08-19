@@ -73,14 +73,16 @@ export default async function PanoramicaPage({
             .order("created_at", { ascending: false }),
           supabase
             .from("company_fields")
-            .select("campo, valore, fonte")
+            .select("campo, valore, fonte, stato")
             .eq("organization_id", contesto.org.id),
         ])
       : [{ data: [] }, { data: [] }, { data: [] }];
 
+  // Un campo RIFIUTATO dal cliente non entra in nessun documento: la sua
+  // riga resta solo perché il Motore non lo riproponga (SPEC §12.D).
   const campiNoti: CampiNoti = Object.fromEntries(
     (righeScheda ?? [])
-      .filter((r) => r.valore)
+      .filter((r) => r.valore && r.stato !== "rifiutato")
       .map((r) => [r.campo, { valore: r.valore as string, fonte: r.fonte }]),
   );
 

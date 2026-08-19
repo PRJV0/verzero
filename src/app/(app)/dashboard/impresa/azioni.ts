@@ -27,6 +27,50 @@ export async function confermaCampo(campo: string) {
   revalidatePath("/dashboard");
 }
 
+/**
+ * RIFIUTO di un campo proposto dal Motore (SPEC §12.D).
+ *
+ * Il cliente può respingere OGNI SINGOLA proposta, non solo accettarla:
+ * senza questo, «da confermare» sarebbe una conferma rimandata, non una
+ * scelta. Il record resta — serve a ricordare al Motore di non
+ * riproporlo — ma il valore smette di valere e non entra in nessun
+ * documento.
+ */
+export async function rifiutaCampo(campo: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("company_fields")
+    .update({ stato: "rifiutato", confirmed_at: null })
+    .eq("campo", campo)
+    .eq("stato", "da_confermare");
+  revalidatePath("/dashboard/impresa");
+  revalidatePath("/dashboard/percorsi");
+  revalidatePath("/dashboard");
+}
+
+/** Il sito ufficiale dichiarato dal cliente: da lì parte la lettura. */
+export async function salvaSitoWeb(formData: FormData) {
+  const grezzo = String(formData.get("sito") ?? "").trim();
+  if (grezzo.length === 0 || grezzo.length > 300) return;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+  const { data: profilo } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!profilo?.organization_id) return;
+  // La RLS consente all'impresa di aggiornare solo la propria riga.
+  await supabase
+    .from("organizations")
+    .update({ sito_web: grezzo })
+    .eq("id", profilo.organization_id);
+  revalidatePath("/dashboard/impresa");
+}
+
 /** Correzione di un campo proposto dal Motore: vince sempre il cliente. */
 export async function correggiCampo(campo: string, valore: string) {
   const pulito = valore.trim();

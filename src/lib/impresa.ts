@@ -53,6 +53,7 @@ export const GRUPPI_CAMPI: GruppoCampi[] = [
       },
       { chiave: "pec", label: "PEC", fonteAttesa: "INI-PEC" },
       { chiave: "email", label: "Email di fatturazione" },
+      { chiave: "sito_web", label: "Sito ufficiale" },
     ],
   },
   {
@@ -79,6 +80,49 @@ export const GRUPPI_CAMPI: GruppoCampi[] = [
         label: "Certificazioni già possedute",
         fonteAttesa: "banca dati ACCREDIA",
       },
+      {
+        chiave: "certificazioni_esposte",
+        label: "Certificazioni dichiarate sul sito",
+        fonteAttesa: "il tuo sito ufficiale",
+      },
+    ],
+  },
+  {
+    // Il profilo qualitativo (SPEC §12.D): ciò che nessuna banca dati
+    // contiene e che il cliente ha già scritto sul proprio sito. Sono le
+    // sezioni che nel VSME e nei manuali resterebbero altrimenti vuote.
+    titolo: "Profilo pubblico",
+    campi: [
+      {
+        chiave: "descrizione_attivita",
+        label: "Come descrivi la tua attività",
+        fonteAttesa: "il tuo sito ufficiale",
+      },
+      {
+        chiave: "prodotti_servizi",
+        label: "Prodotti e servizi",
+        fonteAttesa: "il tuo sito ufficiale",
+      },
+      {
+        chiave: "sedi_operative",
+        label: "Sedi e stabilimenti",
+        fonteAttesa: "il tuo sito ufficiale",
+      },
+      {
+        chiave: "mercati",
+        label: "Mercati serviti",
+        fonteAttesa: "il tuo sito ufficiale",
+      },
+      {
+        chiave: "pagine_sostenibilita",
+        label: "Pagine sostenibilità",
+        fonteAttesa: "il tuo sito ufficiale",
+      },
+      {
+        chiave: "policy_pubblicate",
+        label: "Policy pubblicate",
+        fonteAttesa: "il tuo sito ufficiale",
+      },
     ],
   },
 ];
@@ -87,7 +131,14 @@ export const GRUPPI_CAMPI: GruppoCampi[] = [
 /* Un dato, più documenti (SPEC §12.F)                                 */
 /* ------------------------------------------------------------------ */
 
-import { DOC_CARBON, DOC_PARITA, DOC_VSME, documentiAttivi } from "./bozza";
+import {
+  DOC_CARBON,
+  DOC_KIT,
+  DOC_PARITA,
+  DOC_SCORE,
+  DOC_VSME,
+  documentiAttivi,
+} from "./bozza";
 
 /**
  * A quali documenti contribuisce ciascun campo della scheda. "tutti"
@@ -95,6 +146,14 @@ import { DOC_CARBON, DOC_PARITA, DOC_VSME, documentiAttivi } from "./bozza";
  * puramente amministrativi (PEC, email) non hanno destinazioni.
  */
 const CAMPO_DESTINAZIONI: Record<string, string[] | "tutti"> = {
+  // Il profilo qualitativo alimenta le sezioni narrative (§12.D).
+  descrizione_attivita: "tutti",
+  prodotti_servizi: [DOC_VSME, DOC_KIT],
+  sedi_operative: [DOC_CARBON, DOC_VSME],
+  mercati: [DOC_VSME, DOC_SCORE, DOC_KIT],
+  certificazioni_esposte: [DOC_VSME, DOC_SCORE],
+  pagine_sostenibilita: [DOC_VSME, DOC_KIT],
+  policy_pubblicate: [DOC_VSME, DOC_PARITA],
   ragione_sociale: "tutti",
   partita_iva: "tutti",
   forma_giuridica: "tutti",
@@ -133,7 +192,11 @@ export type CampoScheda = {
   provenienza: ProvenienzaCampo;
   /** "registrazione", "InfoCamere", … oppure la fonte attesa per la 2.1. */
   fonte: string | null;
+  /** L'indirizzo della pagina da cui viene il dato (SPEC §12.D). */
+  fonteUrl: string | null;
   daConfermare: boolean;
+  /** Il cliente ha respinto questa proposta: resta annotato, non vale. */
+  rifiutato: boolean;
 };
 
 type RigaCampo = {
@@ -141,7 +204,8 @@ type RigaCampo = {
   valore: string | null;
   provenienza: "utente" | "motore";
   fonte: string | null;
-  stato: "confermato" | "da_confermare";
+  fonte_url?: string | null;
+  stato: "confermato" | "da_confermare" | "rifiutato";
 };
 
 type DatiOrganizzazione = {
@@ -149,6 +213,7 @@ type DatiOrganizzazione = {
   partita_iva: string;
   dimensione: string;
   billing_email: string | null;
+  sito_web?: string | null;
 };
 
 const LABEL_DIMENSIONE: Record<string, string> = {
@@ -179,12 +244,30 @@ export function componiScheda(
     ...(org.billing_email
       ? { email: { valore: org.billing_email, fonte: "registrazione" } }
       : {}),
+    ...(org.sito_web
+      ? { sito_web: { valore: org.sito_web, fonte: "registrazione" } }
+      : {}),
   };
 
   return GRUPPI_CAMPI.map((g) => ({
     titolo: g.titolo,
     campi: g.campi.map((c): CampoScheda => {
       const riga = daDb.get(c.chiave);
+      // Un campo RIFIUTATO non è un valore: torna a essere una casella
+      // vuota, con l'annotazione che una proposta c'era ed è stata
+      // respinta. Non lo mostriamo come se fosse il dato dell'impresa.
+      if (riga && riga.stato === "rifiutato") {
+        return {
+          chiave: c.chiave,
+          label: c.label,
+          valore: null,
+          provenienza: "in-arrivo",
+          fonte: c.fonteAttesa ?? null,
+          fonteUrl: null,
+          daConfermare: false,
+          rifiutato: true,
+        };
+      }
       if (riga && riga.valore !== null) {
         return {
           chiave: c.chiave,
@@ -192,7 +275,9 @@ export function componiScheda(
           valore: riga.valore,
           provenienza: riga.provenienza,
           fonte: riga.fonte,
+          fonteUrl: riga.fonte_url ?? null,
           daConfermare: riga.stato === "da_confermare",
+          rifiutato: false,
         };
       }
       const b = base[c.chiave];
@@ -203,7 +288,9 @@ export function componiScheda(
           valore: b.valore,
           provenienza: "utente",
           fonte: b.fonte,
+          fonteUrl: null,
           daConfermare: false,
+          rifiutato: false,
         };
       }
       return {
@@ -212,7 +299,9 @@ export function componiScheda(
         valore: null,
         provenienza: "in-arrivo",
         fonte: c.fonteAttesa ?? null,
+        fonteUrl: null,
         daConfermare: false,
+        rifiutato: false,
       };
     }),
   }));

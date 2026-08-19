@@ -27,6 +27,9 @@ type Organization = {
   billing_indirizzo: string | null;
   /** Codice pubblico non indovinabile della pagina /verifica (§12.F). */
   codice_verifica: string;
+  /** Il sito ufficiale dichiarato: l'unico dominio che il Motore legge
+   *  per l'arricchimento qualitativo (§12.D). */
+  sito_web: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -123,7 +126,10 @@ type CompanyField = {
   valore: string | null;
   provenienza: "utente" | "motore";
   fonte: string | null;
-  stato: "confermato" | "da_confermare";
+  /** La pagina esatta da cui viene il dato (§12.D). */
+  fonte_url: string | null;
+  /** 'rifiutato': il cliente ha respinto la proposta del Motore. */
+  stato: "confermato" | "da_confermare" | "rifiutato";
   confirmed_at: string | null;
   created_at: string;
   updated_at: string;

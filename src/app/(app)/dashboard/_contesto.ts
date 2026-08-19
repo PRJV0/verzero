@@ -23,6 +23,8 @@ export type ContestoPortale = {
     partita_iva: string;
     dimensione: string;
     billing_email: string | null;
+    /** Il sito ufficiale: da lì il Motore legge il profilo pubblico (§12.D). */
+    sito_web: string | null;
   } | null;
   /** Solo per il consulente: i clienti con mandato attivo. */
   clienti: { id: string; ragione_sociale: string }[];
@@ -51,7 +53,7 @@ export async function caricaContesto(
     // La RLS mostra solo le organizzazioni con mandato attivo.
     const { data: clienti } = await supabase
       .from("organizations")
-      .select("id, ragione_sociale, partita_iva, dimensione, billing_email")
+      .select("id, ragione_sociale, partita_iva, dimensione, billing_email, sito_web")
       .order("ragione_sociale");
     // Un ?cliente= che non corrisponde a un mandato attivo (revocato nel
     // frattempo, URL vecchio, id arbitrario) non deve restare nell'URL a
@@ -83,7 +85,7 @@ export async function caricaContesto(
   const { data: org } = profilo?.organization_id
     ? await supabase
         .from("organizations")
-        .select("id, ragione_sociale, partita_iva, dimensione, billing_email")
+        .select("id, ragione_sociale, partita_iva, dimensione, billing_email, sito_web")
         .eq("id", profilo.organization_id)
         .maybeSingle()
     : { data: null };

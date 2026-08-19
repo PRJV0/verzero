@@ -39,6 +39,13 @@ export type CampoArricchito = {
   valore: string;
   /** La fonte, come la vedrà il cliente: «VIES», «INI-PEC», … */
   fonte: string;
+  /**
+   * L'indirizzo esatto da cui viene il dato, quando la fonte è una
+   * pagina web (SPEC §12.D). Per i contenuti presi dal sito del cliente
+   * NON è facoltativo: senza URL il dato non è verificabile, e un dato
+   * non verificabile non lo scriviamo.
+   */
+  fonteUrl?: string;
 };
 
 export type RisultatoFonte = {
@@ -53,6 +60,9 @@ export type ContestoImpresa = {
   organizationId: string;
   ragioneSociale: string;
   partitaIva: string;
+  /** Il sito ufficiale dichiarato dall'impresa: l'unico dominio che il
+   *  Motore ha il permesso di leggere (SPEC §12.D). */
+  sitoWeb: string | null;
   /** Campi già noti (utente o motore): permette agli adapter che
    *  derivano un dato da un altro — es. ATECO → descrizione. */
   campiEsistenti: Record<string, string>;

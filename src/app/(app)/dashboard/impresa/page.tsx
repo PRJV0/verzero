@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Check, Sparkles } from "lucide-react";
+import { Check, ExternalLink, Globe, Sparkles, X } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -17,7 +17,7 @@ import {
   SelettoreCliente,
 } from "../_ui";
 import { AggiornaDati } from "./aggiorna";
-import { confermaCampo } from "./azioni";
+import { confermaCampo, rifiutaCampo, salvaSitoWeb } from "./azioni";
 
 export const metadata: Metadata = {
   title: "La tua impresa — il tuo ecosistema",
@@ -33,8 +33,41 @@ function IconaMotore({ className = "" }: { className?: string }) {
   );
 }
 
+/**
+ * Il link alla pagina esatta da cui viene un dato (SPEC §12.D): senza
+ * questo il cliente non potrebbe controllare ciò che gli proponiamo, e
+ * un dato non controllabile non ha posto in un documento.
+ */
+function LinkFonte({ url }: { url: string }) {
+  let etichetta = url;
+  try {
+    const u = new URL(url);
+    etichetta = `${u.hostname.replace(/^www\./, "")}${u.pathname === "/" ? "" : u.pathname}`;
+  } catch {
+    // URL non interpretabile: si mostra com'è.
+  }
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer nofollow"
+      className="inline-flex max-w-full items-center gap-1 text-[10px] text-gray-light underline decoration-dotted hover:text-pine"
+    >
+      <ExternalLink size={9} className="shrink-0" />
+      <span className="truncate">{etichetta.slice(0, 52)}</span>
+    </a>
+  );
+}
+
 /** Il badge di provenienza: la firma visiva della scheda (§12.H). */
 function BadgeProvenienza({ campo }: { campo: CampoScheda }) {
+  if (campo.rifiutato) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-paper px-2 py-0.5 text-[10px] font-semibold text-gray-warm">
+        <X size={10} strokeWidth={3} /> Proposta respinta da te
+      </span>
+    );
+  }
   if (campo.daConfermare) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-amber-soft px-2 py-0.5 text-[10px] font-semibold text-amber-ink">
@@ -85,7 +118,7 @@ export default async function ImpresaPage({
     ? await Promise.all([
         supabase
           .from("company_fields")
-          .select("campo, valore, provenienza, fonte, stato")
+          .select("campo, valore, provenienza, fonte, fonte_url, stato")
           .eq("organization_id", contesto.org.id),
         supabase
           .from("module_activations")
@@ -96,9 +129,9 @@ export default async function ImpresaPage({
 
   const scheda = contesto.org ? componiScheda(contesto.org, righe ?? []) : [];
   const moduliAttivi = (moduli ?? []).map((m) => m.module);
-  const daConfermare = scheda
-    .flatMap((g) => g.campi)
-    .filter((c) => c.daConfermare).length;
+  const tuttiCampi = scheda.flatMap((g) => g.campi);
+  const daConfermare = tuttiCampi.filter((c) => c.daConfermare).length;
+  const sitoDichiarato = tuttiCampi.find((c) => c.chiave === "sito_web")?.valore;
   const fontiSpente = FONTI_DICHIARATE.filter((f) => f.stato === "spenta");
 
   return (
@@ -130,6 +163,43 @@ export default async function ImpresaPage({
               contesto.ruolo === "consulente" ? contesto.org.id : undefined
             }
           />
+
+          {/* Senza sito dichiarato il Motore non ha da dove leggere: lo
+              chiediamo qui, spiegando cosa ne farà (§12.D). */}
+          {!sitoDichiarato && contesto.ruolo === "impresa" && (
+            <form
+              action={salvaSitoWeb}
+              className="rounded-2xl border border-dashed border-pine/30 bg-moss/40 p-5"
+            >
+              <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+                <Globe size={15} className="text-pine" /> Qual è il tuo sito?
+              </p>
+              <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-gray-warm">
+                Dal tuo sito il Motore prende ciò che nessuna banca dati ha:
+                come descrivi la tua attività, i prodotti, le sedi, i mercati e
+                le certificazioni che esponi. Sono le parti narrative del
+                bilancio di sostenibilità e dei manuali — quelle che di solito
+                si scrivono da zero. Leggiamo solo il tuo sito, rispettando le
+                regole che pubblica per i programmi automatici, e ogni frase
+                che prendiamo resta una citazione con il link alla pagina.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <input
+                  type="text"
+                  name="sito"
+                  required
+                  placeholder="www.latuaimpresa.it"
+                  className="min-w-0 flex-1 rounded-lg border border-line bg-white px-3 py-2.5 text-sm outline-none transition-colors focus:border-mint"
+                />
+                <button
+                  type="submit"
+                  className="vz-press shrink-0 rounded-lg bg-pine px-4 py-2.5 text-sm font-semibold text-white"
+                >
+                  Salva il sito
+                </button>
+              </div>
+            </form>
+          )}
 
           {daConfermare > 0 && (
             <p className="rounded-xl border border-amber-ink/25 bg-amber-soft/60 px-4 py-3 text-sm leading-relaxed text-amber-ink">
@@ -194,20 +264,38 @@ export default async function ImpresaPage({
                         <BadgeProvenienza campo={c} />
                         {/* La conferma: il dato diventa tuo, e da lì in poi
                             nessun recupero successivo lo sovrascrive. */}
+                        {c.fonteUrl && <LinkFonte url={c.fonteUrl} />}
                         {c.daConfermare && contesto.ruolo === "impresa" && (
-                          <form
-                            action={async () => {
-                              "use server";
-                              await confermaCampo(c.chiave);
-                            }}
-                          >
-                            <button
-                              type="submit"
-                              className="mt-0.5 inline-flex items-center gap-1 rounded-lg border border-pine px-2.5 py-1 text-[11px] font-semibold text-pine transition-colors hover:bg-moss"
+                          <div className="mt-0.5 flex flex-wrap justify-end gap-1.5">
+                            <form
+                              action={async () => {
+                                "use server";
+                                await confermaCampo(c.chiave);
+                              }}
                             >
-                              <Check size={11} strokeWidth={3} /> È corretto
-                            </button>
-                          </form>
+                              <button
+                                type="submit"
+                                className="inline-flex items-center gap-1 rounded-lg border border-pine px-2.5 py-1 text-[11px] font-semibold text-pine transition-colors hover:bg-moss"
+                              >
+                                <Check size={11} strokeWidth={3} /> È corretto
+                              </button>
+                            </form>
+                            {/* Il rifiuto è alla pari della conferma: senza,
+                                «da confermare» sarebbe solo un rinvio. */}
+                            <form
+                              action={async () => {
+                                "use server";
+                                await rifiutaCampo(c.chiave);
+                              }}
+                            >
+                              <button
+                                type="submit"
+                                className="inline-flex items-center gap-1 rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-gray-warm transition-colors hover:border-amber-ink/50 hover:text-amber-ink"
+                              >
+                                <X size={11} strokeWidth={3} /> Non è corretto
+                              </button>
+                            </form>
+                          </div>
                         )}
                       </dd>
                     </div>

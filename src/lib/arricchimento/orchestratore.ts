@@ -9,6 +9,7 @@ import {
   adapterCamerale,
   adapterIniPec,
 } from "./fonti-vincolate";
+import { adapterPresenzaWeb } from "./presenza-web";
 import { adapterVies } from "./vies";
 import type { Adapter, ContestoImpresa, EsitoFonte } from "./tipi";
 
@@ -37,6 +38,9 @@ const ADAPTER: Adapter[] = [
   adapterAgenziaEntrate,
   adapterIniPec,
   adapterCamerale,
+  // Il sito del cliente dopo le banche dati: se la visura porta il sito,
+  // questo lo trova già valorizzato (§12.D).
+  adapterPresenzaWeb,
   adapterAteco, // per ultimo: decodifica ciò che le altre hanno portato
   adapterAccredia,
 ];
@@ -77,7 +81,7 @@ export async function* arricchisci(
 
   const { data: org } = await admin
     .from("organizations")
-    .select("ragione_sociale, partita_iva")
+    .select("ragione_sociale, partita_iva, sito_web")
     .eq("id", organizationId)
     .maybeSingle();
   if (!org) return;
@@ -94,6 +98,12 @@ export async function* arricchisci(
     organizationId,
     ragioneSociale: org.ragione_sociale,
     partitaIva: org.partita_iva,
+    // Il sito dichiarato in registrazione, o quello che un'altra fonte
+    // ha nel frattempo scritto nella scheda.
+    sitoWeb:
+      (righe ?? []).find((r) => r.campo === "sito_web")?.valore ??
+      org.sito_web ??
+      null,
     campiEsistenti: Object.fromEntries(
       (righe ?? [])
         .filter((r) => r.valore !== null)
@@ -134,7 +144,10 @@ export async function* arricchisci(
     if (risultato.esito === "ok") {
       for (const campo of risultato.campi) {
         const attuale = esistenti.get(campo.campo);
+        // La parola del cliente è definitiva in entrambi i sensi: né un
+        // campo confermato né uno RIFIUTATO vengono riproposti (§12.D).
         if (attuale?.stato === "confermato" && attuale.valore) continue;
+        if (attuale?.stato === "rifiutato") continue;
         if (attuale?.valore === campo.valore) continue;
 
         const { error } = await admin.from("company_fields").upsert(
@@ -144,6 +157,9 @@ export async function* arricchisci(
             valore: campo.valore,
             provenienza: "motore",
             fonte: campo.fonte,
+            // L'indirizzo esatto della pagina: senza, un dato qualitativo
+            // non è verificabile (§12.D).
+            fonte_url: campo.fonteUrl ?? null,
             stato: "da_confermare",
             confirmed_at: null,
           },

@@ -91,7 +91,14 @@ const TAGLI: Record<string, { slug: string; label: string }[]> = {
 
 const STEP_LABELS = ["Riepilogo", "Registrazione", "Consensi", "Pagamento"];
 
-type Azienda = { ragioneSociale: string; piva: string; email: string };
+type Azienda = {
+  ragioneSociale: string;
+  piva: string;
+  email: string;
+  /** Sito ufficiale, facoltativo: da lì il Motore prende le parti
+   *  narrative dei documenti (SPEC §12.D). */
+  sitoWeb: string;
+};
 
 type FunnelState = {
   step: 1 | 2 | 3 | 4 | 5;
@@ -111,7 +118,7 @@ const DEFAULT_STATE: FunnelState = {
   step: 1,
   dimensione: "micro",
   formula: "mensile",
-  azienda: { ragioneSociale: "", piva: "", email: "" },
+  azienda: { ragioneSociale: "", piva: "", email: "", sitoWeb: "" },
   registrato: false,
   emailDaConfermare: false,
   consensi: { tos: false, bancheDati: false },
@@ -771,6 +778,7 @@ function StepRegistrazione({
             userId: data.user?.id,
             ragioneSociale: form.ragioneSociale.trim(),
             piva: form.piva.replace(/\s/g, ""),
+            sitoWeb: form.sitoWeb.trim(),
             dimensione: state.dimensione,
           }),
         });
@@ -941,6 +949,31 @@ function StepRegistrazione({
             </p>
           )}
         </div>
+
+        {mode === "registrati" && (
+          <div>
+            <label
+              htmlFor="sitoWeb"
+              className="mb-1 block text-sm font-medium text-ink"
+            >
+              Sito dell&apos;impresa{" "}
+              <span className="font-normal text-gray-light">(facoltativo)</span>
+            </label>
+            <input
+              id="sitoWeb"
+              type="text"
+              autoComplete="url"
+              className={input}
+              placeholder="www.latuaimpresa.it"
+              {...campo("sitoWeb")}
+            />
+            <p className="mt-1 text-xs leading-relaxed text-gray-light">
+              Se ce l&apos;hai, il Motore ne ricava le parti descrittive dei
+              tuoi documenti — attività, prodotti, sedi, certificazioni esposte
+              — citando sempre la pagina. Puoi aggiungerlo anche dopo.
+            </p>
+          </div>
+        )}
 
         <div>
           <label
