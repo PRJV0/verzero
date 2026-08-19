@@ -149,6 +149,26 @@ type EnrichmentRun = {
   created_at: string;
 };
 
+/** Hub documenti (SPEC §12.E): il file sta nello storage, qui c'è la sua
+ *  descrizione, il tipo riconosciuto e lo stato di smistamento. */
+type Documento = {
+  id: string;
+  organization_id: string;
+  caricato_da: string | null;
+  nome_file: string;
+  /** Indirizzo nel bucket privato: `<organization_id>/<file>`. */
+  percorso: string;
+  mime: string;
+  dimensione: number;
+  /** Chiave di src/lib/documenti.ts; nulla finché non si sa cosa sia. */
+  tipo: string | null;
+  /** Vero quando è stato il cliente a dirlo, non una regola sul nome. */
+  tipo_confermato: boolean;
+  stato: "smistato" | "da_classificare" | "non_pertinente";
+  created_at: string;
+  updated_at: string;
+};
+
 type Row<T> = {
   Row: T;
   Insert: Partial<T>;
@@ -168,6 +188,7 @@ export type Database = {
       consultant_organizations: Row<ConsultantOrganization>;
       company_fields: Row<CompanyField>;
       enrichment_runs: Row<EnrichmentRun>;
+      documents: Row<Documento>;
     };
     Views: Record<string, never>;
     Functions: {

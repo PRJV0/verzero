@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, LifeBuoy } from "lucide-react";
+import { ArrowRight, Check, LifeBuoy } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -9,6 +9,7 @@ import {
   getServizio,
 } from "@/lib/catalog";
 import {
+  bozzaConDocumenti,
   componentiPercorso,
   completamentoBozza,
   documentiAttivi,
@@ -17,6 +18,9 @@ import {
   type ComponentePercorso,
   type SezioneBozza,
 } from "@/lib/bozza";
+import { tipoDocumento } from "@/lib/documenti";
+
+import { CaricaDocumenti } from "../documenti/carica";
 
 import { caricaContesto } from "../_contesto";
 import { AnelloSigillo } from "../_anello";
@@ -70,6 +74,10 @@ function SezioneFoglio({
           <span className="shrink-0 rounded-full bg-paper px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-warm">
             In attesa
           </span>
+        ) : sezione.stato === "ricevuta" ? (
+          <span className="shrink-0 rounded-full bg-mint/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-mint">
+            Documenti ricevuti
+          </span>
         ) : (
           <span className="shrink-0 rounded-full bg-mint/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-mint">
             Dal Motore{sezione.fonte ? ` · ${sezione.fonte}` : ""}
@@ -101,6 +109,19 @@ function SezioneFoglio({
 
       {sezione.stato === "impostata" && <RigheAccennate quante={2} />}
 
+      {/* Ricevuta: il documento è in nostre mani, la lettura arriva con
+          la prossima tappa. Lo diciamo invece di far credere che i
+          numeri siano già dentro. */}
+      {sezione.stato === "ricevuta" && (
+        <>
+          <RigheAccennate quante={2} />
+          <p className="mt-1.5 text-xs text-mint">
+            Hai portato i documenti che servivano: il Motore li legge e
+            compila questa sezione.
+          </p>
+        </>
+      )}
+
       {sezione.stato === "in-attesa" && (
         <>
           <RigheAccennate quante={1} />
@@ -119,15 +140,24 @@ function SezioneFoglio({
 function FoglioComponente({
   comp,
   attiviDocs,
+  tipiCaricati,
+  organizationId,
 }: {
   comp: ComponentePercorso;
   attiviDocs: Set<string>;
+  tipiCaricati: Set<string>;
+  /** Presente solo per l'impresa: il consulente legge, non carica. */
+  organizationId?: string;
 }) {
   const bozza = comp.bozza;
   const percentuale = completamentoBozza(bozza);
   const segmenti = segmentiBozza(bozza);
   const conDati = segmenti.filter((s) => s === "piena").length;
+  const ricevute = segmenti.filter((s) => s === "quasi").length;
   const impostate = segmenti.filter((s) => s === "mezza").length;
+  const mancanti = bozza.daFornire.filter(
+    (v) => !v.tipo || !tipiCaricati.has(v.tipo),
+  );
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_260px]">
@@ -153,6 +183,15 @@ function FoglioComponente({
               {conDati} {conDati === 1 ? "sezione" : "sezioni"}
             </span>{" "}
             {conDati === 1 ? "compilata" : "compilate"} coi tuoi dati
+            {ricevute > 0 && (
+              <>
+                ,{" "}
+                <span className="font-semibold tabular-nums text-pine">
+                  {ricevute}
+                </span>{" "}
+                con i documenti ricevuti
+              </>
+            )}
             {impostate > 0 && (
               <>
                 ,{" "}
@@ -188,18 +227,31 @@ function FoglioComponente({
                   const anche = (v.destinazioni ?? []).filter(
                     (d) => d !== comp.doc && attiviDocs.has(d),
                   );
+                  const arrivato = !!v.tipo && tipiCaricati.has(v.tipo);
                   return (
                     <li
                       key={v.documento}
-                      className="rounded-lg border border-amber-ink/20 bg-amber-soft/70 px-3 py-2.5"
+                      className={
+                        "rounded-lg border px-3 py-2.5 " +
+                        (arrivato
+                          ? "border-mint/40 bg-mint/5"
+                          : "border-amber-ink/20 bg-amber-soft/70")
+                      }
                     >
-                      <p className="text-xs font-semibold text-ink">
-                        {v.documento}
+                      <p className="flex items-start gap-1.5 text-xs font-semibold text-ink">
+                        {arrivato && (
+                          <Check
+                            size={12}
+                            strokeWidth={3}
+                            className="mt-0.5 shrink-0 text-mint"
+                          />
+                        )}
+                        <span className="min-w-0">{v.documento}</span>
                       </p>
                       <p className="mt-0.5 text-[11px] leading-snug text-gray-warm">
-                        {v.perche}
+                        {arrivato ? "Ricevuto, grazie: è nel tuo archivio." : v.perche}
                       </p>
-                      {anche.length > 0 && (
+                      {anche.length > 0 && !arrivato && (
                         <p className="mt-1.5 flex flex-wrap gap-1">
                           {anche.map((d) => (
                             <ChipDestinazione key={d} label={`anche ${d}`} />
@@ -210,10 +262,27 @@ function FoglioComponente({
                   );
                 })}
               </ul>
+
+              {/* Il caricamento vive anche qui, dentro il fascicolo: chi sta
+                  guardando cosa manca deve poterlo dare subito (§12.E). */}
+              {organizationId && mancanti.length > 0 && (
+                <div className="mt-2.5">
+                  <CaricaDocumenti
+                    organizationId={organizationId}
+                    compatto
+                    tipoAtteso={
+                      mancanti.length === 1
+                        ? (tipoDocumento(mancanti[0].tipo ?? null)?.nome ??
+                          undefined)
+                        : undefined
+                    }
+                  />
+                </div>
+              )}
               <p className="mt-2.5 text-[11px] leading-relaxed text-gray-light">
-                Quando lo carichi, il Motore lo legge e compila le sezioni in
-                attesa: il caricamento guidato apre con la prossima tappa, ti
-                avvisiamo noi.
+                {mancanti.length === 0
+                  ? "Hai portato tutto. Il Motore legge i documenti e compila le sezioni: ti avvisiamo noi quando la bozza è pronta."
+                  : "Puoi caricarli qui o dalla sezione Documenti: è lo stesso archivio."}
               </p>
             </>
           )}
@@ -238,19 +307,32 @@ export default async function PercorsiPage({
   const contesto = await caricaContesto(cliente, "/dashboard/percorsi");
   const supabase = await createClient();
 
-  const [{ data: moduli }, { data: righeScheda }] = contesto.org
-    ? await Promise.all([
-        supabase
-          .from("module_activations")
-          .select("*")
-          .eq("organization_id", contesto.org.id)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("company_fields")
-          .select("campo, valore, fonte, stato")
-          .eq("organization_id", contesto.org.id),
-      ])
-    : [{ data: [] }, { data: [] }];
+  const [{ data: moduli }, { data: righeScheda }, { data: documenti }] =
+    contesto.org
+      ? await Promise.all([
+          supabase
+            .from("module_activations")
+            .select("*")
+            .eq("organization_id", contesto.org.id)
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("company_fields")
+            .select("campo, valore, fonte, stato")
+            .eq("organization_id", contesto.org.id),
+          supabase
+            .from("documents")
+            .select("tipo, stato")
+            .eq("organization_id", contesto.org.id),
+        ])
+      : [{ data: [] }, { data: [] }, { data: [] }];
+
+  // I tipi già in archivio: è ciò che fa cambiare stato alle sezioni e
+  // alle voci del fascicolo, e muovere l'anello (SPEC §12.E).
+  const tipiCaricati = new Set(
+    (documenti ?? [])
+      .filter((d) => d.tipo && d.stato !== "non_pertinente")
+      .map((d) => d.tipo as string),
+  );
 
   const attivi = moduli ?? [];
   // I dati recuperati dal Motore entrano nelle bozze (tappa 2.1): è qui
@@ -287,7 +369,12 @@ export default async function PercorsiPage({
           {attivi.map((m) => {
             const s = getServizio(m.module);
             const componenti = contesto.org
-              ? componentiPercorso(m.module, contesto.org, campiNoti)
+              ? componentiPercorso(m.module, contesto.org, campiNoti).map(
+                  (c) => ({
+                    ...c,
+                    bozza: bozzaConDocumenti(c.bozza, tipiCaricati),
+                  }),
+                )
               : [];
             if (componenti.length === 0) return null;
             const bundle = componenti.length > 1;
@@ -352,7 +439,16 @@ export default async function PercorsiPage({
                           </h3>
                         </div>
                       )}
-                      <FoglioComponente comp={comp} attiviDocs={attiviDocs} />
+                      <FoglioComponente
+                        comp={comp}
+                        attiviDocs={attiviDocs}
+                        tipiCaricati={tipiCaricati}
+                        organizationId={
+                          contesto.ruolo === "impresa"
+                            ? contesto.org?.id
+                            : undefined
+                        }
+                      />
                     </section>
                   ))}
                 </div>

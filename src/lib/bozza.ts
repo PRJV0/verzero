@@ -28,6 +28,8 @@ import { getServizio } from "@/lib/catalog";
 export type StatoSezione =
   /** Leggibile coi dati veri, provenienza dichiarata. */
   | "popolata"
+  /** I documenti che servono sono arrivati: manca la lettura. */
+  | "ricevuta"
   /** Struttura e riferimenti già impostati dal Motore. */
   | "impostata"
   /** Visibile ma in attesa: si compila coi documenti del fascicolo. */
@@ -42,12 +44,17 @@ export type SezioneBozza = {
   righe?: { etichetta: string; valore: string }[];
   /** La fonte del contenuto: "registrazione", "UNI EN ISO 14064-1"… */
   fonte?: string;
-  /** Per le sezioni in attesa: cosa le sblocca. */
+  /** Per le sezioni in attesa: cosa le sblocca, in parole. */
   attende?: string;
+  /** Gli stessi documenti, come chiavi dei tipi (src/lib/documenti.ts):
+   *  servono a capire quando la sezione ha ricevuto ciò che aspettava. */
+  attendeTipi?: string[];
 };
 
 export type VoceDaFornire = {
   documento: string;
+  /** La chiave del tipo (src/lib/documenti.ts), per sapere se è arrivato. */
+  tipo?: string;
   /** Il perché, sempre: mai il tono del compito assegnato. */
   perche: string;
   /** A quali documenti contribuisce questo dato (etichette DOC_*). */
@@ -314,6 +321,7 @@ function bozzaCarbon(org: DatiOrg, conScope3: boolean, campi: CampiNoti = {}): B
         titolo: "Scope 1 — emissioni dirette",
         stato: "in-attesa",
         attende: "registri o fatture dei carburanti",
+        attendeTipi: ["carburanti", "bolletta-gas"],
         spiega:
           "Scope 1 = ciò che bruci tu: caldaie, mezzi aziendali, impianti.",
       },
@@ -321,6 +329,7 @@ function bozzaCarbon(org: DatiOrg, conScope3: boolean, campi: CampiNoti = {}): B
         titolo: "Scope 2 — energia acquistata (location e market based)",
         stato: "in-attesa",
         attende: "bollette elettriche di tutti i contatori",
+        attendeTipi: ["bolletta-elettrica"],
         spiega: "Scope 2 = le emissioni dell'energia elettrica che compri.",
       },
       ...(conScope3
@@ -345,16 +354,19 @@ function bozzaCarbon(org: DatiOrg, conScope3: boolean, campi: CampiNoti = {}): B
     daFornire: [
       {
         documento: "Bollette di energia elettrica (tutti i contatori)",
+        tipo: "bolletta-elettrica",
         perche: "documentano il consumo elettrico per lo Scope 2",
         destinazioni: [DOC_CARBON, DOC_VSME],
       },
       {
         documento: "Bollette del gas o altri combustibili",
+        tipo: "bolletta-gas",
         perche: "servono alle emissioni dirette da riscaldamento (Scope 1)",
         destinazioni: [DOC_CARBON, DOC_VSME],
       },
       {
         documento: "Registri o fatture dei carburanti",
+        tipo: "carburanti",
         perche: "coprono i mezzi aziendali e d'opera nello Scope 1",
         destinazioni: [DOC_CARBON],
       },
@@ -388,12 +400,14 @@ function bozzaVsme(org: DatiOrg, avanzato: boolean, campi: CampiNoti = {}): Bozz
         titolo: "Indicatori ambientali",
         stato: "in-attesa",
         attende: "i dati del Carbon Footprint o le bollette",
+        attendeTipi: ["bolletta-elettrica"],
         spiega: "Energia, emissioni e rifiuti: i numeri ambientali dell'anno.",
       },
       {
         titolo: "Indicatori sociali e di governance",
         stato: "in-attesa",
         attende: "i dati di organico aggregati",
+        attendeTipi: ["organico"],
         spiega:
           "Le persone e il governo dell'impresa: organico, formazione, organi sociali.",
       },
@@ -418,11 +432,13 @@ function bozzaVsme(org: DatiOrg, avanzato: boolean, campi: CampiNoti = {}): Bozz
     daFornire: [
       {
         documento: "Dati di organico aggregati",
+        tipo: "organico",
         perche: "compilano gli indicatori sociali dello standard",
         destinazioni: [DOC_VSME, DOC_PARITA],
       },
       {
         documento: "Composizione degli organi sociali",
+        tipo: "organigramma",
         perche: "serve agli indicatori di governance",
         destinazioni: [DOC_VSME],
       },
@@ -435,6 +451,7 @@ function bozzaVsme(org: DatiOrg, avanzato: boolean, campi: CampiNoti = {}): Bozz
         ? [
             {
               documento: "Politiche e obiettivi formalizzati",
+        tipo: "politiche",
               perche: "entrano nel modulo completo per i finanziatori",
               destinazioni: [DOC_VSME],
             },
@@ -536,6 +553,7 @@ function bozzaManualeIso(org: DatiOrg, norma: string, ambito: string, campi: Cam
         titolo: "Processi, procedure e modulistica operativa",
         stato: "in-attesa",
         attende: "la mappa dei processi (anche in bozza)",
+        attendeTipi: ["organigramma", "politiche"],
         spiega: "Come lavori davvero, messo per iscritto in modo controllabile.",
       },
       {
@@ -549,6 +567,7 @@ function bozzaManualeIso(org: DatiOrg, norma: string, ambito: string, campi: Cam
     daFornire: [
       {
         documento: "Organigramma aggiornato",
+        tipo: "organigramma",
         perche: "definisce ruoli e responsabilità richiesti dalla norma",
       },
       {
@@ -557,6 +576,7 @@ function bozzaManualeIso(org: DatiOrg, norma: string, ambito: string, campi: Cam
       },
       {
         documento: "Procedure esistenti, se ci sono",
+        tipo: "politiche",
         perche: "si riusano: nessun lavoro fatto due volte",
       },
     ],
@@ -579,6 +599,7 @@ function bozzaPdr125(org: DatiOrg, campi: CampiNoti = {}): Bozza {
         titolo: "KPI quantitativi per area",
         stato: "in-attesa",
         attende: "i dati di organico aggregati",
+        attendeTipi: ["organico"],
         spiega: "I numeri veri della tua impresa dentro ciascuna area.",
       },
       sezionePoliticaParita(campi),
@@ -593,11 +614,13 @@ function bozzaPdr125(org: DatiOrg, campi: CampiNoti = {}): Bozza {
     daFornire: [
       {
         documento: "Dati di organico aggregati per genere e inquadramento",
+        tipo: "organico",
         perche: "alimentano i KPI delle sei aree (mai dati nominativi)",
         destinazioni: [DOC_PARITA, DOC_VSME],
       },
       {
         documento: "Politiche HR formalizzate",
+        tipo: "politiche",
         perche: "entrano nel sistema di gestione della parità",
         destinazioni: [DOC_PARITA],
       },
@@ -742,8 +765,18 @@ export function componentiPercorso(
  * La struttura resta lavoro fatto — per questo pesa mezzo e non zero.
  */
 export function completamentoBozza(bozza: Bozza): number {
+  // «ricevuta» pesa più di «impostata» e meno di «popolata»: il documento
+  // è in nostre mani — che è progresso vero e verificabile — ma il dato
+  // non è ancora dentro. Gonfiarla a 1 sarebbe dire che il lavoro è
+  // fatto quando manca proprio la parte che il cliente ci paga.
   const peso = (s: SezioneBozza) =>
-    s.stato === "popolata" ? 1 : s.stato === "impostata" ? 0.5 : 0;
+    s.stato === "popolata"
+      ? 1
+      : s.stato === "ricevuta"
+        ? 0.75
+        : s.stato === "impostata"
+          ? 0.5
+          : 0;
   const somma = bozza.sezioni.reduce((t, s) => t + peso(s), 0);
   return Math.round((somma / bozza.sezioni.length) * 100);
 }
@@ -751,8 +784,35 @@ export function completamentoBozza(bozza: Bozza): number {
 /** Il riempimento di ciascun segmento dell'anello, sezione per sezione. */
 export function segmentiBozza(
   bozza: Bozza,
-): ("piena" | "mezza" | "vuota")[] {
+): ("piena" | "quasi" | "mezza" | "vuota")[] {
   return bozza.sezioni.map((s) =>
-    s.stato === "popolata" ? "piena" : s.stato === "impostata" ? "mezza" : "vuota",
+    s.stato === "popolata"
+      ? "piena"
+      : s.stato === "ricevuta"
+        ? "quasi"
+        : s.stato === "impostata"
+          ? "mezza"
+          : "vuota",
   );
+}
+
+/**
+ * Applica alla bozza i documenti già caricati: una sezione in attesa
+ * cambia stato quando TUTTI i tipi che aspettava sono arrivati. È così
+ * che il fascicolo e l'anello reagiscono a un caricamento, invece di
+ * restare fermi mentre il cliente vede crescere l'archivio.
+ */
+export function bozzaConDocumenti(bozza: Bozza, tipiCaricati: Set<string>): Bozza {
+  if (tipiCaricati.size === 0) return bozza;
+  return {
+    ...bozza,
+    sezioni: bozza.sezioni.map((s) => {
+      if (s.stato !== "in-attesa") return s;
+      const attesi = s.attendeTipi ?? [];
+      if (attesi.length === 0 || !attesi.every((t) => tipiCaricati.has(t))) {
+        return s;
+      }
+      return { ...s, stato: "ricevuta" as const };
+    }),
+  };
 }

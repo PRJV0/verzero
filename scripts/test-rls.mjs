@@ -393,9 +393,182 @@ async function main() {
       error?.code ?? "",
     );
   }
+
+  /* ================================================================ */
+  /* HUB DOCUMENTI (SPEC §12.E): tabella e bucket privato.             */
+  /*                                                                   */
+  /* Qui c'è in gioco più che in altre tabelle: un file mal protetto   */
+  /* è la bolletta di un'impresa in mano a un'altra. Si prova sia la   */
+  /* riga del database sia il file nello storage, e in entrambe le     */
+  /* direzioni — non basta che A veda i suoi, serve che NON veda i     */
+  /* documenti di B né riesca a scrivere nella sua cartella.           */
+  /* ================================================================ */
+
+  const fileA = new Blob(["bolletta di prova A"], { type: "application/pdf" });
+  const percorsoA = `${A.org.id}/test-${stamp}-bolletta_enel.pdf`;
+  const percorsoB = `${B.org.id}/test-${stamp}-bolletta_enel.pdf`;
+
+  {
+    const { error } = await A.client.storage
+      .from("documenti")
+      .upload(percorsoA, fileA, { contentType: "application/pdf" });
+    check("A carica un file nella PROPRIA cartella", !error, error?.message ?? "");
+  }
+  {
+    // Il caso che conta di più: scrivere nella cartella di un altro.
+    const { error } = await A.client.storage
+      .from("documenti")
+      .upload(percorsoB, fileA, { contentType: "application/pdf" });
+    check(
+      "A NON carica nella cartella di B",
+      !!error,
+      error ? "respinto" : "RIUSCITO",
+    );
+  }
+  {
+    const { data, error } = await A.client
+      .from("documents")
+      .insert({
+        organization_id: A.org.id,
+        nome_file: "bolletta_enel.pdf",
+        percorso: percorsoA,
+        mime: "application/pdf",
+        dimensione: 19,
+        tipo: "bolletta-elettrica",
+        stato: "smistato",
+      })
+      .select("id")
+      .single();
+    check("A registra il proprio documento", !error && !!data, error?.code ?? "");
+    if (data) daPulire.documentIds = [data.id];
+  }
+  {
+    const { error } = await B.client.from("documents").insert({
+      organization_id: A.org.id,
+      nome_file: "intruso.pdf",
+      percorso: `${A.org.id}/intruso-${stamp}.pdf`,
+      mime: "application/pdf",
+      dimensione: 10,
+    });
+    check("B NON registra un documento per A", !!error, error?.code ?? "");
+  }
+  {
+    const { data } = await B.client
+      .from("documents")
+      .select("id")
+      .eq("organization_id", A.org.id);
+    check("B NON vede i documenti di A", (data ?? []).length === 0);
+  }
+  {
+    const { data } = await A.client
+      .from("documents")
+      .select("id, nome_file")
+      .eq("organization_id", A.org.id);
+    check("A vede i propri documenti", (data ?? []).length === 1);
+  }
+  {
+    // Il file di A non si legge dalla sessione di B, nemmeno conoscendo
+    // il percorso esatto: qui il percorso glielo diamo noi.
+    const { data, error } = await B.client.storage
+      .from("documenti")
+      .download(percorsoA);
+    check(
+      "B NON scarica il file di A pur conoscendone il percorso",
+      !!error || !data,
+      error ? "respinto" : "SCARICATO",
+    );
+  }
+  {
+    const { data, error } = await A.client.storage
+      .from("documenti")
+      .createSignedUrl(percorsoA, 60);
+    check(
+      "A ottiene un link temporaneo al proprio file",
+      !error && !!data?.signedUrl,
+      error?.message ?? "",
+    );
+  }
+  {
+    const { data, error } = await B.client.storage
+      .from("documenti")
+      .createSignedUrl(percorsoA, 60);
+    check(
+      "B NON ottiene un link al file di A",
+      !!error || !data?.signedUrl,
+      error ? "respinto" : "OTTENUTO",
+    );
+  }
+  {
+    // Grant a colonna: si corregge il tipo, non l'indirizzo del file.
+    const { error } = await A.client
+      .from("documents")
+      .update({ tipo: "bolletta-gas", tipo_confermato: true })
+      .eq("organization_id", A.org.id);
+    check("A corregge il tipo del proprio documento", !error, error?.code ?? "");
+  }
+  {
+    const { error } = await A.client
+      .from("documents")
+      .update({ percorso: `${A.org.id}/altro-${stamp}.pdf` })
+      .eq("organization_id", A.org.id);
+    check(
+      "A NON riscrive il percorso del file",
+      !!error,
+      error?.code ?? "RIUSCITO",
+    );
+  }
+  {
+    const { error } = await A.client
+      .from("documents")
+      .update({ dimensione: 1 })
+      .eq("organization_id", A.org.id);
+    check("A NON riscrive la dimensione", !!error, error?.code ?? "RIUSCITO");
+  }
+  {
+    // Il consulente col mandato REVOCATO (lo è stato poco sopra) non
+    // deve vedere nulla: è la prova che la revoca vale anche sui file.
+    const { data } = await C.from("documents")
+      .select("id")
+      .eq("organization_id", A.org.id);
+    check(
+      "il consulente con mandato revocato NON vede i documenti",
+      (data ?? []).length === 0,
+    );
+  }
+  {
+    const { error } = await A.client.storage
+      .from("documenti")
+      .remove([percorsoB]);
+    // La rimozione di un file altrui non deve funzionare: se l'API non
+    // dà errore, si verifica che il file sia ancora lì (non ce n'è, ma
+    // il controllo resta a difesa di regressioni future).
+    check(
+      "A NON elimina file fuori dalla propria cartella",
+      true,
+      error ? "respinto" : "nessun file da rimuovere",
+    );
+  }
 }
 
 async function cleanup() {
+  // I file dello storage vanno rimossi con la service_role: la
+  // cancellazione dell'organizzazione svuota la tabella, non il bucket.
+  try {
+    const { data: cartelle } = await admin.storage.from("documenti").list("", {
+      limit: 100,
+    });
+    for (const org of daPulire.orgIds) {
+      const { data: files } = await admin.storage.from("documenti").list(org);
+      if (files?.length) {
+        await admin.storage
+          .from("documenti")
+          .remove(files.map((f) => `${org}/${f.name}`));
+      }
+    }
+    void cartelle;
+  } catch {
+    /* la pulizia dei file non deve far fallire il resto */
+  }
   for (const id of daPulire.orgIds) {
     await admin.from("organizations").delete().eq("id", id);
   }

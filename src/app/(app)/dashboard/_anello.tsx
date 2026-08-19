@@ -1,9 +1,10 @@
 /**
- * L'anello del Sigillo come cruscotto (SPEC §12.G + tappa 2.1).
+ * L'anello del Sigillo come cruscotto (SPEC §12.G + §12.E).
  *
- * Un segmento per sezione della bozza, con tre livelli di riempimento che
+ * Un segmento per sezione della bozza, con quattro livelli che
  * raccontano lo stato reale del documento:
  *   PIENA (menta accesa) — la sezione ha i dati veri dentro;
+ *   QUASI (menta media)  — i documenti sono arrivati, manca la lettura;
  *   MEZZA (menta tenue)  — struttura e norma impostate, contenuto in arrivo;
  *   VUOTA (grigio)       — sezione ancora in attesa.
  *
@@ -18,7 +19,7 @@ export function AnelloSigillo({
   percentuale,
   dimensione = 112,
 }: {
-  segmenti: ("piena" | "mezza" | "vuota")[];
+  segmenti: ("piena" | "quasi" | "mezza" | "vuota")[];
   percentuale: number;
   dimensione?: number;
 }) {
@@ -38,7 +39,15 @@ export function AnelloSigillo({
     return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${R} ${R} 0 ${ampiezza > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
   };
 
-  const colore = { piena: "#1D9E75", mezza: "#9ED9C2", vuota: "#DCE4DD" };
+  // Quattro livelli, non tre: «quasi» è la sezione che ha ricevuto i
+  // documenti e aspetta solo la lettura. Senza questo gradino, caricare
+  // una bolletta non muoverebbe nulla sotto gli occhi del cliente.
+  const colore = {
+    piena: "#1D9E75",
+    quasi: "#5FBF9B",
+    mezza: "#9ED9C2",
+    vuota: "#DCE4DD",
+  };
   const piene = segmenti.filter((s) => s === "piena").length;
 
   return (
