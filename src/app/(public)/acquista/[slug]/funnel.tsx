@@ -1411,7 +1411,10 @@ function StepConferma({
       </p>
       <p className="mx-auto mt-4 max-w-md text-sm text-gray-warm">
         Nessun addebito è stato effettuato: ti ricontattiamo per l&apos;attivazione
-        del pagamento. Intanto il tuo ecosistema è già pronto.
+        del pagamento.{" "}
+        {state.emailDaConfermare
+          ? "Il tuo ecosistema è già pronto e ti aspetta: manca solo la conferma qui sotto."
+          : "Intanto il tuo ecosistema è già pronto."}
       </p>
       {/* Con la verifica dell'indirizzo attiva la registrazione NON apre una
           sessione: mandare qui al portale significherebbe farsi rimbalzare

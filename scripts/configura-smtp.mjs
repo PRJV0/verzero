@@ -24,7 +24,7 @@ const PROJECT_REF = "xbpfykunfxzyafyhouki";
 // la password è la chiave API.
 const SMTP = {
   host: "smtp.resend.com",
-  port: 465,
+  port: "465",
   user: "resend",
   senderName: "Ver0",
 };

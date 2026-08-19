@@ -25,13 +25,33 @@ const intestazioni = { Authorization: `Bearer ${chiave}` };
 const risposta = await fetch("https://api.resend.com/domains", {
   headers: intestazioni,
 });
-if (!risposta.ok) {
-  console.error(`Resend ha risposto ${risposta.status}: ${await risposta.text()}`);
-  process.exit(1);
-}
-const { data: domini = [] } = await risposta.json();
 
-if (domini.length === 0) {
+let domini = [];
+if (risposta.ok) {
+  ({ data: domini = [] } = await risposta.json());
+} else {
+  const dettaglio = await risposta.text();
+  // Una chiave di solo invio non può leggere i domini: è il permesso
+  // GIUSTO (meno può fare, meglio è). Non è un problema da risolvere
+  // allargando i permessi: lo stato del dominio si vede dal pannello
+  // Resend, e la prova che conta la danno le intestazioni dei messaggi
+  // effettivamente ricevuti — vedi scripts/collaudo-accesso.mjs.
+  if (/restricted/i.test(dettaglio)) {
+    console.log(
+      [
+        "La chiave è di SOLO INVIO e non può elencare i domini: giusto così,",
+        "è il permesso minimo necessario. Lo stato del dominio si legge dal",
+        "pannello Resend; SPF, DKIM e DMARC li misura il collaudo leggendo",
+        "le intestazioni dei messaggi davvero ricevuti.",
+      ].join("\n"),
+    );
+  } else {
+    console.error(`Resend ha risposto ${risposta.status}: ${dettaglio}`);
+    process.exit(1);
+  }
+}
+
+if (domini.length === 0 && risposta.ok) {
   console.log("Nessun dominio configurato su Resend.");
   process.exit(1);
 }
