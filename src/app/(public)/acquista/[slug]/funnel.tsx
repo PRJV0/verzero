@@ -15,7 +15,6 @@ import {
   Check,
   CheckCircle2,
   CreditCard,
-  Info,
   Landmark,
   Mail,
   ShieldCheck,
@@ -1282,9 +1281,12 @@ function StepPagamento({
 
       {!publicEnv.pagamentiAttivi && (
         <p className="mt-2 max-w-md text-sm leading-relaxed text-gray-warm">
-          Confermi la configurazione e ci arriva la tua richiesta. Prezzi e
-          formula servono a capire di cosa hai bisogno: non stai comprando
-          nulla adesso.
+          Confermi la configurazione e ci arriva la tua richiesta.{" "}
+          <strong className="font-medium text-ink">
+            Ti contattiamo per fissare l&apos;avvio del tuo percorso.
+          </strong>{" "}
+          Prezzi e formula servono a capire di cosa hai bisogno: non stai
+          comprando nulla adesso.
         </p>
       )}
 
@@ -1390,14 +1392,6 @@ function StepPagamento({
             })}
           </div>
 
-          <p
-            role="status"
-            className="mt-3 flex items-start gap-2 rounded-lg border border-amber-ink/30 bg-amber-soft px-3 py-2.5 text-sm text-amber-ink"
-          >
-            <Info size={16} className="mt-0.5 shrink-0" />
-            I pagamenti si attivano a breve: completa l&apos;ordine senza alcun
-            addebito e ti ricontattiamo noi per l&apos;attivazione.
-          </p>
         </fieldset>
       ) : (
         <p
@@ -1538,8 +1532,8 @@ function StepConferma({
             </span>
           </p>
           <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-gray-warm">
-            Ti contatteremo per capire da dove partire e avviare il percorso
-            insieme. Te ne abbiamo mandato copia via email.
+            Ti contattiamo per fissare l&apos;avvio del tuo percorso. Te ne
+            abbiamo mandato copia via email.
           </p>
         </>
       )}

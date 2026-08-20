@@ -134,10 +134,9 @@ export async function confermaRichiestaAlCliente(dati: {
       "NESSUN ADDEBITO. Non ti verrà addebitato nulla fino all'inizio",
       "effettivo delle attività, che concorderemo insieme.",
       "",
-      "Ti contatteremo per capire da dove partire e organizzare il lavoro.",
-      "Nel frattempo puoi già entrare nel tuo ecosistema: la scheda della",
-      "tua impresa è in preparazione e i documenti che servono sono",
-      "elencati lì.",
+      "Ti contattiamo per fissare l'avvio del tuo percorso.",
+      "Nel frattempo entra pure nel tuo ecosistema: la scheda della tua",
+      "impresa è già lì, con l'elenco dei documenti che servono.",
       "",
       `${publicEnv.siteUrl}/dashboard`,
       "",
@@ -155,11 +154,55 @@ export async function confermaRichiestaAlCliente(dati: {
       '<p style="background:#F6F1E4;border-left:4px solid#0E5238;padding:12px 16px">',
       "<strong>Nessun addebito.</strong> Non ti verrà addebitato nulla fino",
       "all'inizio effettivo delle attività, che concorderemo insieme.</p>",
-      "<p>Ti contatteremo per capire da dove partire e organizzare il lavoro.",
-      "Nel frattempo puoi già entrare nel tuo ecosistema: la scheda della tua",
-      "impresa è in preparazione e i documenti che servono sono elencati lì.</p>",
+      "<p>Ti contattiamo per fissare l'avvio del tuo percorso. Nel frattempo",
+      "entra pure nel tuo ecosistema: la scheda della tua impresa è già lì,",
+      "con l'elenco dei documenti che servono.</p>",
       `<p><a href="${publicEnv.siteUrl}/dashboard" style="background:#0E5238;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600">Vai al tuo ecosistema</a></p>`,
       "<p>— Ver0</p>",
+    ].join("\n"),
+  });
+}
+
+/**
+ * CONFERMA A CHI SI È ISCRITTO ALLA LISTA D'ATTESA.
+ *
+ * Il tono è quello del modulo: nessuna euforia da newsletter, nessuna
+ * promessa di date. E la promessa che conta ripetuta per iscritto —
+ * niente newsletter, niente promozioni — perché è esattamente il timore
+ * di chi lascia il proprio indirizzo a uno sconosciuto.
+ */
+export async function confermaWaitlist(dati: {
+  a: string;
+  azienda: string | null;
+}) {
+  const saluto = dati.azienda ? `Ciao da ${dati.azienda},` : "Ciao,";
+  await inviaEmail({
+    a: dati.a,
+    oggetto: "Ci sei — Ver0",
+    testo: [
+      saluto,
+      "",
+      "il tuo contatto è in lista.",
+      "",
+      "Apriamo a poche imprese alla volta perché ognuna parta con il",
+      "percorso costruito bene. Ti scriviamo noi quando apriamo il tuo",
+      "turno, con le condizioni fondatori riservate ai primi.",
+      "",
+      "Niente newsletter, niente promozioni: da noi ricevi solo questa",
+      "email e quella con cui apriamo il tuo turno.",
+      "",
+      "— Ver0",
+      publicEnv.siteUrl,
+    ].join("\n"),
+    html: [
+      `<p>${saluto}<br>il tuo contatto è in lista.</p>`,
+      "<p>Apriamo a poche imprese alla volta perché ognuna parta con il",
+      "percorso costruito bene. Ti scriviamo noi quando apriamo il tuo turno,",
+      "con le <strong>condizioni fondatori</strong> riservate ai primi.</p>",
+      '<p style="background:#F6F1E4;border-left:4px solid #0E5238;padding:12px 16px">',
+      "Niente newsletter, niente promozioni: da noi ricevi solo questa email",
+      "e quella con cui apriamo il tuo turno.</p>",
+      `<p>— <a href="${publicEnv.siteUrl}" style="color:#0E5238">Ver0</a></p>`,
     ].join("\n"),
   });
 }

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { JsonLd } from "@/components/json-ld";
+import { FasciaListaAttesa } from "@/components/lista-attesa";
 import { TracciaApertura } from "@/components/traccia-evento";
 import { EVENTI } from "@/lib/eventi";
 import {
@@ -329,6 +330,10 @@ export default async function ServizioPage({
         </section>
       )}
     </main>
+
+      {/* La stessa fascia in fondo alla scheda: chi è arrivato a leggere
+          fin qui è la persona giusta a cui chiederlo. */}
+      <FasciaListaAttesa interesse={s.slug} />
     </>
   );
 }

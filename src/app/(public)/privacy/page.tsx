@@ -32,7 +32,7 @@ export default function PrivacyPage() {
     <main className="mx-auto max-w-3xl px-5 py-16">
       <IntestazioneLegale
         titolo="Informativa privacy"
-        sotto="Questa pagina spiega quali dati trattiamo, perché, per quanto tempo e con chi li condividiamo. È scritta per essere capita: dove un passaggio è ancora in lavorazione lo diciamo, invece di riempirlo di formule."
+        sotto="Questa pagina spiega quali dati trattiamo, perché, per quanto tempo e con chi li condividiamo. È scritta per essere capita: dove un punto attende la validazione del nostro legale lo diciamo, invece di riempirlo di formule."
         aggiornato={AGGIORNATO}
         altra={{ href: "/cookie-policy", label: "Vai alla cookie policy" }}
       />

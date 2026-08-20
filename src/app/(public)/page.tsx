@@ -11,6 +11,7 @@ import {
   ScrollyStep,
   ScrollySteps,
 } from "@/components/scrolly";
+import { FasciaListaAttesa } from "@/components/lista-attesa";
 import { JsonLd } from "@/components/json-ld";
 import { PhotoDuotone } from "@/components/photo-duotone";
 import { CANONE_INCLUDE } from "@/lib/canone";
@@ -478,6 +479,11 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* LISTA D'ATTESA (fascia dedicata): dice una cosa scomoda —
+          apriamo a pochi — e la trasforma nella ragione per lasciare il
+          contatto. Testi decisi dal fondatore, alla lettera. */}
+      <FasciaListaAttesa interesse="home" />
     </>
   );
 }

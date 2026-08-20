@@ -5,15 +5,15 @@ import { metadataPagina } from "@/lib/seo";
 export const metadata: Metadata = metadataPagina({
   title: "Condizioni di servizio",
   description:
-    "Le condizioni di servizio della piattaforma Ver0. Testo in preparazione: la versione definitiva sarà pubblicata prima dell'attivazione dei pagamenti.",
+    "Le regole che valgono tra te e Ver0: dove stanno i dati, come si revoca l'autorizzazione alle banche dati, a chi scrivere.",
   path: "/termini",
 });
 
 /**
- * Stub delle condizioni di servizio: il funnel di acquisto le linka già
- * (SPEC §12.T, consenso a). Il testo definitivo arriva dal legale prima
- * dell'attivazione dei pagamenti (SPEC §15.1) — fino ad allora questa pagina
- * dichiara apertamente lo stato, senza finti legalese.
+ * Le condizioni in forma breve: il funnel le linka già (SPEC §12.T,
+ * consenso a). Il contratto integrale lo redige il legale e si consegna
+ * prima dell'avvio (SPEC §15.1). Questa pagina dice al presente ciò che
+ * vale oggi, senza finto legalese e senza annunci di cantiere.
  */
 export default function TerminiPage() {
   return (
@@ -22,12 +22,17 @@ export default function TerminiPage() {
         Condizioni di servizio
       </h1>
       <p className="mt-4 text-sm leading-relaxed text-gray-warm">
-        Il testo integrale delle condizioni di servizio e dell&apos;informativa
-        privacy è in preparazione con il nostro legale e sarà pubblicato qui
-        prima dell&apos;attivazione dei pagamenti. Fino ad allora nessun
-        addebito viene effettuato e gli ordini restano «in attivazione».
+        Queste sono le regole che valgono fra te e Ver0. Il contratto
+        integrale, redatto con il nostro legale, te lo consegniamo prima di
+        qualunque avvio: nulla parte, e nulla si paga, senza che tu lo abbia
+        letto e accettato.
       </p>
       <ul className="mt-6 space-y-2 text-sm text-gray-warm">
+        <li>
+          · Dal sito si invia una richiesta di attivazione, non un acquisto:
+          nessun addebito avviene finché non concordiamo insieme l&apos;inizio
+          delle attività.
+        </li>
         <li>
           · I dati sono ospitati nell&apos;Unione Europea e trattati secondo il
           GDPR.

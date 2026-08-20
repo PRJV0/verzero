@@ -30,9 +30,9 @@ export const STATO_LABEL: Record<string, string> = {
 /** Lo stato spiegato in una frase (§12.F: mai codici, per non esperti). */
 export const STATO_FRASE: Record<string, string> = {
   richiesta:
-    "Richiesta registrata: ti contatteremo per concordare l'avvio. Nessun addebito fino all'inizio effettivo delle attività.",
+    "Richiesta registrata: ti contattiamo per fissare l'avvio del tuo percorso. Nessun addebito fino all'inizio effettivo delle attività.",
   richiesto:
-    "Richiesta registrata: ti contatteremo per concordare l'avvio. Nessun addebito fino all'inizio effettivo delle attività.",
+    "Richiesta registrata: ti contattiamo per fissare l'avvio del tuo percorso. Nessun addebito fino all'inizio effettivo delle attività.",
   in_attivazione:
     "Ordine ricevuto: stiamo attivando il percorso e nessun addebito è ancora partito.",
   attivo: "Il percorso è attivo: ci stiamo lavorando.",
