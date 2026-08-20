@@ -15,6 +15,8 @@ import {
 
 import { JsonLd } from "@/components/json-ld";
 import { FasciaListaAttesa } from "@/components/lista-attesa";
+import { OndaParticelle } from "@/components/onda-particelle";
+import { PRESET } from "@/lib/onda";
 import { TracciaApertura } from "@/components/traccia-evento";
 import { EVENTI } from "@/lib/eventi";
 import {
@@ -107,12 +109,17 @@ export default async function ServizioPage({
         ])}
       />
 
-      <Link
-        href="/servizi"
-        className="mb-4 flex items-center gap-1.5 text-xs text-gray-warm hover:text-pine"
-      >
-        <ArrowLeft size={13} /> Tutti i servizi
-      </Link>
+      {/* L'intestazione porta la firma dell'onda, appena percepibile:
+          sotto c'è il listino, cioè dati — e sui dati il fondale tace. */}
+      <div className="relative isolate -mx-5 mb-4 overflow-hidden px-5 pb-4 pt-2">
+        <OndaParticelle config={PRESET.tenue} className="-z-10" />
+        <Link
+          href="/servizi"
+          className="relative flex items-center gap-1.5 text-xs text-gray-warm hover:text-pine"
+        >
+          <ArrowLeft size={13} /> Tutti i servizi
+        </Link>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {/* Colonna contenuti */}

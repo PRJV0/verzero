@@ -13,6 +13,8 @@ import {
 } from "@/components/scrolly";
 import { FasciaListaAttesa } from "@/components/lista-attesa";
 import { HeroHome } from "@/components/hero-home";
+import { OndaParticelle } from "@/components/onda-particelle";
+import { PRESET } from "@/lib/onda";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { JsonLd } from "@/components/json-ld";
 import { PhotoDuotone } from "@/components/photo-duotone";
@@ -176,7 +178,10 @@ export default function HomePage() {
 
       {/* IL MOTORE — manifesto della potenza, senza fasi né meccanismi
           (§12.J: il «come» vive dentro, in /come-funziona). */}
-      <section className="relative overflow-hidden bg-pine-deep px-5 py-16 md:py-24">
+      <section className="relative isolate overflow-hidden bg-pine-deep px-5 py-16 md:py-24">
+        {/* L'onda torna qui in palette invertita e più nitida: è la
+            sezione del Motore, e le si addice un carattere tecnico. */}
+        <OndaParticelle config={PRESET.tecnica} className="-z-10" />
         <ZeroWatermark
           tone="light"
           className="-left-20 top-1/2 -translate-y-1/2 text-[28rem]"
@@ -391,8 +396,9 @@ export default function HomePage() {
       </section>
 
       {/* SIGILLO — registro scuro istituzionale (§11.X). */}
-      <section id="sigillo" className="bg-pine-deep px-5 py-16 md:py-24">
-        <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 text-center sm:flex-row sm:gap-10 sm:text-left">
+      <section id="sigillo" className="relative isolate overflow-hidden bg-pine-deep px-5 py-16 md:py-24">
+        <OndaParticelle config={PRESET.tenueScura} className="-z-10" />
+        <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-8 text-center sm:flex-row sm:gap-10 sm:text-left">
           <Sigillo tone="dark" className="h-32 w-32 shrink-0 md:h-40 md:w-40" />
           <div className="min-w-0">
             <h2 className="font-display text-4xl leading-[1.05] text-white md:text-6xl">

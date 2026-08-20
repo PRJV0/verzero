@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, CircleAlert } from "lucide-react";
 
 import { EVENTI, traccia } from "@/lib/eventi";
+import { OndaParticelle } from "@/components/onda-particelle";
+import { PRESET } from "@/lib/onda";
 
 /**
  * MODULO LISTA D'ATTESA.
@@ -183,10 +185,17 @@ export function FasciaListaAttesa({
       aria-labelledby={`attesa-h-${interesse ?? "home"}`}
       className={
         scuro
-          ? "relative overflow-hidden bg-pine-deep px-5 py-16 md:py-20"
-          : "border-t border-line bg-paper px-5 py-14"
+          ? "relative isolate overflow-hidden bg-pine-deep px-5 py-16 md:py-20"
+          : "relative isolate overflow-hidden border-t border-line bg-paper px-5 py-14"
       }
     >
+      {/* L'onda chiude la home sotto il modulo. Qui c'è un form, quindi
+          sta al minimo: la regola è che dove si legge o si scrive un
+          fondale non compete mai. */}
+      <OndaParticelle
+        config={scuro ? PRESET.tenueScura : PRESET.tenue}
+        className="-z-10"
+      />
       {scuro && (
         <span
           aria-hidden

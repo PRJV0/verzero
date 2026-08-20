@@ -18,6 +18,8 @@ import {
 
 import { Sigillo } from "@/components/brand/sigillo";
 import { JsonLd } from "@/components/json-ld";
+import { OndaParticelle } from "@/components/onda-particelle";
+import { PRESET } from "@/lib/onda";
 import { MotoreScrolly } from "@/components/motore-scrolly";
 import { PhotoDuotone } from "@/components/photo-duotone";
 import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
@@ -104,7 +106,8 @@ export default function ChiSiamoPage() {
       {/* 1. APERTURA — primissimo contenuto: l'origine raccontata in chiave
           Zero. Registro A pieno: Fraunces grande, salvia in gradiente, foto
           duotone affiancata, reveal discreto. */}
-      <section className="bg-gradient-to-b from-moss via-moss to-paper px-5 py-16 md:py-24">
+      <section className="relative isolate overflow-hidden bg-gradient-to-b from-moss via-moss to-paper px-5 py-16 md:py-24">
+        <OndaParticelle config={PRESET.pacata} className="-z-10" />
         <div className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-10 md:grid-cols-[1.15fr_1fr]">
           <div className="vz-reveal">
             <p className="mb-4 text-xs font-semibold tracking-widest text-pine">

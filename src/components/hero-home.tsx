@@ -1,85 +1,105 @@
+"use client";
+
+import { useRef } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { OndaParticelle } from "@/components/onda-particelle";
-import { RISERVA_FONDO } from "@/lib/onda";
+import { ONDA_HERO } from "@/lib/onda";
 
 /**
- * PRIMO IMPATTO — claim testuale su onda di particelle.
+ * PRIMO IMPATTO — il claim galleggia sopra l'onda.
  *
- * Il claim non si trasforma più in niente: si legge, e basta. La
- * sostituzione grafica di «zero» con lo zero del marchio è stata tolta
- * perché costringeva a decifrare una parola invece di leggerla, e in un
- * claim la leggibilità viene prima di qualunque idea. L'unico accento è
- * la parola «effort» in corsivo menta.
+ * L'onda attraversa TUTTO l'hero e passa dietro le lettere: non le
+ * evita. Dove ci sono le lettere si spegne per gradi (la maschera vive
+ * in `@/lib/onda`), e sotto il blocco c'è un alone bianco che non ha
+ * bordi — su fondo bianco un gradiente bianco si vede solo dove copre
+ * una particella. Niente riquadri: di un contenitore non si deve
+ * accorgere nessuno.
  *
- * L'effetto sta tutto dietro, nell'onda: fondo bianco, particelle che
- * scorrono lungo una curva sinuosa. Tecnologia e natura nella stessa
- * immagine, senza che nulla si muova sopra il testo.
+ * IL TRATTAMENTO DI «CLOUD», variante scelta e perché. Le due sul
+ * tavolo erano (a) «cloud» in pino pieno col resto più tenue e (b)
+ * «cloud» in corsivo display con accento menta, in coerenza con
+ * «effort» nel sottotitolo. Ho scelto la (a) per due ragioni concrete:
  *
- * Il claim entra a scaglioni con il sistema di movimento del prodotto
- * (SPEC §12.X), con la PRIMA parola senza ritardo: qui il titolo è il
- * contenuto principale che il browser misura, e farlo aspettare
- * significherebbe pagare l'effetto con l'LCP.
+ *  - sopra un fondo mosso comanda il CONTRASTO, non il colore. In (a)
+ *    la parola-chiave è la più scura della riga e regge anche dove
+ *    passa una particella; in (b) l'accento menta sarebbe stato il
+ *    punto PIÙ CHIARO del claim, cioè il più fragile proprio
+ *    sull'unica parola che deve restare leggibile da lontano.
+ *  - la menta è già la firma dell'accento nel sottotitolo («effort») e
+ *    dell'onda. Usarla tre volte in quattro righe la svuota: un accento
+ *    che compare ovunque smette di essere un accento.
+ *
+ * L'ingresso è scaglionato PER RIGA, mai per lettera: una lettera alla
+ * volta è una slide di presentazione, non l'insegna di un'azienda.
  */
 
-/** Il claim, spezzato in parole per poterle far entrare a scaglioni. */
-function ClaimComposto({ testo }: { testo: string }) {
-  const parole = testo.split(" ");
-  return (
-    <>
-      {parole.map((parola, i) => (
-        <span key={`${parola}-${i}`}>
-          <span
-            className="vz-parola"
-            style={{ "--vz-i": i } as React.CSSProperties}
-          >
-            {parola}
-          </span>
-          {i < parole.length - 1 ? " " : ""}
-        </span>
-      ))}
-    </>
-  );
-}
-
 export function HeroHome() {
-  return (
-    <section
-      className="relative isolate overflow-hidden bg-white px-5 pt-16 md:pt-24"
-      // Lo spazio in fondo non è una scelta di gusto: è quello che
-      // l'onda occupa, dichiarato dal modulo che la disegna. Se un
-      // giorno la fascia diventa più alta, questo cresce con lei e le
-      // particelle non possono salire sul claim.
-      style={{ paddingBottom: RISERVA_FONDO }}
-    >
-      <OndaParticelle className="-z-20" />
+  const blocco = useRef<HTMLDivElement>(null);
 
-      {/* IL VELO: bianco pieno sopra la fascia del testo, che sfuma solo
-          dove l'onda comincia. Il primo tentativo lasciava le particelle
-          passare attraverso il sottotitolo: leggibile a fatica, cioè non
-          leggibile. Il contrasto del claim non può dipendere da dove si
-          trova una particella in quel momento. */}
-      <span
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[68%] bg-gradient-to-b from-white via-white to-white/0"
+  return (
+    <section className="relative isolate overflow-hidden bg-white px-5 py-24 md:py-32">
+      <OndaParticelle
+        config={ONDA_HERO}
+        riferimentoTesto={blocco}
+        className="-z-20"
       />
 
-      <div className="relative mx-auto max-w-4xl text-center">
+      <div ref={blocco} className="relative mx-auto max-w-4xl text-center">
+        {/* L'ALONE: un'ellisse di bianco dietro il testo, senza contorni.
+            Sul fondo bianco della sezione è invisibile finché non copre
+            una particella — che è esattamente il suo unico compito. */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -inset-x-12 -inset-y-10 -z-10"
+          style={{
+            background:
+              "radial-gradient(ellipse at center, rgba(255,255,255,0.97) 0%, rgba(255,255,255,0.9) 42%, rgba(255,255,255,0.55) 66%, rgba(255,255,255,0) 82%)",
+          }}
+        />
+
         <p
-          className="vz-parola mb-7 text-xs font-semibold tracking-widest text-pine"
+          data-onda-maschera
+          className="vz-entra mb-7 inline-block text-xs font-semibold tracking-widest text-pine"
           style={{ "--vz-i": 0 } as React.CSSProperties}
         >
           SOSTENIBILITÀ · SISTEMI DI GESTIONE · CONSULENZA
         </p>
 
-        <h1 className="font-display text-6xl leading-[0.98] text-pine-dark md:text-8xl">
-          <ClaimComposto testo="I tuoi consulenti in cloud." />
+        <h1
+          className="font-display text-[2.5rem] font-semibold leading-[1.02] tracking-[-0.022em] text-pine-dark/80 sm:text-[3.25rem] md:text-[4.5rem] xl:text-[5rem]"
+          style={{
+            // Ombra bianca larga e sfumata: le lettere restano nitide
+            // sopra le particelle senza che si veda un contenitore.
+            textShadow:
+              "0 0 16px rgba(255,255,255,0.95), 0 0 40px rgba(255,255,255,0.8)",
+          }}
+        >
+          <span className="block">
+            <span
+              data-onda-maschera
+              className="vz-entra inline-block"
+              style={{ "--vz-i": 1 } as React.CSSProperties}
+            >
+              I tuoi consulenti
+            </span>
+          </span>
+          <span className="block">
+            <span
+              data-onda-maschera
+              className="vz-entra inline-block"
+              style={{ "--vz-i": 2 } as React.CSSProperties}
+            >
+              in <span className="text-pine">cloud.</span>
+            </span>
+          </span>
         </h1>
 
         <p
+          data-onda-maschera
           className="vz-entra mx-auto mt-7 max-w-2xl font-display text-2xl leading-snug text-pine md:text-3xl"
-          style={{ "--vz-i": 4 } as React.CSSProperties}
+          style={{ "--vz-i": 3 } as React.CSSProperties}
         >
           La crescita della tua azienda, in abbonamento. Zero{" "}
           <em className="font-semibold italic text-mint">effort</em>: bastano i
@@ -87,8 +107,9 @@ export function HeroHome() {
         </p>
 
         <div
+          data-onda-maschera
           className="vz-entra mt-10 flex flex-wrap justify-center gap-3"
-          style={{ "--vz-i": 5 } as React.CSSProperties}
+          style={{ "--vz-i": 4 } as React.CSSProperties}
         >
           <Link
             href="/servizi"
@@ -98,7 +119,7 @@ export function HeroHome() {
           </Link>
           <Link
             href="/come-funziona"
-            className="vz-press inline-flex items-center gap-2 rounded-xl border-2 border-pine bg-white/70 px-7 py-4 text-base font-semibold text-pine backdrop-blur-sm"
+            className="vz-press inline-flex items-center gap-2 rounded-xl border-2 border-pine bg-white/80 px-7 py-4 text-base font-semibold text-pine"
           >
             Guarda come funziona
           </Link>
