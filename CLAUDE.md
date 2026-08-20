@@ -38,6 +38,10 @@ Vale per ogni pagina nuova e per ogni pagina modificata. Le utilità stanno in
   nelle pagine, mai.
 - **Catalogo**: fonte unica in `src/lib/catalog.ts`; aggiungere un servizio lì
   lo propaga a vetrina, pagina di dettaglio, funnel e sitemap.
+- **DNS della posta**: l'SPF della radice è quello dell'hosting e **non va
+  toccato**. Resend spedisce con Return-Path su `send.verzero.it` e allinea
+  DMARC via DKIM (`d=verzero.it`): aggiungere Resend all'SPF della radice non
+  serve e brucia uno dei dieci lookup. Dettagli in `SPEC.md` §12.A.1.
 - **Migrazioni Supabase**: la rete blocca il protocollo Postgres. Si applicano
   via Management API in HTTPS con `curl`, poi si registra la versione in
   `supabase_migrations.schema_migrations`. Mai `supabase db push`.
