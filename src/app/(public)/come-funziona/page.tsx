@@ -8,9 +8,9 @@ import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
 import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
 export const metadata: Metadata = metadataPagina({
-  title: "Come funziona: il Motore, i documenti, la validazione",
+  title: "Come funziona: l'AI Ver0, i documenti, la validazione",
   description:
-    "Il fascicolo del percorso documento per documento, cosa legge il Motore Ver0, cosa genera e chi valida: la profondità tecnica, con le norme citate.",
+    "Il fascicolo del percorso documento per documento, cosa legge l'AI Ver0, cosa genera e chi valida: la profondità tecnica, con le norme citate.",
   path: "/come-funziona",
 });
 
@@ -43,7 +43,7 @@ export default function ComeFunzionaPage() {
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-gray-warm md:text-base">
             Questa pagina mostra il lavoro da vicino: quali documenti chiede il
-            Motore Ver0, che cosa ne estrae, che cosa genera e chi valida.
+            AI Ver0, che cosa ne estrae, che cosa genera e chi valida.
             Tutto su norme citate una per una.
           </p>
         </div>
@@ -66,7 +66,7 @@ export default function ComeFunzionaPage() {
             <p className="mt-2 text-sm leading-relaxed text-gray-warm">
               Nessun documento viene emesso senza una verifica umana, e ogni
               verifica porta il nome di chi l&apos;ha fatta. Le elaborazioni del
-              Motore sono sempre dichiarate.
+              AI Ver0 sono sempre dichiarate.
             </p>
             <Link
               href="/chi-siamo"

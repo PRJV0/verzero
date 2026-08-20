@@ -54,7 +54,7 @@ export type Servizio = {
   copre?: string[];
   /**
    * "Cosa ti chiederemo" (§12.P): la lista PRECISA di documenti richiesti dal
-   * percorso. Il Motore Ver0 non accetta documenti qualsiasi: chiede esattamente
+   * percorso. L'AI Ver0 non accetta documenti qualsiasi: chiede esattamente
    * questi, li legge e segnala cosa manca.
    */
   documenti: string[];
@@ -70,19 +70,19 @@ export const SERVIZI: Servizio[] = [
   {
     slug: "percorso-ver0",
     name: "Percorso Ver0",
-    taglio: "Carbon Scope 1 e 2 + VSME Base + rating",
+    taglio: "Carbon Scope 1 e 2 + VSME Base + profilo ESG",
     icon: Leaf,
     featured: true,
     short:
-      "Carbon Footprint Scope 1 e 2 + Bilancio di Sostenibilità (VSME) Base + miglioramento score rating. La via diretta al Sigillo.",
-    cosE: "Il percorso integrato che unisce inventario delle emissioni (Scope 1 e 2), bilancio di sostenibilità in formato VSME e preparazione ai rating richiesti da banche e capofiliera. Un solo inserimento dati alimenta tutti e tre gli output, con un'unica scadenza annuale.",
+      "Carbon Footprint Scope 1 e 2 + Bilancio di Sostenibilità (VSME) Base + profilo ESG pronto per i questionari di banche e capofiliera.",
+    cosE: "Il percorso integrato che unisce inventario delle emissioni (Scope 1 e 2), bilancio di sostenibilità in formato VSME e preparazione delle risposte ai questionari e ai rating di terze parti richiesti da banche e capofiliera. Un solo inserimento dati alimenta tutti e tre i documenti, con un'unica scadenza annuale riferita all'anno solare chiuso.",
     copre: [
-      "Include Carbon Footprint Scope 1 e 2",
-      "Bilancio VSME",
-      "Miglioramento score rating",
+      "Carbon Footprint Scope 1 e 2",
+      "Bilancio VSME Base",
+      "Profilo ESG per questionari e rating di terze parti",
     ],
     comeFunziona: [
-      "Il Motore Ver0 ti indica la lista esatta dei documenti da caricare (bollette, visura, bilancio), li legge e li incrocia con le banche dati ufficiali.",
+      "L'AI Ver0 ti indica la lista esatta dei documenti da caricare (bollette, visura, bilancio), li legge e li incrocia con le banche dati ufficiali.",
       "Verifichi e confermi i dati proposti; dove un dato manca, il sistema propone una stima dichiarata che approvi tu.",
       "La piattaforma genera report GHG e bilancio VSME; il team tecnico li valida prima dell'emissione.",
       "Con le categorie obbligatorie confermate accedi ai requisiti del Sigillo Ver0 livello 1.",
@@ -90,7 +90,7 @@ export const SERVIZI: Servizio[] = [
     output: [
       "Report di inventario GHG (Scope 1 e 2) redatto secondo GHG Protocol Corporate Standard e UNI EN ISO 14064-1:2019",
       "Bilancio di sostenibilità conforme allo standard volontario VSME pubblicato da EFRAG",
-      "Base dati organizzata per questionari e rating ESG (banche, capofiliera)",
+      "Profilo ESG pronto: risposte già composte per i questionari di banche e capofiliera (EcoVadis, Synesgy, Open-es, CDP). Il punteggio lo assegna sempre l'ente terzo",
       "Accesso ai requisiti del Sigillo Ver0 livello 1, con pagina pubblica di verifica",
     ],
     requisiti: [
@@ -113,7 +113,7 @@ export const SERVIZI: Servizio[] = [
     opportunita: [
       "Banche e capofiliera chiedono già questi dati per credito e qualifica fornitori: presentarsi con documenti standard riduce i tempi di risposta",
       "Chi rendiconta lo Scope 3 di filiera privilegia fornitori con dati pronti e verificabili",
-      "Tre output con un solo inserimento dati: l'effort complessivo è una frazione dei tre percorsi separati",
+      "Tre documenti con un solo inserimento dati: l'effort complessivo è una frazione dei tre percorsi separati",
     ],
   },
   {
@@ -125,7 +125,7 @@ export const SERVIZI: Servizio[] = [
     cosE: "L'inventario delle emissioni dirette (Scope 1) e da energia acquistata (Scope 2) della tua organizzazione, calcolato dai documenti reali di consumo con fattori di emissione pubblici e tracciabili.",
     copre: ["Scope 1 — emissioni dirette", "Scope 2 — energia acquistata"],
     comeFunziona: [
-      "Il Motore Ver0 ti chiede i documenti previsti dal percorso — bollette e fatture carburante — e ne estrae consumi, periodi e tipo di fornitura, segnalando cosa manca.",
+      "L'AI Ver0 ti chiede i documenti previsti dal percorso — bollette e fatture carburante — e ne estrae consumi, periodi e tipo di fornitura, segnalando cosa manca.",
       "Verifichi i dati estratti nel pannello di conferma; l'impatto in tCO₂e si aggiorna in tempo reale.",
       "Il calcolo applica fattori di emissione da fonti pubbliche (ISPRA, DEFRA), sempre citati riga per riga.",
       "Il team tecnico valida il report prima dell'emissione; il documento resta aggiornato nel tuo archivio.",
@@ -171,7 +171,7 @@ export const SERVIZI: Servizio[] = [
       "Scope 3 — filiera e indirette",
     ],
     comeFunziona: [
-      "Parti dalla stessa lista del taglio Scope 1 e 2; il Motore Ver0 legge i documenti, incrocia le banche dati ufficiali e segnala gli scostamenti.",
+      "Parti dalla stessa lista del taglio Scope 1 e 2; l'AI Ver0 legge i documenti, incrocia le banche dati ufficiali e segnala gli scostamenti.",
       "La piattaforma mappa le categorie Scope 3 applicabili alla tua attività e guida la raccolta dei dati di filiera (acquisti, trasporti, rifiuti).",
       "Dove il dato primario non è disponibile si applicano stime spend-based o da benchmark, sempre etichettate e approvate da te.",
       "Il team tecnico valida metodologia e risultati prima dell'emissione.",
@@ -215,7 +215,7 @@ export const SERVIZI: Servizio[] = [
     comeFunziona: [
       "La piattaforma precompila anagrafica e dati economici dalle banche dati ufficiali; gli indicatori ambientali arrivano dai moduli carbon se attivi.",
       "Completi le sezioni restanti con un questionario guidato; ogni campo ha un'alternativa (documento, stima dichiarata, delega).",
-      "Il Motore Ver0 genera la narrativa sui tuoi dati; la rivedi e la approvi sezione per sezione.",
+      "L'AI Ver0 genera la narrativa sui tuoi dati; la rivedi e la approvi sezione per sezione.",
       "Il team tecnico valida il bilancio prima dell'emissione.",
     ],
     output: [
@@ -241,7 +241,7 @@ export const SERVIZI: Servizio[] = [
     ],
     opportunita: [
       "Un documento standard al posto di questionari diversi per ogni banca o cliente",
-      "Sempre più istituti lo integrano nei rating ESG per l'accesso al credito",
+      "Sempre più istituti lo usano nei propri rating ESG per l'accesso al credito: il punteggio resta loro, noi prepariamo le risposte",
       "Percorso qualificante per il Sigillo Ver0",
     ],
   },
@@ -261,7 +261,7 @@ export const SERVIZI: Servizio[] = [
     comeFunziona: [
       "Si parte dal modulo base: anagrafica e dati economici precompilati, indicatori ambientali dai moduli carbon se attivi.",
       "Il questionario guidato prosegue sulle sezioni del modulo completo: politiche adottate, azioni in corso, obiettivi con orizzonte temporale.",
-      "Il Motore Ver0 genera la narrativa estesa sui tuoi dati; la rivedi e la approvi sezione per sezione.",
+      "L'AI Ver0 genera la narrativa estesa sui tuoi dati; la rivedi e la approvi sezione per sezione.",
       "Il team tecnico valida il bilancio prima dell'emissione.",
     ],
     output: [
@@ -300,7 +300,7 @@ export const SERVIZI: Servizio[] = [
     cosE: "L'impianto documentale completo di un sistema di gestione per la qualità conforme a UNI EN ISO 9001:2015, generato sui dati e sui processi reali della tua azienda: manuale, politica, procedure e modulistica secondo la struttura di alto livello della norma (punti 4–10).",
     comeFunziona: [
       "La piattaforma precompila contesto e anagrafica dai dati camerali; un questionario guidato raccoglie processi, ruoli e responsabilità.",
-      "Il Motore Ver0 genera i documenti sezione per sezione, applicando i requisiti della norma alla tua realtà operativa.",
+      "L'AI Ver0 genera i documenti sezione per sezione, applicando i requisiti della norma alla tua realtà operativa.",
       "Rivedi e approvi ogni documento; il team tecnico esegue la revisione finale dell'impianto.",
       "Dal secondo anno il mantenimento tiene aggiornati documenti e scadenzario (audit interni, riesame di direzione).",
     ],
@@ -340,7 +340,7 @@ export const SERVIZI: Servizio[] = [
     comeFunziona: [
       "L'analisi ambientale parte precompilata dai tuoi dati carbon, se il modulo è attivo: consumi, emissioni e aspetti già mappati.",
       "Un questionario guidato completa aspetti ambientali, prescrizioni applicabili e controlli operativi.",
-      "Il Motore Ver0 genera i documenti; li rivedi e li approvi; il team tecnico esegue la revisione finale.",
+      "L'AI Ver0 genera i documenti; li rivedi e li approvi; il team tecnico esegue la revisione finale.",
       "Dal secondo anno il mantenimento aggiorna documenti, registro degli obblighi e scadenzario.",
     ],
     output: [
@@ -377,7 +377,7 @@ export const SERVIZI: Servizio[] = [
     cosE: "La preparazione alla certificazione della parità di genere secondo la prassi di riferimento UNI/PdR 125:2022: autovalutazione sui KPI delle sei aree previste, sistema di gestione della parità e fascicolo documentale pronto per l'audit dell'organismo accreditato.",
     comeFunziona: [
       "I KPI di governance partono precompilati dai dati camerali (composizione degli organi); gli altri si inseriscono in forma aggregata.",
-      "Il Motore Ver0 genera politica, piano strategico e procedure del sistema di gestione della parità.",
+      "L'AI Ver0 genera politica, piano strategico e procedure del sistema di gestione della parità.",
       "Rivedi e approvi i documenti; il team tecnico verifica la completezza del fascicolo per l'audit.",
       "Dal secondo anno il mantenimento aggiorna KPI, piano e documentazione per il monitoraggio annuale.",
     ],
@@ -426,7 +426,7 @@ export const SERVIZI: Servizio[] = [
       "DVR escluso: resta del datore di lavoro",
     ],
     comeFunziona: [
-      "Il Motore Ver0 raccoglie visura, organigramma della sicurezza (datore di lavoro, RSPP, medico competente, RLS), DVR in vigore e documentazione già presente.",
+      "L'AI Ver0 raccoglie visura, organigramma della sicurezza (datore di lavoro, RSPP, medico competente, RLS), DVR in vigore e documentazione già presente.",
       "Legge il DVR e ne riprende pericoli, misure e scadenze per costruire il sistema attorno alla valutazione dei rischi che hai già, senza duplicarla.",
       "Genera manuale, politica, procedure, modulistica, piano di audit interni e riesame della direzione secondo la struttura HLS della norma.",
       "Un professionista del team tecnico verifica l'impianto prima della consegna; il fascicolo è pronto per l'audit dell'organismo accreditato.",
@@ -476,7 +476,7 @@ export const SERVIZI: Servizio[] = [
       "Aderenza documentata e dimostrabile",
     ],
     comeFunziona: [
-      "Il Motore Ver0 riprende organigramma, dati di organico e — se attivi — i documenti dei percorsi UNI/PdR 125 e ISO 45001, evitando di richiedere due volte le stesse cose.",
+      "L'AI Ver0 riprende organigramma, dati di organico e — se attivi — i documenti dei percorsi UNI/PdR 125 e ISO 45001, evitando di richiedere due volte le stesse cose.",
       "Un questionario guidato mappa i fattori di rischio psicosociale previsti dalla linea guida: carichi, autonomia, relazioni, cambiamento organizzativo.",
       "La piattaforma genera politica, procedura di gestione dei rischi psicosociali, piano di miglioramento e indicatori di monitoraggio.",
       "Il team tecnico verifica la coerenza dell'impianto prima della consegna.",
@@ -522,7 +522,7 @@ export const SERVIZI: Servizio[] = [
       "Aderenza documentata e dimostrabile",
     ],
     comeFunziona: [
-      "Se il percorso UNI/PdR 125 è attivo, il Motore Ver0 riusa KPI, politiche e procedure già prodotti: non ti chiede due volte gli stessi dati.",
+      "Se il percorso UNI/PdR 125 è attivo, l'AI Ver0 riusa KPI, politiche e procedure già prodotti: non ti chiede due volte gli stessi dati.",
       "Un questionario guidato copre le aree della linea guida: governance della D&I, selezione, sviluppo, retribuzione, ambiente di lavoro, rapporti con la catena di fornitura.",
       "La piattaforma genera politica, procedure e piano d'azione con indicatori e responsabilità assegnate.",
       "Il team tecnico verifica l'impianto prima della consegna.",
@@ -573,7 +573,7 @@ export const SERVIZI: Servizio[] = [
       "Rilevante nelle filiere labour-intensive",
     ],
     comeFunziona: [
-      "Il Motore Ver0 raccoglie la documentazione su personale, orari, retribuzioni, salute e sicurezza e catena di fornitura, e segnala subito le lacune rispetto ai requisiti dello schema.",
+      "L'AI Ver0 raccoglie la documentazione su personale, orari, retribuzioni, salute e sicurezza e catena di fornitura, e segnala subito le lacune rispetto ai requisiti dello schema.",
       "Genera il sistema di gestione della responsabilità sociale: politica, procedure, gestione delle segnalazioni, riesame e social performance team.",
       "Costruisce il presidio della catena di fornitura, che nello schema è il punto più spesso carente: criteri di selezione, monitoraggio e azioni sui fornitori.",
       "Un professionista del team tecnico verifica il fascicolo; l'audit e la certificazione restano dell'organismo accreditato.",
@@ -617,7 +617,7 @@ export const SERVIZI: Servizio[] = [
     cosE: "La valutazione strutturata di quanto la tua impresa è circolare: flussi di materiali, gestione dei rifiuti, riuso e recupero, energia. Un punteggio per area con il dettaglio dei criteri e un piano di miglioramento ordinato per impatto.",
     comeFunziona: [
       "Un questionario guidato raccoglie i dati su approvvigionamento, produzione, rifiuti e recupero; i dati energetici arrivano dai moduli attivi.",
-      "Il Motore Ver0 calcola il punteggio per area applicando criteri dichiarati.",
+      "L'AI Ver0 calcola il punteggio per area applicando criteri dichiarati.",
       "Il report propone azioni di miglioramento ordinate per impatto; il team tecnico valida il risultato.",
     ],
     output: [
@@ -661,7 +661,7 @@ export const SERVIZI: Servizio[] = [
     ],
     comeFunziona: [
       "Carichi il rapporto di audit dell'organismo con i rilievi, e i documenti del sistema di gestione a cui si riferiscono.",
-      "Il Motore Ver0 associa ogni rilievo al requisito di norma richiamato e individua i documenti da modificare.",
+      "L'AI Ver0 associa ogni rilievo al requisito di norma richiamato e individua i documenti da modificare.",
       "La documentazione viene revisionata dove serve e viene redatta una nota di risposta, rilievo per rilievo.",
       "Un professionista del team tecnico verifica l'intero pacchetto prima della consegna: è un passaggio obbligatorio, non opzionale.",
     ],

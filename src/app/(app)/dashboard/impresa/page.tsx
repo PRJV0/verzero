@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Check, ExternalLink, Globe, Sparkles, X } from "lucide-react";
+import { CalendarRange, Check, ExternalLink, Globe, Sparkles, X } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -14,10 +14,18 @@ import {
   CardOpportunita,
   ChipDestinazione,
   IntestazioneSezione,
+  Occhiello,
   SelettoreCliente,
+  ZonaInput,
 } from "../_ui";
 import { AggiornaDati } from "./aggiorna";
-import { confermaCampo, rifiutaCampo, salvaSitoWeb } from "./azioni";
+import {
+  confermaCampo,
+  rifiutaCampo,
+  salvaAnnoRendicontazione,
+  salvaSitoWeb,
+} from "./azioni";
+import { anniSelezionabili, annoElaborazione } from "@/lib/periodo";
 
 export const metadata: Metadata = {
   title: "La tua impresa — il tuo ecosistema",
@@ -93,7 +101,7 @@ function BadgeProvenienza({ campo }: { campo: CampoScheda }) {
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-pine/30 bg-white px-2 py-0.5 text-[10px] font-semibold text-gray-warm">
-      <Sparkles size={10} className="text-mint" /> Lo recupererà il Motore
+      <Sparkles size={10} className="text-mint" /> Lo recupereremo noi
       {campo.fonte ? ` · ${campo.fonte}` : ""}
     </span>
   );
@@ -139,7 +147,7 @@ export default async function ImpresaPage({
       <IntestazioneSezione
         eyebrow="LA TUA IMPRESA"
         titolo="La scheda della tua impresa"
-        sotto="Ogni dato dichiara da dove viene — inserito da te, recuperato dal Motore o in arrivo dalle banche dati ufficiali — e a quali documenti sta contribuendo: rispondi una volta sola, il resto lo smista il Motore."
+        sotto="Ogni dato dichiara da dove viene — inserito da te, recuperato dall'AI Ver0 o in arrivo dalle banche dati ufficiali — e a quali documenti sta contribuendo: rispondi una volta sola, allo smistamento pensiamo noi."
       />
 
       <SelettoreCliente contesto={contesto} base="/dashboard/impresa" />
@@ -149,13 +157,69 @@ export default async function ImpresaPage({
           <div className="mt-8">
             <CardOpportunita
               titolo="La scheda nasce con il primo percorso"
-              testo="Alla registrazione la compiliamo con i tuoi dati, e il Motore recupera il resto dalle fonti ufficiali: niente da ricopiare."
+              testo="Alla registrazione la compiliamo con i tuoi dati, e il resto lo recuperiamo dalle fonti ufficiali: niente da ricopiare."
               cta={{ href: "/servizi", label: "Apri il catalogo" }}
             />
           </div>
         ) : null
       ) : (
         <div className="mt-8 space-y-4">
+          {/* ZONA DI INSERIMENTO — l'anno decide titoli, periodi e richieste
+              di TUTTI i documenti, quindi sta in cima e si vede che è un
+              campo, non una scritta (SPEC §12.C). */}
+          {contesto.ruolo === "impresa" && (
+            <ZonaInput>
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex min-w-0 items-start gap-3">
+                  <span
+                    aria-hidden
+                    className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-pine"
+                  >
+                    <CalendarRange size={18} />
+                  </span>
+                  <div className="min-w-0">
+                    <Occhiello>Periodo dei tuoi documenti</Occhiello>
+                    <p className="mt-1 font-display text-xl text-ink">
+                      Anno di rendicontazione
+                    </p>
+                    <p className="mt-1 max-w-xl text-sm leading-relaxed text-gray-warm">
+                      I documenti si riferiscono sempre a un anno solare già
+                      chiuso — è ciò che li rende accettabili da banche ed
+                      enti. Da non confondere con l&apos;anno in cui li
+                      elaboriamo, che è il {annoElaborazione()}.
+                    </p>
+                  </div>
+                </div>
+                <form
+                  action={salvaAnnoRendicontazione}
+                  className="flex shrink-0 items-center gap-2"
+                >
+                  <label htmlFor="anno" className="sr-only">
+                    Anno di rendicontazione
+                  </label>
+                  <select
+                    id="anno"
+                    name="anno"
+                    defaultValue={contesto.org.anno_rendicontazione}
+                    className="rounded-lg border-2 border-pine/30 bg-white px-3 py-2.5 font-display text-lg tabular-nums text-ink outline-none focus:border-mint"
+                  >
+                    {anniSelezionabili().map((a) => (
+                      <option key={a} value={a}>
+                        {a}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="submit"
+                    className="vz-press rounded-lg bg-pine px-4 py-2.5 text-sm font-semibold text-white"
+                  >
+                    Salva
+                  </button>
+                </form>
+              </div>
+            </ZonaInput>
+          )}
+
           {/* Il recupero automatico, con progressione vera per fonte */}
           <AggiornaDati
             fonti={FONTI_DICHIARATE}
@@ -175,7 +239,7 @@ export default async function ImpresaPage({
                 <Globe size={15} className="text-pine" /> Qual è il tuo sito?
               </p>
               <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-gray-warm">
-                Dal tuo sito il Motore prende ciò che nessuna banca dati ha:
+                Dal tuo sito l&apos;AI Ver0 prende ciò che nessuna banca dati ha:
                 come descrivi la tua attività, i prodotti, le sedi, i mercati e
                 le certificazioni che esponi. Sono le parti narrative del
                 bilancio di sostenibilità e dei manuali — quelle che di solito

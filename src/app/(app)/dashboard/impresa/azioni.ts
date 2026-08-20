@@ -5,11 +5,11 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * Conferma di un campo recuperato dal Motore (SPEC §12.H, tappa 2.1).
+ * Conferma di un campo recuperato dall'AI Ver0 (SPEC §12.H, tappa 2.1).
  *
  * Gira con il client di SESSIONE: i permessi a colonna della 2.0
  * consentono all'utente di toccare solo `valore`, `stato` e
- * `confirmed_at` — non può spacciarsi per il Motore né riscrivere la
+ * `confirmed_at` — non può spacciarsi per l'AI Ver0 né riscrivere la
  * provenienza, e i test RLS lo verificano. Qui il campo passa da
  * «da confermare» a «confermato»: da quel momento nessun arricchimento
  * successivo lo sovrascriverà, perché la parola del cliente vale più di
@@ -28,11 +28,11 @@ export async function confermaCampo(campo: string) {
 }
 
 /**
- * RIFIUTO di un campo proposto dal Motore (SPEC §12.D).
+ * RIFIUTO di un campo proposto dall'AI Ver0 (SPEC §12.D).
  *
  * Il cliente può respingere OGNI SINGOLA proposta, non solo accettarla:
  * senza questo, «da confermare» sarebbe una conferma rimandata, non una
- * scelta. Il record resta — serve a ricordare al Motore di non
+ * scelta. Il record resta — serve a ricordare all'AI Ver0 di non
  * riproporlo — ma il valore smette di valere e non entra in nessun
  * documento.
  */
@@ -71,7 +71,36 @@ export async function salvaSitoWeb(formData: FormData) {
   revalidatePath("/dashboard/impresa");
 }
 
-/** Correzione di un campo proposto dal Motore: vince sempre il cliente. */
+/**
+ * ANNO DI RENDICONTAZIONE (SPEC §12.C): l'anno solare CHIUSO a cui i
+ * documenti si riferiscono, che non è l'anno in cui li elaboriamo.
+ * Cambiarlo ricompone tutte le bozze: titoli, periodi e richieste.
+ */
+export async function salvaAnnoRendicontazione(formData: FormData) {
+  const anno = Number(formData.get("anno"));
+  if (!Number.isInteger(anno) || anno < 2015 || anno > 2100) return;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+  const { data: profilo } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!profilo?.organization_id) return;
+  await supabase
+    .from("organizations")
+    .update({ anno_rendicontazione: anno })
+    .eq("id", profilo.organization_id);
+  revalidatePath("/dashboard/impresa");
+  revalidatePath("/dashboard/percorsi");
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/documenti");
+}
+
+/** Correzione di un campo proposto dall'AI Ver0: vince sempre il cliente. */
 export async function correggiCampo(campo: string, valore: string) {
   const pulito = valore.trim();
   if (pulito.length === 0 || pulito.length > 2000) return;

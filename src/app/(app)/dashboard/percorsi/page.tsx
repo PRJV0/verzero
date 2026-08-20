@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, LifeBuoy } from "lucide-react";
+import { ArrowRight, Check, Inbox, LifeBuoy } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -80,7 +80,7 @@ function SezioneFoglio({
           </span>
         ) : (
           <span className="shrink-0 rounded-full bg-mint/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-mint">
-            Dal Motore{sezione.fonte ? ` · ${sezione.fonte}` : ""}
+            Dall&apos;AI Ver0{sezione.fonte ? ` · ${sezione.fonte}` : ""}
           </span>
         )}
       </div>
@@ -116,7 +116,7 @@ function SezioneFoglio({
         <>
           <RigheAccennate quante={2} />
           <p className="mt-1.5 text-xs text-mint">
-            Hai portato i documenti che servivano: il Motore li legge e
+            Hai portato i documenti che servivano: l&apos;AI Ver0 li legge e
             compila questa sezione.
           </p>
         </>
@@ -198,16 +198,20 @@ function FoglioComponente({
                 <span className="font-semibold tabular-nums text-pine">
                   {impostate}
                 </span>{" "}
-                {impostate === 1 ? "impostata" : "impostate"} dal Motore
+                {impostate === 1 ? "impostata" : "impostate"}
+                {" dall'AI Ver0"}
               </>
             )}
             . In tutto {bozza.sezioni.length}.
           </p>
         </div>
 
-        <div className="rounded-xl bg-moss/50 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-pine">
-            Per completare ci serve
+        {/* ZONA DI INSERIMENTO: bordo tratteggiato e fondo salvia, come
+            ovunque nel portale. Si distingue a colpo d'occhio dal foglio
+            bianco accanto, che è invece da leggere (SPEC §12.C). */}
+        <div className="rounded-xl border-2 border-dashed border-pine/30 bg-moss/40 p-4">
+          <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-pine">
+            <Inbox size={12} /> Per completare ci serve
           </p>
           {bozza.daFornire.length === 0 && bozza.zeroDocumenti ? (
             <>
@@ -281,7 +285,7 @@ function FoglioComponente({
               )}
               <p className="mt-2.5 text-[11px] leading-relaxed text-gray-light">
                 {mancanti.length === 0
-                  ? "Hai portato tutto. Il Motore legge i documenti e compila le sezioni: ti avvisiamo noi quando la bozza è pronta."
+                  ? "Hai portato tutto. Ora l'AI Ver0 legge i documenti e compila le sezioni: ti avvisiamo noi quando la bozza è pronta."
                   : "Puoi caricarli qui o dalla sezione Documenti: è lo stesso archivio."}
               </p>
             </>
@@ -350,7 +354,7 @@ export default async function PercorsiPage({
     <main>
       <IntestazioneSezione
         eyebrow="I TUOI PERCORSI"
-        titolo="Il Motore ha già iniziato"
+        titolo="Abbiamo già iniziato"
         sotto="Ogni percorso si apre sulla bozza del documento: le sezioni già composte si leggono, quelle in attesa sono al loro posto. Sotto, le poche cose che servono da te — col perché."
       />
 

@@ -110,7 +110,7 @@ const ZERI = [
   {
     accent: "Zero",
     tail: "effort",
-    m: "Bastano i documenti che hai già: il Motore li trasforma, un professionista valida.",
+    m: "Bastano i documenti che hai già: l'AI Ver0 li trasforma, un professionista valida.",
   },
   {
     accent: "Zero",
@@ -143,14 +143,14 @@ const ZERI = [
 /** Le tre battute della sezione documenti (§12.J): secche, senza processo. */
 const BATTUTE = [
   { icon: FileText, t: "Solo il necessario." },
-  { icon: null, t: "Il Motore lavora." }, // icona: lo zero E1, disegnato sotto
+  { icon: null, t: "L'AI Ver0 lavora." }, // icona: lo zero E1, disegnato sotto
   { icon: UserCheck, t: "Un professionista valida." },
 ];
 
 export const metadata: Metadata = {
   title: { absolute: "Ver0 — la piattaforma che qualifica la tua impresa" },
   description:
-    "Sostenibilità, sistemi di gestione e consulenza con il Motore Ver0: documenti conformi in giorni, verificati da professionisti, con prezzi pubblici.",
+    "Sostenibilità, sistemi di gestione e consulenza con l'AI Ver0: documenti conformi in giorni, verificati da professionisti, con prezzi pubblici.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -158,7 +158,7 @@ export const metadata: Metadata = {
     siteName: SITO.nome,
     title: "Ver0 — la piattaforma che qualifica la tua impresa",
     description:
-      "Sostenibilità, sistemi di gestione e consulenza con il Motore Ver0: documenti conformi in giorni, verificati da professionisti, con prezzi pubblici.",
+      "Sostenibilità, sistemi di gestione e consulenza con l'AI Ver0: documenti conformi in giorni, verificati da professionisti, con prezzi pubblici.",
     url: "/",
     images: [{ url: SITO.ogImage, width: 1200, height: 630, alt: SITO.nome }],
   },
@@ -193,7 +193,7 @@ export default function HomePage() {
                 validazione umana. Mai numeri, mai il verbo "firmare". */}
             <p className="mt-5 max-w-lg text-sm leading-relaxed text-gray-warm md:text-base">
               Zero effort, sul serio: bastano i documenti che hai già in
-              azienda. Il Motore Ver0 li trasforma in qualifiche, un
+              azienda. L&apos;AI Ver0 li trasforma in qualifiche, un
               professionista le valida.
             </p>
 
@@ -383,7 +383,7 @@ export default function HomePage() {
             I tuoi documenti non invecchiano mai.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-center text-sm text-gray-warm md:text-base">
-            Quando una norma cambia, il Motore aggiorna i tuoi documenti. Il
+            Quando una norma cambia, l&apos;AI Ver0 aggiorna i tuoi documenti. Il
             Sigillo resta valido, i bandi ti vengono segnalati,
             l&apos;assistenza risponde. Tutto incluso nell&apos;abbonamento.
           </p>

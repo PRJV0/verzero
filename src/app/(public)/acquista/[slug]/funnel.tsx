@@ -969,7 +969,7 @@ function StepRegistrazione({
               {...campo("sitoWeb")}
             />
             <p className="mt-1 text-xs leading-relaxed text-gray-light">
-              Se ce l&apos;hai, il Motore ne ricava le parti descrittive dei
+              Se ce l&apos;hai, l&apos;AI Ver0 ne ricava le parti descrittive dei
               tuoi documenti — attività, prodotti, sedi, certificazioni esposte
               — citando sempre la pagina. Puoi aggiungerlo anche dopo.
             </p>

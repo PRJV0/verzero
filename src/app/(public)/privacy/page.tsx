@@ -66,7 +66,7 @@ export default function PrivacyPage() {
       <SezioneLegale id="dati" titolo="Quali dati trattiamo, e da dove arrivano">
         <p>
           Alcuni dati ce li dai tu. Altri li recuperiamo noi, ed è il cuore del
-          servizio: il Motore compila la scheda della tua impresa al posto tuo.
+          servizio: l&apos;AI Ver0 compila la scheda della tua impresa al posto tuo.
           Quando un dato non viene da te, l&apos;articolo 14 del GDPR ci obbliga
           a dirti da dove viene — e nel portale lo trovi scritto accanto a ogni
           singolo campo, con la fonte e, per i contenuti presi dal web, il link
@@ -285,7 +285,7 @@ export default function PrivacyPage() {
         <p>
           Alcuni di questi diritti li eserciti da solo, senza chiedere permesso:
           nella scheda della tua impresa puoi correggere o rifiutare ogni
-          singolo dato che il Motore ti propone, e dalle impostazioni puoi
+          singolo dato che l&apos;AI Ver0 ti propone, e dalle impostazioni puoi
           revocare i mandati.
         </p>
         <p>
@@ -304,7 +304,7 @@ export default function PrivacyPage() {
 
       <SezioneLegale id="decisioni" titolo="Automatismi e decisioni">
         <p>
-          Il Motore legge documenti e fonti pubbliche e produce bozze. Non prende
+          L&apos;AI Ver0 legge documenti e fonti pubbliche e produce bozze. Non prende
           decisioni automatizzate che producano effetti giuridici su di te: ogni
           documento passa dalla tua conferma e dalla validazione di un
           professionista prima di essere emesso. I punteggi e i rating che

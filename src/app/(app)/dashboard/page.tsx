@@ -5,7 +5,10 @@ import {
   Building2,
   CalendarDays,
   FolderOpen,
+  Gift,
+  LayoutList,
   Megaphone,
+  MessagesSquare,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -24,10 +27,14 @@ import { caricaContesto } from "./_contesto";
 import {
   CardOpportunita,
   IntestazioneSezione,
+  LegendaColori,
+  Occhiello,
   STATO_BADGE,
   STATO_LABEL,
   SelettoreCliente,
+  TestataSezione,
 } from "./_ui";
+import { annoElaborazione } from "@/lib/periodo";
 import { WizardPrimoAccesso } from "./wizard";
 
 export const metadata: Metadata = {
@@ -103,7 +110,7 @@ export default async function PanoramicaPage({
       case "disdetto":
         return "Il percorso è chiuso. Il lavoro fatto resta tuo: puoi riattivarlo dal catalogo quando vuoi.";
       default:
-        return "Tieni a portata i documenti del fascicolo: il Motore ti dice esattamente quali e perché.";
+        return "Tieni a portata i documenti del fascicolo: ti diciamo esattamente quali e perché.";
     }
   };
 
@@ -150,8 +157,20 @@ export default async function PanoramicaPage({
       <SelettoreCliente contesto={contesto} base="/dashboard" />
 
       {/* I servizi in corso, in chiaro */}
+      {/* La legenda del colore: un patto dichiarato una volta sola, che
+          rende leggibile tutto il resto senza spiegazioni ripetute. */}
+      {contesto.org && (
+        <div className="mt-6 rounded-xl border border-line bg-white px-4 py-3">
+          <LegendaColori />
+        </div>
+      )}
+
       <section className="mt-8">
-        <h2 className="text-sm font-semibold text-ink">Servizi in corso</h2>
+        <TestataSezione
+          icona={LayoutList}
+          titolo="I documenti che stai facendo"
+          sotto={`Quello che hai acquistato, con l'avanzamento di ciascuno. Si riferiscono all'anno che hai indicato nella scheda impresa; li elaboriamo nel ${annoElaborazione()}.`}
+        />
         {attivi.length > 0 ? (
           <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">
             {attivi.map((m) => {
@@ -256,6 +275,72 @@ export default async function PanoramicaPage({
         )}
       </section>
 
+      {/* INCLUSO NEL CANONE, NON ACQUISTATO (SPEC §12.C). Kit, osservatorio
+          bandi e Sigillo sono strumenti che restano tuoi finché sei cliente:
+          non sono deliverable e non entrano nel conteggio dei documenti. */}
+      {attivi.length > 0 && (
+        <section className="mt-10">
+          <TestataSezione
+            icona={Gift}
+            titolo="Incluso nel tuo abbonamento"
+            sotto="Strumenti che non compri a parte: sono tuoi finché sei cliente, e lavorano anche quando tu non ci pensi."
+          />
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {[
+              {
+                icona: MessagesSquare,
+                titolo: "Kit di comunicazione",
+                testo:
+                  "Testi corretti e verificabili sul tuo percorso, pronti per sito, offerte e firma email.",
+                href: conCliente("/dashboard/sigillo"),
+                azione: "Vedi i materiali",
+              },
+              {
+                icona: Megaphone,
+                titolo: "Osservatorio bandi",
+                testo:
+                  "Segnaliamo noi i bandi che premiano le tue qualifiche, per settore e territorio.",
+                href: conCliente("/dashboard/bandi"),
+                azione: "Apri l'osservatorio",
+              },
+              {
+                icona: ShieldCheck,
+                titolo: "Sigillo e targa",
+                testo:
+                  "La targa di avvio e la pagina pubblica di verifica, con il millesimo che si rinnova ogni anno.",
+                href: conCliente("/dashboard/sigillo"),
+                azione: "Vai al Sigillo",
+              },
+            ].map((v) => {
+              const Icona = v.icona;
+              return (
+                <article
+                  key={v.titolo}
+                  className="rounded-2xl border border-line bg-white p-5"
+                >
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-moss text-pine">
+                    <Icona size={18} />
+                  </span>
+                  <Occhiello>Incluso</Occhiello>
+                  <p className="mt-0.5 text-[15px] font-bold leading-snug text-ink">
+                    {v.titolo}
+                  </p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-gray-warm">
+                    {v.testo}
+                  </p>
+                  <Link
+                    href={v.href}
+                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-pine hover:underline"
+                  >
+                    {v.azione} <ArrowRight size={15} />
+                  </Link>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Con i dati che già abbiamo (§12.F): opportunità, mai pressione. */}
       {opportunita.length > 0 && (
         <section className="mt-10">
@@ -346,27 +431,17 @@ export default async function PanoramicaPage({
 
       {/* Le altre sezioni come opportunità: mai vuoti tristi. */}
       <section className="mt-10">
-        <h2 className="text-sm font-semibold text-ink">
-          Il resto del tuo ecosistema
-        </h2>
+        <TestataSezione
+          icona={Sparkles}
+          titolo="Il resto del tuo ecosistema"
+          sotto="Le sezioni che si accendono man mano che il tuo percorso avanza."
+        />
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <CardOpportunita
-            icona={ShieldCheck}
-            titolo="Il Sigillo Ver0"
-            testo="Si conquista completando un percorso qualificante: criteri pubblici, dati verificati, l'anno sempre stampato sopra. Intanto puoi già dichiarare il percorso avviato."
-            cta={{ href: conCliente("/dashboard/sigillo"), label: "Vedi a che punto sei" }}
-          />
           <CardOpportunita
             icona={FolderOpen}
             titolo="I tuoi documenti"
             testo="L'archivio unico di bollette, visure e report: si popola con il fascicolo del tuo percorso."
             cta={{ href: conCliente("/dashboard/documenti"), label: "Apri l'archivio" }}
-          />
-          <CardOpportunita
-            icona={Megaphone}
-            titolo="Bandi per il tuo profilo"
-            testo="L'osservatorio incluso nell'abbonamento: segnaliamo noi le opportunità che premiano le tue qualifiche."
-            cta={{ href: conCliente("/dashboard/bandi"), label: "Scopri l'osservatorio" }}
           />
           <CardOpportunita
             icona={CalendarDays}

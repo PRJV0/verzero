@@ -1,4 +1,10 @@
 import { getServizio } from "@/lib/catalog";
+import {
+  annoRendicontazioneDefault,
+  dodiciMesiDi,
+  intestazioneDocumento,
+  periodoEsteso,
+} from "@/lib/periodo";
 
 /**
  * LA BOZZA DEL DOCUMENTO (SPEC §12.G «mai una checklist vuota» + §12.F).
@@ -70,7 +76,18 @@ export type Bozza = {
   zeroDocumenti?: string;
 };
 
-type DatiOrg = { ragione_sociale: string; partita_iva: string };
+type DatiOrg = {
+  ragione_sociale: string;
+  partita_iva: string;
+  /** L'anno solare CHIUSO a cui i documenti si riferiscono (SPEC §12.C):
+   *  mai l'anno in cui li elaboriamo. */
+  anno_rendicontazione?: number;
+};
+
+/** L'anno di rendicontazione dell'impresa, o l'ultimo chiuso. */
+function annoDi(org: DatiOrg): number {
+  return org.anno_rendicontazione ?? annoRendicontazioneDefault();
+}
 
 /**
  * I campi già noti della scheda impresa (tappa 2.1): inseriti dal cliente
@@ -80,7 +97,6 @@ type DatiOrg = { ragione_sociale: string; partita_iva: string };
  */
 export type CampiNoti = Record<string, { valore: string; fonte: string | null }>;
 
-const ANNO = 2026;
 
 /* ------------------------------------------------------------------ */
 /* Etichette dei documenti (per i chip «→ contribuisce a…», §12.F)     */
@@ -88,7 +104,11 @@ const ANNO = 2026;
 
 export const DOC_CARBON = "Carbon Footprint";
 export const DOC_VSME = "Bilancio VSME";
-export const DOC_SCORE = "Profilo score ESG";
+/** Prepariamo il dossier: il punteggio lo assegna sempre l'ente terzo. */
+export const DOC_SCORE = "Profilo ESG per questionari e rating";
+/** Strumento INCLUSO nel canone, non un documento acquistato (§12.C):
+ *  resta come etichetta per la fascia «incluso nel tuo abbonamento», ma
+ *  non compare fra i deliverable né nel conteggio «Documento X di Y». */
 export const DOC_KIT = "Kit di comunicazione";
 export const DOC_PARITA = "Sistema parità di genere";
 
@@ -114,7 +134,7 @@ export function documentiAttivi(moduli: string[]): Set<string> {
   const out = new Set<string>();
   for (const m of moduli) {
     if (m === "percorso-ver0") {
-      [DOC_CARBON, DOC_VSME, DOC_SCORE, DOC_KIT].forEach((d) => out.add(d));
+      [DOC_CARBON, DOC_VSME, DOC_SCORE].forEach((d) => out.add(d));
     } else if (ETICHETTA_MODULO[m]) {
       out.add(ETICHETTA_MODULO[m]);
     }
@@ -128,10 +148,11 @@ export function documentiAttivi(moduli: string[]): Set<string> {
 
 /** Anagrafica: la sezione popolata di ogni bozza, che cresce col Motore. */
 function sezioneAnagrafica(org: DatiOrg, campi: CampiNoti = {}): SezioneBozza {
+  const anno = annoDi(org);
   const righe = [
     { etichetta: "Organizzazione", valore: org.ragione_sociale },
     { etichetta: "Partita IVA", valore: org.partita_iva },
-    { etichetta: "Anno di riferimento", valore: String(ANNO) },
+    { etichetta: "Anno di rendicontazione", valore: String(anno) },
   ];
   // Ogni dato recuperato entra nel documento appena arriva (tappa 2.1).
   if (campi.forma_giuridica) {
@@ -198,7 +219,7 @@ function righeDalSito(
  * solo impostata sulla norma. Con la sede legale recuperata diventa
  * POPOLATA — ed è il momento in cui l'anello del percorso sale davvero.
  */
-function sezionePerimetro(campi: CampiNoti): SezioneBozza {
+function sezionePerimetro(campi: CampiNoti, anno: number): SezioneBozza {
   const sede = campi.sede_legale;
   if (!sede) {
     return {
@@ -219,7 +240,7 @@ function sezionePerimetro(campi: CampiNoti): SezioneBozza {
       { etichetta: "Sede legale", valore: sede.valore },
       {
         etichetta: "Periodo di rendicontazione",
-        valore: `1 gennaio – 31 dicembre ${ANNO}`,
+        valore: periodoEsteso(anno),
       },
       { etichetta: "Criterio di consolidamento", valore: "Controllo operativo" },
     ],
@@ -305,11 +326,12 @@ function sezionePoliticaParita(campi: CampiNoti): SezioneBozza {
 }
 
 function bozzaCarbon(org: DatiOrg, conScope3: boolean, campi: CampiNoti = {}): Bozza {
+  const anno = annoDi(org);
   return {
-    intestazione: `Bozza · Inventario GHG ${ANNO}`,
+    intestazione: `Bozza · ${intestazioneDocumento("Inventario GHG", anno)}`,
     sezioni: [
       sezioneAnagrafica(org, campi),
-      sezionePerimetro(campi),
+      sezionePerimetro(campi, anno),
       {
         titolo: "Metodologia e fattori di emissione",
         stato: "impostata",
@@ -320,7 +342,7 @@ function bozzaCarbon(org: DatiOrg, conScope3: boolean, campi: CampiNoti = {}): B
       {
         titolo: "Scope 1 — emissioni dirette",
         stato: "in-attesa",
-        attende: "registri o fatture dei carburanti",
+        attende: `i registri o le fatture dei carburanti del ${anno}`,
         attendeTipi: ["carburanti", "bolletta-gas"],
         spiega:
           "Scope 1 = ciò che bruci tu: caldaie, mezzi aziendali, impianti.",
@@ -328,7 +350,7 @@ function bozzaCarbon(org: DatiOrg, conScope3: boolean, campi: CampiNoti = {}): B
       {
         titolo: "Scope 2 — energia acquistata (location e market based)",
         stato: "in-attesa",
-        attende: "bollette elettriche di tutti i contatori",
+        attende: `le bollette elettriche di ${dodiciMesiDi(anno)}`,
         attendeTipi: ["bolletta-elettrica"],
         spiega: "Scope 2 = le emissioni dell'energia elettrica che compri.",
       },
@@ -353,19 +375,19 @@ function bozzaCarbon(org: DatiOrg, conScope3: boolean, campi: CampiNoti = {}): B
     ],
     daFornire: [
       {
-        documento: "Bollette di energia elettrica (tutti i contatori)",
+        documento: `Bollette di energia elettrica di ${dodiciMesiDi(anno)}, per ogni contatore`,
         tipo: "bolletta-elettrica",
         perche: "documentano il consumo elettrico per lo Scope 2",
         destinazioni: [DOC_CARBON, DOC_VSME],
       },
       {
-        documento: "Bollette del gas o altri combustibili",
+        documento: `Bollette del gas o altri combustibili di ${dodiciMesiDi(anno)}`,
         tipo: "bolletta-gas",
         perche: "servono alle emissioni dirette da riscaldamento (Scope 1)",
         destinazioni: [DOC_CARBON, DOC_VSME],
       },
       {
-        documento: "Registri o fatture dei carburanti",
+        documento: `Registri o fatture dei carburanti di ${dodiciMesiDi(anno)}`,
         tipo: "carburanti",
         perche: "coprono i mezzi aziendali e d'opera nello Scope 1",
         destinazioni: [DOC_CARBON],
@@ -384,8 +406,9 @@ function bozzaCarbon(org: DatiOrg, conScope3: boolean, campi: CampiNoti = {}): B
 }
 
 function bozzaVsme(org: DatiOrg, avanzato: boolean, campi: CampiNoti = {}): Bozza {
+  const anno = annoDi(org);
   return {
-    intestazione: `Bozza · Bilancio di Sostenibilità (VSME) ${ANNO}`,
+    intestazione: `Bozza · ${intestazioneDocumento("Bilancio di Sostenibilità (VSME)", anno)}`,
     sezioni: [
       sezioneAnagrafica(org, campi),
       {
@@ -431,7 +454,7 @@ function bozzaVsme(org: DatiOrg, avanzato: boolean, campi: CampiNoti = {}): Bozz
     ],
     daFornire: [
       {
-        documento: "Dati di organico aggregati",
+        documento: `Dati di organico aggregati al 31 dicembre ${anno}`,
         tipo: "organico",
         perche: "compilano gli indicatori sociali dello standard",
         destinazioni: [DOC_VSME, DOC_PARITA],
@@ -463,82 +486,68 @@ function bozzaVsme(org: DatiOrg, avanzato: boolean, campi: CampiNoti = {}): Bozz
 
 /** Miglioramento score (componente del Percorso Ver0): si compone dai
  *  dati degli altri due documenti — l'esempio vivo di «zero documenti». */
+/**
+ * PROFILO ESG PER QUESTIONARI E RATING DI TERZE PARTI (SPEC §12.C).
+ *
+ * Ver0 NON è un'agenzia di rating e non emette punteggi propri. Quello
+ * che facciamo è preparare il dossier: componiamo le risposte dai dati
+ * già raccolti, segnaliamo dove mancano evidenze e mettiamo tutto in
+ * ordine per il momento in cui l'ente terzo — EcoVadis, Synesgy,
+ * Open-es, CDP, la banca — farà le sue domande. Il punteggio lo assegna
+ * sempre e solo l'ente terzo, e in queste sezioni non c'è nulla che
+ * possa far pensare il contrario.
+ */
 function bozzaScore(org: DatiOrg, campi: CampiNoti = {}): Bozza {
+  const anno = annoDi(org);
   return {
-    intestazione: `Bozza · Profilo Score ESG ${ANNO}`,
+    intestazione: `Bozza · ${intestazioneDocumento("Profilo ESG per questionari e rating", anno)}`,
     sezioni: [
       sezioneAnagrafica(org, campi),
       {
-        titolo: "Mappatura dei questionari di banche e capofiliera",
+        titolo: "Questionari mappati sui tuoi dati",
         stato: "impostata",
-        fonte: "questionari bancari · CDP · EcoVadis",
+        fonte: "EcoVadis · Synesgy · Open-es · CDP · questionari bancari",
         spiega:
-          "Le domande che banche e grandi clienti ti faranno, già mappate sui tuoi dati.",
+          "Le domande che questi enti fanno, già accostate ai dati che abbiamo: così rispondi una volta e vale per tutti.",
       },
       {
-        titolo: "Indicatori ambientali per i rating",
+        titolo: "Risposte sulla parte ambientale",
         stato: "in-attesa",
         attende: "i dati del Carbon Footprint",
-        spiega: "I numeri sulle emissioni, ripresi dal tuo inventario.",
+        spiega:
+          "Emissioni ed energia, riprese dal tuo inventario: niente da ricalcolare.",
       },
       {
-        titolo: "Indicatori sociali e di governance per i rating",
+        titolo: "Risposte sulla parte sociale e di governance",
         stato: "in-attesa",
         attende: "gli indicatori del Bilancio VSME",
-        spiega: "Ripresi dal bilancio di sostenibilità: nessuna doppia domanda.",
+        spiega:
+          "Persone, organi sociali e politiche, ripresi dal bilancio: nessuna doppia domanda.",
       },
       {
-        titolo: "Piano di miglioramento dello score",
+        titolo: "Lacune da colmare prima di rispondere",
         stato: "in-attesa",
-        attende: "gli indicatori confermati",
-        spiega: "Dove guadagni punti con meno sforzo: azioni in ordine di resa.",
+        attende: "le risposte confermate",
+        spiega:
+          "Dove il dossier è ancora scoperto e cosa serve per chiuderlo, in ordine di importanza.",
+      },
+      {
+        titolo: "Dossier pronto da allegare",
+        stato: "in-attesa",
+        attende: "le sezioni precedenti confermate",
+        spiega:
+          "Il fascicolo da caricare sul portale dell'ente o da mandare alla banca. Il punteggio lo assegnano loro.",
       },
     ],
     daFornire: [],
     zeroDocumenti:
-      "Zero documenti da fornire: questo profilo si compone da solo coi dati del Carbon Footprint e del Bilancio VSME.",
-  };
-}
-
-/** Kit di comunicazione (componente del Percorso Ver0). */
-function bozzaKit(org: DatiOrg, campi: CampiNoti = {}): Bozza {
-  return {
-    intestazione: `Bozza · Kit di Comunicazione ${ANNO}`,
-    sezioni: [
-      sezioneAnagrafica(org, campi),
-      {
-        titolo: "Linee d'uso del Sigillo e della targa",
-        stato: "impostata",
-        fonte: "identità Ver0",
-        spiega: "Dove e come puoi usare il Sigillo: sito, firma email, offerte.",
-      },
-      {
-        titolo: "Testi pronti per sito e presentazioni",
-        stato: "in-attesa",
-        attende: "i risultati validati dei tuoi documenti",
-        spiega:
-          "Frasi corrette e verificabili sul tuo percorso: mai promesse gonfiate.",
-      },
-      {
-        titolo: "Scheda per clienti e capofiliera",
-        stato: "in-attesa",
-        attende: "i documenti emessi",
-        spiega: "La pagina da allegare alle offerte quando ti chiedono i dati.",
-      },
-    ],
-    daFornire: [
-      {
-        documento: "Il tuo logo in buona qualità (facoltativo)",
-        perche: "solo se vuoi i materiali già impaginati col tuo marchio",
-        destinazioni: [DOC_KIT],
-      },
-    ],
+      "Zero documenti da fornire: questo dossier si compone dai dati del Carbon Footprint e del Bilancio VSME che stai già facendo.",
   };
 }
 
 function bozzaManualeIso(org: DatiOrg, norma: string, ambito: string, campi: CampiNoti = {}): Bozza {
   return {
-    intestazione: `Bozza · Manuale del Sistema di Gestione ${ambito}`,
+    intestazione: `Bozza · Manuale del Sistema di Gestione ${ambito} · elaborato nel ${new Date().getFullYear()}`,
     sezioni: [
       sezioneAnagrafica(org, campi),
       {
@@ -572,7 +581,7 @@ function bozzaManualeIso(org: DatiOrg, norma: string, ambito: string, campi: Cam
       },
       {
         documento: "Mappa dei processi (anche in bozza)",
-        perche: "è l'ossatura su cui il Motore costruisce le procedure",
+        perche: "è l'ossatura su cui costruiamo le procedure",
       },
       {
         documento: "Procedure esistenti, se ci sono",
@@ -584,8 +593,9 @@ function bozzaManualeIso(org: DatiOrg, norma: string, ambito: string, campi: Cam
 }
 
 function bozzaPdr125(org: DatiOrg, campi: CampiNoti = {}): Bozza {
+  const anno = annoDi(org);
   return {
-    intestazione: `Bozza · Sistema di Gestione della Parità ${ANNO}`,
+    intestazione: `Bozza · ${intestazioneDocumento("Sistema di Gestione della Parità", anno)}`,
     sezioni: [
       sezioneAnagrafica(org, campi),
       {
@@ -727,15 +737,10 @@ export function componentiPercorso(
       },
       {
         key: "score",
-        nome: "Miglioramento dello Score di Rating ESG",
+        nome: "Profilo ESG per questionari e rating di terze parti",
+        taglio: "EcoVadis, Synesgy, Open-es, CDP, questionari bancari",
         doc: DOC_SCORE,
         bozza: bozzaScore(org, campi),
-      },
-      {
-        key: "kit",
-        nome: "Kit di Comunicazione",
-        doc: DOC_KIT,
-        bozza: bozzaKit(org, campi),
       },
     ];
   }

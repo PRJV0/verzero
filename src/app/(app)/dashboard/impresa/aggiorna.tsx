@@ -107,7 +107,7 @@ export function AggiornaDati({
             Il recupero automatico
           </h2>
           <p className="mt-1 max-w-xl text-sm leading-relaxed text-gray-warm">
-            Il Motore interroga le banche dati ufficiali per compilare la
+            L&apos;AI Ver0 interroga le banche dati ufficiali per compilare la
             scheda al posto tuo. Ciò che trova te lo mette davanti con la
             fonte: confermi tu, sempre.
           </p>
@@ -119,7 +119,7 @@ export function AggiornaDati({
           className="vz-press inline-flex shrink-0 items-center gap-2 rounded-lg bg-pine px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
         >
           <RefreshCw size={15} className={inCorso ? "animate-spin" : ""} />
-          {inCorso ? "Il Motore sta lavorando…" : "Aggiorna i dati"}
+          {inCorso ? "L'AI Ver0 sta lavorando…" : "Aggiorna i dati"}
         </button>
       </div>
 

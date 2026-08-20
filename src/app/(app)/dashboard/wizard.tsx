@@ -51,7 +51,7 @@ export function WizardPrimoAccesso({
           <p className="text-sm leading-relaxed text-gray-warm">
             Questa è la tua impresa come l&apos;hai registrata. Dalla sezione
             «La tua impresa» potrai vedere ogni dato con la sua provenienza —
-            e presto il Motore recupererà il resto per te.
+            e presto recupereremo il resto per te.
           </p>
           <dl className="mt-3 space-y-1.5 rounded-xl bg-paper p-4 text-sm">
             <div className="flex justify-between gap-3">
@@ -112,7 +112,7 @@ export function WizardPrimoAccesso({
           <p className="text-sm leading-relaxed text-gray-warm">
             {documenti.length > 0
               ? "Solo ciò che solo tu puoi darci — i documenti che hai già. Per il tuo percorso servono:"
-              : "Quando attiverai un percorso, il Motore ti chiederà una lista precisa di documenti — quelli che hai già in azienda. Di tutto il resto si occupa lui."}
+              : "Quando attiverai un percorso ti chiederemo una lista precisa di documenti — quelli che hai già in azienda. Di tutto il resto ci occupiamo noi."}
           </p>
           {documenti.length > 0 && (
             <ul className="mt-3 space-y-1.5">

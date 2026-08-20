@@ -175,7 +175,7 @@ export default async function ServizioPage({
               chiederemo
             </p>
             <p className="mb-2 text-xs text-gray-warm">
-              Il Motore Ver0 non accetta documenti qualsiasi: per questo
+              L&apos;AI Ver0 non accetta documenti qualsiasi: per questo
               percorso chiede esattamente questi, li legge e segnala cosa manca.
             </p>
             <ul className="space-y-1.5 text-sm text-gray-warm">

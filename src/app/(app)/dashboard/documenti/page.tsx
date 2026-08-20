@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
+  Archive,
   CircleHelp,
+  ClipboardList,
   FileText,
   Image as ImageIcon,
   Inbox,
@@ -19,7 +21,13 @@ import {
 } from "@/lib/documenti";
 
 import { caricaContesto } from "../_contesto";
-import { CardOpportunita, IntestazioneSezione, SelettoreCliente } from "../_ui";
+import {
+  CardOpportunita,
+  IntestazioneSezione,
+  Occhiello,
+  SelettoreCliente,
+  TestataSezione,
+} from "../_ui";
 import { CaricaDocumenti } from "./carica";
 import { correggiTipoDocumento, eliminaDocumento } from "./azioni";
 
@@ -88,7 +96,7 @@ export default async function DocumentiPage({
         <IntestazioneSezione
           eyebrow="DOCUMENTI"
           titolo="Porta qui i documenti che hai già"
-          sotto="L'archivio unico della tua impresa: qui carichi una volta sola e il Motore smista ciò che serve a ciascun percorso."
+          sotto="L'archivio unico della tua impresa: carichi una volta sola e smistiamo noi ciò che serve a ciascun percorso."
         />
         <SelettoreCliente contesto={contesto} base="/dashboard/documenti" />
         {contesto.ruolo === "impresa" && (
@@ -109,7 +117,7 @@ export default async function DocumentiPage({
       <IntestazioneSezione
         eyebrow="DOCUMENTI"
         titolo="Porta qui i documenti che hai già"
-        sotto="Carichi una volta sola: il Motore riconosce cosa sono e li manda ai percorsi giusti, dicendoti dove è finito ciascuno. Niente moduli da compilare, niente nomi da rispettare."
+        sotto="Carichi una volta sola: l'AI Ver0 riconosce cosa sono e li manda ai percorsi giusti, dicendoti dove è finito ciascuno. Niente moduli da compilare, niente nomi da rispettare."
       />
 
       <SelettoreCliente contesto={contesto} base="/dashboard/documenti" />
@@ -123,13 +131,11 @@ export default async function DocumentiPage({
       {/* 2. Cosa serve, derivato dai percorsi attivi — con esempi veri. */}
       {richiesti.length > 0 && (
         <section className="mt-10">
-          <h2 className="font-display text-2xl text-ink">
-            Cosa serve ai tuoi percorsi
-          </h2>
-          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-gray-warm">
-            Solo questo, e niente altro. Quello che manca non blocca nulla:
-            puoi portarlo quando ce l&apos;hai.
-          </p>
+          <TestataSezione
+            icona={ClipboardList}
+            titolo="Cosa serve ai tuoi percorsi"
+            sotto="Solo questo, e niente altro. Quello che manca non blocca nulla: puoi portarlo quando ce l'hai."
+          />
 
           <ul className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
             {richiesti.map(({ tipo, destinazioni }) => {
@@ -145,9 +151,14 @@ export default async function DocumentiPage({
                   }
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <p className="min-w-0 text-[15px] font-bold leading-snug text-ink">
-                      {tipo.nome}
-                    </p>
+                    <div className="min-w-0">
+                      <Occhiello>
+                        {arrivato ? "Già in archivio" : "Serve a te"}
+                      </Occhiello>
+                      <p className="mt-0.5 text-[15px] font-bold leading-snug text-ink">
+                        {tipo.nome}
+                      </p>
+                    </div>
                     <span
                       className={
                         "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide " +
@@ -187,7 +198,11 @@ export default async function DocumentiPage({
 
       {/* 3. Cosa c'è già, e dove è finito. */}
       <section className="mt-10">
-        <h2 className="font-display text-2xl text-ink">Il tuo archivio</h2>
+        <TestataSezione
+          icona={Archive}
+          titolo="Il tuo archivio"
+          sotto="Tutto quello che hai portato, con la strada che ha preso."
+        />
 
         {archivio.length === 0 ? (
           <div className="mt-3 flex items-start gap-3 rounded-2xl border border-dashed border-pine/30 bg-moss/40 p-5">

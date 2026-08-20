@@ -78,7 +78,7 @@ export function CatalogoVetrina() {
             </p>
             <p className="mt-2 text-sm leading-relaxed text-moss">
               Carbon Footprint Scope 1 e 2 + Bilancio di Sostenibilità (VSME) +
-              miglioramento score rating. Un solo inserimento dati.
+              profilo ESG per i questionari di banche e capofiliera. Un solo inserimento dati.
             </p>
           </div>
           <div className="min-w-0 shrink-0">

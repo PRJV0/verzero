@@ -27,9 +27,12 @@ type Organization = {
   billing_indirizzo: string | null;
   /** Codice pubblico non indovinabile della pagina /verifica (§12.F). */
   codice_verifica: string;
-  /** Il sito ufficiale dichiarato: l'unico dominio che il Motore legge
+  /** Il sito ufficiale dichiarato: l'unico dominio che l'AI Ver0 legge
    *  per l'arricchimento qualitativo (§12.D). */
   sito_web: string | null;
+  /** L'anno solare CHIUSO a cui si riferiscono i documenti (§12.C):
+   *  diverso dall'anno in cui li elaboriamo. */
+  anno_rendicontazione: number;
   created_at: string;
   updated_at: string;
 };

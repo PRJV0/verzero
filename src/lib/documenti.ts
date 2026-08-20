@@ -1,4 +1,8 @@
-import { DOC_CARBON, DOC_KIT, DOC_PARITA, DOC_SCORE, DOC_VSME } from "./bozza";
+import { DOC_CARBON, DOC_PARITA, DOC_SCORE, DOC_VSME } from "./bozza";
+import { annoRendicontazioneDefault, dodiciMesiDi } from "./periodo";
+
+/** L'anno a cui si riferiscono i documenti richiesti (SPEC §12.C). */
+const ANNO = annoRendicontazioneDefault();
 
 /**
  * TIPI DI DOCUMENTO E SMISTAMENTO (SPEC §12.E).
@@ -43,9 +47,8 @@ export const TIPI_DOCUMENTO: TipoDocumento[] = [
   {
     chiave: "bolletta-elettrica",
     nome: "Bolletta di energia elettrica",
-    spiega:
-      "Una bolletta della luce per ogni contatore, di un anno intero se ce l'hai.",
-    esempi: ["bolletta_enel_gennaio_2026.pdf", "luce-pod-IT001E123.pdf"],
+    spiega: `Una bolletta della luce per ogni contatore, relativa a ${dodiciMesiDi(ANNO)}.`,
+    esempi: [`bolletta_enel_gennaio_${ANNO}.pdf`, "luce-pod-IT001E123.pdf"],
     indizi: [
       /\b(bolletta|fattura)\b[\s\S]*\b(luce|elettric|energia|ee)\b/i,
       /\b(enel|a2a|hera|iren|acea|eni.?plenitude|edison|sorgenia|illumia)\b/i,
@@ -60,8 +63,8 @@ export const TIPI_DOCUMENTO: TipoDocumento[] = [
   {
     chiave: "bolletta-gas",
     nome: "Bolletta del gas o altri combustibili",
-    spiega: "Gas metano, GPL o gasolio da riscaldamento: la fornitura del sito.",
-    esempi: ["bolletta_gas_2026.pdf", "metano_dicembre.pdf"],
+    spiega: `Gas metano, GPL o gasolio del sito, relativi a ${dodiciMesiDi(ANNO)}.`,
+    esempi: [`bolletta_gas_${ANNO}.pdf`, "metano_dicembre.pdf"],
     indizi: [
       /\b(bolletta|fattura)\b[\s\S]*\b(gas|metano|gpl)\b/i,
       /\b(gas|metano|gpl|smc)\b/i,
@@ -75,8 +78,8 @@ export const TIPI_DOCUMENTO: TipoDocumento[] = [
   {
     chiave: "carburanti",
     nome: "Registri o fatture dei carburanti",
-    spiega: "Rifornimenti di flotta e mezzi d'opera: schede carburante o fatture.",
-    esempi: ["carburante_flotta_2026.xlsx", "rifornimenti-gasolio.pdf"],
+    spiega: `Rifornimenti di flotta e mezzi d'opera del ${ANNO}: schede carburante o fatture.`,
+    esempi: [`carburante_flotta_${ANNO}.xlsx`, "rifornimenti-gasolio.pdf"],
     indizi: [
       /\b(carburant|rifornimen|gasolio|diesel|benzina|flotta|scheda[_\s-]?carburante)\b/i,
       /\b(q8|eni|ip|tamoil|esso|shell)\b/i,
@@ -97,21 +100,20 @@ export const TIPI_DOCUMENTO: TipoDocumento[] = [
   {
     chiave: "bilancio",
     nome: "Bilancio depositato",
-    spiega: "L'ultimo bilancio d'esercizio: serve a rapportare i numeri.",
+    spiega: `Il bilancio dell'esercizio ${ANNO}: serve a rapportare i numeri.`,
     esempi: ["bilancio_2025.pdf", "bilancio-esercizio-depositato.pdf"],
     indizi: [/\bbilancio\b/i, /\bconto[_\s-]?economico\b/i, /\bstato[_\s-]?patrimoniale\b/i],
     destinazioni: [
       { doc: DOC_CARBON, sezione: "Intensità emissiva" },
       { doc: DOC_VSME, sezione: "Indicatori economici" },
-      { doc: DOC_SCORE, sezione: "Indicatori per i rating" },
+      { doc: DOC_SCORE, sezione: "Risposte ai questionari" },
     ],
   },
   {
     chiave: "organico",
     nome: "Dati di organico aggregati",
-    spiega:
-      "Numero di addetti, contratti e formazione, in forma aggregata: mai nominativi.",
-    esempi: ["organico_2026.xlsx", "dipendenti-aggregati.pdf"],
+    spiega: `Addetti, contratti e formazione al 31 dicembre ${ANNO}, in forma aggregata: mai nominativi.`,
+    esempi: [`organico_${ANNO}.xlsx`, "dipendenti-aggregati.pdf"],
     indizi: [
       /\b(organico|addetti|dipendenti|personale|libro[_\s-]?unico|lul)\b/i,
       /\bformazione\b/i,
@@ -135,7 +137,7 @@ export const TIPI_DOCUMENTO: TipoDocumento[] = [
   {
     chiave: "rifiuti",
     nome: "Registro dei rifiuti (MUD o formulari)",
-    spiega: "MUD annuale o formulari di trasporto: servono alla parte ambientale.",
+    spiega: `MUD o formulari relativi al ${ANNO}: servono alla parte ambientale.`,
     esempi: ["mud_2025.pdf", "formulari-rifiuti.pdf"],
     indizi: [/\bmud\b/i, /\brifiut/i, /\bformulari?\b/i, /\bfir\b/i],
     destinazioni: [{ doc: DOC_VSME, sezione: "Indicatori ambientali" }],
@@ -153,8 +155,7 @@ export const TIPI_DOCUMENTO: TipoDocumento[] = [
     ],
     destinazioni: [
       { doc: DOC_VSME, sezione: "Certificazioni" },
-      { doc: DOC_SCORE, sezione: "Indicatori per i rating" },
-      { doc: DOC_KIT, sezione: "Materiali da comunicare" },
+      { doc: DOC_SCORE, sezione: "Risposte sulla parte ambientale" },
     ],
   },
   {
