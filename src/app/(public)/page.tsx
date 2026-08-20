@@ -12,6 +12,8 @@ import {
   ScrollySteps,
 } from "@/components/scrolly";
 import { FasciaListaAttesa } from "@/components/lista-attesa";
+import { HeroHome } from "@/components/hero-home";
+import { MotoreInAzione } from "@/components/motore-in-azione";
 import { JsonLd } from "@/components/json-ld";
 import { PhotoDuotone } from "@/components/photo-duotone";
 import { CANONE_INCLUDE } from "@/lib/canone";
@@ -170,54 +172,7 @@ export default function HomePage() {
     <>
       <JsonLd dati={jsonLdOrganization()} />
 
-      {/* HERO — il claim del marchio, alla scala massima. Fondo piatto. */}
-      <section className="relative overflow-hidden bg-moss px-5 py-16 md:py-24">
-        <ZeroWatermark
-          tone="pine"
-          className="-right-10 -top-16 text-[22rem] md:text-[32rem]"
-        />
-        <DottedRing className="-left-16 top-24 h-56 w-56 border-mint/20" />
-
-        <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 md:grid-cols-[1.35fr_1fr]">
-          <div className="text-left">
-            <p className="mb-6 text-xs font-semibold tracking-widest text-pine">
-              SOSTENIBILITÀ · SISTEMI DI GESTIONE · CONSULENZA
-            </p>
-            <h1 className="font-display text-6xl leading-[0.98] text-pine-dark md:text-8xl">
-              I tuoi consulenti in cloud.
-            </h1>
-            <p className="mt-6 max-w-xl font-display text-2xl leading-snug text-pine md:text-4xl">
-              La crescita della tua azienda, in abbonamento. Con{" "}
-              <ZeroWord>zero</ZeroWord> effort.
-            </p>
-            {/* §12.O: la formula canonica — documenti esistenti, Motore,
-                validazione umana. Mai numeri, mai il verbo "firmare". */}
-            <p className="mt-5 max-w-lg text-sm leading-relaxed text-gray-warm md:text-base">
-              Zero effort, sul serio: bastano i documenti che hai già in
-              azienda. L&apos;AI Ver0 li trasforma in qualifiche, un
-              professionista le valida.
-            </p>
-
-            <div className="mt-9 flex flex-wrap gap-3">
-              <CtaGrande href="/servizi">Calcola il prezzo</CtaGrande>
-              <Link
-                href="/come-funziona"
-                className="vz-press inline-flex items-center gap-2 rounded-xl border-2 border-pine px-7 py-4 text-base font-semibold text-pine hover:-translate-y-0.5"
-              >
-                Guarda come funziona
-              </Link>
-            </div>
-          </div>
-
-          <PhotoDuotone
-            src="/photos/hero.jpg"
-            alt="Paesaggio produttivo italiano: capannoni e campi coltivati, le imprese che Ver0 accompagna verso la qualifica."
-            intensity="soft"
-            priority
-            className="aspect-[16/10] rounded-3xl shadow-lift md:aspect-[4/5]"
-          />
-        </div>
-      </section>
+      <HeroHome />
 
       {/* IL MOTORE — manifesto della potenza, senza fasi né meccanismi
           (§12.J: il «come» vive dentro, in /come-funziona). */}
@@ -241,6 +196,14 @@ export default function HomePage() {
             Costruito per i documenti d&apos;impresa. Verificato da
             professionisti.
           </p>
+
+          {/* LA SCENA MADRE: qui il Motore smette di essere raccontato e
+              si vede lavorare. È il protagonista della sezione — le tre
+              battute qui sotto sono la sua didascalia, non un secondo
+              centro di attenzione (brief §2a, §3.2). */}
+          <div className="mt-12">
+            <MotoreInAzione />
+          </div>
 
           {/* Le tre battute della sezione documenti: secche, visual minimi. */}
           <div className="mx-auto mt-14 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">

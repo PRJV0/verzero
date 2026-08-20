@@ -186,7 +186,14 @@ function FoglioComponente({
       {/* Colonna quieta: anello-cruscotto + cosa serve, col perché */}
       <aside className="space-y-4">
         <div className="flex flex-col items-center rounded-xl border border-line bg-white p-5 text-center">
-          <AnelloSigillo segmenti={segmenti} percentuale={percentuale} />
+          {/* La chiave lega l'anello a QUESTO documento: al prossimo
+              accesso la percentuale riparte da dove eravamo e si vede
+              salire di quanto è cresciuta davvero (brief §3.3). */}
+          <AnelloSigillo
+            segmenti={segmenti}
+            percentuale={percentuale}
+            chiave={comp.key}
+          />
           <p className="mt-3 text-xs leading-relaxed text-gray-warm">
             <span className="font-semibold tabular-nums text-pine">
               {conDati} {conDati === 1 ? "sezione" : "sezioni"}

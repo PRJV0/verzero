@@ -18,6 +18,7 @@ export function Sigillo({
   tone = "light",
   year = "2026",
   avvio = false,
+  vivo = false,
 }: {
   className?: string;
   segmenti?: boolean;
@@ -26,6 +27,10 @@ export function Sigillo({
   /** Stato «percorso avviato» (§12.F): solo anello punteggiato, MAI
    *  segmenti pieni — nemmeno quello d'accento delle superfici scure. */
   avvio?: boolean;
+  /** L'anello si chiude segmento dopo segmento all'ingresso in scena
+   *  (brief §3.6): la meccanica del prodotto resa visibile. Da usare
+   *  dove il Sigillo È il soggetto, mai sui marchietti di servizio. */
+  vivo?: boolean;
 }) {
   const dark = tone === "dark";
   const ink = dark ? "#FFFFFF" : "#0E5238";
@@ -39,7 +44,7 @@ export function Sigillo({
       aria-label={
         segmenti ? "Sigillo Ver0 con percorsi verificati" : "Sigillo Ver0"
       }
-      className={className}
+      className={(vivo ? "vz-anello-vivo " : "") + className}
     >
       {/* Placca bianca solo su fondo chiaro: su scuro il sigillo è tono-su-tono. */}
       {!dark && <circle cx="100" cy="100" r="98" fill="#FFFFFF" />}
@@ -56,6 +61,8 @@ export function Sigillo({
       {segmenti ? (
         <>
           <path
+            className="vz-arco"
+            style={{ "--vz-i": 0 } as React.CSSProperties}
             d="M 100 18 A 82 82 0 0 1 169 59"
             fill="none"
             stroke={ink}
@@ -63,6 +70,8 @@ export function Sigillo({
             strokeLinecap="round"
           />
           <path
+            className="vz-arco"
+            style={{ "--vz-i": 1 } as React.CSSProperties}
             d="M 175 68 A 82 82 0 0 1 179 110"
             fill="none"
             stroke={mint}

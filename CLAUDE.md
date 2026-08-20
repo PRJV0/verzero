@@ -34,6 +34,14 @@ Vale per ogni pagina nuova e per ogni pagina modificata. Le utilità stanno in
 
 ## Altre regole già in vigore
 
+- **Movimento**: fonte unica in `src/app/globals.css` (token `--vz-micro`
+  150ms, `--vz-stato` 250ms, `--vz-ingresso` 400ms, `--vz-scaglione` 70ms,
+  `--vz-curva`). Mai durate o curve scritte a mano in un componente, mai
+  `@keyframes` sparsi nei file: si aggiunge al sistema e si motiva. Ogni
+  regola che nasconde contenuto sta dentro
+  `@media (prefers-reduced-motion: no-preference)` — senza quella
+  protezione un'animazione diventa contenuto mancante. Si animano solo
+  `opacity` e `transform`. Dettagli e criteri in `SPEC.md` §12.X.
 - **Prezzi**: fonte unica in `src/lib/pricing.ts`. Nessun prezzo scritto a mano
   nelle pagine, mai.
 - **Catalogo**: fonte unica in `src/lib/catalog.ts`; aggiungere un servizio lì

@@ -18,6 +18,7 @@ export function WizardPrimoAccesso({
   partitaIva,
   percorsi,
   documenti,
+  trovati,
 }: {
   ragioneSociale: string;
   partitaIva: string;
@@ -25,6 +26,8 @@ export function WizardPrimoAccesso({
   percorsi: string[];
   /** I documenti richiesti dal primo percorso attivo. */
   documenti: string[];
+  /** I dati che l'AI Ver0 ha recuperato da sé, con la loro fonte. */
+  trovati: { label: string; valore: string; fonte: string | null }[];
 }) {
   const [passo, setPasso] = useState(0);
   const [chiuso, setChiuso] = useState(false);
@@ -45,29 +48,75 @@ export function WizardPrimoAccesso({
   const PASSI = [
     {
       icona: Building2,
-      titolo: "Conferma i tuoi dati",
+      /* IL RICONOSCIMENTO (brief §3.4): l'effetto più forte del prodotto
+         non è un'animazione, è la piattaforma che sa cose che nessuno le
+         ha scritto. Il titolo porta il numero, e i dati compaiono uno
+         dopo l'altro con la fonte accanto — perché un dato senza fonte
+         è una pretesa, non un'informazione. */
+      titolo:
+        trovati.length > 0
+          ? `Abbiamo già trovato ${trovati.length} ${trovati.length === 1 ? "dato" : "dati"} sulla tua impresa`
+          : "Conferma i tuoi dati",
       contenuto: (
         <div>
-          <p className="text-sm leading-relaxed text-gray-warm">
-            Questa è la tua impresa come l&apos;hai registrata. Dalla sezione
-            «La tua impresa» potrai vedere ogni dato con la sua provenienza —
-            e presto recupereremo il resto per te.
-          </p>
-          <dl className="mt-3 space-y-1.5 rounded-xl bg-paper p-4 text-sm">
-            <div className="flex justify-between gap-3">
-              <dt className="text-gray-warm">Ragione sociale</dt>
-              <dd className="font-semibold text-ink">{ragioneSociale}</dd>
-            </div>
-            <div className="flex justify-between gap-3">
-              <dt className="text-gray-warm">Partita IVA</dt>
-              <dd className="font-semibold tabular-nums text-ink">
-                {partitaIva}
-              </dd>
-            </div>
-          </dl>
-          <span className="mt-2 inline-block rounded-full bg-moss px-2.5 py-1 text-[11px] font-semibold text-pine">
-            Inserito da te · registrazione
-          </span>
+          {trovati.length > 0 ? (
+            <>
+              <p className="text-sm leading-relaxed text-gray-warm">
+                Non li hai scritti tu: li abbiamo recuperati dalle fonti
+                ufficiali. Controllali e confermali quando vuoi — finché non
+                lo fai restano proposte nostre, non dati tuoi.
+              </p>
+              <dl className="mt-3 space-y-1.5">
+                {trovati.slice(0, 6).map((c, i) => (
+                  <div
+                    key={c.label}
+                    className="vz-entra flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 rounded-lg bg-paper px-3.5 py-2"
+                    style={{ "--vz-i": i } as React.CSSProperties}
+                  >
+                    <dt className="text-xs text-gray-warm">{c.label}</dt>
+                    <dd className="flex min-w-0 items-baseline gap-2">
+                      <span className="truncate text-sm font-semibold text-ink">
+                        {c.valore}
+                      </span>
+                      {c.fonte && (
+                        <span className="shrink-0 rounded-full bg-moss px-1.5 py-0.5 text-[9px] font-semibold text-pine">
+                          {c.fonte}
+                        </span>
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              {trovati.length > 6 && (
+                <p className="mt-2 text-xs text-gray-warm">
+                  E altri {trovati.length - 6} nella scheda della tua impresa.
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <p className="text-sm leading-relaxed text-gray-warm">
+                Questa è la tua impresa come l&apos;hai registrata. Il resto lo
+                recuperiamo noi dalle fonti ufficiali: nella sezione «La tua
+                impresa» ogni dato dichiara da dove viene.
+              </p>
+              <dl className="mt-3 space-y-1.5 rounded-xl bg-paper p-4 text-sm">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-gray-warm">Ragione sociale</dt>
+                  <dd className="font-semibold text-ink">{ragioneSociale}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-gray-warm">Partita IVA</dt>
+                  <dd className="font-semibold tabular-nums text-ink">
+                    {partitaIva}
+                  </dd>
+                </div>
+              </dl>
+              <span className="mt-2 inline-block rounded-full bg-moss px-2.5 py-1 text-[11px] font-semibold text-pine">
+                Inserito da te · registrazione
+              </span>
+            </>
+          )}
         </div>
       ),
     },

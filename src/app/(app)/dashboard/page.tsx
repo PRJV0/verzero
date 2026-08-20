@@ -35,6 +35,7 @@ import {
   SelettoreCliente,
   TestataSezione,
 } from "./_ui";
+import { componiScheda } from "@/lib/impresa";
 import { annoElaborazione } from "@/lib/periodo";
 import { WizardPrimoAccesso } from "./wizard";
 
@@ -81,7 +82,7 @@ export default async function PanoramicaPage({
             .order("created_at", { ascending: false }),
           supabase
             .from("company_fields")
-            .select("campo, valore, fonte, stato")
+            .select("campo, valore, provenienza, fonte, fonte_url, stato")
             .eq("organization_id", contesto.org.id),
         ])
       : [{ data: [] }, { data: [] }, { data: [] }];
@@ -93,6 +94,21 @@ export default async function PanoramicaPage({
       .filter((r) => r.valore && r.stato !== "rifiutato")
       .map((r) => [r.campo, { valore: r.valore as string, fonte: r.fonte }]),
   );
+
+  // IL RICONOSCIMENTO (brief §3.4): quanto sappiamo già dell'impresa
+  // senza che nessuno ce l'abbia scritto. È il numero che apre il primo
+  // accesso, quindi dev'essere quello vero: solo campi con un valore,
+  // recuperati dall'AI, non rifiutati.
+  const trovatiDaNoi = contesto.org
+    ? componiScheda(contesto.org, righeScheda ?? [])
+        .flatMap((g) => g.campi)
+        .filter((c) => c.valore && c.provenienza === "motore" && !c.rifiutato)
+        .map((c) => ({
+          label: c.label,
+          valore: c.valore as string,
+          fonte: c.fonte,
+        }))
+    : [];
 
   const attivi = moduli ?? [];
   const percorsiNomi = attivi.map(
@@ -145,10 +161,12 @@ export default async function PanoramicaPage({
           partitaIva={contesto.org.partita_iva}
           percorsi={percorsiNomi}
           documenti={documentiPrimo}
+          trovati={trovatiDaNoi}
         />
       )}
 
       <IntestazioneSezione
+        classe="vz-entra"
         eyebrow="PANORAMICA"
         titolo={
           contesto.org ? contesto.org.ragione_sociale : "Il tuo ecosistema"
@@ -168,12 +186,22 @@ export default async function PanoramicaPage({
       {/* La legenda del colore: un patto dichiarato una volta sola, che
           rende leggibile tutto il resto senza spiegazioni ripetute. */}
       {contesto.org && (
-        <div className="mt-6 rounded-xl border border-line bg-white px-4 py-3">
+        <div
+          className="vz-entra mt-6 rounded-xl border border-line bg-white px-4 py-3"
+          style={{ "--vz-i": 1 } as React.CSSProperties}
+        >
           <LegendaColori />
         </div>
       )}
 
-      <section className="mt-8">
+      {/* TRE ingressi in tutta la schermata, non uno per card: il brief
+          fissa il tetto a tre elementi in movimento insieme, e una griglia
+          di dieci riquadri che si accendono a cascata sarebbe un'attesa
+          travestita da animazione (§5). */}
+      <section
+        className="vz-entra mt-8"
+        style={{ "--vz-i": 2 } as React.CSSProperties}
+      >
         <TestataSezione
           icona={LayoutList}
           titolo="I documenti che stai facendo"

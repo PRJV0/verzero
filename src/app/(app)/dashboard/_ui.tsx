@@ -58,13 +58,16 @@ export function IntestazioneSezione({
   eyebrow,
   titolo,
   sotto,
+  classe = "",
 }: {
   eyebrow: string;
   titolo: string;
   sotto?: string;
+  /** Per l'ingresso in scena: `vz-entra` con il suo indice. */
+  classe?: string;
 }) {
   return (
-    <div>
+    <div className={classe}>
       <p className="text-xs font-semibold tracking-widest text-pine">
         {eyebrow}
       </p>
@@ -322,6 +325,7 @@ export function LegendaColori() {
     { colore: "bg-mint", testo: "l'ha fatto l'AI Ver0" },
     { colore: "bg-amber-ink/70", testo: "serve qualcosa da te" },
     { colore: "bg-pine", testo: "struttura del documento" },
+    { colore: "bg-line", testo: "in attesa" },
   ];
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2">

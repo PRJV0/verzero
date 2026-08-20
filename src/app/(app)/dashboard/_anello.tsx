@@ -1,3 +1,5 @@
+import { NumeroCheSale } from "@/components/numero-che-sale";
+
 /**
  * L'anello del Sigillo come cruscotto (SPEC §12.G + §12.E).
  *
@@ -18,10 +20,14 @@ export function AnelloSigillo({
   segmenti,
   percentuale,
   dimensione = 112,
+  chiave,
 }: {
   segmenti: ("piena" | "quasi" | "mezza" | "vuota")[];
   percentuale: number;
   dimensione?: number;
+  /** Identifica l'anello fra un accesso e l'altro: serve al numero che
+   *  sale per ripartire da dove eravamo invece che da zero. */
+  chiave?: string;
 }) {
   const totale = segmenti.length;
   const R = 40;
@@ -56,7 +62,7 @@ export function AnelloSigillo({
       role="img"
       aria-label={`Bozza al ${percentuale} per cento: ${piene} sezioni su ${totale} compilate coi tuoi dati`}
       style={{ width: dimensione, height: dimensione }}
-      className="shrink-0"
+      className="vz-anello-vivo shrink-0"
     >
       {/* Cornice punteggiata, come sul Sigillo */}
       <circle
@@ -70,9 +76,14 @@ export function AnelloSigillo({
         strokeDasharray="0.1 6.4"
         strokeLinecap="round"
       />
+      {/* I segmenti si disegnano uno dopo l'altro, 70ms l'uno dall'altro:
+          la meccanica del prodotto resa visibile (brief §3.6). Senza
+          movimento sono semplicemente lì, colorati. */}
       {segmenti.map((stato, i) => (
         <path
           key={i}
+          className="vz-arco"
+          style={{ "--vz-i": i } as React.CSSProperties}
           d={arco(i)}
           fill="none"
           stroke={colore[stato]}
@@ -91,7 +102,7 @@ export function AnelloSigillo({
         }}
         fill="#0E5238"
       >
-        {percentuale}%
+        <NumeroCheSale valore={percentuale} chiave={chiave} />
       </text>
       <text
         x="50"

@@ -87,7 +87,7 @@ export default function SigilloPage() {
           tono-su-tono bianco con segmento menta acceso. */}
       <section className="bg-pine-deep px-5 py-16 text-center">
         <div className="mb-6 flex justify-center">
-          <Sigillo tone="dark" className="h-28 w-28" />
+          <Sigillo tone="dark" vivo className="h-28 w-28" />
         </div>
         <p className="mb-4 text-xs font-semibold tracking-widest text-mint-bright">
           IL MARCHIO DI VERIFICA

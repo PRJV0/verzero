@@ -23,11 +23,31 @@
   --color-mint-bright: #2fcf9a; /* bagliori e segmenti su fondo scuro */
   --color-pine-deep: #0a2e1f; /* fondo del registro scuro istituzionale */
 
-  /* Transizioni uniformi in tutto il sito (Registro A). */
-  /* Micro-interazioni: UNA durata e UNA curva per tutto il sito. Le
-     transizioni Tailwind senza duration/easing espliciti ereditano queste. */
-  --default-transition-duration: 200ms;
-  --default-transition-timing-function: cubic-bezier(0.22, 0.9, 0.34, 1);
+  /* ---------------------------------------------------------------
+   * SISTEMA DI MOVIMENTO (brief §5). Regole, non gusti.
+   *
+   * Tre durate e UNA curva per tutto il prodotto. Se scrivi una durata
+   * a mano da qualche parte, stai creando un secondo sistema: usa uno
+   * di questi token, o aggiungine uno qui e motivalo.
+   *
+   *   micro     150ms — risposta a un gesto (hover, pressione, focus)
+   *   stato     250ms — un elemento cambia natura (vuoto→pieno, chiuso→aperto)
+   *   ingresso  400ms — un blocco entra in scena
+   *   ambiente  lento — movimento di fondo, mai in risposta a un gesto
+   *
+   * Lo scaglionamento fra elementi di una lista è uno solo: 70ms, dentro
+   * la forbice 60-80 del brief.
+   * --------------------------------------------------------------- */
+  --vz-micro: 150ms;
+  --vz-stato: 250ms;
+  --vz-ingresso: 400ms;
+  --vz-scaglione: 70ms;
+  --vz-curva: cubic-bezier(0.22, 0.9, 0.34, 1);
+
+  /* Le utility Tailwind senza duration/easing espliciti ereditano queste:
+     il default è la micro-interazione, che è il 90% dei casi. */
+  --default-transition-duration: var(--vz-micro);
+  --default-transition-timing-function: var(--vz-curva);
 
   --font-display: var(--font-fraunces), Georgia, serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;
@@ -59,18 +79,52 @@ body {
   border-radius: 4px;
 }
 
-/* Stato premuto: il bottone "cede" di un pixel. Applicato ai CTA pieni.
-   Durata e curva arrivano dal tema: le custom property di Tailwind valgono
-   solo per le utility, quindi qui vanno richiamate esplicitamente. */
-.vz-press {
+/* I QUATTRO STATI di ogni elemento cliccabile (brief §5).
+   Nessuno dei quattro può somigliare a un altro:
+
+     riposo      la superficie com'è
+     hover       sale di 1px e prende ombra — «questo si può premere»
+     premuto     scende di 1px e si stringe, in 90ms — la risposta fisica
+     disabilitato piatto, spento, senza mano: non finge di essere premibile
+
+   `.vz-press` resta il nome storico ed è un alias esatto: era già su
+   tutti i CTA del prodotto, e rinominarlo avrebbe solo prodotto un giro
+   di modifiche senza cambiare un pixel. */
+.vz-press,
+.vz-interattivo {
   transition-property: transform, box-shadow, background-color, color,
     border-color, opacity;
-  transition-duration: var(--default-transition-duration);
-  transition-timing-function: var(--default-transition-timing-function);
+  transition-duration: var(--vz-micro);
+  transition-timing-function: var(--vz-curva);
 }
-.vz-press:active {
+.vz-press:hover:not(:disabled):not([aria-disabled="true"]),
+.vz-interattivo:hover:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
+}
+.vz-press:active:not(:disabled):not([aria-disabled="true"]),
+.vz-interattivo:active:not(:disabled):not([aria-disabled="true"]) {
   transform: translateY(1px) scale(0.99);
-  transition-duration: 80ms;
+  box-shadow: none;
+  transition-duration: 90ms;
+}
+.vz-press:disabled,
+.vz-press[aria-disabled="true"],
+.vz-interattivo:disabled,
+.vz-interattivo[aria-disabled="true"] {
+  transform: none;
+  box-shadow: none;
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Cambio di stato di un elemento (vuoto→pieno, chiuso→aperto): più lento
+   della risposta a un gesto, perché racconta una trasformazione. */
+.vz-stato {
+  transition-property: background-color, border-color, color, box-shadow,
+    opacity, transform;
+  transition-duration: var(--vz-stato);
+  transition-timing-function: var(--vz-curva);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -113,7 +167,73 @@ body {
     transform: translateY(18px);
   }
   .vz-reveal[data-reveal="visibile"] {
-    animation: vz-reveal-in 0.65s cubic-bezier(0.22, 0.9, 0.34, 1) both;
+    animation: vz-reveal-in var(--vz-ingresso) var(--vz-curva) both;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * INGRESSO IN SCENA, con scaglionamento (brief §5).
+ *
+ * `.vz-entra` su un elemento; `--vz-i` sull'indice quando fa parte di una
+ * sequenza. Lo scaglionamento è UNO, 70ms, e si ferma al sesto elemento:
+ * una lista di venti voci che si accendono per un secondo e mezzo non è
+ * un ingresso, è un'attesa. Da lì in poi entrano insieme.
+ *
+ * Regola del brief — mai più di 3 elementi in movimento insieme — vale
+ * per gli elementi INDIPENDENTI di una composizione: i membri di una
+ * stessa lista sono un elemento solo che si scrive da sé.
+ *
+ * Lo stato iniziale nascosto vive solo dentro la media query: senza JS,
+ * con «riduci movimento» o su un motore che ignora l'animazione, il
+ * contenuto è semplicemente lì. Nessun testo può sparire per un effetto.
+ * ------------------------------------------------------------------- */
+@media (prefers-reduced-motion: no-preference) {
+  .vz-entra {
+    animation: vz-reveal-in var(--vz-ingresso) var(--vz-curva) both;
+    animation-delay: calc(min(var(--vz-i, 0), 6) * var(--vz-scaglione));
+  }
+}
+
+/* La spunta che si disegna: la conferma di un dato deve sembrare un
+   gesto compiuto, non un cambio di colore (brief §3.5). */
+@keyframes vz-spunta-traccia {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.vz-spunta path,
+.vz-spunta polyline {
+  stroke-dasharray: 24;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vz-spunta path,
+  .vz-spunta polyline {
+    animation: vz-spunta-traccia var(--vz-stato) var(--vz-curva) both;
+  }
+}
+
+/* I segmenti dell'anello si disegnano uno dopo l'altro: è la meccanica
+   del prodotto resa visibile (brief §3.6). La lunghezza dell'arco non è
+   nota al CSS, quindi si parte da un dasharray abbondante. */
+@keyframes vz-arco-traccia {
+  from {
+    stroke-dashoffset: 120;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vz-anello-vivo .vz-arco {
+    stroke-dasharray: 120;
+    animation: vz-arco-traccia var(--vz-ingresso) var(--vz-curva) both;
+    animation-delay: calc(min(var(--vz-i, 0), 6) * var(--vz-scaglione));
   }
 }
 
@@ -223,7 +343,7 @@ body {
 
 @media (prefers-reduced-motion: no-preference) {
   .vz-price-in {
-    animation: vz-price-in 0.28s ease-out;
+    animation: vz-price-in var(--vz-stato) var(--vz-curva);
   }
 }
 
@@ -290,4 +410,204 @@ body {
 .vz-scrolly[data-live="1"] .vz-scrolly-progress {
   transform-origin: left center;
   transform: scaleX(0);
+}
+
+/* =====================================================================
+ * PRIMO IMPATTO (brief §4, direzione C + B).
+ *
+ * Tipografia cinetica come base, movimento vettoriale del brand come
+ * strato di profondità. Nessun video, nessuna libreria: gradiente che
+ * deriva, filigrane che ruotano lentissime, e la parola-Zero che si
+ * trasforma nel segno del marchio.
+ *
+ * Vincolo di velocità: si animano SOLO opacity e transform, le due
+ * proprietà che il compositor gestisce senza rifare layout né disegno.
+ * Nessun blur animato, nessuna ombra animata, nessun filtro: sono le
+ * cose che fanno scendere i Core Web Vitals.
+ * ===================================================================== */
+
+/* Il claim si compone: una parola dopo l'altra, 70ms l'una dall'altra.
+   La PRIMA parola non ha ritardo — è quella che il browser misura come
+   contenuto principale, e farla aspettare significherebbe pagare
+   l'effetto con l'LCP. */
+@keyframes vz-parola-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.22em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vz-parola {
+    display: inline-block;
+    animation: vz-parola-in var(--vz-ingresso) var(--vz-curva) both;
+    animation-delay: calc(var(--vz-i, 0) * var(--vz-scaglione));
+  }
+}
+
+/* La parola-Zero diventa il segno. Il testo resta nel DOM — chi legge con
+   uno screen reader sente «zero», non un buco — e a scomparire è solo la
+   sua resa visiva, sostituita dallo zero canonico del marchio.
+   Con «riduci movimento» non succede niente: si legge la parola. */
+.vz-zero-morph {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+.vz-zero-segno {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  /* Un filo più grande della x-height: il segno deve pesare quanto la
+     parola che sostituisce, altrimenti sembra un refuso. */
+  height: 1.15em;
+  width: 1.15em;
+  opacity: 0;
+}
+
+@keyframes vz-zero-esce {
+  to {
+    opacity: 0;
+    transform: translateY(-0.12em) scale(0.94);
+  }
+}
+@keyframes vz-zero-entra {
+  from {
+    opacity: 0;
+    transform: rotate(-24deg) scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vz-zero-morph .vz-zero-testo {
+    display: inline-block;
+    animation: vz-zero-esce var(--vz-stato) var(--vz-curva) 1.15s both;
+  }
+  .vz-zero-morph .vz-zero-segno {
+    animation: vz-zero-entra var(--vz-ingresso) var(--vz-curva) 1.28s both;
+  }
+}
+
+/* Fondo che si muove in modo impercettibile: due masse di colore che
+   derivano su un ciclo lunghissimo. Se lo noti, è troppo. */
+@keyframes vz-deriva {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3%, -2%, 0) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vz-deriva {
+    animation: vz-deriva 42s ease-in-out infinite;
+    will-change: transform;
+  }
+  .vz-deriva-lenta {
+    animation: vz-deriva 64s ease-in-out infinite reverse;
+    will-change: transform;
+  }
+  /* Filigrana vettoriale: un giro completo in due minuti. */
+  .vz-trama {
+    animation: vz-trama-gira 120s linear infinite;
+  }
+}
+
+@keyframes vz-trama-gira {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =====================================================================
+ * LA SCENA MADRE (brief §3.2): documento reale → campi che si accendono
+ * uno a uno → documento conforme.
+ *
+ * Tutto in CSS, in un ciclo che si ripete: nessun JS, nessun osservatore,
+ * nessun rischio che resti a metà. Con «riduci movimento» il documento
+ * si mostra già compilato e già conforme — cioè il finale, che è anche
+ * il messaggio.
+ * ===================================================================== */
+@keyframes vz-riga-accende {
+  0%,
+  6% {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  14%,
+  86% {
+    opacity: 1;
+    transform: none;
+  }
+  96%,
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+@keyframes vz-timbro-in {
+  0%,
+  62% {
+    opacity: 0;
+    transform: scale(0.86) rotate(-8deg);
+  }
+  70%,
+  90% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+/* Il cursore di lettura che scorre il foglio mentre i campi si accendono. */
+@keyframes vz-lettura {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  62% {
+    transform: translateY(var(--vz-corsa, 150px));
+    opacity: 1;
+  }
+  72%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vz-scena .vz-riga-valore {
+    animation: vz-riga-accende 9s var(--vz-curva) infinite;
+    animation-delay: calc(var(--vz-i, 0) * 0.5s);
+  }
+  .vz-scena .vz-timbro {
+    animation: vz-timbro-in 9s var(--vz-curva) infinite;
+  }
+  .vz-scena .vz-lettura {
+    animation: vz-lettura 9s var(--vz-curva) infinite;
+  }
+}
+
+/* Senza movimento: il foglio è già pieno e già timbrato. */
+@media (prefers-reduced-motion: reduce) {
+  .vz-scena .vz-lettura {
+    display: none;
+  }
 }

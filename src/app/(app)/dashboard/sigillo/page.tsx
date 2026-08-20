@@ -71,6 +71,7 @@ export default async function SigilloPage({
           <Sigillo
             tone="dark"
             avvio={avviato}
+            vivo
             className={avviato ? "h-28 w-28" : "h-28 w-28 opacity-60"}
           />
         </div>

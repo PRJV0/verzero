@@ -19,12 +19,8 @@ import {
   ZonaInput,
 } from "../_ui";
 import { AggiornaDati } from "./aggiorna";
-import {
-  confermaCampo,
-  rifiutaCampo,
-  salvaAnnoRendicontazione,
-  salvaSitoWeb,
-} from "./azioni";
+import { AzioniCampo, ContatoreDaConfermare } from "./conferma";
+import { salvaAnnoRendicontazione, salvaSitoWeb } from "./azioni";
 import { anniSelezionabili, annoElaborazione } from "@/lib/periodo";
 
 export const metadata: Metadata = {
@@ -265,16 +261,19 @@ export default async function ImpresaPage({
             </form>
           )}
 
-          {daConfermare > 0 && (
+          {daConfermare > 0 && contesto.ruolo === "impresa" && (
+            <ContatoreDaConfermare iniziale={daConfermare} />
+          )}
+          {daConfermare > 0 && contesto.ruolo === "consulente" && (
             <p className="rounded-xl border border-amber-ink/25 bg-amber-soft/60 px-4 py-3 text-sm leading-relaxed text-amber-ink">
-              <strong className="font-semibold">
+              <strong className="font-semibold tabular-nums">
                 {daConfermare}{" "}
                 {daConfermare === 1
-                  ? "dato aspetta la tua conferma"
-                  : "dati aspettano la tua conferma"}
+                  ? "dato aspetta la conferma dell'impresa"
+                  : "dati aspettano la conferma dell'impresa"}
               </strong>
-              : li abbiamo recuperati noi, ma entrano nei tuoi documenti solo
-              quando ci dici che sono giusti.
+              : li abbiamo recuperati noi, ma entrano nei documenti solo quando
+              è l&apos;impresa a dire che sono giusti.
             </p>
           )}
 
@@ -330,36 +329,7 @@ export default async function ImpresaPage({
                             nessun recupero successivo lo sovrascrive. */}
                         {c.fonteUrl && <LinkFonte url={c.fonteUrl} />}
                         {c.daConfermare && contesto.ruolo === "impresa" && (
-                          <div className="mt-0.5 flex flex-wrap justify-end gap-1.5">
-                            <form
-                              action={async () => {
-                                "use server";
-                                await confermaCampo(c.chiave);
-                              }}
-                            >
-                              <button
-                                type="submit"
-                                className="inline-flex items-center gap-1 rounded-lg border border-pine px-2.5 py-1 text-[11px] font-semibold text-pine transition-colors hover:bg-moss"
-                              >
-                                <Check size={11} strokeWidth={3} /> È corretto
-                              </button>
-                            </form>
-                            {/* Il rifiuto è alla pari della conferma: senza,
-                                «da confermare» sarebbe solo un rinvio. */}
-                            <form
-                              action={async () => {
-                                "use server";
-                                await rifiutaCampo(c.chiave);
-                              }}
-                            >
-                              <button
-                                type="submit"
-                                className="inline-flex items-center gap-1 rounded-lg border border-line px-2.5 py-1 text-[11px] font-medium text-gray-warm transition-colors hover:border-amber-ink/50 hover:text-amber-ink"
-                              >
-                                <X size={11} strokeWidth={3} /> Non è corretto
-                              </button>
-                            </form>
-                          </div>
+                          <AzioniCampo chiave={c.chiave} />
                         )}
                       </dd>
                     </div>
