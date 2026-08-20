@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { AVVIO } from "@/lib/avvio";
 import { getServizio } from "@/lib/catalog";
 import {
   componentiPercorso,
@@ -105,9 +106,13 @@ export default async function PanoramicaPage({
     switch (stato) {
       case "richiesta":
       case "richiesto":
-        return "Abbiamo la tua richiesta: ti contattiamo noi per concordare l'avvio. Intanto puoi già portare i documenti che hai — così quando partiamo si parte davvero.";
+        // Le stesse parole della schermata finale e dell'email: chi
+        // arriva qui non deve trovare una terza versione della storia.
+        return `${AVVIO.contatto.titolo}. ${AVVIO.intanto.titolo}: ${AVVIO.intanto.azioni
+          .map((a) => a.infinito)
+          .join(" e ")}.`;
       case "in_attivazione":
-        return "Ti ricontattiamo noi per l'attivazione del pagamento: nessun addebito è stato fatto.";
+        return "Ti contattiamo per l'attivazione del pagamento: nessun addebito è stato fatto.";
       case "sospeso":
         return "Il percorso è in pausa: scrivici dalla sezione Consulenza per riprenderlo.";
       case "disdetto":

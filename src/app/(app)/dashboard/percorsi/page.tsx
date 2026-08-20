@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, Inbox, LifeBuoy } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Inbox,
+  LifeBuoy,
+  Lock,
+} from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -18,7 +24,8 @@ import {
   type ComponentePercorso,
   type SezioneBozza,
 } from "@/lib/bozza";
-import { tipoDocumento } from "@/lib/documenti";
+import { tipiRichiesti, tipoDocumento } from "@/lib/documenti";
+import { AVVIO, DOPO_AVVIO } from "@/lib/avvio";
 
 import { CaricaDocumenti } from "../documenti/carica";
 
@@ -26,6 +33,8 @@ import { caricaContesto } from "../_contesto";
 import { AnelloSigillo } from "../_anello";
 import {
   CardOpportunita,
+  Occhiello,
+  ZonaInput,
   ChipDestinazione,
   IntestazioneSezione,
   STATO_BADGE,
@@ -297,6 +306,103 @@ function FoglioComponente({
 }
 
 /**
+ * PERCORSO IN ATTESA DI AVVIO (stato «richiesto»).
+ *
+ * Qui la bozza non c'è ancora e fingere il contrario sarebbe peggio del
+ * vuoto. Ma «vuoto» non è un'opzione: la schermata dice le stesse due
+ * cose utili della schermata finale e dell'email — conferma i dati,
+ * porta i documenti — e poi DICHIARA cosa si sblocca con l'avvio,
+ * nominando i documenti che il percorso produrrà. Chi legge sa dove
+ * mettere le mani adesso e cosa aspettarsi dopo.
+ */
+function PercorsoInAttesa({
+  componenti,
+  daConfermare,
+  documentiMancanti,
+}: {
+  componenti: ComponentePercorso[];
+  daConfermare: number;
+  documentiMancanti: number;
+}) {
+  const conteggi = [
+    daConfermare > 0
+      ? `${daConfermare} ${daConfermare === 1 ? "dato recuperato" : "dati recuperati"} da controllare`
+      : null,
+    documentiMancanti > 0
+      ? `${documentiMancanti} ${documentiMancanti === 1 ? "tipo di documento" : "tipi di documento"} da portare`
+      : null,
+  ];
+
+  return (
+    <div className="mt-4 space-y-4">
+      <ZonaInput>
+        <Occhiello>{AVVIO.intanto.titolo}</Occhiello>
+        <p className="mt-1.5 text-sm leading-relaxed text-pine-dark">
+          {AVVIO.intanto.testo}
+        </p>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {AVVIO.intanto.azioni.map((a, i) => (
+            <Link
+              key={a.href}
+              href={a.href}
+              className="group flex flex-col rounded-xl border border-line bg-white px-4 py-3.5 transition-all hover:-translate-y-0.5 hover:border-pine/40 hover:shadow-soft"
+            >
+              <span className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="text-sm font-semibold text-ink">
+                  {a.titolo}
+                </span>
+                {conteggi[i] && (
+                  <span className="rounded-full bg-amber-soft px-2 py-0.5 text-[10px] font-semibold tabular-nums text-amber-ink">
+                    {conteggi[i]}
+                  </span>
+                )}
+              </span>
+              <span className="mt-1 text-xs leading-relaxed text-gray-warm">
+                {a.testo}
+              </span>
+              <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-pine">
+                {a.cta} <ArrowRight size={13} />
+              </span>
+            </Link>
+          ))}
+        </div>
+      </ZonaInput>
+
+      {/* COSA SI SBLOCCA: dichiarato, non lasciato intuire. I documenti
+          si nominano per esteso (§12.F), così l'attesa ha un oggetto. */}
+      <div className="rounded-2xl border border-line bg-white p-5">
+        <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+          <Lock size={15} className="shrink-0 text-gray-light" />
+          Quando partiamo si sblocca il lavoro sui documenti
+        </p>
+        <ul className="mt-3 space-y-2">
+          {componenti.map((c) => (
+            <li key={c.key} className="flex items-start gap-2.5 text-sm">
+              <span
+                aria-hidden
+                className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-pine/30"
+              />
+              <span className="min-w-0">
+                <span className="font-medium text-ink">{c.nome}</span>{" "}
+                {c.taglio && (
+                  <span className="text-xs text-gray-warm">
+                    {c.taglio}
+                  </span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-xs leading-relaxed text-gray-warm">
+          {DOPO_AVVIO} Quello che confermi e carichi adesso finisce lì
+          dentro: non si ricomincia da capo.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
  * I TUOI PERCORSI (SPEC §12.G + §12.F): la vista si apre sul LAVORO GIÀ
  * SVOLTO — il foglio-bozza di ogni documento — e il Percorso Ver0 si
  * presenta sempre scomposto nei suoi quattro documenti componenti,
@@ -350,6 +456,15 @@ export default async function PercorsiPage({
   );
   const attiviDocs = documentiAttivi(attivi.map((m) => m.module));
 
+  // I due numeri che rendono concrete le azioni proposte a chi aspetta
+  // l'avvio: senza, l'invito resta un invito generico.
+  const daConfermare = (righeScheda ?? []).filter(
+    (r) => r.valore && r.stato === "da_confermare",
+  ).length;
+  const documentiMancanti = tipiRichiesti(attiviDocs).filter(
+    (r) => !tipiCaricati.has(r.tipo.chiave),
+  ).length;
+
   return (
     <main>
       <IntestazioneSezione
@@ -382,6 +497,9 @@ export default async function PercorsiPage({
               : [];
             if (componenti.length === 0) return null;
             const bundle = componenti.length > 1;
+            // Le attivazioni usano «richiesto»; «richiesta» e lo stato
+            // dell'ordine, un'altra tabella: qui non arriva mai.
+            const inAttesa = m.stato === "richiesto";
 
             return (
               <article key={m.id}>
@@ -413,7 +531,7 @@ export default async function PercorsiPage({
                 )}
 
                 {/* Il bundle si presenta SEMPRE scomposto (§12.F) */}
-                {bundle && (
+                {bundle && !inAttesa && (
                   <p className="mt-3 max-w-2xl rounded-lg bg-paper px-4 py-2.5 text-xs leading-relaxed text-gray-warm">
                     Questo percorso produce{" "}
                     <strong className="font-semibold text-ink">
@@ -425,6 +543,15 @@ export default async function PercorsiPage({
                   </p>
                 )}
 
+                {/* In attesa di avvio la bozza non esiste ancora: al suo
+                    posto le due azioni utili e cosa si sblocca dopo. */}
+                {inAttesa ? (
+                  <PercorsoInAttesa
+                    componenti={componenti}
+                    daConfermare={daConfermare}
+                    documentiMancanti={documentiMancanti}
+                  />
+                ) : (
                 <div className="mt-4 space-y-8">
                   {componenti.map((comp, idx) => (
                     <section key={comp.key}>
@@ -456,6 +583,7 @@ export default async function PercorsiPage({
                     </section>
                   ))}
                 </div>
+                )}
 
                 {/* Percorsi certificabili: i rilievi si adeguano qui. */}
                 {SERVIZI_CERTIFICABILI.includes(m.module) && (

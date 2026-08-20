@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { AVVIO } from "@/lib/avvio";
 import { publicEnv } from "@/lib/env";
 import { EVENTI, PASSI_FUNNEL, traccia } from "@/lib/eventi";
 import {
@@ -1517,24 +1518,80 @@ function StepConferma({
         </p>
       </dl>
 
+      {/* LE TRE COSE, nell'ordine di AVVIO: la rassicurazione per prima
+          perché è quella che chi legge sta cercando, poi cosa succede
+          adesso, poi le due azioni utili. Stessa sequenza nell'email. */}
       {!publicEnv.pagamentiAttivi && (
         <>
-          {/* LA RASSICURAZIONE, in evidenza: è la cosa che chi legge sta
-              cercando, e nessuna data promessa — «ti contatteremo» senza
-              un «entro N giorni» che non possiamo garantire. */}
           <p className="mx-auto mt-4 flex max-w-md items-start gap-2.5 rounded-xl border-2 border-pine/25 bg-moss/50 px-4 py-3.5 text-left text-sm leading-relaxed text-pine-dark">
             <ShieldCheck size={18} className="mt-0.5 shrink-0 text-pine" />
             <span>
-              <strong className="font-semibold">Nessun addebito.</strong>{" "}
-            Non ti
-              verrà addebitato nulla fino all&apos;inizio effettivo delle
-              attività, che concorderemo insieme.
+              <strong className="font-semibold">{AVVIO.addebito.titolo}.</strong>{" "}
+              {AVVIO.addebito.testo}
             </span>
           </p>
           <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-gray-warm">
-            Ti contattiamo per fissare l&apos;avvio del tuo percorso. Te ne
-            abbiamo mandato copia via email.
+            {AVVIO.contatto.titolo}. Te ne abbiamo mandato copia via email.
           </p>
+
+          <div className="mx-auto mt-6 max-w-md text-left">
+            <p className="text-sm font-semibold text-ink">
+              {AVVIO.intanto.titolo}
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-gray-warm">
+              {AVVIO.intanto.testo}
+              {state.emailDaConfermare &&
+                " Appena confermi l'indirizzo qui sotto, le trovi nel portale."}
+            </p>
+            <div className="mt-3 space-y-2">
+              {AVVIO.intanto.azioni.map((a, i) => {
+                const corpo = (
+                  <>
+                    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-mint/15 text-xs font-semibold text-pine">
+                      {i + 1}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-medium text-ink">
+                        {a.titolo}
+                      </span>
+                      <span className="mt-0.5 block text-xs leading-relaxed text-gray-warm">
+                        {a.testo}
+                      </span>
+                      {/* L'invito è circoscritto: nomina la scheda e
+                          l'archivio, non un ambiente operativo che si
+                          apre davvero solo dopo l'avvio. */}
+                      <span className="mt-1.5 block text-xs font-medium text-pine">
+                        {a.cta}
+                      </span>
+                    </span>
+                  </>
+                );
+                /* Con l'indirizzo da confermare NON c'è sessione: un link
+                   al portale rimbalzerebbe al login senza spiegazioni.
+                   Restano le stesse due cose, dette e non cliccabili. */
+                return state.emailDaConfermare ? (
+                  <div
+                    key={a.href}
+                    className="flex items-start gap-3 rounded-xl border border-line bg-white px-4 py-3"
+                  >
+                    {corpo}
+                  </div>
+                ) : (
+                  <Link
+                    key={a.href}
+                    href={a.href}
+                    className="flex items-start gap-3 rounded-xl border border-line bg-white px-4 py-3 transition-all hover:-translate-y-0.5 hover:border-pine/40 hover:shadow-soft"
+                  >
+                    {corpo}
+                    <ArrowRight
+                      size={15}
+                      className="mt-0.5 shrink-0 text-pine"
+                    />
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
         </>
       )}
 
@@ -1580,7 +1637,7 @@ function StepConferma({
             </Link>
           </div>
         </>
-      ) : (
+      ) : publicEnv.pagamentiAttivi ? (
         <div className="mt-7">
           <Link
             href="/dashboard"
@@ -1589,7 +1646,7 @@ function StepConferma({
             Vai al tuo ecosistema <ArrowRight size={15} />
           </Link>
         </div>
-      )}
+      ) : null}
     </section>
   );
 }

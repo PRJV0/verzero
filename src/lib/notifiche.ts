@@ -1,5 +1,6 @@
 import "server-only";
 
+import { bloccoAvvioHtml, bloccoAvvioTesto } from "@/lib/avvio";
 import { NOTIFICHE_INTERNE, inviaEmail } from "@/lib/email";
 import { publicEnv } from "@/lib/env";
 
@@ -106,10 +107,11 @@ export async function notificaWaitlist(dati: {
 /**
  * CONFERMA AL RICHIEDENTE (SPEC §12.B, modalità pre-lancio).
  *
- * La rassicurazione sull'addebito è la parte che conta: chi ha appena
- * riempito un modulo con la propria partita IVA vuole sapere che non gli
- * verrà tolto nulla dal conto. E nessuna data promessa — «ti
- * ricontattiamo» senza un «entro N giorni» che non possiamo mantenere.
+ * Le tre cose vengono da AVVIO e nello stesso ordine della schermata
+ * finale del funnel: chi ha appena chiuso il browser e apre l'email non
+ * deve leggere un messaggio diverso da quello che ha appena visto.
+ * Nessuna data promessa: «ti contattiamo» senza un «entro N giorni» che
+ * non possiamo mantenere.
  */
 export async function confermaRichiestaAlCliente(dati: {
   a: string;
@@ -131,15 +133,7 @@ export async function confermaRichiestaAlCliente(dati: {
       `  Formula:    ${dati.formula}`,
       `  Prezzo:     ${dati.prezzo}`,
       "",
-      "NESSUN ADDEBITO. Non ti verrà addebitato nulla fino all'inizio",
-      "effettivo delle attività, che concorderemo insieme.",
-      "",
-      "Ti contattiamo per fissare l'avvio del tuo percorso.",
-      "Nel frattempo entra pure nel tuo ecosistema: la scheda della tua",
-      "impresa è già lì, con l'elenco dei documenti che servono.",
-      "",
-      `${publicEnv.siteUrl}/dashboard`,
-      "",
+      bloccoAvvioTesto(publicEnv.siteUrl),
       "— Ver0",
     ].join("\n"),
     html: [
@@ -151,13 +145,7 @@ export async function confermaRichiestaAlCliente(dati: {
       `<li>Formula: ${dati.formula}</li>`,
       `<li>Prezzo: ${dati.prezzo}</li>`,
       "</ul>",
-      '<p style="background:#F6F1E4;border-left:4px solid#0E5238;padding:12px 16px">',
-      "<strong>Nessun addebito.</strong> Non ti verrà addebitato nulla fino",
-      "all'inizio effettivo delle attività, che concorderemo insieme.</p>",
-      "<p>Ti contattiamo per fissare l'avvio del tuo percorso. Nel frattempo",
-      "entra pure nel tuo ecosistema: la scheda della tua impresa è già lì,",
-      "con l'elenco dei documenti che servono.</p>",
-      `<p><a href="${publicEnv.siteUrl}/dashboard" style="background:#0E5238;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600">Vai al tuo ecosistema</a></p>`,
+      bloccoAvvioHtml(publicEnv.siteUrl),
       "<p>— Ver0</p>",
     ].join("\n"),
   });
