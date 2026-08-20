@@ -449,53 +449,6 @@ body {
   }
 }
 
-/* La parola-Zero diventa il segno. Il testo resta nel DOM — chi legge con
-   uno screen reader sente «zero», non un buco — e a scomparire è solo la
-   sua resa visiva, sostituita dallo zero canonico del marchio.
-   Con «riduci movimento» non succede niente: si legge la parola. */
-.vz-zero-morph {
-  position: relative;
-  display: inline-block;
-  white-space: nowrap;
-}
-.vz-zero-segno {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  /* Un filo più grande della x-height: il segno deve pesare quanto la
-     parola che sostituisce, altrimenti sembra un refuso. */
-  height: 1.15em;
-  width: 1.15em;
-  opacity: 0;
-}
-
-@keyframes vz-zero-esce {
-  to {
-    opacity: 0;
-    transform: translateY(-0.12em) scale(0.94);
-  }
-}
-@keyframes vz-zero-entra {
-  from {
-    opacity: 0;
-    transform: rotate(-24deg) scale(0.82);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .vz-zero-morph .vz-zero-testo {
-    display: inline-block;
-    animation: vz-zero-esce var(--vz-stato) var(--vz-curva) 1.15s both;
-  }
-  .vz-zero-morph .vz-zero-segno {
-    animation: vz-zero-entra var(--vz-ingresso) var(--vz-curva) 1.28s both;
-  }
-}
-
 /* Fondo che si muove in modo impercettibile: due masse di colore che
    derivano su un ciclo lunghissimo. Se lo noti, è troppo. */
 @keyframes vz-deriva {
