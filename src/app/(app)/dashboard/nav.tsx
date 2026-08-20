@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   Building2,
+  Inbox,
   CalendarDays,
   FolderOpen,
   LayoutDashboard,
@@ -29,14 +30,22 @@ const SEZIONI = [
   { href: "/dashboard/impostazioni", label: "Impostazioni", icon: Settings },
 ];
 
-export function NavPortale() {
+/** Voce riservata: compare solo a chi ha il ruolo amministratore. */
+const VOCE_LEAD = {
+  href: "/dashboard/lead",
+  label: "Lead",
+  icon: Inbox,
+};
+
+export function NavPortale({ amministratore = false }: { amministratore?: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const cliente = searchParams.get("cliente");
   const conCliente = (href: string) =>
     cliente ? `${href}?cliente=${cliente}` : href;
 
-  const voci = SEZIONI.map((s) => {
+  const elenco = amministratore ? [...SEZIONI, VOCE_LEAD] : SEZIONI;
+  const voci = elenco.map((s) => {
     const attiva =
       s.href === "/dashboard"
         ? pathname === "/dashboard"

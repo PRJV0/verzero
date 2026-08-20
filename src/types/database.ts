@@ -45,7 +45,7 @@ type Profile = {
   /** Ruolo dentro l'organizzazione. */
   role: "owner" | "member";
   /** Profilo di accesso all'ecosistema (SPEC §12.K). */
-  ruolo: "impresa" | "consulente";
+  ruolo: "impresa" | "consulente" | "amministratore";
   /** Quando il wizard di primo accesso è stato visto (o saltato). */
   wizard_visto_at: string | null;
   created_at: string;
@@ -76,7 +76,9 @@ type Order = {
    *  Il vincolo prezzo_coerente a database tiene le due forme esclusive. */
   prezzo_canone: number | null;
   prezzo_una_tantum: number | null;
-  stato: "in_attivazione" | "attivo" | "disdetto";
+  /** "richiesta": modalità pre-lancio, nessun addebito (SPEC §12.B). */
+  stato: "richiesta" | "in_attivazione" | "attivo" | "disdetto";
+  note_interne: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -98,7 +100,7 @@ type ModuleActivation = {
   organization_id: string;
   module: string;
   order_id: string | null;
-  stato: "in_attivazione" | "attivo" | "sospeso" | "disdetto";
+  stato: "richiesto" | "in_attivazione" | "attivo" | "sospeso" | "disdetto";
   activated_at: string | null;
   renews_at: string | null;
   created_at: string;
@@ -117,6 +119,7 @@ type ContactMessage = {
   ip_hash: string | null;
   user_agent: string | null;
   stato: "nuovo" | "in_lavorazione" | "chiuso";
+  note_interne: string | null;
   created_at: string;
 };
 
@@ -172,6 +175,33 @@ type Documento = {
   updated_at: string;
 };
 
+/** Registro eventi: analitica di prima parte, senza cookie. Scritto
+ *  dalla service_role, letto solo dall'amministratore. */
+type Evento = {
+  id: number;
+  nome: string;
+  percorso: string | null;
+  sorgente: string | null;
+  dettagli: Record<string, string>;
+  /** Impronta con pepper, mai l'IP: distingue le sessioni, non le persone. */
+  visitatore: string | null;
+  created_at: string;
+};
+
+/** Lista d'attesa: lead raccolti prima dell'apertura dei pagamenti. */
+type Waitlist = {
+  id: string;
+  email: string;
+  nome: string | null;
+  azienda: string | null;
+  interesse: string | null;
+  stato: "nuovo" | "contattato" | "convertito" | "chiuso";
+  note_interne: string | null;
+  ip_hash: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 type Row<T> = {
   Row: T;
   Insert: Partial<T>;
@@ -192,10 +222,13 @@ export type Database = {
       company_fields: Row<CompanyField>;
       enrichment_runs: Row<EnrichmentRun>;
       documents: Row<Documento>;
+      events: Row<Evento>;
+      waitlist: Row<Waitlist>;
     };
     Views: Record<string, never>;
     Functions: {
       current_org_id: { Args: Record<string, never>; Returns: string };
+      is_admin: { Args: Record<string, never>; Returns: boolean };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

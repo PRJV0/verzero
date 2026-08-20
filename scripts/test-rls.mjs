@@ -535,6 +535,106 @@ async function main() {
       (data ?? []).length === 0,
     );
   }
+  /* ================================================================ */
+  /* RUOLO AMMINISTRATORE: back-office lead.                          */
+  /*                                                                   */
+  /* Qui il rischio è opposto a tutti gli altri: non che un cliente    */
+  /* veda i dati di un altro, ma che veda i dati di TUTTI. Si prova    */
+  /* che il ruolo non sia autoassegnabile e che senza di esso non si   */
+  /* legga nulla.                                                      */
+  /* ================================================================ */
+  {
+    const { error } = await A.client
+      .from("profiles")
+      .update({ ruolo: "amministratore" })
+      .eq("id", A.userId);
+    check(
+      "l'impresa NON si promuove ad amministratore",
+      !!error,
+      error?.code ?? "RIUSCITO",
+    );
+  }
+  {
+    const { data } = await A.client.from("events").select("id").limit(1);
+    check("un'impresa NON legge il registro eventi", (data ?? []).length === 0);
+  }
+  {
+    const { data } = await A.client.from("waitlist").select("id").limit(1);
+    check("un'impresa NON legge la lista d'attesa", (data ?? []).length === 0);
+  }
+  {
+    const { data } = await A.client
+      .from("contact_messages")
+      .select("id")
+      .limit(1);
+    check(
+      "un'impresa NON legge i messaggi di contatto",
+      (data ?? []).length === 0,
+    );
+  }
+  {
+    // L'impresa vede i PROPRI ordini ma non quelli di B: la policy
+    // dell'amministratore non deve aver allargato le maglie a tutti.
+    const { data } = await B.client
+      .from("orders")
+      .select("organization_id");
+    check(
+      "l'impresa B vede solo i propri ordini, non quelli di A",
+      (data ?? []).every((o) => o.organization_id === B.org.id),
+      JSON.stringify((data ?? []).map((o) => o.organization_id)),
+    );
+  }
+  {
+    // Ora si promuove A ad amministratore dal back-office (service_role,
+    // l'unica via) e si verifica che da lì veda tutto.
+    await admin
+      .from("profiles")
+      .update({ ruolo: "amministratore", organization_id: null })
+      .eq("id", A.userId);
+    // Nuova sessione: il ruolo si legge a ogni richiesta.
+    const Admin = createClient(URL_, ANON, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    await Admin.auth.signInWithPassword({
+      email: utenti[0].email,
+      password: PASSWORD,
+    });
+
+    const { data: msg } = await Admin.from("contact_messages").select("id");
+    check("l'amministratore legge i messaggi di contatto", Array.isArray(msg));
+
+    const { data: ord } = await Admin.from("orders").select("organization_id");
+    check(
+      "l'amministratore vede gli ordini di TUTTE le organizzazioni",
+      (ord ?? []).some((o) => o.organization_id === B.org.id),
+      `viste: ${(ord ?? []).length}`,
+    );
+
+    const { data: ev } = await Admin.from("events").select("id").limit(1);
+    check("l'amministratore legge il registro eventi", Array.isArray(ev));
+
+    const { data: wl } = await Admin.from("waitlist").select("id").limit(1);
+    check("l'amministratore legge la lista d'attesa", Array.isArray(wl));
+
+    const { error: eNota } = await Admin.from("contact_messages")
+      .update({ note_interne: "nota di prova" })
+      .eq("id", "00000000-0000-0000-0000-000000000000");
+    check(
+      "l'amministratore può scrivere note interne",
+      !eNota,
+      eNota?.code ?? "",
+    );
+
+    // Anche da amministratore, i documenti di un'impresa restano suoi:
+    // il back-office gestisce i lead, non apre gli archivi dei clienti.
+    const { data: docs } = await Admin.from("documents").select("id");
+    check(
+      "l'amministratore NON accede agli archivi documenti dei clienti",
+      (docs ?? []).length === 0,
+      `visti: ${(docs ?? []).length}`,
+    );
+  }
+
   {
     const { error } = await A.client.storage
       .from("documenti")

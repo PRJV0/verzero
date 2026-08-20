@@ -11,7 +11,7 @@
  * - servizi con produzione iniziale (Manuali ISO, UNI/PdR 125): anno 1 pieno,
  *   dal 2° anno solo mantenimento;
  * - servizi documentali annuali (Carbon, VSME, Percorso, Rating): rinnovo dal
- *   2° anno a −20% ("i tuoi dati sono già nel Motore");
+ *   2° anno a −20% ("i tuoi dati sono già nell'AI Ver0");
  * - il rinnovo è sempre libero: nessun vincolo dopo i primi 12 mesi.
  *
  * Fasce: micro = listino, piccola +20%, media +50%, grande su richiesta.
@@ -49,7 +49,7 @@ const MULTIPLIER: Record<Exclude<Dimensione, "grande">, number> = {
 /** Ciclo di vita del canone dal 2° anno. */
 type Rinnovo =
   | { tipo: "mantenimento"; mensile: number } // produzione iniziale → solo mantenimento
-  | { tipo: "sconto20" }; // documentale annuale → −20%, dati già nel Motore
+  | { tipo: "sconto20" }; // documentale annuale → −20%, dati già nel AI Ver0
 
 /** Listino base fascia micro (§12.Q): canone anno 1 mensile/annuale + rinnovo,
  *  oppure servizio one-shot senza canone (es. supporto all'audit). */
@@ -178,7 +178,7 @@ export function rinnovoLabel(slug: string, dim: Dimensione): string | null {
   if (!p) return null;
   return p.rinnovoTipo === "mantenimento"
     ? `dal 2° anno: ${eur(p.rinnovoMensile)} €/mese`
-    : `dal 2° anno: ${eur(p.rinnovoMensile)} €/mese (−20% al rinnovo: i tuoi dati sono già nel Motore)`;
+    : `dal 2° anno: ${eur(p.rinnovoMensile)} €/mese (−20% al rinnovo: i tuoi dati sono già nell'AI Ver0)`;
 }
 
 /** Nota sempre presente accanto al ciclo di vita (§12.Q.c). */

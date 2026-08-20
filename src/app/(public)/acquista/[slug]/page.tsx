@@ -22,9 +22,9 @@ export async function generateMetadata({
   // non portano traffico organico e diluiscono la scansione. Restano
   // "follow" perché i link interni verso il catalogo hanno valore.
   const fuoriIndice = { index: false, follow: true } as const;
-  if (!s) return { title: "Acquisto", robots: fuoriIndice };
+  if (!s) return { title: "Attivazione", robots: fuoriIndice };
   return {
-    title: `Acquista ${s.name}`,
+    title: `Attiva ${s.name}`,
     description: `Attiva ${s.name} in pochi passaggi: riepilogo, registrazione, consensi e pagamento. Prezzi in chiaro per fascia dimensionale.`,
     robots: fuoriIndice,
   };

@@ -30,13 +30,18 @@ export default async function PortaleLayout({
 
   let intestazione = "Il tuo ecosistema";
   let sottotitolo: string | null = null;
+  let amministratore = false;
   if (user) {
     const { data: profilo } = await supabase
       .from("profiles")
       .select("ruolo, organization_id")
       .eq("id", user.id)
       .maybeSingle();
-    if (profilo?.ruolo === "consulente") {
+    amministratore = profilo?.ruolo === "amministratore";
+    if (amministratore) {
+      intestazione = "Back-office Ver0";
+      sottotitolo = user.email ?? null;
+    } else if (profilo?.ruolo === "consulente") {
       intestazione = "Consulente partner";
       sottotitolo = user.email ?? null;
     } else if (profilo?.organization_id) {
@@ -95,7 +100,7 @@ export default async function PortaleLayout({
       <div className="mx-auto flex max-w-6xl gap-8 px-5 pb-24 pt-8 md:pb-12">
         {/* useSearchParams nella nav richiede un confine di Suspense */}
         <Suspense fallback={<div className="hidden w-56 shrink-0 md:block" />}>
-          <NavPortale />
+          <NavPortale amministratore={amministratore} />
         </Suspense>
         <div className="min-w-0 flex-1">{children}</div>
       </div>

@@ -37,6 +37,20 @@ export const publicEnv = {
   get siteUrl() {
     return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   },
+  /**
+   * MODALITÀ PRE-LANCIO (SPEC §12.B). A false — il valore predefinito —
+   * il funnel non vende: raccoglie RICHIESTE DI ATTIVAZIONE. Restano
+   * prezzi, dimensione e formula, perché qualificano il lead; sparisce
+   * la scelta del metodo di pagamento, perché prometterebbe un addebito
+   * che non avviene.
+   *
+   * L'intero flusso di pagamento resta nel codice dietro questo
+   * interruttore: si riaccende mettendo la variabile a "true", senza
+   * riscrivere nulla.
+   */
+  get pagamentiAttivi() {
+    return process.env.NEXT_PUBLIC_PAGAMENTI_ATTIVI === "true";
+  },
 };
 
 /**

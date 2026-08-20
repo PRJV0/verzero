@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 
 import { publicEnv } from "@/lib/env";
 import { SITO } from "@/lib/seo";
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
     template: `%s — ${SITO.nome}`,
   },
   description:
-    "Consulenza digitale col Motore Ver0: sostenibilità, sistemi di gestione, consulenti veri. Percorsi verificabili e prezzi in chiaro, per imprese di ogni dimensione.",
+    "Consulenza digitale con l'AI Ver0: sostenibilità, sistemi di gestione, consulenti veri. Percorsi verificabili e prezzi in chiaro, per imprese di ogni dimensione.",
   applicationName: SITO.nome,
   authors: [{ name: SITO.nomeLegale }],
   creator: SITO.nomeLegale,
@@ -48,6 +49,18 @@ export const metadata: Metadata = {
     images: [{ url: SITO.ogImage, width: 1200, height: 630, alt: SITO.nome }],
   },
   twitter: { card: "summary_large_image", images: [SITO.ogImage] },
+  /**
+   * Verifica della proprietà del dominio per i motori di ricerca. I
+   * codici arrivano da variabili d'ambiente: sono pubblici (finiscono in
+   * un meta tag), ma tenerli fuori dal codice permette di cambiarli
+   * senza un rilascio. Se mancano, Next non emette il tag.
+   */
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    other: process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION
+      ? { "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION }
+      : {},
+  },
   robots: {
     index: true,
     follow: true,
@@ -66,7 +79,13 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="it" className={`${inter.variable} ${fraunces.variable}`}>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        {children}
+        {/* Traffico e sorgenti: nessun cookie, quindi fuori dal consenso.
+            Gli eventi di business vivono invece in casa nostra, accanto
+            agli ordini e ai lead — vedi src/lib/eventi.ts. */}
+        <Analytics />
+      </body>
     </html>
   );
 }

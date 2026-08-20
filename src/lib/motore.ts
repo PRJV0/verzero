@@ -35,7 +35,7 @@ export const MOTORE_FASI: FaseMotore[] = [
   {
     icon: ScanLine,
     titolo: "Cosa leggiamo",
-    desc: "Il Motore estrae i campi che servono — anche da una foto della bolletta — li normalizza e li incrocia con le banche dati ufficiali. Ogni valore resta etichettato per qualità: misurato, da documento, stimato.",
+    desc: "L'AI Ver0 estrae i campi che servono — anche da una foto della bolletta — li normalizza e li incrocia con le banche dati ufficiali. Ogni valore resta etichettato per qualità: misurato, da documento, stimato.",
     entra: "I documenti caricati e le fonti camerali ed energetiche",
     esce: "Campi strutturati, tracciabili al documento di origine",
     norma: "Registro Imprese · fattori di emissione ISPRA e AIB",
@@ -173,7 +173,7 @@ export const FASCICOLI: FascicoloPercorso[] = [
 
 /** La chiusa del fascicolo: resta identica in ogni percorso. */
 export const FASCICOLO_CHIUSA =
-  "Il Motore ti dice esattamente cosa manca, prima che diventi un problema.";
+  "Ti diciamo esattamente cosa manca, prima che diventi un problema.";
 
 /** Fase 2 — i campi estratti da ciascun documento, con valori d'esempio. */
 export const CAMPI_ESTRATTI: {
@@ -252,4 +252,4 @@ export const VERIFICA_UMANA = {
  *  VIETATE le quantificazioni di tempo o impegno («un'ora del tuo tempo»):
  *  l'impegno varia per percorso e impresa, ogni numero promesso è un ostaggio. */
 export const ZERO_EFFORT_DEFINIZIONE =
-  "Zero effort, sul serio: bastano i documenti che hai già in azienda. Il Motore Ver0 li trasforma in qualifiche, un professionista le valida.";
+  "Zero effort, sul serio: bastano i documenti che hai già in azienda. L'AI Ver0 li trasforma in qualifiche, un professionista le valida.";

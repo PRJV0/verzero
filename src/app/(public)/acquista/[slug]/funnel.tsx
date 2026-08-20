@@ -18,9 +18,12 @@ import {
   Info,
   Landmark,
   Mail,
+  ShieldCheck,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { publicEnv } from "@/lib/env";
+import { EVENTI, PASSI_FUNNEL, traccia } from "@/lib/eventi";
 import {
   DIMENSIONI,
   DIMENSIONE_LABEL,
@@ -28,6 +31,7 @@ import {
   FORMULE,
   isUnaTantum,
   prezzoDettaglio,
+  prezzoLabel,
   prezzoUnaTantum,
   rinnovoLabel,
   RINNOVO_LIBERO,
@@ -90,7 +94,14 @@ const TAGLI: Record<string, { slug: string; label: string }[]> = {
   ],
 };
 
-const STEP_LABELS = ["Riepilogo", "Registrazione", "Consensi", "Pagamento"];
+/** L'ultimo passo cambia nome con la modalità: pre-lancio si richiede,
+ *  a pagamenti accesi si paga (SPEC §12.B). */
+const STEP_LABELS = [
+  "Riepilogo",
+  "Registrazione",
+  "Consensi",
+  publicEnv.pagamentiAttivi ? "Pagamento" : "Richiesta",
+];
 
 type Azienda = {
   ragioneSociale: string;
@@ -189,11 +200,22 @@ export function FunnelAcquisto({
 
   const goTo = useCallback(
     (step: FunnelState["step"]) => {
-      setState((s) => ({ ...s, step }));
+      setState((s) => {
+        // Un passo COMPLETATO è quello che si lascia, non quello che si
+        // apre: registriamo l'avanzamento solo andando avanti, altrimenti
+        // un «indietro» falserebbe la scala dell'abbandono.
+        if (step > s.step) {
+          traccia(EVENTI.FUNNEL_PASSO, {
+            passo: PASSI_FUNNEL[s.step - 1] ?? String(s.step),
+            servizio: slug,
+          });
+        }
+        return { ...s, step };
+      });
       // Focus sull'intestazione del nuovo step (accessibilità).
       requestAnimationFrame(() => stepHeadingRef.current?.focus());
     },
-    [],
+    [slug],
   );
 
   const prezzo = prezzoDettaglio(slug, state.dimensione);
@@ -386,6 +408,7 @@ export function FunnelAcquisto({
               headingRef={stepHeadingRef}
               nome={nome}
               short={short}
+              slug={slug}
               state={state}
             />
           )}
@@ -1233,7 +1256,17 @@ function StepPagamento({
     setErrore(null);
     const err = await completa();
     setInvio(false);
-    if (err) setErrore(err);
+    if (err) {
+      setErrore(err);
+      return;
+    }
+    // L'evento che chiude l'imbuto: da qui si misura quanti, di quelli
+    // che hanno visto il prezzo, arrivano davvero a chiedere.
+    traccia(EVENTI.FUNNEL_COMPLETATO, {
+      servizio: slug,
+      dimensione: state.dimensione,
+      formula: state.formula,
+    });
   }
 
   return (
@@ -1244,8 +1277,16 @@ function StepPagamento({
         tabIndex={-1}
         className="font-display text-2xl text-ink outline-none"
       >
-        Pagamento
+        {publicEnv.pagamentiAttivi ? "Pagamento" : "Richiedi l'attivazione"}
       </h2>
+
+      {!publicEnv.pagamentiAttivi && (
+        <p className="mt-2 max-w-md text-sm leading-relaxed text-gray-warm">
+          Confermi la configurazione e ci arriva la tua richiesta. Prezzi e
+          formula servono a capire di cosa hai bisogno: non stai comprando
+          nulla adesso.
+        </p>
+      )}
 
       {unaTantum !== null ? (
         <p className="mt-5 max-w-md rounded-lg border border-line bg-paper px-4 py-3 text-sm text-gray-warm">
@@ -1303,56 +1344,75 @@ function StepPagamento({
         </fieldset>
       )}
 
+      {/* IL METODO DI PAGAMENTO ESISTE ANCORA, dietro l'interruttore: in
+          pre-lancio chiederlo prometterebbe un addebito che non avviene,
+          ma il giorno in cui i pagamenti si accendono torna com'era,
+          senza riscrivere nulla (SPEC §12.B). */}
+      {publicEnv.pagamentiAttivi ? (
       <fieldset className="mt-6 max-w-md">
-        <legend className="text-sm font-medium text-ink">
-          Metodo di pagamento
-        </legend>
-        <div className="mt-2 space-y-1.5">
-          {(
-            [
-              { id: "carta", label: "Carta di credito o debito", icon: CreditCard },
-              { id: "sepa", label: "Addebito SEPA / bonifico", icon: Landmark },
-            ] as const
-          ).map((m) => {
-            const selected = metodo === m.id;
-            const Icon = m.icon;
-            return (
-              <button
-                key={m.id}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                onClick={() => setMetodo(m.id)}
-                className={
-                  "flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-all " +
-                  (selected
-                    ? "border-pine bg-moss shadow-soft"
-                    : "border-line bg-white hover:border-pine/40")
-                }
-              >
-                <Icon size={17} className="shrink-0 text-pine" />
-                <span
+          <legend className="text-sm font-medium text-ink">
+            Metodo di pagamento
+          </legend>
+          <div className="mt-2 space-y-1.5">
+            {(
+              [
+                { id: "carta", label: "Carta di credito o debito", icon: CreditCard },
+                { id: "sepa", label: "Addebito SEPA / bonifico", icon: Landmark },
+              ] as const
+            ).map((m) => {
+              const selected = metodo === m.id;
+              const Icon = m.icon;
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => setMetodo(m.id)}
                   className={
-                    "text-sm " +
-                    (selected ? "font-semibold text-pine-dark" : "text-ink")
+                    "flex w-full items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-all " +
+                    (selected
+                      ? "border-pine bg-moss shadow-soft"
+                      : "border-line bg-white hover:border-pine/40")
                   }
                 >
-                  {m.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  <Icon size={17} className="shrink-0 text-pine" />
+                  <span
+                    className={
+                      "text-sm " +
+                      (selected ? "font-semibold text-pine-dark" : "text-ink")
+                    }
+                  >
+                    {m.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
+          <p
+            role="status"
+            className="mt-3 flex items-start gap-2 rounded-lg border border-amber-ink/30 bg-amber-soft px-3 py-2.5 text-sm text-amber-ink"
+          >
+            <Info size={16} className="mt-0.5 shrink-0" />
+            I pagamenti si attivano a breve: completa l&apos;ordine senza alcun
+            addebito e ti ricontattiamo noi per l&apos;attivazione.
+          </p>
+        </fieldset>
+      ) : (
         <p
           role="status"
-          className="mt-3 flex items-start gap-2 rounded-lg border border-amber-ink/30 bg-amber-soft px-3 py-2.5 text-sm text-amber-ink"
+          className="mt-6 flex max-w-md items-start gap-2.5 rounded-xl border-2 border-pine/25 bg-moss/50 px-4 py-3.5 text-sm leading-relaxed text-pine-dark"
         >
-          <Info size={16} className="mt-0.5 shrink-0" />
-          I pagamenti si attivano a breve: completa l&apos;ordine senza alcun
-          addebito e ti ricontattiamo noi per l&apos;attivazione.
+          <ShieldCheck size={18} className="mt-0.5 shrink-0 text-pine" />
+          <span>
+            <strong className="font-semibold">Nessun addebito.</strong>{" "}
+            Non ti
+            verrà addebitato nulla fino all&apos;inizio effettivo delle
+            attività, che concorderemo insieme.
+          </span>
         </p>
-      </fieldset>
+      )}
 
       {errore && (
         <p
@@ -1377,7 +1437,11 @@ function StepPagamento({
           disabled={invio}
           className="inline-flex items-center gap-1.5 rounded-lg bg-pine px-5 py-2.5 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-soft disabled:opacity-60"
         >
-          {invio ? "Salvataggio…" : "Completa l'ordine (senza pagamento)"}
+          {invio
+            ? "Un istante…"
+            : publicEnv.pagamentiAttivi
+              ? "Completa l'ordine"
+              : "Richiedi l'attivazione"}
           {!invio && <ArrowRight size={15} />}
         </button>
       </div>
@@ -1393,11 +1457,13 @@ function StepConferma({
   headingRef,
   nome,
   short,
+  slug,
   state,
 }: {
   headingRef: React.RefObject<HTMLHeadingElement | null>;
   nome: string;
   short: string;
+  slug: string;
   state: FunnelState;
 }) {
   return (
@@ -1409,21 +1475,80 @@ function StepConferma({
         tabIndex={-1}
         className="mt-4 font-display text-3xl text-ink outline-none md:text-4xl"
       >
-        Ordine confermato
+        {publicEnv.pagamentiAttivi
+          ? "Ordine confermato"
+          : "Grazie: la tua richiesta è registrata"}
       </h2>
       <p className="mt-3 text-sm text-gray-warm">
-        <strong className="font-medium text-ink">{nome}</strong> — {short}
+        {publicEnv.pagamentiAttivi
+          ? "Ecco cosa hai attivato:"
+          : "Grazie dell'interesse. Ecco la configurazione che hai scelto, e che abbiamo registrato:"}
       </p>
-      <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-soft px-3.5 py-1.5 text-xs font-medium text-amber-ink">
-        Stato: in attivazione
-      </p>
-      <p className="mx-auto mt-4 max-w-md text-sm text-gray-warm">
-        Nessun addebito è stato effettuato: ti ricontattiamo per l&apos;attivazione
-        del pagamento.{" "}
-        {state.emailDaConfermare
-          ? "Il tuo ecosistema è già pronto e ti aspetta: manca solo la conferma qui sotto."
-          : "Intanto il tuo ecosistema è già pronto."}
-      </p>
+
+      {/* IL RIEPILOGO DELLA CONFIGURAZIONE: chi ha appena lasciato la
+          propria partita IVA deve rivedere per esteso cosa ha chiesto. */}
+      <dl className="mx-auto mt-4 max-w-md space-y-2 rounded-xl border border-line bg-white p-5 text-left text-sm">
+        <div className="flex flex-wrap justify-between gap-x-4 gap-y-1">
+          <dt className="text-gray-warm">Percorso</dt>
+          <dd className="text-right font-semibold text-ink">{nome}</dd>
+        </div>
+        <div className="flex flex-wrap justify-between gap-x-4 gap-y-1">
+          <dt className="text-gray-warm">Dimensione</dt>
+          <dd className="font-semibold text-ink">
+            {DIMENSIONE_LABEL[state.dimensione]}
+          </dd>
+        </div>
+        {prezzoLabel(slug, state.dimensione, state.formula) && (
+          <>
+            <div className="flex flex-wrap justify-between gap-x-4 gap-y-1">
+              <dt className="text-gray-warm">Formula</dt>
+              <dd className="font-semibold text-ink">
+                {isUnaTantum(slug)
+                  ? "Una tantum"
+                  : state.formula === "mensile"
+                    ? "Canone mensile"
+                    : "Unica soluzione annuale"}
+              </dd>
+            </div>
+            <div className="flex flex-wrap justify-between gap-x-4 gap-y-1 border-t border-line pt-2">
+              <dt className="text-gray-warm">Prezzo indicato</dt>
+              <dd className="font-semibold tabular-nums text-pine">
+                {prezzoLabel(slug, state.dimensione, state.formula)}
+              </dd>
+            </div>
+          </>
+        )}
+        <p className="border-t border-line pt-2 text-xs leading-relaxed text-gray-light">
+          {short}
+        </p>
+      </dl>
+
+      {!publicEnv.pagamentiAttivi && (
+        <>
+          {/* LA RASSICURAZIONE, in evidenza: è la cosa che chi legge sta
+              cercando, e nessuna data promessa — «ti contatteremo» senza
+              un «entro N giorni» che non possiamo garantire. */}
+          <p className="mx-auto mt-4 flex max-w-md items-start gap-2.5 rounded-xl border-2 border-pine/25 bg-moss/50 px-4 py-3.5 text-left text-sm leading-relaxed text-pine-dark">
+            <ShieldCheck size={18} className="mt-0.5 shrink-0 text-pine" />
+            <span>
+              <strong className="font-semibold">Nessun addebito.</strong>{" "}
+            Non ti
+              verrà addebitato nulla fino all&apos;inizio effettivo delle
+              attività, che concorderemo insieme.
+            </span>
+          </p>
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-gray-warm">
+            Ti contatteremo per capire da dove partire e avviare il percorso
+            insieme. Te ne abbiamo mandato copia via email.
+          </p>
+        </>
+      )}
+
+      {publicEnv.pagamentiAttivi && (
+        <p className="mx-auto mt-4 max-w-md text-sm text-gray-warm">
+          Il tuo ecosistema è già pronto.
+        </p>
+      )}
       {/* Con la verifica dell'indirizzo attiva la registrazione NON apre una
           sessione: mandare qui al portale significherebbe farsi rimbalzare
           al login senza spiegazioni. Il passo successivo è l'email. */}

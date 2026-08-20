@@ -14,6 +14,12 @@ import {
 } from "@/lib/pricing";
 
 import { arricchiciEBasta } from "@/lib/arricchimento/orchestratore";
+import { publicEnv } from "@/lib/env";
+import {
+  confermaRichiestaAlCliente,
+  notificaRichiesta,
+} from "@/lib/notifiche";
+import { DIMENSIONE_LABEL, prezzoLabel } from "@/lib/pricing";
 
 import { DOC_VERSION, risolviUtente } from "../_lib";
 
@@ -164,7 +170,7 @@ export async function POST(request: NextRequest) {
     .select("id")
     .eq("organization_id", organizationId)
     .eq("servizio_slug", servizio.slug)
-    .eq("stato", "in_attivazione")
+    .in("stato", ["richiesta", "in_attivazione"])
     .maybeSingle();
   if (giaPresente) {
     return NextResponse.json({ orderId: giaPresente.id, giaPresente: true });
@@ -188,7 +194,9 @@ export async function POST(request: NextRequest) {
           ? prezzo!.mensile
           : prezzo!.annuale,
       prezzo_una_tantum: unaTantum,
-      stato: "in_attivazione",
+      // Pre-lancio: è una RICHIESTA, non un ordine. Il vocabolario dei
+      // dati deve dire la stessa cosa dell'interfaccia (SPEC §12.B).
+      stato: publicEnv.pagamentiAttivi ? "in_attivazione" : "richiesta",
     })
     .select("id")
     .single();
@@ -220,7 +228,7 @@ export async function POST(request: NextRequest) {
     organization_id: organizationId,
     module: servizio.slug,
     order_id: ordine.id,
-    stato: "in_attivazione",
+    stato: publicEnv.pagamentiAttivi ? "in_attivazione" : "richiesto",
   });
 
   if (consErr || actErr) {
@@ -245,6 +253,47 @@ export async function POST(request: NextRequest) {
   } catch (e) {
     console.error(
       `[arricchimento] avvio all'ordine non riuscito: ${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
+
+  // NOTIFICHE (SPEC §12.B): il fondatore deve sapere subito che c'è una
+  // richiesta, e chi l'ha fatta deve avere per iscritto che non pagherà
+  // nulla finché non si concorda l'avvio. Nessuna delle due può far
+  // fallire la richiesta, che è già registrata.
+  try {
+    const { data: org } = await admin
+      .from("organizations")
+      .select("ragione_sociale, billing_email")
+      .eq("id", organizationId)
+      .maybeSingle();
+
+    const etichettaPrezzo =
+      prezzoLabel(servizio.slug, dimensione, oneShot ? "mensile" : formula!) ??
+      "su richiesta";
+    const comune = {
+      ragioneSociale: org?.ragione_sociale ?? "Impresa",
+      servizio: `${servizio.name}${servizio.taglio ? ` — ${servizio.taglio}` : ""}`,
+      dimensione: DIMENSIONE_LABEL[dimensione],
+      formula: oneShot
+        ? "una tantum"
+        : formula === "mensile"
+          ? "canone mensile"
+          : "unica soluzione annuale",
+      prezzo: etichettaPrezzo,
+    };
+
+    await notificaRichiesta({
+      ...comune,
+      stato: publicEnv.pagamentiAttivi ? "in_attivazione" : "richiesta",
+    });
+
+    const destinatario = org?.billing_email ?? utente.email;
+    if (destinatario && !publicEnv.pagamentiAttivi) {
+      await confermaRichiestaAlCliente({ a: destinatario, ...comune });
+    }
+  } catch (e) {
+    console.error(
+      `[notifiche] invio non riuscito: ${e instanceof Error ? e.message : String(e)}`,
     );
   }
 

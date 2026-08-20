@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validaContatto, type DatiContatto } from "@/lib/contatti";
-import { NOTIFICHE_INTERNE, inviaEmail } from "@/lib/email";
+import { notificaContatto } from "@/lib/notifiche";
 
 /**
  * Modulo di contatto pubblico (/contatti).
@@ -124,20 +124,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Notifica interna: il messaggio è già salvo, questa è comodità. Se
-  // Resend non è configurato o risponde male, non cambia nulla per chi
-  // ha scritto — per questo l'esito non viene nemmeno controllato.
-  await inviaEmail({
-    a: NOTIFICHE_INTERNE,
-    oggetto: `Nuovo contatto dal sito — ${body.oggetto}`,
-    rispondiA: emailMittente,
-    testo: [
-      `Da: ${nome}${azienda ? ` (${azienda})` : ""}`,
-      `Email: ${emailMittente}`,
-      `Oggetto: ${body.oggetto}`,
-      "",
-      messaggio,
-    ].join("\n"),
+  // Notifica interna: il messaggio è già salvo, questa è la campana che
+  // impedisce a un lead di restare in tabella senza che nessuno lo veda.
+  // Se Resend non risponde non cambia nulla per chi ha scritto.
+  await notificaContatto({
+    nome,
+    azienda: azienda === "" ? null : azienda,
+    oggetto: String(body.oggetto),
+    email: emailMittente,
   });
 
   return NextResponse.json({ ok: true });

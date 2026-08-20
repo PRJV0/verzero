@@ -80,7 +80,7 @@ export default async function DocumentiPage({
 
   const attiviDocs = documentiAttivi(
     (moduli ?? [])
-      .filter((m) => ["attivo", "in_attivazione"].includes(m.stato))
+      .filter((m) => ["richiesto", "attivo", "in_attivazione"].includes(m.stato))
       .map((m) => m.module),
   );
   const richiesti = tipiRichiesti(attiviDocs);

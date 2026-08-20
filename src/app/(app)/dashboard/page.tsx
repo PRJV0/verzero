@@ -103,6 +103,9 @@ export default async function PanoramicaPage({
   /** La prossima azione, onesta: dipende dallo stato reale del modulo. */
   const prossimaAzione = (stato: string) => {
     switch (stato) {
+      case "richiesta":
+      case "richiesto":
+        return "Abbiamo la tua richiesta: ti contattiamo noi per concordare l'avvio. Intanto puoi già portare i documenti che hai — così quando partiamo si parte davvero.";
       case "in_attivazione":
         return "Ti ricontattiamo noi per l'attivazione del pagamento: nessun addebito è stato fatto.";
       case "sospeso":

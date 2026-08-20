@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 
 import { JsonLd } from "@/components/json-ld";
+import { TracciaApertura } from "@/components/traccia-evento";
+import { EVENTI } from "@/lib/eventi";
 import {
   RICHIAMO_SUPPORTO_AUDIT,
   SERVIZI,
@@ -74,6 +76,13 @@ export default async function ServizioPage({
   const unaTantum = prezzoUnaTantum(s.slug, "micro");
 
   return (
+    <>
+      {/* Primo segnale d'interesse reale: chi apre una scheda servizio
+          sta valutando, non passando (src/lib/eventi.ts). */}
+      <TracciaApertura
+        evento={EVENTI.SERVIZIO_APERTO}
+        dettagli={{ servizio: s.slug }}
+      />
     <main className="mx-auto max-w-3xl px-4 pb-12 pt-6">
       {/* Dati strutturati: il servizio con la sua offerta in fascia micro,
           la stessa esposta in pagina come prezzo di partenza. */}
@@ -320,5 +329,6 @@ export default async function ServizioPage({
         </section>
       )}
     </main>
+    </>
   );
 }

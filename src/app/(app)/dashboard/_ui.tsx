@@ -11,12 +11,16 @@ import type { ContestoPortale } from "./_contesto";
 
 /** Stati condivisi di ordini e moduli. */
 export const STATO_BADGE: Record<string, string> = {
+  richiesta: "bg-moss text-pine",
+  richiesto: "bg-moss text-pine",
   in_attivazione: "bg-amber-soft text-amber-ink",
   attivo: "bg-moss text-pine",
   sospeso: "bg-paper text-gray-warm",
   disdetto: "bg-paper text-gray-light",
 };
 export const STATO_LABEL: Record<string, string> = {
+  richiesta: "In attesa di avvio",
+  richiesto: "In attesa di avvio",
   in_attivazione: "In attivazione",
   attivo: "Attivo",
   sospeso: "Sospeso",
@@ -25,6 +29,10 @@ export const STATO_LABEL: Record<string, string> = {
 
 /** Lo stato spiegato in una frase (§12.F: mai codici, per non esperti). */
 export const STATO_FRASE: Record<string, string> = {
+  richiesta:
+    "Richiesta registrata: ti contatteremo per concordare l'avvio. Nessun addebito fino all'inizio effettivo delle attività.",
+  richiesto:
+    "Richiesta registrata: ti contatteremo per concordare l'avvio. Nessun addebito fino all'inizio effettivo delle attività.",
   in_attivazione:
     "Ordine ricevuto: stiamo attivando il percorso e nessun addebito è ancora partito.",
   attivo: "Il percorso è attivo: ci stiamo lavorando.",

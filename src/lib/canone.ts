@@ -25,8 +25,8 @@ export const CANONE_INCLUDE: BeneficioCanone[] = [
   {
     icon: RefreshCw,
     title: "Il tuo documento non invecchia mai",
-    desc: "Quando una norma cambia o ne arriva una nuova, il Motore Ver0 segnala l'impatto e aggiorna i documenti interessati — con verifica umana dove prevista.",
-    note: "— Motore Ver0",
+    desc: "Quando una norma cambia o ne arriva una nuova, l'AI Ver0 segnala l'impatto e aggiorna i documenti interessati — con verifica umana dove prevista.",
+    note: "— AI Ver0",
   },
   {
     icon: Landmark,

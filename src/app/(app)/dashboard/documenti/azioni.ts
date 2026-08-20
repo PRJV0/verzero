@@ -77,7 +77,7 @@ export async function registraDocumento(dati: {
     .from("module_activations")
     .select("module")
     .eq("organization_id", organizationId)
-    .in("stato", ["attivo", "in_attivazione"]);
+    .in("stato", ["richiesto", "attivo", "in_attivazione"]);
   const attivi = documentiAttivi((moduli ?? []).map((m) => m.module));
 
   const { tipo } = riconosciDaNome(dati.nomeFile);
@@ -139,7 +139,7 @@ export async function correggiTipoDocumento(id: string, chiaveTipo: string) {
     .from("module_activations")
     .select("module")
     .eq("organization_id", profilo.organization_id)
-    .in("stato", ["attivo", "in_attivazione"]);
+    .in("stato", ["richiesto", "attivo", "in_attivazione"]);
   const attivi = documentiAttivi((moduli ?? []).map((m) => m.module));
 
   await supabase

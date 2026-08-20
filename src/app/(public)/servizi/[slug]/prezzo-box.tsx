@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+
+import { publicEnv } from "@/lib/env";
+import { EVENTI, traccia } from "@/lib/eventi";
 import { ArrowRight, Check, Mail } from "lucide-react";
 
 import {
@@ -104,9 +107,15 @@ export function PrezzoBox({ slug }: { slug: string }) {
           </p>
           <Link
             href={`/acquista/${slug}?dimensione=${dim}`}
+            onClick={() =>
+              traccia(EVENTI.ATTIVA_CLICK, { servizio: slug, dimensione: dim })
+            }
             className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg bg-pine px-4 py-2.5 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
           >
-            Procedi all&apos;acquisto <ArrowRight size={15} />
+            {publicEnv.pagamentiAttivi
+              ? "Procedi all'acquisto"
+              : "Richiedi l'attivazione"}{" "}
+            <ArrowRight size={15} />
           </Link>
         </div>
       ) : p ? (
@@ -140,9 +149,15 @@ export function PrezzoBox({ slug }: { slug: string }) {
           </p>
           <Link
             href={`/acquista/${slug}?dimensione=${dim}`}
+            onClick={() =>
+              traccia(EVENTI.ATTIVA_CLICK, { servizio: slug, dimensione: dim })
+            }
             className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg bg-pine px-4 py-2.5 text-sm font-medium text-white transition-all hover:-translate-y-0.5 hover:shadow-soft"
           >
-            Procedi all&apos;acquisto <ArrowRight size={15} />
+            {publicEnv.pagamentiAttivi
+              ? "Procedi all'acquisto"
+              : "Richiedi l'attivazione"}{" "}
+            <ArrowRight size={15} />
           </Link>
         </div>
       ) : (

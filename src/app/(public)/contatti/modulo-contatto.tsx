@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, Check, CircleAlert } from "lucide-react";
 
+import { EVENTI, traccia } from "@/lib/eventi";
+
 import {
   LIMITI,
   OGGETTI,
@@ -91,6 +93,7 @@ export function ModuloContatto() {
         setErroreGenerale(esito.error ?? "Invio non riuscito, riprova.");
         return;
       }
+      traccia(EVENTI.CONTATTO_INVIATO, { oggetto: dati.oggetto });
       setInviato(true);
     } catch {
       setErroreGenerale(

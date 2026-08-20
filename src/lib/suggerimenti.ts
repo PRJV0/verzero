@@ -93,7 +93,7 @@ const REGOLE: Regola[] = [
     slug: "carbon-footprint-scope-1-2",
     se: (a) => haVsme(a) && !haCarbon(a),
     motivo:
-      "Anagrafica, bollette e dati economici del tuo bilancio sono già nel Motore.",
+      "Anagrafica, bollette e dati economici del tuo bilancio sono già nel tuo ecosistema.",
     effort: ["registri o fatture dei carburanti dell'anno"],
   },
   {
