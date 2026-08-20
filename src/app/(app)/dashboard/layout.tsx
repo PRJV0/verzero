@@ -38,7 +38,10 @@ export default async function PortaleLayout({
       .eq("id", user.id)
       .maybeSingle();
     amministratore = profilo?.ruolo === "amministratore";
-    if (amministratore) {
+    // Un amministratore può avere anche una PROPRIA impresa: in quel caso
+    // il resto del portale gli mostra quella, e la barra deve dire la
+    // stessa cosa — altrimenti l'intestazione contraddice la pagina.
+    if (amministratore && !profilo?.organization_id) {
       intestazione = "Back-office Ver0";
       sottotitolo = user.email ?? null;
     } else if (profilo?.ruolo === "consulente") {
