@@ -42,6 +42,18 @@ Vale per ogni pagina nuova e per ogni pagina modificata. Le utilità stanno in
   `@media (prefers-reduced-motion: no-preference)` — senza quella
   protezione un'animazione diventa contenuto mancante. Si animano solo
   `opacity` e `transform`. Dettagli e criteri in `SPEC.md` §12.X.
+- **Dati nelle pagine pubbliche**: nelle vetrine, nelle infografiche e in
+  ogni grafica del sito pubblico si usano SOLO imprese dichiaratamente
+  inventate (oggi «Officina Lombardi S.r.l.») con partita IVA e valori
+  plausibili ma fittizi, e la parola «esempio» visibile accanto. Mai il
+  nome di un'azienda reale — nemmeno come segnaposto, nemmeno se
+  sembra innocuo — e mai un dato che venga dal database: le pagine
+  pubbliche non leggono `organizations`, `company_fields`, `documents`
+  né qualunque altra tabella di clienti. Un nome vero in una vetrina è
+  un dato personale pubblicato senza base giuridica. UNICA ECCEZIONE:
+  `/verifica/[codice]`, dove mostrare l'impresa È il servizio — chi
+  espone la targa ha chiesto di poter essere controllato, e lì si
+  mostra solo ciò che il Sigillo dichiara.
 - **Prezzi**: fonte unica in `src/lib/pricing.ts`. Nessun prezzo scritto a mano
   nelle pagine, mai.
 - **Catalogo**: fonte unica in `src/lib/catalog.ts`; aggiungere un servizio lì

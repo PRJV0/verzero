@@ -177,17 +177,24 @@ export const ONDA_CONTENUTA: ConfigOnda = {
  * non può mai competere con ciò che deve far leggere.
  */
 export const PRESET = {
-  /** Sezione del Motore, fondo scuro: carattere più tecnico e nitido. */
+  /**
+   * Sezione del Motore, fondo scuro: la stessa luce della soglia, più
+   * contenuta. Il ritmo della pagina diventa chiaro/scuro/chiaro, e
+   * l'apertura smette di essere un episodio isolato.
+   */
   tecnica: {
     ...ONDA_DECISA,
-    densita: 0.85,
-    opacita: 0.3,
+    densita: 0.8,
+    opacita: 0.36,
     velocita: 1.15,
-    ampiezza: 0.75,
-    raggio: 0.85,
+    ampiezza: 0.8,
+    raggio: 0.9,
     palette: "scura" as const,
     posizione: 0.5,
-    primoPiano: 0.04,
+    primoPiano: 0.05,
+    scie: 0.14,
+    fondo: FONDO_SOGLIA,
+    additivo: true,
   },
   /** Chi siamo: presenza pacata dietro un testo che si legge. */
   pacata: {
@@ -212,17 +219,20 @@ export const PRESET = {
     posizione: 0.5,
     primoPiano: 0.02,
   },
-  /** La stessa, per la fascia scura del Sigillo. */
+  /** La fascia del Sigillo: luminosa come le altre scure, ma più quieta. */
   tenueScura: {
     ...ONDA_DECISA,
-    densita: 0.5,
-    opacita: 0.22,
+    densita: 0.55,
+    opacita: 0.32,
     velocita: 0.7,
     ampiezza: 0.7,
-    raggio: 0.8,
+    raggio: 0.85,
     palette: "scura" as const,
     posizione: 0.5,
-    primoPiano: 0.02,
+    primoPiano: 0.04,
+    scie: 0.12,
+    fondo: FONDO_SOGLIA,
+    additivo: true,
   },
 } satisfies Record<string, ConfigOnda>;
 

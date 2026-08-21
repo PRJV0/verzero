@@ -1,141 +1,283 @@
-import { Check, FileSpreadsheet, FileText, Receipt } from "lucide-react";
+import {
+  Building2,
+  Database,
+  FileCheck2,
+  FileText,
+  Globe,
+  Layers,
+  ScanLine,
+  ShieldCheck,
+} from "lucide-react";
 
 /**
- * LA SCENA MADRE (brief §3.2): documento reale → campi che si accendono
- * uno a uno → documento conforme.
+ * IL SISTEMA, non un caso.
  *
- * È l'unica cosa che deve essere guardata in quella sezione: tutto il
- * resto le fa da didascalia (brief §2a, un solo protagonista).
+ * La versione precedente raccontava un solo documento — l'inventario GHG
+ * — riga per riga: bella scena, argomento sbagliato. Chi guarda deve
+ * capire il MECCANISMO in tre secondi: cosa entra, chi lavora, cosa esce.
+ * Quindi infografica, non racconto: tre colonne, poche parole, e sotto
+ * l'unico argomento che vende davvero — quando apri il portale il
+ * documento non è vuoto.
  *
- * Perché in CSS e non in JS: una scena che si ripete non deve dipendere
- * da un osservatore, da un timer o da una libreria — e soprattutto non
- * deve poter restare a metà. Qui il ciclo è dichiarato una volta e il
- * browser lo esegue nel compositor; con «riduci movimento» il foglio si
- * mostra già pieno e già timbrato, che poi è il messaggio.
+ * ONESTÀ SUI DATI: qui non compare nessuna impresa vera. L'esempio è
+ * un'azienda inventata e lo dice in pagina (regola in CLAUDE.md): un
+ * nome reale in una vetrina è un dato personale pubblicato senza base
+ * giuridica, e nemmeno il nome più innocuo fa eccezione.
  *
- * Onestà: è un ESEMPIO, e lo dice. I numeri di un'impresa vera stanno
- * nel suo fascicolo, non in una vetrina.
+ * NOMENCLATURA: il motore si nomina per esteso e si dichiara PROPRIETARIO
+ * e specializzato, perché è quello il perimetro — non un assistente
+ * generalista con un prompt sopra.
  */
 
-/** Le righe del foglio: nome del campo, valore, da dove arriva. */
-const RIGHE = [
-  { campo: "Ragione sociale", valore: "Metallika S.r.l.", fonte: "visura" },
-  { campo: "Codice ATECO 2025", valore: "25.62.00", fonte: "registro imprese" },
-  { campo: "Dipendenti (media annua)", valore: "34", fonte: "cedolini" },
-  { campo: "Energia elettrica", valore: "412.800 kWh", fonte: "bollette" },
-  { campo: "Gasolio per autotrazione", valore: "18.240 l", fonte: "fatture" },
+/** L'impresa d'esempio del sito: inventata, e dichiarata tale. */
+export const IMPRESA_ESEMPIO = {
+  nome: "Officina Lombardi S.r.l.",
+  /* Formato plausibile ma volutamente NON valido: undici cifre con una
+     lettera in mezzo. Una partita IVA formalmente corretta potrebbe
+     appartenere a qualcuno per caso. */
+  piva: "IT 0499X881207",
+} as const;
+
+/* (a) COSA ENTRA — le tre provenienze, dette dal punto di vista di chi legge. */
+const FONTI = [
   {
-    campo: "Emissioni Scope 1 e 2",
-    valore: "213,4 tCO₂e",
-    fonte: "calcolato dall'AI Ver0",
-    calcolato: true,
+    icona: FileText,
+    titolo: "I documenti che hai già",
+    testo: "Bollette, visure, cedolini, certificati: quelli nel tuo archivio.",
+  },
+  {
+    icona: Database,
+    titolo: "Le banche dati ufficiali",
+    testo: "Le interroghiamo noi, sul mandato che ci dai all'attivazione.",
+  },
+  {
+    icona: Globe,
+    titolo: "Il tuo sito e i dati pubblici",
+    testo: "Come descrivi la tua attività, e ciò che di te è già pubblico.",
   },
 ];
 
-/** I documenti di partenza: quelli che l'impresa ha già in un cassetto. */
-const PARTENZA = [
-  { icona: FileText, nome: "Visura" },
-  { icona: Receipt, nome: "Bollette" },
-  { icona: FileSpreadsheet, nome: "Cedolini" },
+/* (b) CHI LAVORA — le tre funzioni del motore. */
+const FUNZIONI = [
+  { icona: ScanLine, titolo: "Legge e comprende", testo: "Estrae i dati dai tuoi documenti." },
+  { icona: Layers, titolo: "Incrocia e verifica", testo: "Confronta le fonti e segnala ciò che non torna." },
+  { icona: FileCheck2, titolo: "Compone secondo norma", testo: "Scrive il documento nella struttura che lo standard richiede." },
 ];
+
+/* (c) COSA ESCE — più percorsi, ognuno con la sua norma citata. */
+const ESITI = [
+  { nome: "Carbon Footprint di Organizzazione", norma: "UNI EN ISO 14064-1:2019" },
+  { nome: "Bilancio di Sostenibilità", norma: "standard VSME (EFRAG)" },
+  { nome: "Manuali dei sistemi di gestione", norma: "UNI EN ISO 9001, 14001, 45001" },
+  { nome: "Sistema per la parità di genere", norma: "UNI/PdR 125:2022" },
+];
+
+/** L'anello della scena finale: quasi pieno, con la fetta che manca. */
+function AnelloEsempio({ percentuale = 68 }: { percentuale?: number }) {
+  const totale = 8;
+  const piene = Math.round((percentuale / 100) * totale);
+  const R = 40;
+  const punto = (g: number) => [
+    50 + R * Math.cos((g * Math.PI) / 180),
+    50 + R * Math.sin((g * Math.PI) / 180),
+  ];
+  const spazio = 6;
+  const ampiezza = 360 / totale - spazio;
+  const arco = (i: number) => {
+    const da = -90 + i * (ampiezza + spazio) + spazio / 2;
+    const a = da + ampiezza;
+    const [x1, y1] = punto(da);
+    const [x2, y2] = punto(a);
+    return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${R} ${R} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+  };
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      role="img"
+      aria-label={`Esempio: documento composto al ${percentuale} per cento`}
+      className="h-32 w-32 shrink-0 md:h-40 md:w-40"
+    >
+      <circle
+        cx="50"
+        cy="50"
+        r="47"
+        fill="none"
+        stroke="#2FCF9A"
+        strokeOpacity="0.25"
+        strokeWidth="1.4"
+        strokeDasharray="0.1 6.4"
+        strokeLinecap="round"
+      />
+      {Array.from({ length: totale }, (_, i) => (
+        <path
+          key={i}
+          className="vz-arco"
+          style={{ "--vz-i": i } as React.CSSProperties}
+          d={arco(i)}
+          fill="none"
+          stroke={i < piene ? "#2FCF9A" : "#F7ECD9"}
+          strokeOpacity={i < piene ? 1 : 0.85}
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+      ))}
+      <text
+        x="50"
+        y="49"
+        textAnchor="middle"
+        style={{
+          fontFamily: "var(--font-display)",
+          fontSize: "23px",
+          fontVariantNumeric: "tabular-nums",
+        }}
+        fill="#FFFFFF"
+      >
+        {percentuale}%
+      </text>
+      <text
+        x="50"
+        y="62"
+        textAnchor="middle"
+        style={{ fontSize: "7px", letterSpacing: "1px" }}
+        fill="#2FCF9A"
+      >
+        GIÀ COMPOSTO
+      </text>
+    </svg>
+  );
+}
+
+function Colonna({
+  occhiello,
+  children,
+}: {
+  occhiello: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0">
+      <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-mint-bright/70">
+        {occhiello}
+      </p>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
 
 export function MotoreInAzione() {
   return (
-    <div className="vz-scena mx-auto grid max-w-4xl grid-cols-1 items-center gap-6 md:grid-cols-[auto_1fr]">
-      {/* SINISTRA — quello che l'impresa ha già. In colonna su desktop,
-          in riga su mobile: sempre prima del foglio, perché è da lì che
-          la scena parte. */}
-      <div className="flex flex-row justify-center gap-2 md:flex-col md:gap-3">
-        {PARTENZA.map(({ icona: Icona, nome }) => (
-          <div
-            key={nome}
-            className="flex w-24 shrink-0 flex-col items-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.04] px-3 py-3 md:w-28"
-          >
-            <Icona size={18} className="text-moss" aria-hidden />
-            <span className="text-[11px] font-medium text-moss">{nome}</span>
-          </div>
-        ))}
-      </div>
+    <div className="vz-anello-vivo mx-auto max-w-5xl text-left">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[1fr_1.15fr_1fr]">
+        {/* (a) COSA ENTRA */}
+        <Colonna occhiello="Cosa entra">
+          {FONTI.map(({ icona: Icona, titolo, testo }) => (
+            <div
+              key={titolo}
+              className="flex gap-3 rounded-xl border border-white/12 bg-white/[0.04] px-4 py-3"
+            >
+              <Icona size={17} className="mt-0.5 shrink-0 text-moss" aria-hidden />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white">{titolo}</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-moss/70">
+                  {testo}
+                </p>
+              </div>
+            </div>
+          ))}
+        </Colonna>
 
-      {/* DESTRA — il foglio che si compila. */}
-      <div className="relative">
-        {/* Il tratto che collega i documenti al foglio: solo da tablet in
-            su, dove i due blocchi stanno affiancati davvero. */}
-        <span
-          aria-hidden
-          className="vz-flow-track absolute -left-6 top-1/2 hidden h-0.5 w-6 md:block"
-        />
-
-        <div className="relative overflow-hidden rounded-2xl bg-white p-5 text-left shadow-lift sm:p-6">
-          {/* Intestazione del documento */}
-          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-line pb-3">
-            <p className="font-display text-lg text-ink">
-              Inventario GHG · esempio
-            </p>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-light">
-              composto dall&apos;AI Ver0
-            </p>
-          </div>
-
-          {/* Il cursore di lettura che scorre mentre i campi si accendono */}
+        {/* (b) CHI LAVORA — dominante, e nominato per esteso. */}
+        <div className="relative min-w-0 rounded-2xl border-2 border-mint-bright/35 bg-mint-bright/[0.07] p-5 sm:p-6">
           <span
             aria-hidden
-            className="vz-lettura pointer-events-none absolute inset-x-0 top-16 h-14 bg-gradient-to-b from-mint/0 via-mint/10 to-mint/0"
-            style={{ "--vz-corsa": "190px" } as React.CSSProperties}
+            className="vz-motore-glow pointer-events-none absolute inset-0 rounded-2xl"
           />
-
-          <dl className="relative mt-3 space-y-2">
-            {RIGHE.map((r, i) => (
-              <div
-                key={r.campo}
-                className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 border-b border-line/60 pb-2 last:border-0"
-              >
-                <dt className="text-xs text-gray-warm">{r.campo}</dt>
-                <dd
-                  className="vz-riga-valore flex min-w-0 items-baseline gap-2"
-                  style={{ "--vz-i": i } as React.CSSProperties}
+          <div className="relative">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-mint-bright">
+              Il motore
+            </p>
+            <p className="mt-1 font-display text-2xl leading-tight text-white md:text-3xl">
+              AI Ver0
+            </p>
+            <p className="mt-1 text-xs font-medium text-mint-bright">
+              Proprietaria e specializzata sui documenti d&apos;impresa
+            </p>
+            <div className="mt-4 space-y-2">
+              {FUNZIONI.map(({ icona: Icona, titolo, testo }) => (
+                <div
+                  key={titolo}
+                  className="flex gap-3 rounded-xl bg-pine-deep/50 px-4 py-3"
                 >
-                  <span
-                    className={
-                      "text-sm font-semibold tabular-nums " +
-                      (r.calcolato ? "text-mint" : "text-ink")
-                    }
-                  >
-                    {r.valore}
-                  </span>
-                  <span className="shrink-0 rounded-full bg-moss px-1.5 py-0.5 text-[9px] font-semibold text-pine">
-                    {r.fonte}
-                  </span>
-                </dd>
-              </div>
-            ))}
-          </dl>
-
-          {/* Il timbro: arriva quando il foglio è pieno. Dice «conforme
-              allo standard», non «certificato» — la certificazione la
-              rilascia un ente terzo, mai noi.
-
-              Sta nel flusso e non sopra il foglio: in assoluto finiva a
-              coprire l'ultima riga sugli schermi stretti. Anima solo
-              l'opacità, quindi lo spazio è già suo e nulla si sposta
-              quando compare. */}
-          <div className="mt-4 flex justify-end">
-          <div
-            aria-hidden
-            className="vz-timbro flex -rotate-2 items-center gap-2 rounded-full border-2 border-mint/40 bg-mint/10 px-3 py-1.5"
-          >
-            <Check size={14} strokeWidth={3} className="text-mint" />
-            <span className="text-[11px] font-bold uppercase tracking-wider text-mint">
-              Conforme allo standard
-            </span>
-          </div>
+                  <Icona
+                    size={17}
+                    className="mt-0.5 shrink-0 text-mint-bright"
+                    aria-hidden
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-white">{titolo}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-moss/70">
+                      {testo}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-moss/70">
+              <ShieldCheck
+                size={14}
+                className="mt-0.5 shrink-0 text-mint-bright"
+                aria-hidden
+              />
+              Un professionista valida prima della consegna: la responsabilità
+              resta di una persona.
+            </p>
           </div>
         </div>
 
-        <p className="mt-2 text-center text-[11px] text-moss/70 md:text-left">
-          Esempio di composizione: i dati della tua impresa restano nel tuo
-          fascicolo.
-        </p>
+        {/* (c) COSA ESCE — più percorsi, ognuno con la norma citata. */}
+        <Colonna occhiello="Cosa esce">
+          {ESITI.map((e) => (
+            <div
+              key={e.nome}
+              className="rounded-xl border border-white/12 bg-white/[0.04] px-4 py-3"
+            >
+              <p className="text-sm font-semibold text-white">{e.nome}</p>
+              <p className="mt-0.5 text-[11px] font-medium text-mint-bright">
+                {e.norma}
+              </p>
+            </div>
+          ))}
+          <p className="px-1 pt-1 text-[11px] leading-relaxed text-moss/60">
+            Solo standard ufficiali: nessuna certificazione inventata da noi.
+          </p>
+        </Colonna>
+      </div>
+
+      {/* (d) LA SCENA FINALE — l'argomento vero. */}
+      <div className="mt-6 flex flex-col items-center gap-6 rounded-2xl border border-white/12 bg-white/[0.04] p-6 sm:flex-row sm:gap-8">
+        <AnelloEsempio />
+        <div className="min-w-0 text-center sm:text-left">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-mint-bright/70">
+            Il primo accesso
+          </p>
+          <p className="mt-1.5 font-display text-2xl leading-tight text-white md:text-3xl">
+            Entri nel portale e il documento è già composto.
+          </p>
+          <p className="mt-2.5 max-w-xl text-sm leading-relaxed text-moss/75">
+            Non una pagina bianca da riempire: le sezioni che si possono
+            comporre dai dati recuperati sono già scritte, con la fonte
+            accanto a ogni dato.
+          </p>
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-amber-soft/90 px-3 py-1.5 text-[11px] font-semibold text-amber-ink">
+            <Building2 size={13} aria-hidden />
+            La parte chiara dell&apos;anello è quello che serve da te
+          </p>
+          <p className="mt-3 text-[11px] leading-relaxed text-moss/55">
+            Esempio su un&apos;impresa inventata ({IMPRESA_ESEMPIO.nome}): la
+            quota già composta dipende dai documenti che hai e dalle banche
+            dati che ti riguardano.
+          </p>
+        </div>
       </div>
     </div>
   );

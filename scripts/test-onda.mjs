@@ -462,10 +462,58 @@ prova("la contenuta è davvero più discreta della decisa",
 prova("le due calibrazioni hanno lo stesso movimento",
   ONDA_CONTENUTA.velocita === ONDA_DECISA.velocita &&
     ONDA_CONTENUTA.posizione === ONDA_DECISA.posizione);
+/*
+ * La discrezione di un preset non si giudica dall'opacità ma da quanto
+ * schiarisce o scurisce il fondo sotto il testo della sua sezione.
+ *
+ * Sui fondi CHIARI resta la regola del brief: sotto il 25%, perché lì il
+ * testo è scuro e sottile e non c'è una maschera a proteggerlo. Sui
+ * fondi SCURI si misura: le sezioni non passano un riferimento al testo,
+ * quindi si prende il caso peggiore ovunque nella fascia e si calcola il
+ * contrasto del bianco sopra quel fondo.
+ */
 for (const [nome, cfg] of Object.entries(PRESET)) {
-  const soglia = nome === "tecnica" ? 0.31 : 0.25;
-  prova(`«${nome}» resta discreto`, cfg.opacita <= soglia,
-    `opacità ${Math.round(cfg.opacita * 100)}%`);
+  if (cfg.palette === "chiara") {
+    prova(`«${nome}» resta discreto`, cfg.opacita <= 0.25,
+      `opacità ${Math.round(cfg.opacita * 100)}%`);
+    continue;
+  }
+  const L = 1280 + SBORDO * 2;
+  const H = 620;
+  const c = { ...cfg, posizione: posizionePerLarghezza(1280, cfg) };
+  const parti = semina(quante(L, c), L, H, c, casoFisso());
+  assesta(parti, 0, L, H, c);
+  let peggiore = 0;
+  for (let f = 0; f < 60 * 90; f++) {
+    const tt = f / 60;
+    avanza(parti, 1 / 60, tt, L, H, c);
+    if (f % 150 !== 0) continue;
+    const vicine = [];
+    for (const p of parti) {
+      const a = opacita(p, tt, L, H, c);
+      if (a > 0.004) vicine.push({ x: p.x, y: p.y, a, raggio: raggioDi(p, tt, L, H, c) * 3 });
+    }
+    // Il testo di quelle sezioni sta nella colonna centrale.
+    for (let x = L * 0.3; x <= L * 0.7; x += 26) {
+      for (let y = H * 0.2; y <= H * 0.8; y += 26) {
+        let tr = 1;
+        for (const v of vicine) {
+          const dx = x - v.x;
+          const dy = y - v.y;
+          const d = Math.sqrt(dx * dx + dy * dy);
+          if (d < v.raggio) tr *= 1 - v.a * profilo(d / v.raggio);
+        }
+        peggiore = Math.max(peggiore, 1 - tr);
+      }
+    }
+  }
+  const fondo = sopraFondo(LUCE, Math.min(1, peggiore));
+  const cBianco = contrasto(LUCE, fondo);
+  prova(
+    `«${nome}» non compromette il testo bianco della sua sezione`,
+    cBianco >= 4.5,
+    `velatura ${(peggiore * 100).toFixed(1)}% → bianco ${cBianco.toFixed(2)}:1`,
+  );
 }
 prova("i preset scuri usano la palette invertita",
   PRESET.tecnica.palette === "scura" && PRESET.tenueScura.palette === "scura");

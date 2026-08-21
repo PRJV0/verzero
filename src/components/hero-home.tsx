@@ -114,7 +114,7 @@ export function HeroHome() {
           <span className="block">
             <span
               data-onda-maschera
-              className="vz-entra inline-block text-[2rem] font-normal leading-[1.05] tracking-[-0.015em] text-moss sm:text-[2.6rem] md:text-[3.4rem]"
+              className="vz-entra inline-block text-[2.15rem] font-normal leading-[1.04] tracking-[-0.015em] text-moss sm:text-[2.9rem] md:text-[3.9rem]"
               style={{ "--vz-i": 1 } as React.CSSProperties}
             >
               I tuoi consulenti
@@ -124,7 +124,7 @@ export function HeroHome() {
           <span className="mt-1 block">
             <span
               data-onda-maschera
-              className="vz-entra relative inline-block text-[3.1rem] font-bold leading-[0.98] tracking-[-0.035em] sm:text-[4.1rem] md:text-[5.4rem] xl:text-[6rem]"
+              className="vz-entra relative inline-block text-[3.4rem] font-bold leading-[0.96] tracking-[-0.038em] sm:text-[4.7rem] md:text-[6.2rem] xl:text-[7rem]"
               style={{ "--vz-i": 2 } as React.CSSProperties}
             >
               in{" "}
@@ -136,13 +136,21 @@ export function HeroHome() {
           </span>
         </h1>
 
+        {/* IL SOTTOTITOLO È LA PROMESSA, non una didascalia: sta a una
+            scala intermedia leggibile, in moss pieno e non attenuato, con
+            interlinea generosa e la misura di riga tenuta corta
+            (`max-w-[24ch]`, poi 30) — una riga lunga in display si legge
+            male anche quando è grande. */}
         <p
           data-onda-maschera
-          className="vz-entra mx-auto mt-9 max-w-2xl font-display text-xl leading-snug text-moss/75 md:text-2xl"
+          className="vz-entra mx-auto mt-8 max-w-[24ch] font-display text-[1.3rem] leading-[1.45] text-moss sm:max-w-[30ch] sm:text-[1.55rem] md:text-[1.8rem]"
           style={{ "--vz-i": 3 } as React.CSSProperties}
         >
-          La crescita della tua azienda, in abbonamento. Zero{" "}
-          <em className="font-semibold italic text-mint-bright">effort</em>:
+          La crescita della tua azienda, in abbonamento.{" "}
+          <span className="whitespace-nowrap">
+            Zero{" "}
+            <em className="font-semibold italic text-mint-bright">effort</em>:
+          </span>{" "}
           bastano i documenti che hai già.
         </p>
 
