@@ -1,62 +1,16 @@
-import {
-  FileCheck2,
-  ScanLine,
-  UserCheck,
-  type LucideIcon,
-} from "lucide-react";
-
 /**
- * Il Motore Ver0 — fonte unica per la sezione narrativa,
- * usata sia in home sia in chi-siamo.
+ * IL FASCICOLO DEL PERCORSO — fonte unica dei dati d'esempio.
  *
- * REGOLA (SPEC §12.O — concretezza del Motore): niente astrazioni. Ogni fase
- * mostra ARTEFATTI REALI — documenti con il loro nome, campi estratti con
- * valori d'esempio plausibili, la norma applicata citata in chiaro, il
- * documento in uscita, l'esito della verifica umana — e dichiara sempre
- * COSA ENTRA, COSA ESCE e SU QUALE NORMA. Solidità prima di spettacolo.
+ * REGOLA (SPEC §12.O — concretezza): niente astrazioni. Ogni percorso
+ * mostra ARTEFATTI REALI — documenti col loro nome, il requisito preciso,
+ * la norma citata in chiaro — e dichiara sempre cosa entra e cosa il
+ * Motore compone.
  *
- * I valori qui sotto sono un esempio coerente e dichiarato come tale
- * (officina meccanica, 14 addetti): i numeri tornano tra loro, perché è
- * proprio la coerenza a rendere credibile la dimostrazione.
+ * I valori sono un esempio coerente e dichiarato come tale, su
+ * un'impresa INVENTATA (regola in CLAUDE.md: nelle pagine pubbliche mai
+ * un'azienda reale). I numeri tornano fra loro, perché è la coerenza a
+ * rendere credibile la dimostrazione.
  */
-export type FaseMotore = {
-  icon: LucideIcon;
-  titolo: string;
-  desc: string;
-  /** Cosa entra in questa fase. */
-  entra: string;
-  /** Cosa esce da questa fase. */
-  esce: string;
-  /** Su quale norma o fonte ufficiale si lavora. */
-  norma: string;
-};
-
-export const MOTORE_FASI: FaseMotore[] = [
-  {
-    icon: ScanLine,
-    titolo: "Cosa leggiamo",
-    desc: "L'AI Ver0 estrae i campi che servono — anche da una foto della bolletta — li normalizza e li incrocia con le banche dati ufficiali. Ogni valore resta etichettato per qualità: misurato, da documento, stimato.",
-    entra: "I documenti caricati e le fonti camerali ed energetiche",
-    esce: "Campi strutturati, tracciabili al documento di origine",
-    norma: "Registro Imprese · fattori di emissione ISPRA e AIB",
-  },
-  {
-    icon: FileCheck2,
-    titolo: "Cosa generiamo",
-    desc: "I dati vengono montati sulla struttura della norma di riferimento: non un documento «ispirato a», ma l'impianto che la norma richiede, con ogni valore riconducibile alla sua fonte riga per riga.",
-    entra: "I campi confermati e i fattori di emissione applicabili",
-    esce: "Il documento conforme, pronto per banche, filiere ed enti",
-    norma: "UNI EN ISO 14064-1:2019 · GHG Protocol Corporate Standard",
-  },
-  {
-    icon: UserCheck,
-    titolo: "Chi verifica",
-    desc: "Prima dell'emissione un professionista del team tecnico controlla perimetro, fattori e completezza, e mette per iscritto i rilievi. La responsabilità resta di una persona, non di un algoritmo.",
-    entra: "Il documento generato e l'intera catena dei dati",
-    esce: "Esito della verifica, rilievi dichiarati e validazione del professionista",
-    norma: "Verifica interna Ver0 — indipendente dalla certificazione di terza parte",
-  },
-];
 
 /* ------------------------------------------------------------------ */
 /* IL FASCICOLO DEL PERCORSO — anteprima fedele della dashboard        */
@@ -238,35 +192,7 @@ export const FASCICOLI: FascicoloPercorso[] = [
 export const FASCICOLO_CHIUSA =
   "Ti diciamo esattamente cosa manca, prima che diventi un problema.";
 
-/** Fase 2 — i campi estratti da ciascun documento, con valori d'esempio. */
-export const CAMPI_ESTRATTI: {
-  doc: string;
-  campi: { campo: string; valore: string }[];
-}[] = [
-  {
-    doc: "Bolletta elettrica",
-    campi: [
-      { campo: "POD", valore: "IT001E98765432" },
-      { campo: "Consumo", valore: "128.400 kWh" },
-      { campo: "Periodo", valore: "01/2025 – 12/2025" },
-    ],
-  },
-  {
-    doc: "Visura camerale",
-    campi: [
-      { campo: "ATECO", valore: "25.62.00" },
-      { campo: "Addetti", valore: "14" },
-      { campo: "Unità locali", valore: "2" },
-    ],
-  },
-  {
-    doc: "Registro carburanti",
-    campi: [
-      { campo: "Gasolio", valore: "8.240 L" },
-      { campo: "Benzina", valore: "610 L" },
-    ],
-  },
-];
+
 
 /** Fase 3 — anteprima del documento in uscita. I numeri sono coerenti tra
  *  loro: 8.240 L di gasolio e 610 L di benzina fanno lo Scope 1; i 128.400

@@ -19,8 +19,8 @@ import {
 import { Sigillo } from "@/components/brand/sigillo";
 import { JsonLd } from "@/components/json-ld";
 import { OndaParticelle } from "@/components/onda-particelle";
-import { PRESET } from "@/lib/onda";
-import { MotoreScrolly } from "@/components/motore-scrolly";
+import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
+import { MotoreInAzione } from "@/components/motore-in-azione";
 import { PhotoDuotone } from "@/components/photo-duotone";
 import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
 import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
@@ -185,9 +185,47 @@ export default function ChiSiamoPage() {
         </div>
       </section>
 
-      {/* 3. IL MOTORE VER0 — sezione narrativa con scrollytelling:
-          il palco resta fermo, le cinque fasi si avvicendano. */}
-      <MotoreScrolly />
+      {/* 3. IL MOTORE — LO STESSO SCHEMA DI HOME E /COME-FUNZIONA.
+          Era l'ultima grammatica diversa rimasta in giro: raccontava le
+          stesse cose con un'altra forma, e chi arrivava dalla home
+          doveva riconoscere il sistema una seconda volta. Qui resta
+          senza il livello di dettaglio — questa è la pagina di chi
+          siamo, il metodo per esteso vive in /come-funziona — e con la
+          didascalia che lo dice. */}
+      <section
+        className="relative isolate overflow-hidden px-5 py-16 md:py-24"
+        style={{
+          background: `linear-gradient(to bottom, ${FONDO_SOGLIA[0]}, ${FONDO_SOGLIA[1]})`,
+        }}
+      >
+        <OndaParticelle config={PRESET.tecnica} className="-z-10" />
+        <div className="relative mx-auto mb-10 max-w-3xl text-center">
+          <p className="mb-4 text-xs font-semibold tracking-widest text-mint-bright">
+            QUELLO CHE ABBIAMO COSTRUITO
+          </p>
+          <h2 className="font-display text-4xl leading-[1.05] text-white md:text-5xl">
+            Un motore nostro, non un assistente con un prompt sopra.
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-moss/75">
+            È la cosa su cui abbiamo speso più tempo, ed è la ragione per cui i
+            prezzi possono essere questi.
+          </p>
+        </div>
+        <div className="relative">
+          <MotoreInAzione />
+        </div>
+        <p className="relative mx-auto mt-8 max-w-xl text-center text-sm leading-relaxed text-moss/70">
+          Il metodo per esteso — cosa leggiamo, con che mandato, chi valida —
+          sta in{" "}
+          <Link
+            href="/come-funziona"
+            className="font-semibold text-mint-bright hover:underline"
+          >
+            come funziona
+          </Link>
+          .
+        </p>
+      </section>
 
 
       {/* 4. LE PERSONE — racconto collettivo con foto */}
