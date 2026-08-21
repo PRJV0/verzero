@@ -249,7 +249,7 @@ export function CatalogoVetrina() {
       {/* Il pacchetto abbonato accanto ai prezzi /mese (§12.V) + rinnovo libero (§12.Q) */}
       <p className="mt-4 text-center text-xs leading-relaxed text-gray-warm">
         {RINNOVO_LIBERO} {CANONE_INLINE}{" "}
-        <Link href="/#canone" className="font-medium text-pine hover:underline">
+        <Link href="/#prezzo" className="font-medium text-pine hover:underline">
           Perché l&apos;abbonamento
         </Link>
       </p>

@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, FileText, Leaf, UserCheck } from "lucide-react";
+import { ArrowRight, FileText, Leaf, UserCheck } from "lucide-react";
 
 import { Sigillo } from "@/components/brand/sigillo";
-import { CatalogoVetrina } from "@/components/catalogo-vetrina";
 import {
   Scrolly,
   ScrollyProgress,
@@ -14,11 +13,11 @@ import {
 import { FasciaListaAttesa } from "@/components/lista-attesa";
 import { HeroHome } from "@/components/hero-home";
 import { OndaParticelle } from "@/components/onda-particelle";
-import { PRESET } from "@/lib/onda";
+import { PrezzoPrincipio } from "@/components/prezzo-principio";
+import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { JsonLd } from "@/components/json-ld";
 import { PhotoDuotone } from "@/components/photo-duotone";
-import { CANONE_INCLUDE } from "@/lib/canone";
 import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
 import { SITO, jsonLdOrganization } from "@/lib/seo";
 
@@ -176,6 +175,61 @@ export default function HomePage() {
 
       <HeroHome />
 
+      {/* LO ZERO DI VER0 — la sezione distintiva: statements per natura. */}
+      <section className="relative bg-moss px-5 py-16 md:py-24">
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <ZeroWatermark tone="pine" className="-bottom-24 -left-10 text-[26rem]" />
+        </div>
+        <div className="relative mx-auto max-w-4xl">
+          <div className="text-center">
+            <h2 className="font-display text-5xl text-ink md:text-6xl">
+              Lo <ZeroWord>Zero</ZeroWord> di Ver0
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-sm text-gray-warm md:text-base">
+              Un principio solo, che regge sempre la stessa domanda:
+              «dimostramelo».
+            </p>
+          </div>
+
+          <Scrolly steps={6} className="mt-8">
+            <ScrollyStage>
+              <div className="relative mx-auto max-w-2xl py-6 text-center">
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute left-1/2 top-1/2 -z-10 -translate-x-1/2 -translate-y-1/2 select-none font-display text-[18rem] leading-none text-pine/[0.07] md:text-[26rem]"
+                >
+                  0
+                </span>
+
+                <ScrollySteps className="min-h-[12rem] place-items-center">
+                  {ZERI.map((z, i) => (
+                    <ScrollyStep key={z.tail} index={i + 1}>
+                      <h3 className="font-display text-4xl text-ink md:text-6xl">
+                        <ZeroWord>{z.accent}</ZeroWord> {z.tail}
+                        {z.leaf && (
+                          <Leaf
+                            size={24}
+                            aria-hidden
+                            className="ml-2 inline text-mint"
+                          />
+                        )}
+                      </h3>
+                      <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-gray-warm md:text-base">
+                        {z.m}
+                      </p>
+                    </ScrollyStep>
+                  ))}
+                </ScrollySteps>
+
+                <div className="mx-auto mt-8 max-w-xs">
+                  <ScrollyProgress />
+                </div>
+              </div>
+            </ScrollyStage>
+          </Scrolly>
+        </div>
+      </section>
+
       {/* IL MOTORE — manifesto della potenza, senza fasi né meccanismi
           (§12.J: il «come» vive dentro, in /come-funziona). */}
       <section className="relative isolate overflow-hidden bg-pine-deep px-5 py-16 md:py-24">
@@ -243,61 +297,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* LO ZERO DI VER0 — la sezione distintiva: statements per natura. */}
-      <section className="relative bg-moss px-5 py-16 md:py-24">
-        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-          <ZeroWatermark tone="pine" className="-bottom-24 -left-10 text-[26rem]" />
-        </div>
-        <div className="relative mx-auto max-w-4xl">
-          <div className="text-center">
-            <h2 className="font-display text-5xl text-ink md:text-6xl">
-              Lo <ZeroWord>Zero</ZeroWord> di Ver0
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-sm text-gray-warm md:text-base">
-              Un principio solo, che regge sempre la stessa domanda:
-              «dimostramelo».
-            </p>
-          </div>
-
-          <Scrolly steps={6} className="mt-8">
-            <ScrollyStage>
-              <div className="relative mx-auto max-w-2xl py-6 text-center">
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute left-1/2 top-1/2 -z-10 -translate-x-1/2 -translate-y-1/2 select-none font-display text-[18rem] leading-none text-pine/[0.07] md:text-[26rem]"
-                >
-                  0
-                </span>
-
-                <ScrollySteps className="min-h-[12rem] place-items-center">
-                  {ZERI.map((z, i) => (
-                    <ScrollyStep key={z.tail} index={i + 1}>
-                      <h3 className="font-display text-4xl text-ink md:text-6xl">
-                        <ZeroWord>{z.accent}</ZeroWord> {z.tail}
-                        {z.leaf && (
-                          <Leaf
-                            size={24}
-                            aria-hidden
-                            className="ml-2 inline text-mint"
-                          />
-                        )}
-                      </h3>
-                      <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-gray-warm md:text-base">
-                        {z.m}
-                      </p>
-                    </ScrollyStep>
-                  ))}
-                </ScrollySteps>
-
-                <div className="mx-auto mt-8 max-w-xs">
-                  <ScrollyProgress />
-                </div>
-              </div>
-            </ScrollyStage>
-          </Scrolly>
-        </div>
-      </section>
-
       {/* CONSULENZA — statement + due righe + CTA. Il dettaglio vive dentro. */}
       <section className="bg-white px-5 py-16 md:py-24">
         <div className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-10 md:grid-cols-2">
@@ -323,57 +322,26 @@ export default function HomePage() {
       </section>
 
       {/* SERVIZI E PREZZI — il cuore della conversione: statement + vetrina. */}
-      <section id="servizi" className="border-t-2 border-line bg-white px-5 py-16 md:py-24">
-        <div className="mx-auto max-w-4xl">
-          <div className="text-center">
-            <h2 className="font-display text-5xl text-ink md:text-6xl">
-              Prezzi in chiaro.
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-sm text-gray-warm md:text-base">
-              Pubblici, per fascia dimensionale. Attivi quello che ti serve,
-              quando ti serve.
-            </p>
-          </div>
+      {/* IL PREZZO COME PRINCIPIO. Qui c'erano due sezioni: la griglia
+          del catalogo coi prezzi e il blocco del canone. La griglia se ne
+          va — elenco e prezzi per servizio hanno una sola casa, ed è la
+          pagina Servizi — e il canone non sparisce ma diventa una delle
+          tre prove di questo blocco, altrimenti sarebbe una ripetizione.
 
-          <div className="mt-10">
-            <CatalogoVetrina />
-          </div>
-          <p className="mt-4 text-center text-xs text-gray-warm">
-            Prezzi &quot;da&quot; riferiti alla fascia micro, IVA esclusa · −10%
-            con pagamento annuale
-          </p>
-        </div>
-      </section>
-
-      {/* IL CANONE — blocco pieno, titoli soltanto: il dettaglio è dentro. */}
-      <section id="canone" className="bg-white px-5 pb-16 md:pb-24">
-        <div className="mx-auto max-w-4xl bg-moss px-6 py-14 md:px-12">
-          <h2 className="text-center font-display text-4xl text-ink md:text-6xl">
-            I tuoi documenti non invecchiano mai.
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-center text-sm text-gray-warm md:text-base">
-            Quando una norma cambia, l&apos;AI Ver0 aggiorna i tuoi documenti. Il
-            Sigillo resta valido, i bandi ti vengono segnalati,
-            l&apos;assistenza risponde. Tutto incluso nell&apos;abbonamento.
-          </p>
-
-          <ul className="mx-auto mt-8 grid max-w-2xl grid-cols-1 gap-x-8 gap-y-3 sm:grid-cols-2">
-            {CANONE_INCLUDE.map((b) => (
-              <li
-                key={b.title}
-                className="flex items-center gap-2.5 text-sm font-medium text-pine-dark"
-              >
-                <Check size={18} className="shrink-0 text-mint" strokeWidth={3} />
-                {b.title}
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-10 text-center">
-            <CtaGrande href="/servizi/percorso-ver0">
-              Attiva il Percorso Ver0
-            </CtaGrande>
-          </div>
+          Fondo scuro di proposito: fra «consulenti veri» e «solo standard
+          ufficiali» c'era una corsa di cinque sezioni chiare di fila, e
+          un manifesto sul prezzo è esattamente il punto in cui la pagina
+          deve cambiare respiro. */}
+      <section
+        id="prezzo"
+        className="relative isolate overflow-hidden px-5 py-16 md:py-24"
+        style={{
+          background: `linear-gradient(to bottom, ${FONDO_SOGLIA[0]}, ${FONDO_SOGLIA[1]})`,
+        }}
+      >
+        <OndaParticelle config={PRESET.tecnica} className="-z-10" />
+        <div className="relative">
+          <PrezzoPrincipio />
         </div>
       </section>
 
@@ -430,16 +398,12 @@ export default function HomePage() {
         />
         <DottedRing className="left-1/2 top-14 h-40 w-40 -translate-x-1/2 border-mint/25" />
         <div className="relative mx-auto max-w-3xl">
-          <p className="font-display text-4xl leading-snug text-white md:text-5xl">
-            <ZeroWord tone="dark">Zero</ZeroWord> effort.{" "}
-            <ZeroWord tone="dark">Zero</ZeroWord> sorprese.{" "}
-            <ZeroWord tone="dark">Zero</ZeroWord> scorciatoie.{" "}
-            <span className="whitespace-nowrap">
-              <ZeroWord tone="dark">Verso zero</ZeroWord> emissioni.
-            </span>
-          </p>
-          <p className="mt-7 font-display text-2xl text-moss md:text-3xl">
-            Lo Zero, da noi, non è il niente — è il traguardo.
+          {/* I sei Zeri sono già elencati sopra, uno per uno: rifarne
+              quattro qui era ripetere, non rilanciare. Resta la riga che
+              li tiene insieme, che è l'unica cosa nuova. */}
+          <p className="font-display text-4xl leading-snug text-white md:text-6xl">
+            Lo <ZeroWord tone="dark">Zero</ZeroWord>, da noi, non è il niente
+            — è il traguardo.
           </p>
           <div className="mt-10 flex justify-center">
             <CtaGrande href="/servizi/percorso-ver0" tone="white">

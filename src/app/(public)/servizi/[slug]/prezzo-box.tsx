@@ -180,7 +180,7 @@ export function PrezzoBox({ slug }: { slug: string }) {
         <p className="mt-3 border-t border-line/70 pt-3 text-xs leading-relaxed text-gray-warm">
           {CANONE_INLINE}{" "}
           <Link
-            href="/#canone"
+            href="/#prezzo"
             className="font-medium text-pine hover:underline"
           >
             Scopri perché l&apos;abbonamento
