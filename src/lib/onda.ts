@@ -1,18 +1,33 @@
+import { fbm01, fbm3, fbmPieno, rumore3 } from "@/lib/rumore";
+
 /**
- * L'ONDA — la geometria, cioè la parte che si può provare.
+ * L'ONDA — un FASCIO che muta, non una curva che scorre.
  *
- * Il canvas è plumbing: contesto, buffer, requestAnimationFrame. Le
- * proprietà che contano — dove passa la fascia, quanto è densa al
- * centro, quanto accento e dove, quanto si spegne dietro il claim, che
- * nessuna particella si muova come un'altra — sono matematica pura, e la
- * matematica pura si prova con uno script invece che a occhio davanti a
- * uno schermo. Di un'animazione non ci si può fidare guardandola: un
- * difetto che compare al quarantesimo secondo, o solo a 2560px, o su una
- * particella su cento, non si vede in un'occhiata.
+ * La forma non è più una somma di sinusoidi: viene da un campo di
+ * RUMORE coerente campionato con coordinate che scorrono nel tempo. Una
+ * somma di sinusoidi, per quante ne metti, resta riconoscibile in pochi
+ * secondi — l'occhio ci trova il ritmo. Il rumore no.
  *
- * Una sola implementazione per tutto il sito: l'onda è la firma visiva
- * del marchio e cambia solo per configurazione — densità, ampiezza,
- * velocità, opacità, palette, posizione, direzione. Mai una copia.
+ * Cosa muta, e con che tempi (tutti diversi fra loro, così non c'è un
+ * battito comune da riconoscere):
+ *   - la linea del fascio si deforma           (rumore, ~29s di scala)
+ *   - l'ampiezza cresce e si smorza            (~48s)
+ *   - la larghezza si dilata e si restringe    (~59s globale, ~22s locale)
+ *   - la densità si concentra in punti diversi (~30s)
+ *   - il fascio si sdoppia in due filamenti e si riunisce (~83s)
+ * Nessuno di questi periodi è multiplo di un altro, e il rumore non è
+ * periodico: la configurazione non torna riconoscibilmente uguale prima
+ * di parecchi minuti.
+ *
+ * Le particelle NON sono disegnate sulla forma: sono attratte verso di
+ * essa con inerzia e smorzamento, quindi la seguono con ritardo. È il
+ * ritardo a rendere il movimento morbido — e a impedire che qualcuna
+ * cambi direzione di scatto quando il campo si muove.
+ *
+ * La geometria sta qui e non nel componente perché è la parte che si può
+ * provare: `scripts/test-onda.mjs` la campiona su quattro larghezze e
+ * centinaia di istanti. Di un'animazione non ci si può fidare
+ * guardandola.
  */
 
 /* ------------------------------------------------------------------ */
@@ -41,34 +56,56 @@ export function coloriDi(p: Palette) {
 export type ConfigOnda = {
   /** Moltiplicatore sul numero di particelle. */
   densita: number;
-  /** Moltiplicatore sulle ampiezze (curva portante e oscillazioni). */
+  /** Moltiplicatore sull'ampiezza della deformazione. */
   ampiezza: number;
   /** Moltiplicatore sulla velocità di scorrimento. */
   velocita: number;
-  /** Moltiplicatore globale sull'opacità: è la manopola della discrezione. */
+  /** Moltiplicatore globale sull'opacità: la manopola della discrezione. */
   opacita: number;
+  /** Moltiplicatore sul raggio delle particelle. */
+  raggio: number;
   palette: Palette;
-  /** Altezza della curva, in frazione dell'altezza del contenitore. */
+  /** Altezza della linea del fascio, in frazione dell'altezza. */
   posizione: number;
   /** Verso dello scorrimento: 1 da sinistra a destra, -1 al contrario. */
   direzione: 1 | -1;
-  /** Moltiplicatore sullo spessore della fascia. */
+  /** Moltiplicatore sulla larghezza del fascio. */
   spessore: number;
+  /** Quota di particelle in primo piano: più grandi, più opache, col bagliore. */
+  primoPiano: number;
 };
 
 /**
- * L'onda dell'hero: è il primo impatto, quindi è quella piena. Tutte le
- * altre sono questa, abbassata.
+ * LE DUE CALIBRAZIONI DELL'HERO, da vedere e scegliere.
+ *
+ * «Decisa» è quella predefinita: il brief dice che l'onda era quasi
+ * impercettibile, e la correzione di un difetto va fatta per intero, non
+ * a metà. «Contenuta» è la stessa forma con meno presenza — stesso
+ * movimento, un terzo di opacità in meno e particelle più piccole — per
+ * chi la vuole come firma e non come protagonista.
+ *
+ * Si confrontano dal vivo con `?onda=contenuta` sulla home.
  */
-export const ONDA_HERO: ConfigOnda = {
+export const ONDA_DECISA: ConfigOnda = {
   densita: 1,
   ampiezza: 1,
   velocita: 1,
   opacita: 1,
+  raggio: 1,
   palette: "chiara",
   posizione: 0.47,
   direzione: 1,
   spessore: 1,
+  primoPiano: 0.07,
+};
+
+export const ONDA_CONTENUTA: ConfigOnda = {
+  ...ONDA_DECISA,
+  densita: 0.8,
+  opacita: 0.62,
+  raggio: 0.78,
+  ampiezza: 0.9,
+  primoPiano: 0.05,
 };
 
 /**
@@ -79,149 +116,267 @@ export const ONDA_HERO: ConfigOnda = {
 export const PRESET = {
   /** Sezione del Motore, fondo scuro: carattere più tecnico e nitido. */
   tecnica: {
-    ...ONDA_HERO,
+    ...ONDA_DECISA,
     densita: 0.85,
     opacita: 0.3,
     velocita: 1.15,
     ampiezza: 0.75,
+    raggio: 0.85,
     palette: "scura" as const,
     posizione: 0.5,
+    primoPiano: 0.04,
   },
   /** Chi siamo: presenza pacata dietro un testo che si legge. */
   pacata: {
-    ...ONDA_HERO,
+    ...ONDA_DECISA,
     densita: 0.6,
     opacita: 0.24,
     velocita: 0.75,
     ampiezza: 0.85,
+    raggio: 0.85,
     posizione: 0.46,
     direzione: -1 as const,
+    primoPiano: 0.03,
   },
   /** Intestazioni delle pagine servizio: quasi un'ombra. */
   tenue: {
-    ...ONDA_HERO,
+    ...ONDA_DECISA,
     densita: 0.5,
     opacita: 0.2,
     velocita: 0.7,
     ampiezza: 0.7,
+    raggio: 0.8,
     posizione: 0.5,
+    primoPiano: 0.02,
   },
   /** La stessa, per la fascia scura del Sigillo. */
   tenueScura: {
-    ...ONDA_HERO,
+    ...ONDA_DECISA,
     densita: 0.5,
     opacita: 0.22,
     velocita: 0.7,
     ampiezza: 0.7,
+    raggio: 0.8,
     palette: "scura" as const,
     posizione: 0.5,
+    primoPiano: 0.02,
   },
 } satisfies Record<string, ConfigOnda>;
 
 /* ------------------------------------------------------------------ */
-/* Costanti geometriche                                                */
+/* Costanti del fascio                                                 */
 /* ------------------------------------------------------------------ */
 
-/** Ampiezze della curva portante, in frazione dell'altezza. */
-export const A1 = 0.13;
-export const A2 = 0.055;
-export const A3 = 0.028;
-/** Semi-spessore della fascia, in frazione dell'altezza. */
-export const SPESSORE = 0.075;
+/** Ampiezza massima della deformazione, in frazione dell'altezza. */
+export const AMPIEZZA = 0.36;
+/** Semi-larghezza di riferimento del fascio, in frazione dell'altezza. */
+export const SPESSORE = 0.105;
+/** Ampiezza del micro-movimento individuale, in frazione dell'altezza. */
+export const MICRO = 0.022;
 /**
  * Sbordo laterale in pixel: il canvas esce dal contenitore, così l'onda
  * non ha un inizio e una fine visibili ma entra ed esce dal campo.
  */
 export const SBORDO = 90;
+/** Rigidezza e smorzamento dell'attrazione verso il campo. */
+export const RIGIDEZZA = 3.2;
+export const SMORZAMENTO = 2.9;
 
 export type Particella = {
-  /** Posizione lungo l'onda, in pixel CSS (può stare fuori dai bordi). */
+  /** Posizione lungo il fascio, in pixel CSS (può stare fuori dai bordi). */
   x: number;
-  /** Scostamento dalla curva, normalizzato in [-1, 1]: la profondità. */
-  dv: number;
+  /** Posto attraverso il fascio, in [-1, 1]. */
+  s: number;
+  /** Stato dell'inerzia: dove si trova e con che velocità verticale. */
+  y: number;
+  vy: number;
   /** Velocità di scorrimento (px/s), individuale e con segno. */
   v: number;
-  /** Le tre oscillazioni verticali proprie e le loro fasi. */
-  f1: number;
-  f2: number;
-  f3: number;
-  p1: number;
-  p2: number;
-  p3: number;
-  amp: number;
-  /** Raggio in pixel CSS, 0,6–2,5. */
+  /** Seme personale: sposta il campionamento del micro-rumore. */
+  seme: number;
+  /** Raggio di riferimento in pixel CSS. */
   r: number;
+  /** In primo piano: più grande, più opaca, col bagliore. */
+  avanti: boolean;
   /** Quanto è disposta a prendere l'accento (0 = mai). */
   soglia: number;
   /** Opacità di base, dalla profondità. */
   a: number;
+  /**
+   * La forma del fascio dove si trova la particella, con l'istante a cui
+   * è stata calcolata.
+   *
+   * Non è un'ottimizzazione prematura: `formaFascio` costa cinque
+   * campionamenti di rumore, e senza memoria veniva chiamata quattro
+   * volte per particella per fotogramma — una per il bersaglio, una per
+   * l'opacità, una per il raggio, una per la densità. Misurato: 0,77ms
+   * contro 0,25ms per fotogramma a 2560px.
+   */
+  f?: Forma;
+  ft?: number;
 };
 
-/** Campana: densità e ampiezza alte al centro, dolci agli estremi. */
-export function campana(u: number, sigma = 0.3): number {
+export type Forma = {
+  centro: number;
+  semi: number;
+  densita: number;
+  sdoppiamento: number;
+};
+
+/** Campana: densità alta al centro dell'inquadratura, dolce agli estremi. */
+export function campana(u: number, sigma = 0.32): number {
   const d = u - 0.5;
   return Math.exp(-(d * d) / (2 * sigma * sigma));
 }
 
 /**
- * La curva portante: TRE sinusoidi con periodi non multipli fra loro,
- * nello spazio e nel tempo. Con due il profilo tornava al punto di
- * partenza abbastanza spesso da poterlo notare; con tre, e con questi
- * rapporti, non si ripete in nessun tempo utile.
+ * LA FORMA DEL FASCIO in un punto e in un istante.
+ *
+ * Tutto viene dal rumore, con scale temporali diverse fra loro. È qui
+ * che il fascio «assume configurazioni diverse»: nessun parametro è
+ * costante, nessuno torna indietro, e ognuno cammina col suo passo.
  */
-export function curva(
+export function formaFascio(
   x: number,
   t: number,
   L: number,
   H: number,
   c: ConfigOnda,
-): number {
-  const k1 = (Math.PI * 2) / (L * 0.92);
-  const k2 = (Math.PI * 2) / (L * 0.53);
-  const k3 = (Math.PI * 2) / (L * 0.31);
-  const a = c.ampiezza * H;
-  return (
-    H * c.posizione +
-    A1 * a * Math.sin(x * k1 + t * 0.075) +
-    A2 * a * Math.sin(x * k2 + t * 0.043 + 1.7) +
-    A3 * a * Math.sin(x * k3 + t * 0.027 + 4.1)
-  );
+): Forma {
+  const u = x / L;
+
+  // La linea: rumore lungo il percorso che scorre nel tempo.
+  const linea = fbmPieno(u * 2.05, 4.7, t * 0.034);
+  // L'ampiezza respira: cresce e si smorza su una scala lunga.
+  const respiroAmp = 0.45 + 0.55 * fbm01(11.3, 2.9, t * 0.021, 2);
+  const centro =
+    H * c.posizione + AMPIEZZA * H * c.ampiezza * respiroAmp * linea;
+
+  // La larghezza si dilata e si restringe, globalmente e lungo il tratto.
+  const respiroLarg = fbm01(7.7, 19.1, t * 0.017, 2);
+  const largLocale = fbm01(u * 1.75, 3.1, t * 0.045, 2);
+  const semi =
+    SPESSORE * H * c.spessore * (0.4 + 0.95 * respiroLarg + 0.75 * largLocale);
+
+  // La densità si concentra in punti che si spostano: dove è alta le
+  // particelle sono più fitte e più piccole, dove è bassa più rade e
+  // più grandi.
+  const densita = 0.3 + 0.7 * fbm01(u * 2.35, 8.2, t * 0.033, 2);
+
+  // Lo sdoppiamento: quando sale, le particelle vengono spinte verso i
+  // due bordi del fascio e si vedono due filamenti che poi si
+  // riuniscono. Sta a zero per la maggior parte del tempo — è un evento,
+  // non un battito.
+  const grezzo = rumore3(u * 0.85, 15.4, t * 0.012);
+  const sdoppiamento = Math.pow(Math.max(0, grezzo - 0.12) / 0.88, 1.6);
+
+  return { centro, semi, densita, sdoppiamento };
 }
 
-/** L'oscillazione propria di una particella, normalizzata in [-1, 1]. */
-export function oscillazione(p: Particella, t: number): number {
-  return (
-    (Math.sin(t * p.f1 + p.p1) +
-      0.55 * Math.sin(t * p.f2 + p.p2) +
-      0.3 * Math.sin(t * p.f3 + p.p3)) /
-    1.85
-  );
+/**
+ * Dove il campo vuole la particella adesso. La particella ci arriva con
+ * ritardo (vedi `avanza`): questo è il bersaglio, non la posizione.
+ */
+export function formaDi(
+  p: Particella,
+  t: number,
+  L: number,
+  H: number,
+  c: ConfigOnda,
+): Forma {
+  if (p.f && p.ft === t) return p.f;
+  const f = formaFascio(p.x, t, L, H, c);
+  p.f = f;
+  p.ft = t;
+  return f;
 }
 
-/** Dove si trova una particella in questo istante. */
-export function posizioneY(
+export function bersaglio(
   p: Particella,
   t: number,
   L: number,
   H: number,
   c: ConfigOnda,
 ): number {
-  const densita = campana(p.x / L);
-  return (
-    curva(p.x, t, L, H, c) +
-    p.dv * H * SPESSORE * c.spessore +
-    oscillazione(p, t) * p.amp * c.ampiezza * (0.3 + 0.7 * densita)
-  );
+  const f = formaDi(p, t, L, H, c);
+  // Lo sdoppiamento spinge verso i bordi senza spostare nessuno di
+  // scatto: è una rimappatura continua del posto nel fascio.
+  const segno = p.s < 0 ? -1 : 1;
+  const posto = segno * (Math.abs(p.s) * (1 - f.sdoppiamento) + f.sdoppiamento);
+  // Secondo strato di rumore, frequenza alta e ampiezza piccola: il
+  // brulichio individuale che rende il fascio uno sciame e non un nastro.
+  const micro = fbm3(p.x * 0.0075 + p.seme, 21.7, t * 0.085, 2);
+  return f.centro + posto * f.semi + micro * MICRO * H * c.ampiezza;
 }
 
 /**
- * LA MASCHERA DEL TESTO: un'ellisse morbida dentro cui le particelle si
+ * Un passo di simulazione: scorrimento e inerzia.
+ *
+ * Il taglio del passo a 50ms evita lo scatto quando la scheda torna in
+ * primo piano dopo essere stata sospesa. Lo smorzamento esponenziale è
+ * indipendente dalla durata del fotogramma, quindi a 120Hz il movimento
+ * è identico che a 60.
+ */
+export function avanza(
+  particelle: Particella[],
+  dt: number,
+  t: number,
+  L: number,
+  H: number,
+  c: ConfigOnda,
+): void {
+  const passo = Math.min(0.05, dt);
+  const giro = L + SBORDO * 2;
+  const decadimento = Math.exp(-SMORZAMENTO * passo);
+  for (const p of particelle) {
+    p.x += p.v * passo;
+    if (p.x > L + SBORDO) p.x -= giro;
+    else if (p.x < -SBORDO) p.x += giro;
+    const b = bersaglio(p, t, L, H, c);
+    p.vy = (p.vy + (b - p.y) * RIGIDEZZA * passo) * decadimento;
+    p.y += p.vy * passo;
+  }
+}
+
+/** Porta il campo a regime senza far vedere l'assestamento iniziale. */
+export function assesta(
+  particelle: Particella[],
+  t: number,
+  L: number,
+  H: number,
+  c: ConfigOnda,
+): void {
+  for (const p of particelle) p.y = bersaglio(p, t, L, H, c);
+  for (let i = 0; i < 30; i++) avanza(particelle, 1 / 60, t, L, H, c);
+}
+
+/**
+ * Il raggio in questo istante: varia nel tempo e nello spazio, non solo
+ * da particella a particella. Dove il fascio si addensa le particelle
+ * sono più piccole e fitte, dove si rarefà più grandi e distanziate.
+ */
+export function raggioDi(
+  p: Particella,
+  t: number,
+  L: number,
+  H: number,
+  c: ConfigOnda,
+): number {
+  const f = formaDi(p, t, L, H, c);
+  return p.r * c.raggio * (0.62 + 0.85 * (1 - f.densita));
+}
+
+/* ------------------------------------------------------------------ */
+/* Maschere del testo                                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * LA MASCHERA DEL TESTO: una regione morbida dentro cui le particelle si
  * spengono progressivamente.
  *
  * È la differenza fra «il claim galleggia sopra l'onda» e «l'onda evita
  * il claim»: l'onda attraversa tutto l'hero e passa dietro le lettere,
- * ma dove ci sono le lettere il fondo torna quasi bianco. Nessun
- * riquadro, nessun bordo — solo una caduta continua di opacità.
+ * ma dove ci sono le lettere il fondo torna quasi bianco.
  */
 export type MascheraTesto = {
   cx: number;
@@ -234,7 +389,7 @@ export type MascheraTesto = {
 
 /**
  * Dove comincia a risalire l'opacità: fino a qui la protezione è piena.
- * Il blocco del testo, angoli compresi, deve stare tutto dentro.
+ * Il rettangolo del testo, angoli compresi, deve stare tutto dentro.
  */
 export const PIANORO = 0.78;
 
@@ -247,14 +402,12 @@ export function fattoreMaschera(
   const dx = Math.abs((x - m.cx) / m.rx);
   const dy = Math.abs((y - m.cy) / m.ry);
   // Norma di ordine 6 e non distanza euclidea: la maschera deve seguire
-  // la forma del BLOCCO, che è un rettangolo. Con l'ellisse gli angoli
-  // del claim restavano fuori dalla protezione — ed è esattamente lì che
-  // la misura del contrasto ha trovato il fondo peggiore.
+  // la forma del RETTANGOLO della riga. Con l'ellisse gli angoli
+  // restavano fuori dalla protezione — ed è esattamente lì che la misura
+  // del contrasto trovava il fondo peggiore.
   const d = Math.pow(Math.pow(dx, 6) + Math.pow(dy, 6), 1 / 6);
   if (d >= 1) return 1;
   if (d <= PIANORO) return m.minimo;
-  // Poi risale con una curva morbida: il bordo della maschera non si
-  // deve poter individuare.
   const u = (d - PIANORO) / (1 - PIANORO);
   const s = u * u * (3 - 2 * u);
   return m.minimo + (1 - m.minimo) * s;
@@ -263,12 +416,9 @@ export function fattoreMaschera(
 /**
  * Il fattore di più maschere insieme: vince la più protettiva.
  *
- * Una maschera sola sul blocco intero copriva anche gli spazi vuoti —
- * fra l'occhiello e il titolo, accanto alle righe più corte, fra il
- * sottotitolo e i bottoni — e a quel punto dell'onda, dietro il claim,
- * non restava niente da vedere. Una maschera PER RIGA protegge le
- * lettere e lascia passare l'onda negli spazi: è lì che si vede che il
- * claim galleggia sopra qualcosa invece di stare in una radura.
+ * Una maschera sola sul blocco intero copriva anche gli spazi vuoti fra
+ * le righe, e dietro il claim non restava niente da vedere. Una maschera
+ * PER RIGA protegge le lettere e lascia passare l'onda negli spazi.
  */
 export function fattoreMaschere(
   x: number,
@@ -283,20 +433,32 @@ export function fattoreMaschere(
   return f;
 }
 
+/* ------------------------------------------------------------------ */
+/* Opacità, accento, semina                                            */
+/* ------------------------------------------------------------------ */
+
 /**
- * L'opacità di una particella: densità orizzontale, profondità,
- * dissolvenza laterale, maschera del testo e manopola globale.
+ * L'opacità: profondità della particella, densità locale del fascio,
+ * campana orizzontale, dissolvenza ai bordi e manopola globale.
  */
 export function opacita(
   p: Particella,
+  t: number,
   L: number,
+  H: number,
   c: ConfigOnda,
   fattoreTesto = 1,
 ): number {
-  const densita = campana(p.x / L);
+  const f = formaDi(p, t, L, H, c);
+  const inquadratura = campana(p.x / L);
   const bordo = Math.min(1, Math.min(p.x + SBORDO, L + SBORDO - p.x) / 150);
   return (
-    p.a * Math.pow(densita, 1.25) * Math.max(0, bordo) * fattoreTesto * c.opacita
+    p.a *
+    (0.45 + 0.55 * f.densita) *
+    Math.pow(inquadratura, 1.15) *
+    Math.max(0, bordo) *
+    fattoreTesto *
+    c.opacita
   );
 }
 
@@ -318,51 +480,56 @@ export function accento(p: Particella, L: number): number {
 export function semina(
   n: number,
   L: number,
+  H: number,
   c: ConfigOnda,
   caso: () => number = Math.random,
 ): Particella[] {
   return Array.from({ length: n }, () => {
-    // Profondità con più massa vicino alla curva: le particelle lontane
-    // sono poche e tenui, ed è ciò che dà lo spessore.
-    const d = Math.pow(caso(), 1.6);
-    const segno = caso() < 0.5 ? -1 : 1;
-    const f1 = 0.16 + caso() * 0.2;
-    // Una minoranza corre di più: è quello che fa sembrare il flusso
-    // vivo invece che un blocco che trasla.
-    const veloce = caso() < 0.12 ? 1.8 + caso() * 0.9 : 1;
+    // Posto nel fascio con più massa al centro: è ciò che gli dà un
+    // cuore denso e bordi sfrangiati invece di due sponde nette.
+    const grezzo = caso() * 2 - 1;
+    const s = Math.sign(grezzo) * Math.pow(Math.abs(grezzo), 1.35);
+    const avanti = caso() < c.primoPiano;
+    // Raggio con distribuzione non uniforme: molte piccole, poche
+    // grandi. Le particelle in primo piano stanno tutte in alto.
+    const r = avanti
+      ? 3.4 + caso() * 2.2
+      : 1 + Math.pow(caso(), 2.1) * 3.2;
     return {
       x: -SBORDO + caso() * (L + SBORDO * 2),
-      dv: segno * d,
-      v: (10 + caso() * 22) * veloce * c.velocita * c.direzione,
-      f1,
-      // Rapporti irrazionali fra le tre frequenze: la somma non torna.
-      f2: f1 * 0.618,
-      f3: f1 * 0.382,
-      p1: caso() * Math.PI * 2,
-      p2: caso() * Math.PI * 2,
-      p3: caso() * Math.PI * 2,
-      amp: (7 + caso() * 22) * (0.6 + 0.4 * caso()),
-      r: 0.6 + Math.pow(1 - d, 1.4) * 1.9,
+      s,
+      y: H * c.posizione,
+      vy: 0,
+      // Una minoranza corre di più: è quello che fa sembrare il flusso
+      // vivo invece che un blocco che trasla.
+      v:
+        (12 + caso() * 26) *
+        (caso() < 0.12 ? 1.9 + caso() * 0.9 : 1) *
+        c.velocita *
+        c.direzione,
+      seme: caso() * 100,
+      r,
+      avanti,
       soglia: caso(),
-      a: 0.3 + (1 - d) * 0.6,
+      a: avanti ? 0.72 + caso() * 0.28 : 0.34 + Math.pow(caso(), 1.3) * 0.5,
     };
   });
 }
 
 /**
- * Quante particelle: dalla larghezza, non da un numero fisso. Meglio
- * poche rese benissimo che tante rese male — questi numeri escono dalla
- * misura del frame time, non da una preferenza.
+ * Quante particelle: dalla larghezza, non da un numero fisso. Questi
+ * numeri escono dalla misura del costo per fotogramma, non da una
+ * preferenza — meglio poche rese benissimo che tante rese male.
  */
 export function quante(larghezza: number, c: ConfigOnda): number {
   const base =
     larghezza < 640
-      ? 260
+      ? 320
       : larghezza < 1100
-        ? 420
+        ? 520
         : larghezza < 1800
-          ? 560
-          : 620;
+          ? 700
+          : 780;
   return Math.round(base * c.densita);
 }
 

@@ -1,11 +1,11 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { OndaParticelle } from "@/components/onda-particelle";
-import { ONDA_HERO } from "@/lib/onda";
+import { ONDA_CONTENUTA, ONDA_DECISA } from "@/lib/onda";
 
 /**
  * PRIMO IMPATTO — il claim galleggia sopra l'onda.
@@ -38,10 +38,31 @@ import { ONDA_HERO } from "@/lib/onda";
 export function HeroHome() {
   const blocco = useRef<HTMLDivElement>(null);
 
+  /*
+   * LE DUE CALIBRAZIONI, da vedere e scegliere. Predefinita è la
+   * «decisa»: il difetto segnalato era che l'onda non si vedeva, e un
+   * difetto si corregge per intero, non a metà. La «contenuta» ha lo
+   * stesso movimento con un terzo di presenza in meno.
+   *
+   * Si confrontano dal vivo con `?onda=contenuta`. La lettura sta in un
+   * effetto e non nel render perché durante il render il server non ha
+   * un URL, e un render diverso fra server e browser è un errore di
+   * idratazione: il primo disegno usa la predefinita, l'eventuale
+   * cambio arriva un istante dopo e riguarda solo il canvas.
+   */
+  const [config, setConfig] = useState(ONDA_DECISA);
+  useEffect(() => {
+    const scelta = new URLSearchParams(window.location.search).get("onda");
+    if (scelta === "contenuta") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- lettura una tantum dell'URL, impossibile durante il render
+      setConfig(ONDA_CONTENUTA);
+    }
+  }, []);
+
   return (
     <section className="relative isolate overflow-hidden bg-white px-5 py-24 md:py-32">
       <OndaParticelle
-        config={ONDA_HERO}
+        config={config}
         riferimentoTesto={blocco}
         className="-z-20"
       />

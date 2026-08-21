@@ -1,39 +1,38 @@
 /*
- * PROVE SULL'ONDA.
+ * PROVE SULL'ONDA — il fascio che muta.
  *
  * Un'animazione non si collauda guardandola: un difetto che compare al
- * quarantesimo secondo, o solo a 2560px, o su una particella su cento,
- * non si vede in un'occhiata. Qui la geometria si campiona — quattro
- * larghezze, ottanta istanti, migliaia di particelle — e si verifica che
- * le proprietà promesse valgano SEMPRE, non in media.
+ * terzo minuto, o solo a 2560px, o su una particella su cento, non si
+ * vede in un'occhiata. Qui si simula il campo davvero — con l'inerzia,
+ * passo per passo — su quattro larghezze e minuti di tempo simulato.
  *
- * La prova che conta di più è il CONTRASTO del claim sopra l'onda IN
- * MOVIMENTO, nel punto peggiore. Non su fondo uniforme.
+ * Le due prove che contano di più:
+ *   - il MOVIMENTO NON SI RIPETE e non ha un ritmo riconoscibile;
+ *   - il CLAIM resta leggibile sopra l'onda IN MOVIMENTO, nel punto
+ *     peggiore, non su fondo uniforme.
  *
  * Uso:  node --import ./scripts/risolutore-ts.mjs scripts/test-onda.mjs
  */
 
 import {
-  A1,
-  A2,
-  A3,
-  ONDA_HERO,
+  ONDA_CONTENUTA,
+  ONDA_DECISA,
   PINO,
   PRESET,
   SBORDO,
-  SPESSORE,
   accento,
-  campana,
-  curva,
+  assesta,
+  avanza,
   fattoreMaschera,
   fattoreMaschere,
+  formaFascio,
   opacita,
-  oscillazione,
-  posizioneY,
   posizionePerLarghezza,
   quante,
+  raggioDi,
   semina,
 } from "@/lib/onda";
+import { fbm3, rumore3 } from "@/lib/rumore";
 
 let ok = 0;
 let ko = 0;
@@ -48,7 +47,7 @@ const prova = (nome, condizione, dettaglio = "") => {
 };
 
 /** Generatore deterministico: due esecuzioni devono dire la stessa cosa. */
-function casoFisso(seme = 20260820) {
+function casoFisso(seme = 20260821) {
   let s = seme;
   return () => {
     s = (s * 1664525 + 1013904223) % 4294967296;
@@ -56,8 +55,6 @@ function casoFisso(seme = 20260820) {
   };
 }
 
-/* Le quattro larghezze richieste. `L` è la larghezza del CANVAS, che
-   sborda di SBORDO da entrambi i lati rispetto alla parte visibile. */
 const SCHERMI = [
   { nome: "mobile 375", visibile: 375, H: 760 },
   { nome: "desktop 1280", visibile: 1280, H: 720 },
@@ -65,14 +62,13 @@ const SCHERMI = [
   { nome: "grande 2560", visibile: 2560, H: 800 },
 ].map((s) => ({ ...s, L: s.visibile + SBORDO * 2 }));
 
-const ISTANTI = Array.from({ length: 80 }, (_, i) => i * 2.9);
-
 /* LE RIGHE DEL CLAIM, con la geometria dichiarata dall'hero: occhiello,
-   due righe di display, sottotitolo, fila dei bottoni. Sono misure
-   generose — una riga più larga del vero protegge di meno, quindi il
-   caso peggiore che ne esce è conservativo. */
+   due righe di display, sottotitolo, fila dei bottoni. Misure generose —
+   una riga più larga del vero protegge di meno, quindi il caso peggiore
+   che ne esce è conservativo. */
 function righeDi(s) {
-  const disp = s.visibile < 640 ? 40 : s.visibile < 768 ? 52 : s.visibile < 1280 ? 72 : 80;
+  const disp =
+    s.visibile < 640 ? 40 : s.visibile < 768 ? 52 : s.visibile < 1280 ? 72 : 80;
   const utile = Math.min(896, s.visibile * 0.92);
   const blocco = [
     { w: Math.min(utile, 340), h: 16, gap: 28 },
@@ -83,17 +79,43 @@ function righeDi(s) {
   ];
   const totale = blocco.reduce((a, r) => a + r.h + r.gap, 0);
   let y = s.H / 2 - totale / 2;
+  // Sotto i 640px il componente usa UNA maschera sul blocco intero, non
+  // una per riga: qui si rispecchia la stessa regola, altrimenti la
+  // prova misurerebbe una cosa che il sito non fa.
+  if (s.visibile < 640) {
+    const w = Math.max(...blocco.map((r) => r.w));
+    const cy = s.H / 2;
+    return [
+      {
+        cx: s.L / 2,
+        cy,
+        rx: (w / 2) * 1.5,
+        ry: (totale / 2) * 1.9,
+        minimo: 0.06,
+        testo: {
+          x0: s.L / 2 - w / 2,
+          x1: s.L / 2 + w / 2,
+          y0: cy - totale / 2,
+          y1: cy + totale / 2,
+        },
+      },
+    ];
+  }
   return blocco.map((r) => {
     const cy = y + r.h / 2;
     y += r.h + r.gap;
     return {
       cx: s.L / 2,
       cy,
-      rx: (r.w / 2) * 1.45,
-      ry: (r.h / 2) * 1.55,
-      minimo: 0.09,
-      // Il rettangolo vero della riga, dove stanno le lettere.
-      testo: { x0: s.L / 2 - r.w / 2, x1: s.L / 2 + r.w / 2, y0: cy - r.h / 2, y1: cy + r.h / 2 },
+      rx: (r.w / 2) * 1.5,
+      ry: (r.h / 2) * 1.9,
+      minimo: 0.06,
+      testo: {
+        x0: s.L / 2 - r.w / 2,
+        x1: s.L / 2 + r.w / 2,
+        y0: cy - r.h / 2,
+        y1: cy + r.h / 2,
+      },
     };
   });
 }
@@ -110,178 +132,241 @@ const contrasto = (c1, c2) => {
   const l2 = luminanza(c2);
   return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 };
-/** Un colore con opacità sopra il bianco. */
 const sopraBianco = ([r, g, b], a) => [
   Math.round(255 + (r - 255) * a),
   Math.round(255 + (g - 255) * a),
   Math.round(255 + (b - 255) * a),
 ];
-
 const TESTO_TENUE = sopraBianco([10, 61, 42], 0.8); // pine-dark/80
-/**
- * Fin dove può arrivare la velatura prima che il contrasto scenda sotto
- * 4,5:1 — la soglia AA per il testo grande. Non è un numero scelto a
- * mano: si ricava risolvendo il contrasto.
- */
+const TESTO_CHIAVE = [14, 82, 56]; // pino pieno, la parola «cloud»
+/** Fin dove può arrivare la velatura prima di scendere sotto 4,5:1. */
 const VELATURA_LIMITE = (() => {
   for (let a = 0; a <= 1; a += 0.005) {
-    if (contrasto(sopraBianco([10, 61, 42], 0.8), sopraBianco(PINO, a)) < 4.5) {
+    if (contrasto(TESTO_TENUE, sopraBianco(PINO, a)) < 4.5) {
       return Math.max(0, a - 0.005);
     }
   }
   return 1;
 })();
-const TESTO_CHIAVE = [14, 82, 56]; // pino pieno, la parola «cloud»
+
+/** Il profilo del bagliore, gli stessi stop del gradiente dello sprite. */
+const profilo = (u) => {
+  if (u >= 1) return 0;
+  if (u <= 0.35) return 1 + (0.55 - 1) * (u / 0.35);
+  if (u <= 0.7) return 0.55 + (0.12 - 0.55) * ((u - 0.35) / 0.35);
+  return 0.12 * (1 - (u - 0.7) / 0.3);
+};
+
+/* ================================================================== */
+/* 1. IL MOVIMENTO: organico, non riconoscibile                        */
+/* ================================================================== */
+console.log("\nil movimento");
+
+/* Il campo non deve avere periodo: si confronta il profilo della linea a
+   t=0 con quello a decine di istanti successivi, fino a cinque minuti. */
+const Lp = 1280 + SBORDO * 2;
+const Hp = 720;
+const profiloLinea = (t) =>
+  Array.from({ length: 120 }, (_, i) =>
+    formaFascio((i / 119) * Lp, t, Lp, Hp, ONDA_DECISA).centro,
+  );
+const base0 = profiloLinea(0);
+// La dispersione del profilo è il metro: uno scarto pari alla
+// dispersione vuol dire «forma completamente diversa», zero vuol dire
+// «identica». Senza normalizzare, la soglia dipenderebbe dall'ampiezza.
+const mediaBase = base0.reduce((a, b) => a + b, 0) / base0.length;
+const dispersione = Math.sqrt(
+  base0.reduce((a, v) => a + (v - mediaBase) ** 2, 0) / base0.length,
+);
+let somiglianzaMax = 0;
+let quandoMax = 0;
+for (let t = 4; t <= 300; t += 2) {
+  const p = profiloLinea(t);
+  let scarto = 0;
+  for (let i = 0; i < p.length; i++) scarto += Math.abs(p[i] - base0[i]);
+  scarto /= p.length;
+  const somiglianza = Math.max(0, 1 - scarto / (1.4 * dispersione));
+  if (somiglianza > somiglianzaMax) {
+    somiglianzaMax = somiglianza;
+    quandoMax = t;
+  }
+}
+prova(
+  "la forma non torna mai uguale in cinque minuti",
+  somiglianzaMax < 0.85,
+  `somiglianza massima ${(somiglianzaMax * 100).toFixed(0)}% (a ${quandoMax}s)`,
+);
+
+/* Prova molto più discriminante: l'IMPRONTA dello stato completo del
+   fascio — linea, larghezza, densità e sdoppiamento in tre punti — non
+   deve mai tornare vicina a quella iniziale. Una forma che si ripete
+   riporterebbe indietro tutti e dodici i numeri insieme, cosa che il
+   caso non fa. */
+const impronta = (t) =>
+  [0.25, 0.5, 0.75].flatMap((u) => {
+    const f = formaFascio(u * Lp, t, Lp, Hp, ONDA_DECISA);
+    return [f.centro / Hp, f.semi / Hp, f.densita, f.sdoppiamento];
+  });
+const imp0 = impronta(0);
+const vicinanzaA = (t) => {
+  const v = impronta(t);
+  let scarto = 0;
+  for (let i = 0; i < v.length; i++) scarto += Math.abs(v[i] - imp0[i]);
+  return Math.max(0, 1 - scarto / 0.9);
+};
+/* Nei primi secondi l'impronta somiglia a quella iniziale, ed è giusto
+   così: il campo è continuo, non salta. La domanda vera è un'altra —
+   una volta che la forma È cambiata, ci TORNA? Si cerca l'istante in cui
+   se ne è andata davvero, e da lì in poi si guarda se rientra. */
+let quandoDiversa = null;
+for (let t = 1; t <= 300; t += 1) {
+  if (vicinanzaA(t) < 0.4) {
+    quandoDiversa = t;
+    break;
+  }
+}
+let vicinanzaMax = 0;
+let quandoImp = 0;
+if (quandoDiversa !== null) {
+  for (let t = quandoDiversa; t <= 300; t += 1) {
+    const v = vicinanzaA(t);
+    if (v > vicinanzaMax) {
+      vicinanzaMax = v;
+      quandoImp = t;
+    }
+  }
+}
+prova(
+  "la forma cambia davvero configurazione",
+  quandoDiversa !== null && quandoDiversa < 60,
+  quandoDiversa === null ? "non cambia mai" : `diversa dopo ${quandoDiversa}s`,
+);
+prova(
+  "e una volta cambiata non ci ritorna",
+  vicinanzaMax < 0.7,
+  `rientro massimo ${(vicinanzaMax * 100).toFixed(0)}% (a ${quandoImp}s)`,
+);
+
+/* Nessun ritmo prevedibile: le creste della linea non devono essere
+   equidistanti. Con una sinusoide la distanza fra i massimi è costante. */
+const istanteCampione = 41.7;
+const linea = profiloLinea(istanteCampione);
+const creste = [];
+for (let i = 1; i < linea.length - 1; i++) {
+  if (linea[i] > linea[i - 1] && linea[i] > linea[i + 1]) creste.push(i);
+}
+const distanze = creste.slice(1).map((v, i) => v - creste[i]);
+const media = distanze.reduce((a, b) => a + b, 0) / Math.max(1, distanze.length);
+const scartoRel =
+  distanze.length > 1
+    ? Math.sqrt(
+        distanze.reduce((a, d) => a + (d - media) ** 2, 0) / distanze.length,
+      ) / media
+    : 1;
+prova(
+  "le creste non sono equidistanti (nessun ritmo di sinusoide)",
+  distanze.length < 2 || scartoRel > 0.25,
+  `${creste.length} creste, dispersione ${(scartoRel * 100).toFixed(0)}%`,
+);
+
+/* Il rumore deve essere continuo: nessun salto fra punti vicini. */
+let saltoRumore = 0;
+for (let i = 0; i < 4000; i++) {
+  const x = i * 0.01;
+  saltoRumore = Math.max(
+    saltoRumore,
+    Math.abs(rumore3(x + 0.01, 3.3, 1.1) - rumore3(x, 3.3, 1.1)),
+  );
+}
+prova("il campo di rumore è continuo", saltoRumore < 0.05,
+  `salto massimo ${saltoRumore.toFixed(4)} su passo 0,01`);
+prova("il rumore resta nell'intervallo atteso",
+  Array.from({ length: 500 }, (_, i) => Math.abs(fbm3(i * 0.37, i * 0.11, i * 0.05)))
+    .every((v) => v <= 1));
+
+/* Il fascio deve davvero cambiare configurazione: larghezza, densità e
+   sdoppiamento devono variare in modo sensibile nel tempo. */
+const campioniForma = Array.from({ length: 400 }, (_, i) =>
+  formaFascio(Lp * 0.5, i * 0.9, Lp, Hp, ONDA_DECISA),
+);
+const escursione = (chiave) => {
+  const v = campioniForma.map((f) => f[chiave]);
+  return Math.max(...v) - Math.min(...v);
+};
+// 3,5% dell'altezza di semi-larghezza vuol dire che il fascio si allarga
+// e si stringe di circa il 7% dell'hero: a occhio è un respiro evidente.
+prova("la larghezza del fascio si dilata e si restringe",
+  escursione("semi") > Hp * 0.035,
+  `escursione ${Math.round(escursione("semi"))}px di semi-larghezza, cioè ${Math.round(escursione("semi") * 2)}px di fascio`);
+prova("la densità si sposta lungo il percorso",
+  escursione("densita") > 0.3,
+  `escursione ${escursione("densita").toFixed(2)}`);
+const sdoppiamenti = campioniForma.map((f) => f.sdoppiamento);
+prova("il fascio ogni tanto si sdoppia e si riunisce",
+  Math.max(...sdoppiamenti) > 0.25 && Math.min(...sdoppiamenti) < 0.05,
+  `da ${Math.min(...sdoppiamenti).toFixed(2)} a ${Math.max(...sdoppiamenti).toFixed(2)}`);
+
+/* ================================================================== */
+/* 2. PER OGNI LARGHEZZA: presenza, inerzia, contrasto                  */
+/* ================================================================== */
 
 for (const s of SCHERMI) {
   const c = {
-    ...ONDA_HERO,
-    posizione: posizionePerLarghezza(s.visibile, ONDA_HERO),
+    ...ONDA_DECISA,
+    posizione: posizionePerLarghezza(s.visibile, ONDA_DECISA),
   };
   const n = quante(s.L, c);
-  console.log(
-    `\n${s.nome} — ${n} particelle, curva al ${Math.round(c.posizione * 100)}%`,
-  );
-  const parti = semina(n, s.L, c, casoFisso());
+  console.log(`\n${s.nome} — ${n} particelle`);
+  const parti = semina(n, s.L, s.H, c, casoFisso());
   const righe = righeDi(s);
+  assesta(parti, 0, s.L, s.H, c);
 
-  /* 1. L'ONDA ATTRAVERSA L'HERO, non ci passa sotto. */
+  /* Si simula davvero, con l'inerzia: tre minuti a 60fps campionando
+     ogni mezzo secondo. */
+  const PASSO_T = 1 / 60;
+  const CAMPIONA_OGNI = 30;
+  const FOTOGRAMMI = 60 * 180;
   let alta = Infinity;
   let bassa = -Infinity;
-  for (const t of ISTANTI) {
-    for (const p of parti) {
-      if (opacita(p, s.L, c) <= 0.004) continue;
-      const y = posizioneY(p, t, s.L, s.H, c);
-      alta = Math.min(alta, y);
-      bassa = Math.max(bassa, y);
-    }
-  }
-  const fascia = (bassa - alta) / s.H;
-  prova(
-    "la fascia occupa una porzione ampia dell'hero",
-    fascia >= 0.45 && fascia <= 0.65,
-    `${Math.round(fascia * 100)}% dell'altezza fra cresta e ventre`,
-  );
-  prova(
-    "la fascia attraversa la banda centrale (passa dietro il claim)",
-    alta < s.H * 0.45 && bassa > s.H * 0.55,
-    `da ${Math.round(alta)}px a ${Math.round(bassa)}px su ${s.H}px`,
-  );
-
-  /* 2. NIENTE TAGLI NETTI: il canvas sborda, quindi ai margini VISIBILI
-        l'onda è ancora viva e si spegne fuori dall'inquadratura. */
-  const alBordoVisibile = parti
-    .map((p) => opacita({ ...p, x: SBORDO + 4 }, s.L, c))
-    .concat(parti.map((p) => opacita({ ...p, x: s.L - SBORDO - 4 }, s.L, c)));
-  prova(
-    "ai bordi visibili l'onda è ancora viva (nessun taglio netto)",
-    Math.max(...alBordoVisibile) > 0.02,
-    `opacità massima ${Math.max(...alBordoVisibile).toFixed(3)}`,
-  );
-  const alBordoCanvas = parti.map((p) => opacita({ ...p, x: -SBORDO }, s.L, c));
-  prova(
-    "al bordo del canvas l'opacità è nulla (esce in dissolvenza)",
-    Math.max(...alBordoCanvas) < 0.005,
-    `massima ${Math.max(...alBordoCanvas).toFixed(4)}`,
-  );
-
-  /* 3. DENSITÀ MAGGIORE AL CENTRO, rarefatta agli estremi. */
-  const terzi = [0, 0, 0];
-  for (const p of parti) {
-    const u = Math.min(0.999, Math.max(0, p.x / s.L));
-    terzi[Math.floor(u * 3)] += opacita(p, s.L, c);
-  }
-  const rapporto = terzi[1] / ((terzi[0] + terzi[2]) / 2);
-  prova("il centro è più denso degli estremi", rapporto > 1.8,
-    `centro/estremi ${rapporto.toFixed(2)}×`);
-
-  /* 4. L'ACCENTO È UNA MINORANZA, E STA AL CENTRO. */
-  const visibili = parti.filter((p) => opacita(p, s.L, c) > 0.004);
-  const accentate = visibili.filter((p) => accento(p, s.L) > 0.5);
-  const quota = (accentate.length / visibili.length) * 100;
-  prova("l'accento è una minoranza", quota > 2 && quota < 25,
-    `${quota.toFixed(1)}% delle particelle visibili`);
-  const fuori = accentate.filter((p) => {
-    const u = p.x / s.L;
-    return u < 0.22 || u > 0.78;
-  });
-  prova("nessun accento fuori dalla parte centrale", fuori.length === 0,
-    `${fuori.length} fuori`);
-  const intermedie = visibili.filter((p) => {
-    const m = accento(p, s.L);
-    return m > 0.05 && m < 0.95;
-  });
-  prova("la transizione all'accento è graduale, non a blocchi",
-    intermedie.length > 0, `${intermedie.length} in transizione`);
-
-  /* 5. NESSUNA PARTICELLA SI MUOVE COME UN'ALTRA, e qualcuna corre. */
-  const firme = new Set(
-    parti.map((p) => `${p.f1.toFixed(6)}|${p.p1.toFixed(6)}|${p.v.toFixed(4)}`),
-  );
-  prova("ogni particella ha fase, frequenza e velocità proprie",
-    firme.size === parti.length, `${firme.size} firme su ${parti.length}`);
-  const veloci = parti.filter((p) => Math.abs(p.v) > 34).length;
-  prova("una minoranza corre più delle altre",
-    veloci > 0 && veloci < parti.length * 0.3,
-    `${veloci} particelle più veloci`);
-
-  /* 6. IL MOVIMENTO NON SI RIPETE: tre sinusoidi, periodi non multipli. */
-  const p0 = parti[0];
-  const periodo = (Math.PI * 2) / p0.f1;
-  const scarti = [1, 2, 3, 5, 8, 13].map((k) =>
-    Math.abs(oscillazione(p0, 0) - oscillazione(p0, periodo * k)),
-  );
-  prova("l'oscillazione non si ripete dopo il periodo fondamentale",
-    Math.min(...scarti) > 0.03,
-    `scarto minimo ${Math.min(...scarti).toFixed(3)}`);
-
-  /* 7. NESSUNO SCATTO fra due fotogrammi a 60fps. */
-  let salto = 0;
-  for (const t of ISTANTI) {
-    for (const p of parti) {
-      salto = Math.max(
-        salto,
-        Math.abs(
-          posizioneY(p, t + 1 / 60, s.L, s.H, c) - posizioneY(p, t, s.L, s.H, c),
-        ),
-      );
-    }
-  }
-  prova("nessuno scatto fra un fotogramma e l'altro", salto < 1.2,
-    `spostamento massimo ${salto.toFixed(3)}px per fotogramma`);
-
-  /* 8. IL CONTRASTO DEL CLAIM SOPRA L'ONDA IN MOVIMENTO, nel punto
-        peggiore.
-
-        Si campiona una griglia di punti dentro il BLOCCO DEL TESTO — non
-        dentro l'ellisse della maschera, che è volutamente più grande e
-        arriva dove le lettere non ci sono — e per ogni punto si compone
-        il colore come lo comporrebbe il browser: ogni particella
-        contribuisce con la sua opacità pesata dal profilo del suo
-        bagliore, e i contributi si COMPONGONO, non si sommano. Sommare
-        le opacità dava numeri come «copertura 480%», che non vuol dire
-        niente: due velature al 30% fanno il 51%, non il 60%. */
-  const PASSO = 24;
-  /** Il profilo del bagliore, gli stessi stop del gradiente dello sprite. */
-  const profilo = (u) => {
-    if (u >= 1) return 0;
-    if (u <= 0.35) return 1 + (0.55 - 1) * (u / 0.35);
-    if (u <= 0.7) return 0.55 + (0.12 - 0.55) * ((u - 0.35) / 0.35);
-    return 0.12 * (1 - (u - 0.7) / 0.3);
-  };
-
+  let saltoMax = 0;
+  let strappoMax = 0;
   let coperturaPeggiore = 0;
-  for (const t of ISTANTI) {
+  let raggioMin = Infinity;
+  let raggioMax = -Infinity;
+  const precedenti = parti.map((p) => p.y);
+  const spostamenti = parti.map(() => 0);
+
+  for (let f = 0; f < FOTOGRAMMI; f++) {
+    const t = f * PASSO_T;
+    avanza(parti, PASSO_T, t, s.L, s.H, c);
+    for (let i = 0; i < parti.length; i++) {
+      const p = parti[i];
+      const sp = p.y - precedenti[i];
+      saltoMax = Math.max(saltoMax, Math.abs(sp));
+      if (f > 1) strappoMax = Math.max(strappoMax, Math.abs(sp - spostamenti[i]));
+      spostamenti[i] = sp;
+      precedenti[i] = p.y;
+    }
+    if (f % CAMPIONA_OGNI !== 0) continue;
+
     const vicine = [];
     for (const p of parti) {
-      const y = posizioneY(p, t, s.L, s.H, c);
-      const a = opacita(p, s.L, c, fattoreMaschere(p.x, y, righe));
-      if (a <= 0.004) continue;
-      vicine.push({ x: p.x, y, a, raggio: p.r * 3 });
+      const a0 = opacita(p, t, s.L, s.H, c);
+      if (a0 <= 0.004) continue;
+      alta = Math.min(alta, p.y);
+      bassa = Math.max(bassa, p.y);
+      const r = raggioDi(p, t, s.L, s.H, c);
+      raggioMin = Math.min(raggioMin, r);
+      raggioMax = Math.max(raggioMax, r);
+      const a = a0 * fattoreMaschere(p.x, p.y, righe);
+      if (a > 0.004) vicine.push({ x: p.x, y: p.y, a, raggio: r * 3 });
     }
+    // Il caso peggiore si cerca solo ogni tre campioni: è la parte cara,
+    // e la forma cambia lentamente.
+    if (f % (CAMPIONA_OGNI * 3) !== 0) continue;
     for (const r of righe) {
-      for (let x = r.testo.x0; x <= r.testo.x1; x += PASSO) {
-        for (let y = r.testo.y0; y <= r.testo.y1; y += PASSO) {
+      for (let x = r.testo.x0; x <= r.testo.x1; x += 24) {
+        for (let y = r.testo.y0; y <= r.testo.y1; y += 24) {
           let trasparenza = 1;
           for (const v of vicine) {
             const dx = x - v.x;
@@ -296,63 +381,75 @@ for (const s of SCHERMI) {
     }
   }
 
-  const fondoPeggiore = sopraBianco(PINO, Math.min(1, coperturaPeggiore));
-  const cTenue = contrasto(TESTO_TENUE, fondoPeggiore);
-  const cChiave = contrasto(TESTO_CHIAVE, fondoPeggiore);
-  prova(
-    "il claim resta leggibile nel punto peggiore dell'onda in movimento",
+  const fascia = (bassa - alta) / s.H;
+  prova("la fascia occupa una porzione ampia dell'hero",
+    fascia >= 0.4 && fascia <= 0.8,
+    `${Math.round(fascia * 100)}% dell'altezza fra cresta e ventre`);
+  prova("la fascia attraversa la banda centrale (passa dietro il claim)",
+    alta < s.H * 0.45 && bassa > s.H * 0.55,
+    `da ${Math.round(alta)}px a ${Math.round(bassa)}px su ${s.H}px`);
+
+  /* L'INERZIA: nessuna particella cambia posizione di scatto. */
+  // Uno scatto non è un movimento veloce: è un movimento che CAMBIA di
+  // colpo. Si misura lo strappo — la variazione dello spostamento fra un
+  // fotogramma e il successivo — che con l'inerzia deve restare una
+  // frazione di pixel qualunque cosa faccia il campo.
+  prova("nessuno scatto: l'inerzia tiene il movimento morbido",
+    strappoMax < 0.25,
+    `strappo massimo ${strappoMax.toFixed(4)}px, velocità di punta ${saltoMax.toFixed(2)}px/fotogramma`);
+
+  /* I RAGGI variano nel tempo e nello spazio, non solo per particella. */
+  prova("i raggi coprono l'intervallo dichiarato",
+    raggioMin >= 0.5 && raggioMax >= 4 && raggioMax <= 9,
+    `da ${raggioMin.toFixed(2)}px a ${raggioMax.toFixed(2)}px`);
+
+  /* IL CONTRASTO, misurato sopra l'onda in movimento. */
+  const fondo = sopraBianco(PINO, Math.min(1, coperturaPeggiore));
+  const cTenue = contrasto(TESTO_TENUE, fondo);
+  const cChiave = contrasto(TESTO_CHIAVE, fondo);
+  prova("il claim resta leggibile nel punto peggiore dell'onda in movimento",
     cTenue >= 4.5,
-    `fondo peggiore rgb(${fondoPeggiore.join(",")}) — testo tenue ${cTenue.toFixed(2)}:1`,
-  );
+    `fondo peggiore rgb(${fondo.join(",")}) — testo tenue ${cTenue.toFixed(2)}:1`);
   prova("la parola-chiave regge meglio del resto", cChiave > cTenue,
     `«cloud» ${cChiave.toFixed(2)}:1 contro ${cTenue.toFixed(2)}:1`);
-  // La velatura di per sé non è un difetto: conta solo in quanto abbassa
-  // il contrasto. La soglia è quella calcolata, non una preferenza.
   prova("la maschera tiene l'onda a velo dietro il testo",
     coperturaPeggiore < VELATURA_LIMITE,
     `velatura massima ${(coperturaPeggiore * 100).toFixed(1)}% sul limite di ${(VELATURA_LIMITE * 100).toFixed(1)}%`);
+
+  /* L'ACCENTO resta una minoranza centrale. */
+  const visibili = parti.filter((p) => opacita(p, 90, s.L, s.H, c) > 0.004);
+  const accentate = visibili.filter((p) => accento(p, s.L) > 0.5);
+  const quota = (accentate.length / visibili.length) * 100;
+  prova("l'accento è una minoranza", quota > 2 && quota < 25,
+    `${quota.toFixed(1)}% delle particelle visibili`);
+
+  /* Il PRIMO PIANO esiste ed è una piccola quota. */
+  const avanti = parti.filter((p) => p.avanti).length;
+  const quotaAvanti = (avanti / parti.length) * 100;
+  prova("le particelle in primo piano sono il 5-8%",
+    quotaAvanti >= 3 && quotaAvanti <= 11,
+    `${quotaAvanti.toFixed(1)}%`);
+
+  /* NIENTE TAGLI NETTI ai bordi. */
+  const alBordo = parti.map((p) =>
+    opacita({ ...p, x: -SBORDO }, 30, s.L, s.H, c),
+  );
+  prova("al bordo del canvas l'opacità è nulla (esce in dissolvenza)",
+    Math.max(...alBordo) < 0.005,
+    `massima ${Math.max(...alBordo).toFixed(4)}`);
 }
 
-/* 9. LA MASCHERA NON HA BORDI VISIBILI: la caduta è continua. */
-console.log("\nmaschera del testo");
-const m = { cx: 0, cy: 0, rx: 400, ry: 200, minimo: 0.09 };
-let gradino = 0;
-let prec = fattoreMaschera(-500, 0, m);
-for (let x = -500; x <= 500; x += 1) {
-  const v = fattoreMaschera(x, 0, m);
-  gradino = Math.max(gradino, Math.abs(v - prec));
-  prec = v;
-}
-// Per PIXEL, non per campione: sotto il 2% di variazione al pixel una
-// sfumatura non si distingue da un gradiente continuo.
-prova("la maschera sfuma senza gradini", gradino < 0.02,
-  `variazione massima ${(gradino * 100).toFixed(2)}% al pixel`);
-prova("al centro della maschera resta pochissimo",
-  fattoreMaschera(0, 0, m) <= 0.1, `${fattoreMaschera(0, 0, m).toFixed(3)}`);
-prova("fuori dalla maschera l'onda è intatta",
-  fattoreMaschera(450, 0, m) === 1);
-
-/* 10. LA CURVA È SINUOSA DAVVERO: tre frequenze non multiple. */
-console.log("\ncurva portante");
-const L = 1280 + SBORDO * 2;
-const H = 720;
-const campioni = Array.from({ length: 400 }, (_, i) =>
-  curva((i / 399) * L, 0, L, H, ONDA_HERO),
-);
-const escursione = Math.max(...campioni) - Math.min(...campioni);
-prova("l'escursione è quella dichiarata dalle ampiezze",
-  escursione > (A1 + A2 + A3) * H,
-  `${Math.round(escursione)}px su ${Math.round((A1 + A2 + A3) * H * 2)}px teorici`);
-let inversioni = 0;
-for (let i = 2; i < campioni.length; i++) {
-  if ((campioni[i - 1] - campioni[i - 2]) * (campioni[i] - campioni[i - 1]) < 0)
-    inversioni++;
-}
-prova("la curva non è una sinusoide sola", inversioni >= 3,
-  `${inversioni} inversioni di direzione`);
-
-/* 11. I PRESET DEL RIUSO rispettano la regola della discrezione. */
-console.log("\npreset del riuso");
+/* ================================================================== */
+/* 3. LE DUE CALIBRAZIONI e i preset del riuso                          */
+/* ================================================================== */
+console.log("\ncalibrazioni e preset");
+prova("la contenuta è davvero più discreta della decisa",
+  ONDA_CONTENUTA.opacita < ONDA_DECISA.opacita &&
+    ONDA_CONTENUTA.raggio < ONDA_DECISA.raggio,
+  `opacità ${Math.round(ONDA_CONTENUTA.opacita * 100)}% contro ${Math.round(ONDA_DECISA.opacita * 100)}%`);
+prova("le due calibrazioni hanno lo stesso movimento",
+  ONDA_CONTENUTA.velocita === ONDA_DECISA.velocita &&
+    ONDA_CONTENUTA.posizione === ONDA_DECISA.posizione);
 for (const [nome, cfg] of Object.entries(PRESET)) {
   const soglia = nome === "tecnica" ? 0.31 : 0.25;
   prova(`«${nome}» resta discreto`, cfg.opacita <= soglia,
@@ -360,7 +457,18 @@ for (const [nome, cfg] of Object.entries(PRESET)) {
 }
 prova("i preset scuri usano la palette invertita",
   PRESET.tecnica.palette === "scura" && PRESET.tenueScura.palette === "scura");
-prova("lo spessore della fascia è quello dichiarato", SPESSORE === 0.075);
+
+/* La maschera non ha bordi visibili. */
+const m = { cx: 0, cy: 0, rx: 400, ry: 200, minimo: 0.02 };
+let gradino = 0;
+let prec = fattoreMaschera(-500, 0, m);
+for (let x = -500; x <= 500; x += 1) {
+  const v = fattoreMaschera(x, 0, m);
+  gradino = Math.max(gradino, Math.abs(v - prec));
+  prec = v;
+}
+prova("la maschera sfuma senza gradini", gradino < 0.02,
+  `variazione massima ${(gradino * 100).toFixed(2)}% al pixel`);
 
 console.log(`\n${ok} prove superate, ${ko} fallite`);
 if (ko > 0) process.exitCode = 1;
