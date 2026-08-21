@@ -8,7 +8,10 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Tutto tranne asset statici e immagini.
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Tutto tranne asset statici, immagini e i percorsi di piattaforma.
+    // `_vercel` va escluso: senza, lo script di Analytics finisce nel
+    // controllo di sessione e torna la pagina di login al posto del
+    // JavaScript — il browser la riceve come script e la rifiuta.
+    "/((?!_next/static|_next/image|_vercel|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

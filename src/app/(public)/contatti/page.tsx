@@ -27,7 +27,7 @@ export const metadata: Metadata = metadataPagina({
 const GARANZIE = [
   {
     icon: Clock,
-    titolo: "Una risposta, non un preventivo da rincorrere",
+    titolo: "Una risposta, entro il giorno dopo",
     testo:
       "Rispondiamo entro un giorno lavorativo. Se la domanda riguarda un prezzo, la risposta breve è che il listino è già pubblico: lo trovi in ogni pagina servizio.",
   },

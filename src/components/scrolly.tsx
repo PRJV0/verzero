@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
+import { attivaReveal } from "@/lib/reveal";
+
 /** Sotto questa soglia la narrazione non parte mai (SPEC §12.O — mobile):
  *  su schermo stretto il palco sticky ruba spazio alla lettura e lo
  *  scorrimento lungo pesa. Meglio la sequenza statica, completa e fluida. */
@@ -90,8 +92,28 @@ export function Scrolly({
     const root = ref.current;
     if (!root) return;
 
-    // Su mobile la sezione resta una sequenza statica impilata.
-    if (!largo) return;
+    /*
+     * SU SCHERMO STRETTO la narrazione non parte: il palco sticky ruba
+     * spazio alla lettura (SPEC §12.O). Ma «niente narrazione» era
+     * diventato «niente animazione»: le fasi restavano una lista statica
+     * che compariva tutta insieme, ed è il difetto segnalato sulla
+     * sezione dei Zeri.
+     *
+     * La sequenza statica resta — non torna il palco sticky — e le fasi
+     * si accendono una alla volta mentre si scorre, con lo stesso motore
+     * dei reveal del resto del sito.
+     */
+    if (!largo) {
+      const fasi = Array.from(
+        root.querySelectorAll<HTMLElement>("[data-fase]"),
+      );
+      for (const f of fasi) f.classList.add("vz-reveal");
+      const spegniReveal = attivaReveal(fasi);
+      return () => {
+        spegniReveal();
+        for (const f of fasi) f.classList.remove("vz-reveal");
+      };
+    }
 
     // Chi ha chiesto meno movimento resta sulla versione statica completa.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;

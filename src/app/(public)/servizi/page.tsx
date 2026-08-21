@@ -8,7 +8,7 @@ import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 export const metadata: Metadata = metadataPagina({
   title: "Servizi e prezzi in chiaro, per ogni dimensione",
   description:
-    "Il catalogo Ver0 per categorie: ambiente, sociale, governance e sistemi di gestione. Prezzi pubblici per fascia dimensionale, nessun preventivo da chiedere.",
+    "Il catalogo Ver0 per categorie: ambiente, sociale, governance e sistemi di gestione. Per ogni percorso, prezzo e perimetro scritti prima di iniziare.",
   path: "/servizi",
 });
 
@@ -26,8 +26,9 @@ export default function ServiziPage() {
         Servizi, con i prezzi in chiaro
       </h1>
       <p className="mx-auto mt-3 max-w-xl text-center text-sm text-gray-warm">
-        Nessun preventivo da chiedere: attivi quello che ti serve, quando ti
-        serve. Ogni servizio riusa i dati che hai già — più moduli attivi, meno
+        Per ogni percorso trovi scritto prima il prezzo e il perimetro: cosa
+        produce, e dove si ferma. Attivi quello che ti serve, quando ti serve,
+        e ogni servizio riusa i dati che hai già — più percorsi attivi, meno
         lavoro per ciascuno.
       </p>
 

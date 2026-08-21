@@ -42,6 +42,11 @@ Vale per ogni pagina nuova e per ogni pagina modificata. Le utilità stanno in
   `@media (prefers-reduced-motion: no-preference)` — senza quella
   protezione un'animazione diventa contenuto mancante. Si animano solo
   `opacity` e `transform`. Dettagli e criteri in `SPEC.md` §12.X.
+  Le comparse allo scroll hanno **una sola implementazione**, in
+  `src/lib/reveal.ts`: chi ne serve una nuova la chiama, non la
+  riscrive — due copie diventano due tarature diverse alla prima
+  modifica. E disattivare la narrazione su schermo stretto non deve mai
+  disattivare anche la comparsa (SPEC §12.O).
 - **Dati nelle pagine pubbliche**: nelle vetrine, nelle infografiche e in
   ogni grafica del sito pubblico si usano SOLO imprese dichiaratamente
   inventate (oggi «Officina Lombardi S.r.l.») con partita IVA e valori

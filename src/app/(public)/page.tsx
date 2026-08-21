@@ -119,8 +119,8 @@ const ZERI = [
   },
   {
     accent: "Zero",
-    tail: "sorprese",
-    m: "Prezzi pubblici, nessun preventivo da chiedere.",
+    tail: "documenti che invecchiano",
+    m: "Quando una norma cambia, i documenti interessati vengono rivisti.",
   },
   {
     accent: "Zero",

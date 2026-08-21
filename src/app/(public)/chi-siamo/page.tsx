@@ -92,7 +92,7 @@ const PRINCIPI = [
   {
     icon: Eye,
     title: "Prezzi pubblici",
-    desc: "Il listino è in chiaro, per fascia dimensionale: nessun preventivo da chiedere, nessuna sorpresa.",
+    desc: "Il listino è pubblico e per fascia dimensionale: chiunque può fare il conto da solo, anche prima di parlarci.",
   },
 ];
 

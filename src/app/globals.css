@@ -168,6 +168,11 @@ body {
   }
   .vz-reveal[data-reveal="visibile"] {
     animation: vz-reveal-in var(--vz-ingresso) var(--vz-curva) both;
+    /* Lo scaglionamento arriva dall'ORDINE REALE di comparsa, che il
+       motore dei reveal scrive in `--vz-i` quando l'elemento entra: su
+       mobile i blocchi impilati entrano quasi insieme, e senza ritardo
+       si accenderebbero tutti in una volta. */
+    animation-delay: calc(min(var(--vz-i, 0), 5) * var(--vz-scaglione));
   }
 }
 
