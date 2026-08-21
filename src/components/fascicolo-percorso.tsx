@@ -245,8 +245,8 @@ export function FascicoloPercorso() {
             <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-light">
               Fascicolo del percorso
             </p>
-            <h3 className="mt-0.5 font-display text-2xl text-ink">
-              {fascicolo.label}
+            <h3 className="mt-0.5 font-display text-2xl leading-tight text-ink">
+              {fascicolo.nome}
             </h3>
             <p className="mt-1 text-xs leading-relaxed text-gray-warm">
               <span className="font-semibold tabular-nums text-pine">
@@ -279,6 +279,32 @@ export function FascicoloPercorso() {
             </li>
           ))}
         </ul>
+
+        {/* LO STESSO SCHEMA, applicato: cosa compone il Motore per QUESTO
+            percorso. È la prova che il sistema è trasversale e non è nato
+            per un solo servizio — cambiando tab cambia il contenuto, non
+            la grammatica. */}
+        <div className="mt-5 rounded-xl border border-line bg-paper p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-light">
+            Cosa compone l&apos;AI Ver0, qui
+          </p>
+          <ul className="mt-2.5 grid grid-cols-1 gap-x-6 gap-y-1.5 sm:grid-cols-2">
+            {fascicolo.compone.map((sezione) => (
+              <li
+                key={sezione}
+                className="flex gap-2 text-xs leading-relaxed text-gray-warm"
+              >
+                <Check
+                  size={13}
+                  strokeWidth={3}
+                  aria-hidden
+                  className="mt-0.5 shrink-0 text-mint"
+                />
+                {sezione}
+              </li>
+            ))}
+          </ul>
+        </div>
 
         {/* La chiusa: resta, in ogni percorso. */}
         <p className="mt-4 border-t border-line pt-3 text-xs text-gray-warm">

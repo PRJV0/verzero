@@ -1,5 +1,6 @@
 import {
   Building2,
+  ChevronDown,
   Database,
   FileCheck2,
   FileText,
@@ -147,6 +148,77 @@ function AnelloEsempio({ percentuale = 68 }: { percentuale?: number }) {
   );
 }
 
+/**
+ * IL LIVELLO DI PROFONDITÀ, che si apre solo dove serve.
+ *
+ * In home lo schema resta muto: lì si vende il risultato. In
+ * /come-funziona ogni blocco si può aprire e raccontare il METODO —
+ * cosa leggiamo, con che mandato, come componiamo, chi valida, come
+ * resta tracciata la provenienza.
+ *
+ * VINCOLO: si spiega il metodo, MAI le regole interne di estrazione. La
+ * differenza è netta e va tenuta: «leggiamo i campi che servono dalla
+ * bolletta» si dice; quali indizi usiamo per riconoscerli, no. Il primo
+ * è fiducia, il secondo è know-how regalato.
+ */
+const DETTAGLI: Record<string, { titolo: string; punti: string[] }> = {
+  entra: {
+    titolo: "Cosa leggiamo, e con che mandato",
+    punti: [
+      "Dai tuoi documenti prendiamo i campi che servono al percorso — consumi, periodi, quantità, ruoli — e ognuno resta legato al file da cui viene.",
+      "Le banche dati ufficiali le interroghiamo NOI, sul mandato che ci dai al momento dell'attivazione: VIES per la partita IVA europea, Registro Imprese per i dati camerali, ATECO per la classificazione, ACCREDIA per le certificazioni che già possiedi.",
+      "Il mandato è revocabile in qualunque momento dalle Impostazioni: alla revoca la piattaforma continua a funzionare con l'inserimento manuale.",
+      "Dal tuo sito leggiamo solo il tuo sito, rispettando le regole che pubblica per i programmi automatici. Mai aggregatori commerciali di terze parti: i loro termini quasi sempre lo vietano.",
+    ],
+  },
+  motore: {
+    titolo: "Come compone secondo norma",
+    punti: [
+      "La struttura non è «ispirata» allo standard: è quella che lo standard richiede, sezione per sezione, con i punti della norma nell'ordine in cui la norma li chiede.",
+      "Dove due fonti dicono cose diverse il Motore non sceglie da solo: segnala la discordanza e la porta alla tua conferma.",
+      "Quando un dato manca e si può stimare, la stima è dichiarata come tale nel documento — mai spacciata per misura.",
+      "Un professionista del team tecnico controlla perimetro, fattori e completezza prima della consegna, e mette per iscritto i rilievi: la responsabilità resta di una persona.",
+    ],
+  },
+  esce: {
+    titolo: "Come resta tracciata la provenienza",
+    punti: [
+      "Ogni valore nel documento porta con sé la sua origine: quale documento, quale banca dati, quale calcolo.",
+      "Nel portale ogni campo mostra un badge di provenienza — inserito da te, recuperato da noi, in attesa — e i dati recuperati restano «da confermare» finché non li validi.",
+      "Un dato che rifiuti non entra in nessun documento, e non te lo riproponiamo.",
+      "I documenti sono di parte prima: l'eventuale verifica di terza parte è un percorso successivo, con organismi accreditati. Non la vendiamo come inclusa.",
+    ],
+  },
+};
+
+/** Il blocco che si apre: nativo, quindi accessibile da tastiera. */
+function Dettaglio({ chiave }: { chiave: keyof typeof DETTAGLI }) {
+  const d = DETTAGLI[chiave];
+  return (
+    <details className="group mt-2 rounded-xl border border-white/12 bg-white/[0.03]">
+      <summary className="vz-interattivo flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-xs font-semibold text-mint-bright">
+        {d.titolo}
+        <ChevronDown
+          size={15}
+          aria-hidden
+          className="shrink-0 transition-transform group-open:rotate-180"
+        />
+      </summary>
+      <ul className="space-y-2 px-4 pb-4 pt-1">
+        {d.punti.map((punto) => (
+          <li
+            key={punto}
+            className="flex gap-2 text-xs leading-relaxed text-moss/75"
+          >
+            <span aria-hidden className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-mint-bright/70" />
+            {punto}
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
 function Colonna({
   occhiello,
   children,
@@ -164,7 +236,7 @@ function Colonna({
   );
 }
 
-export function MotoreInAzione() {
+export function MotoreInAzione({ dettaglio = false }: { dettaglio?: boolean }) {
   return (
     <div className="vz-anello-vivo mx-auto max-w-5xl text-left">
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[1fr_1.15fr_1fr]">
@@ -184,6 +256,7 @@ export function MotoreInAzione() {
               </div>
             </div>
           ))}
+          {dettaglio && <Dettaglio chiave="entra" />}
         </Colonna>
 
         {/* (b) CHI LAVORA — dominante, e nominato per esteso. */}
@@ -231,6 +304,7 @@ export function MotoreInAzione() {
               Un professionista valida prima della consegna: la responsabilità
               resta di una persona.
             </p>
+            {dettaglio && <Dettaglio chiave="motore" />}
           </div>
         </div>
 
@@ -250,6 +324,7 @@ export function MotoreInAzione() {
           <p className="px-1 pt-1 text-[11px] leading-relaxed text-moss/60">
             Solo standard ufficiali: nessuna certificazione inventata da noi.
           </p>
+          {dettaglio && <Dettaglio chiave="esce" />}
         </Colonna>
       </div>
 

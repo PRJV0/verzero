@@ -49,7 +49,7 @@ const MULTIPLIER: Record<Exclude<Dimensione, "grande">, number> = {
 /** Ciclo di vita del canone dal 2° anno. */
 type Rinnovo =
   | { tipo: "mantenimento"; mensile: number } // produzione iniziale → solo mantenimento
-  | { tipo: "sconto20" }; // documentale annuale → −20%, dati già nel AI Ver0
+  | { tipo: "sconto20" }; // documentale annuale → −20%, dati già nell'AI Ver0
 
 /** Listino base fascia micro (§12.Q): canone anno 1 mensile/annuale + rinnovo,
  *  oppure servizio one-shot senza canone (es. supporto all'audit). */

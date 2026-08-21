@@ -82,8 +82,12 @@ export type FascicoloPercorso = {
   id: string;
   /** Etichetta del tab. */
   label: string;
+  /** Il nome per esteso: nei tab non ci sta, nel focus serve. */
+  nome: string;
   /** La norma su cui il percorso lavora (contratto entra/esce/norma). */
   norma: string;
+  /** Le sezioni che il Motore compone da sé: lo schema applicato. */
+  compone: string[];
   documenti: DocumentoFascicolo[];
 };
 
@@ -96,7 +100,15 @@ export const FASCICOLI: FascicoloPercorso[] = [
   {
     id: "carbon",
     label: "Carbon",
+    nome: "Carbon Footprint di Organizzazione",
     norma: "UNI EN ISO 14064-1:2019 · GHG Protocol",
+    compone: [
+      "Confini organizzativi e operativi",
+      "Inventario Scope 1 — combustione diretta",
+      "Inventario Scope 2 — energia acquistata",
+      "Fattori di emissione applicati, con la fonte",
+      "Intensità emissiva sui dati di bilancio",
+    ],
     documenti: [
       {
         nome: "Bolletta elettrica",
@@ -123,7 +135,15 @@ export const FASCICOLI: FascicoloPercorso[] = [
   {
     id: "iso-9001",
     label: "ISO 9001",
+    nome: "Manuale del Sistema di Gestione ISO 9001",
     norma: "UNI EN ISO 9001:2015 — struttura HLS",
+    compone: [
+      "Contesto dell'organizzazione e parti interessate",
+      "Politica per la qualità e obiettivi misurabili",
+      "Mappa dei processi e loro interazioni",
+      "Procedure e modulistica secondo i punti 4–10",
+      "Piano degli audit interni e riesame della direzione",
+    ],
     documenti: [
       {
         nome: "Visura camerale",
@@ -148,9 +168,52 @@ export const FASCICOLI: FascicoloPercorso[] = [
     ],
   },
   {
+    id: "vsme",
+    label: "VSME",
+    nome: "Bilancio di Sostenibilità (VSME)",
+    norma: "Standard VSME pubblicato da EFRAG — modulo base",
+    compone: [
+      "Profilo dell'impresa e modello di business",
+      "Indicatori ambientali, ripresi dal Carbon Footprint",
+      "Indicatori sociali sui dati di organico aggregati",
+      "Governance: composizione degli organi e politiche",
+      "Nota metodologica con il perimetro dichiarato",
+    ],
+    documenti: [
+      {
+        nome: "Visura camerale",
+        requisito: "basta la P.IVA",
+        stato: "recuperato",
+      },
+      {
+        nome: "Ultimo bilancio depositato",
+        requisito: "per i dati economici del profilo",
+        stato: "recuperato",
+      },
+      {
+        nome: "Dati di organico aggregati",
+        requisito: "per genere e inquadramento, mai nominativi",
+        stato: "caricato",
+      },
+      {
+        nome: "Composizione degli organi sociali",
+        requisito: "per la parte di governance",
+        stato: "da-caricare",
+      },
+    ],
+  },
+  {
     id: "pdr-125",
     label: "PdR 125",
+    nome: "Sistema di Gestione per la Parità di Genere",
     norma: "UNI/PdR 125:2022 — sei aree di KPI",
+    compone: [
+      "Analisi di contesto sui sei ambiti della prassi",
+      "KPI calcolati sui dati di organico aggregati",
+      "Politica per la parità e piano strategico",
+      "Procedure di selezione, crescita e conciliazione",
+      "Piano di monitoraggio e riesame",
+    ],
     documenti: [
       {
         nome: "Visura camerale",
