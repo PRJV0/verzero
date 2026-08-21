@@ -9,7 +9,9 @@ import {
   assesta,
   avanza,
   coloriDi,
+  disperdi,
   fattoreMaschere,
+  ingresso,
   opacita,
   posizionePerLarghezza,
   quante,
@@ -173,29 +175,24 @@ export function OndaParticelle({
           cx: b.left - t.left + b.width / 2,
           cy: b.top - t.top + b.height / 2,
           /*
-           * Questi tre numeri escono da una ricerca, non da un'idea.
-           *
-           * Misurando la velatura sul testo al variare dei parametri, il
-           * `minimo` — quanto resta dell'onda SOTTO le lettere — non
-           * cambia il risultato di un punto: da 0,012 a 0,08 la velatura
-           * peggiore è la stessa. Vuol dire che a sporcare il testo non
-           * sono le particelle mascherate, ma quelle che stanno NEGLI
-           * SPAZI fra una riga e l'altra e ci arrivano con il bagliore,
-           * largo tre raggi.
-           *
-           * Quindi conta l'ESTENSIONE, e soprattutto quella verticale:
-           * ry 1,55 → 1,9 porta il contrasto sul telefono da 4,16:1 a
-           * 5,09:1. E siccome il `minimo` è gratis, si tiene alto: dietro
-           * le lettere l'onda resta visibile come un velo, che è il punto
-           * — il claim galleggia sopra l'onda, non su una radura.
+           * Quanto proteggere lo dice la configurazione, perché dipende
+           * dal fondo: su bianco serve molto, su pino profondo molto
+           * meno. Ma la forma della protezione è sempre la stessa, e
+           * viene da una ricerca: misurando la velatura al variare dei
+           * parametri, il `minimo` — quanto resta dell'onda SOTTO le
+           * lettere — non sposta il risultato di un punto. A sporcare il
+           * testo sono le particelle che stanno NEGLI SPAZI fra le righe
+           * e ci arrivano col bagliore, largo tre raggi. Conta
+           * l'ESTENSIONE, e soprattutto quella verticale.
            */
-          rx: (b.width / 2) * 1.5,
-          ry: (b.height / 2) * 1.9,
-          minimo: 0.06,
+          rx: (b.width / 2) * attiva.maschera.rx,
+          ry: (b.height / 2) * attiva.maschera.ry,
+          minimo: attiva.maschera.minimo,
         }));
     };
 
     let ultimoT = 0;
+    let primoMontaggio = true;
 
     const misura = () => {
       const b = tela.getBoundingClientRect();
@@ -208,25 +205,61 @@ export function OndaParticelle({
       tela.height = Math.round(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       attiva = { ...config, posizione: posizionePerLarghezza(L, config) };
+      if (attiva.fondo) {
+        const g = ctx.createLinearGradient(0, 0, 0, H);
+        g.addColorStop(0, attiva.fondo[0]);
+        g.addColorStop(1, attiva.fondo[1]);
+        sfondo = g;
+      } else {
+        sfondo = null;
+      }
       particelle = semina(quante(L, attiva), L, H, attiva);
-      // Il campo parte già a regime: senza questo, al primo fotogramma
-      // tutte le particelle sarebbero allineate sulla stessa riga e si
-      // vedrebbe il fascio «formarsi», che è un momento di scena.
-      assesta(particelle, ultimoT, L, H, attiva);
+      if (primoMontaggio && attiva.fondo && !menoMovimento) {
+        // ALL'APERTURA le particelle arrivano da fuori campo e trovano
+        // la forma da sole: le disperde, poi ci pensa l'inerzia.
+        disperdi(particelle, H);
+        primoMontaggio = false;
+      } else {
+        // A ogni ridimensionamento invece il campo parte già a regime:
+        // rifare l'ingresso a ogni resize sarebbe un tic.
+        assesta(particelle, ultimoT, L, H, attiva);
+      }
       misuraMaschere();
     };
 
-    const disegna = (t: number) => {
-      // clearRect e non un fondo pieno: sulle sezioni scure il colore lo
-      // mette la sezione, e il canvas non deve saperne niente.
-      ctx.clearRect(0, 0, L, H);
+    /** Il gradiente del fondo, rifatto solo quando cambia la misura. */
+    let sfondo: CanvasGradient | null = null;
+
+    const disegna = (t: number, primaVolta = false) => {
+      ctx.globalCompositeOperation = "source-over";
+      if (attiva.fondo && sfondo) {
+        // Il canvas possiede il fondo: la scia è il fondo ridipinto in
+        // trasparenza, che consuma il fotogramma precedente invece di
+        // cancellarlo. Le particelle lente si ricoprono da sole, le
+        // veloci lasciano un filo — che è esattamente la scia chiesta,
+        // e non costa nemmeno una drawImage in più.
+        ctx.globalAlpha =
+          primaVolta || attiva.scie <= 0 ? 1 : 1 - attiva.scie;
+        ctx.fillStyle = sfondo;
+        ctx.fillRect(0, 0, L, H);
+        ctx.globalAlpha = 1;
+      } else {
+        // Senza fondo proprio si cancella e basta: nelle sezioni che il
+        // colore ce l'hanno già, il canvas non deve saperne niente.
+        ctx.clearRect(0, 0, L, H);
+      }
+      // Il bagliore vero è additivo: le particelle SI SOMMANO al fondo
+      // invece di coprirlo. Su pino profondo è ciò che le fa sembrare
+      // luce e non vernice.
+      if (attiva.additivo) ctx.globalCompositeOperation = "lighter";
+      const entrata = attiva.fondo ? ingresso(t) : 1;
       for (const p of particelle) {
         const alfaLibera = opacita(p, t, L, H, attiva);
         if (alfaLibera <= 0.004) continue;
         const alfa =
-          maschere.length > 0
+          (maschere.length > 0
             ? alfaLibera * fattoreMaschere(p.x, p.y, maschere)
-            : alfaLibera;
+            : alfaLibera) * entrata;
         if (alfa <= 0.004) continue;
         const indice = Math.round(accento(p, L) * (GRADAZIONI - 1));
         const raggio = raggioDi(p, t, L, H, attiva);
@@ -252,6 +285,7 @@ export function OndaParticelle({
         );
       }
       ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
     };
 
     let rafId = 0;
@@ -279,12 +313,12 @@ export function OndaParticelle({
     // Un fotogramma subito, sempre: l'onda c'è già prima che il primo
     // rAF arrivi — e in una scheda aperta in secondo piano il rAF non
     // parte affatto finché non la si guarda.
-    disegna(ultimoT);
+    disegna(ultimoT, true);
     if (!menoMovimento) rafId = requestAnimationFrame(passo);
 
     const osservatore = new ResizeObserver(() => {
       misura();
-      disegna(ultimoT);
+      disegna(ultimoT, true);
     });
     osservatore.observe(tela);
     const nodoTesto = riferimentoTesto?.current;

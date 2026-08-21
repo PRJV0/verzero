@@ -17,6 +17,7 @@
 import {
   ONDA_CONTENUTA,
   ONDA_DECISA,
+  ONDA_SOGLIA,
   PINO,
   PRESET,
   SBORDO,
@@ -66,7 +67,7 @@ const SCHERMI = [
    due righe di display, sottotitolo, fila dei bottoni. Misure generose —
    una riga più larga del vero protegge di meno, quindi il caso peggiore
    che ne esce è conservativo. */
-function righeDi(s) {
+function righeDi(s, m = ONDA_SOGLIA.maschera) {
   const disp =
     s.visibile < 640 ? 40 : s.visibile < 768 ? 52 : s.visibile < 1280 ? 72 : 80;
   const utile = Math.min(896, s.visibile * 0.92);
@@ -89,9 +90,9 @@ function righeDi(s) {
       {
         cx: s.L / 2,
         cy,
-        rx: (w / 2) * 1.5,
-        ry: (totale / 2) * 1.9,
-        minimo: 0.06,
+        rx: (w / 2) * m.rx,
+        ry: (totale / 2) * m.ry,
+        minimo: m.minimo,
         testo: {
           x0: s.L / 2 - w / 2,
           x1: s.L / 2 + w / 2,
@@ -107,9 +108,9 @@ function righeDi(s) {
     return {
       cx: s.L / 2,
       cy,
-      rx: (r.w / 2) * 1.5,
-      ry: (r.h / 2) * 1.9,
-      minimo: 0.06,
+      rx: (r.w / 2) * m.rx,
+      ry: (r.h / 2) * m.ry,
+      minimo: m.minimo,
       testo: {
         x0: s.L / 2 - r.w / 2,
         x1: s.L / 2 + r.w / 2,
@@ -137,12 +138,23 @@ const sopraBianco = ([r, g, b], a) => [
   Math.round(255 + (g - 255) * a),
   Math.round(255 + (b - 255) * a),
 ];
-const TESTO_TENUE = sopraBianco([10, 61, 42], 0.8); // pine-dark/80
-const TESTO_CHIAVE = [14, 82, 56]; // pino pieno, la parola «cloud»
+/* L'HERO E SU FONDO SCURO: il testo è chiaro e le particelle, essendo
+   luminose, SCHIARISCONO il fondo — quindi abbassano il contrasto
+   esattamente come le scure lo abbassavano sotto un testo scuro. Il
+   vincolo si allenta molto (si parte da 15:1), non sparisce. */
+const FONDO_SCURO = [10, 46, 31]; // #0A2E1F
+const LUCE = [255, 255, 255]; // le particelle in palette invertita
+const sopraFondo = ([r, g, b], a) => [
+  Math.round(FONDO_SCURO[0] + (r - FONDO_SCURO[0]) * a),
+  Math.round(FONDO_SCURO[1] + (g - FONDO_SCURO[1]) * a),
+  Math.round(FONDO_SCURO[2] + (b - FONDO_SCURO[2]) * a),
+];
+const TESTO_TENUE = [231, 240, 234]; // moss, il sottotitolo e la riga 1
+const TESTO_CHIAVE = [255, 255, 255]; // bianco pieno, «in cloud.»
 /** Fin dove può arrivare la velatura prima di scendere sotto 4,5:1. */
 const VELATURA_LIMITE = (() => {
   for (let a = 0; a <= 1; a += 0.005) {
-    if (contrasto(TESTO_TENUE, sopraBianco(PINO, a)) < 4.5) {
+    if (contrasto(TESTO_TENUE, sopraFondo(LUCE, a)) < 4.5) {
       return Math.max(0, a - 0.005);
     }
   }
@@ -312,8 +324,8 @@ prova("il fascio ogni tanto si sdoppia e si riunisce",
 
 for (const s of SCHERMI) {
   const c = {
-    ...ONDA_DECISA,
-    posizione: posizionePerLarghezza(s.visibile, ONDA_DECISA),
+    ...ONDA_SOGLIA,
+    posizione: posizionePerLarghezza(s.visibile, ONDA_SOGLIA),
   };
   const n = quante(s.L, c);
   console.log(`\n${s.nome} — ${n} particelle`);
@@ -404,14 +416,14 @@ for (const s of SCHERMI) {
     `da ${raggioMin.toFixed(2)}px a ${raggioMax.toFixed(2)}px`);
 
   /* IL CONTRASTO, misurato sopra l'onda in movimento. */
-  const fondo = sopraBianco(PINO, Math.min(1, coperturaPeggiore));
+  const fondo = sopraFondo(LUCE, Math.min(1, coperturaPeggiore));
   const cTenue = contrasto(TESTO_TENUE, fondo);
   const cChiave = contrasto(TESTO_CHIAVE, fondo);
   prova("il claim resta leggibile nel punto peggiore dell'onda in movimento",
     cTenue >= 4.5,
-    `fondo peggiore rgb(${fondo.join(",")}) — testo tenue ${cTenue.toFixed(2)}:1`);
-  prova("la parola-chiave regge meglio del resto", cChiave > cTenue,
-    `«cloud» ${cChiave.toFixed(2)}:1 contro ${cTenue.toFixed(2)}:1`);
+    `fondo peggiore rgb(${fondo.join(",")}) — riga 1 e sottotitolo ${cTenue.toFixed(2)}:1`);
+  prova("il bianco pieno di «in cloud.» regge più del resto", cChiave > cTenue,
+    `«in cloud.» ${cChiave.toFixed(2)}:1 contro ${cTenue.toFixed(2)}:1`);
   prova("la maschera tiene l'onda a velo dietro il testo",
     coperturaPeggiore < VELATURA_LIMITE,
     `velatura massima ${(coperturaPeggiore * 100).toFixed(1)}% sul limite di ${(VELATURA_LIMITE * 100).toFixed(1)}%`);

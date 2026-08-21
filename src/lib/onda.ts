@@ -73,6 +73,32 @@ export type ConfigOnda = {
   spessore: number;
   /** Quota di particelle in primo piano: più grandi, più opache, col bagliore. */
   primoPiano: number;
+  /**
+   * Le scie: quanto resta del fotogramma precedente, da 0 (nessuna) a
+   * ~0.9 (lunghissime). Funziona solo se il canvas possiede il fondo —
+   * la scia è il fondo ridipinto in trasparenza, quindi chi non ha un
+   * fondo proprio non può averla.
+   */
+  scie: number;
+  /**
+   * Il fondo, se il canvas se lo dipinge da sé: due colori per un
+   * gradiente verticale. Serve alle scie e al bagliore additivo.
+   */
+  fondo: readonly [string, string] | null;
+  /**
+   * Bagliore vero: le particelle si SOMMANO al fondo invece di coprirlo.
+   * Su fondo scuro è ciò che le fa sembrare luminose e non incollate;
+   * su fondo chiaro le farebbe sparire, quindi resta spenta.
+   */
+  additivo: boolean;
+  /**
+   * Quanto proteggere il testo. Non è una preferenza estetica: è quanto
+   * contrasto serve, e serve MENO su fondo scuro — lì il testo bianco
+   * parte da 15:1 e può permettersi molte più particelle dietro. `rx` e
+   * `ry` sono i margini della maschera rispetto alla riga, `minimo`
+   * quanto resta dell'onda sotto le lettere.
+   */
+  maschera: { rx: number; ry: number; minimo: number };
 };
 
 /**
@@ -97,6 +123,43 @@ export const ONDA_DECISA: ConfigOnda = {
   direzione: 1,
   spessore: 1,
   primoPiano: 0.07,
+  scie: 0,
+  fondo: null,
+  additivo: false,
+  maschera: { rx: 1.5, ry: 1.9, minimo: 0.06 },
+};
+
+/** Il pino profondo dell'hero, e il suo schiarimento verso il basso. */
+export const FONDO_SOGLIA = ["#0A2E1F", "#0C3927"] as const;
+
+/**
+ * L'ONDA DELLA SOGLIA — l'hero su fondo scuro.
+ *
+ * Qui cade il vincolo che ci frenava: su pino profondo il testo è bianco
+ * e il contrasto parte da 15:1, quindi le particelle possono essere
+ * luminose davvero. Bagliore additivo, scie sulle più veloci, raggi fino
+ * a sei pixel, densità e opacità alzate.
+ *
+ * Il fondo lo dipinge il canvas e non la sezione: senza possederlo non
+ * si possono fare le scie, che sono il fondo ridipinto in trasparenza.
+ */
+export const ONDA_SOGLIA: ConfigOnda = {
+  ...ONDA_DECISA,
+  densita: 1.15,
+  ampiezza: 1.1,
+  velocita: 1.25,
+  opacita: 1,
+  raggio: 1.15,
+  palette: "scura",
+  primoPiano: 0.09,
+  scie: 0.17,
+  fondo: FONDO_SOGLIA,
+  additivo: true,
+  // Molto più permissiva: misurando, con la maschera del fondo chiaro il
+  // contrasto restava a 9-12:1 contro i 4,5 richiesti — cioè si stava
+  // trattenendo l'onda per niente. Qui il fascio attraversa il claim
+  // davvero, e il contrasto resta comunque sopra 5,5:1.
+  maschera: { rx: 1.35, ry: 1.65, minimo: 0.16 },
 };
 
 export const ONDA_CONTENUTA: ConfigOnda = {
@@ -338,6 +401,36 @@ export function avanza(
   }
 }
 
+/**
+ * L'INGRESSO IN SCENA: le particelle partono fuori campo e ci arrivano
+ * da sole.
+ *
+ * Non è un'animazione aggiunta: è la stessa fisica di sempre con un
+ * punto di partenza diverso. Con la rigidezza e lo smorzamento scelti,
+ * la convergenza si esaurisce in circa un secondo e mezzo — il tempo
+ * chiesto dal brief — e siccome è inerzia e non un'interpolazione, non
+ * c'è un istante in cui «finisce l'ingresso e comincia il moto».
+ */
+export function disperdi(
+  particelle: Particella[],
+  H: number,
+  caso: () => number = Math.random,
+): void {
+  for (const p of particelle) {
+    const sopra = caso() < 0.5;
+    p.y = sopra ? -H * (0.35 + caso() * 0.5) : H * (1.35 + caso() * 0.5);
+    p.vy = 0;
+  }
+}
+
+/** Quanto è già entrata in scena: 0 appena aperta, 1 a regime. */
+export const DURATA_INGRESSO = 1.7;
+
+export function ingresso(t: number): number {
+  const u = Math.min(1, Math.max(0, t / DURATA_INGRESSO));
+  return u * u * (3 - 2 * u);
+}
+
 /** Porta il campo a regime senza far vedere l'assestamento iniziale. */
 export function assesta(
   particelle: Particella[],
@@ -493,8 +586,8 @@ export function semina(
     // Raggio con distribuzione non uniforme: molte piccole, poche
     // grandi. Le particelle in primo piano stanno tutte in alto.
     const r = avanti
-      ? 3.4 + caso() * 2.2
-      : 1 + Math.pow(caso(), 2.1) * 3.2;
+      ? 3.6 + caso() * 2.4
+      : 1 + Math.pow(caso(), 2.05) * 3.4;
     return {
       x: -SBORDO + caso() * (L + SBORDO * 2),
       s,
