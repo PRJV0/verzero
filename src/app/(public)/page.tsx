@@ -14,6 +14,7 @@ import { FasciaListaAttesa } from "@/components/lista-attesa";
 import { HeroHome } from "@/components/hero-home";
 import { OndaParticelle } from "@/components/onda-particelle";
 import { PrezzoPrincipio } from "@/components/prezzo-principio";
+import { QualitaOutput } from "@/components/qualita-output";
 import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { JsonLd } from "@/components/json-ld";
@@ -246,10 +247,10 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-4xl text-center">
           {/* Mai "VER0" in maiuscoletto: si legge "VERO" (decisione già presa). */}
           <p className="mb-6 text-xs font-semibold tracking-widest text-mint-bright">
-            IL NOSTRO MOTORE
+            LA NOSTRA AI
           </p>
           <h2 className="font-display text-5xl leading-[1.02] text-white md:text-7xl">
-            Un motore AI proprietario.
+            Un&apos;AI proprietaria.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl font-display text-2xl leading-snug text-moss md:text-3xl">
             Costruito per i documenti d&apos;impresa. Verificato da
@@ -360,6 +361,29 @@ export default function HomePage() {
           >
             Le norme, citate una per una <ArrowRight size={15} />
           </Link>
+        </div>
+      </section>
+
+      {/* LA QUALITÀ DEGLI ELABORATI. Mancava: si raccontava il metodo e
+          il prezzo, mai il livello del documento che esce — che è la
+          prima cosa che guarda chi deve portarlo in banca o in audit. */}
+      <section className="bg-paper px-5 py-16 md:py-24">
+        <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
+              GLI ELABORATI
+            </p>
+            <h2 className="font-display text-4xl leading-[1.05] text-ink md:text-5xl">
+              Documenti che reggono la lettura di chi li riceve.
+            </h2>
+            <p className="mx-auto mt-4 text-sm leading-relaxed text-gray-warm md:text-base">
+              Banca, capofiliera, stazione appaltante, organismo di
+              certificazione: chi li legge sa cosa cercare.
+            </p>
+          </div>
+          <div className="mt-10">
+            <QualitaOutput />
+          </div>
         </div>
       </section>
 

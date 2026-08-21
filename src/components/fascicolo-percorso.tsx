@@ -280,7 +280,7 @@ export function FascicoloPercorso() {
           ))}
         </ul>
 
-        {/* LO STESSO SCHEMA, applicato: cosa compone il Motore per QUESTO
+        {/* LO STESSO SCHEMA, applicato: cosa compone l'AI Ver0 per QUESTO
             percorso. È la prova che il sistema è trasversale e non è nato
             per un solo servizio — cambiando tab cambia il contenuto, non
             la grammatica. */}

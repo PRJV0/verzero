@@ -175,7 +175,7 @@ const DETTAGLI: Record<string, { titolo: string; punti: string[] }> = {
     titolo: "Come compone secondo norma",
     punti: [
       "La struttura non è «ispirata» allo standard: è quella che lo standard richiede, sezione per sezione, con i punti della norma nell'ordine in cui la norma li chiede.",
-      "Dove due fonti dicono cose diverse il Motore non sceglie da solo: segnala la discordanza e la porta alla tua conferma.",
+      "Dove due fonti dicono cose diverse l'AI Ver0 non sceglie da sola: segnala la discordanza e la porta alla tua conferma.",
       "Quando un dato manca e si può stimare, la stima è dichiarata come tale nel documento — mai spacciata per misura.",
       "Un professionista del team tecnico controlla perimetro, fattori e completezza prima della consegna, e mette per iscritto i rilievi: la responsabilità resta di una persona.",
     ],
@@ -259,7 +259,7 @@ export function MotoreInAzione({ dettaglio = false }: { dettaglio?: boolean }) {
           {dettaglio && <Dettaglio chiave="entra" />}
         </Colonna>
 
-        {/* (b) CHI LAVORA — dominante, e nominato per esteso. */}
+        {/* (b) CHI LAVORA — dominante, e nominata per esteso. */}
         <div className="relative min-w-0 rounded-2xl border-2 border-mint-bright/35 bg-mint-bright/[0.07] p-5 sm:p-6">
           <span
             aria-hidden
@@ -267,7 +267,7 @@ export function MotoreInAzione({ dettaglio = false }: { dettaglio?: boolean }) {
           />
           <div className="relative">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-mint-bright">
-              Il motore
+              La nostra AI
             </p>
             <p className="mt-1 font-display text-2xl leading-tight text-white md:text-3xl">
               AI Ver0

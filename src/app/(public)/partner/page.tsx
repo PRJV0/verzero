@@ -8,25 +8,32 @@ import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 export const metadata: Metadata = metadataPagina({
   title: "Programma partner per commercialisti e consulenti",
   description:
-    "Provvigione ricorrente sul canone incassato, uno schema unico e il cliente che resta tuo: il programma partner Ver0 per chi affianca già le imprese.",
+    "Dashboard multi-cliente, percorsi standardizzati e documenti pronti: il programma partner Ver0 per commercialisti e consulenti che affiancano già le imprese.",
   path: "/partner",
 });
 
+/*
+ * Il partner si racconta con gli STRUMENTI e con la qualità, mai con i
+ * numeri: provvigioni, percentuali e ritorni economici non stanno su una
+ * pagina pubblica. Sono condizioni commerciali, e le condizioni
+ * commerciali si trattano in privato — anche perché una percentuale
+ * scritta sul sito diventa un impegno verso chiunque passi di lì.
+ */
 const PUNTI = [
   {
+    icon: Users,
+    title: "Una dashboard multi-cliente",
+    desc: "Un accesso solo, il selettore per passare da un'impresa all'altra. Vedi le imprese che ti hanno dato il mandato, e solo finché è attivo.",
+  },
+  {
     icon: Repeat,
-    title: "Provvigione ricorrente",
-    desc: "Il 20% sul canone incassato, per tutta la durata dell'abbonamento del cliente segnalato.",
+    title: "Percorsi standardizzati",
+    desc: "Lo stesso impianto per ogni cliente: documenti conformi alle norme citate, dati tracciati alla fonte, tempi che si misurano in giorni.",
   },
   {
     icon: Handshake,
-    title: "Uno schema unico",
-    desc: "Le stesse condizioni per tutti i canali partner, senza trattative caso per caso.",
-  },
-  {
-    icon: Users,
     title: "Il cliente resta tuo",
-    desc: "Porti la relazione, noi mettiamo la piattaforma. Nessuna sovrapposizione sul tuo lavoro.",
+    desc: "Porti la relazione, noi mettiamo la piattaforma e la validazione professionale. Nessuna sovrapposizione sul tuo lavoro.",
   },
 ];
 
@@ -46,10 +53,11 @@ export default function PartnerPage() {
         Programma partner
       </h1>
       <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-gray-warm">
-        Sei un commercialista o un consulente? Stiamo aprendo il programma
-        partner Ver0: porti i tuoi clienti verso una qualifica verificabile, con
-        una provvigione ricorrente sul canone. Stiamo definendo gli ultimi
-        dettagli — lascia che ti avvisiamo appena parte.
+        Sei un commercialista o un consulente? Con il programma partner Ver0
+        porti i tuoi clienti verso una qualifica verificabile usando gli
+        strumenti della piattaforma: una dashboard che tiene insieme tutte le
+        imprese che segui, percorsi standardizzati e documenti pronti da
+        consegnare.
       </p>
 
       <div className="mt-10 grid grid-cols-1 gap-3 text-left sm:grid-cols-3">
@@ -88,7 +96,8 @@ export default function PartnerPage() {
       </div>
 
       <p className="mt-8 text-xs text-gray-light">
-        Nessuna provvigione sul canale self-service · condizioni valide per tutti
+        Condizioni dedicate ai partner, su richiesta · il mandato del cliente
+        resta revocabile in ogni momento
         i canali partner
       </p>
     </main>

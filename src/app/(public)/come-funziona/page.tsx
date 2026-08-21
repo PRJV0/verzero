@@ -6,6 +6,7 @@ import { FascicoloPercorso } from "@/components/fascicolo-percorso";
 import { JsonLd } from "@/components/json-ld";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { OndaParticelle } from "@/components/onda-particelle";
+import { QualitaOutput } from "@/components/qualita-output";
 import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
 import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
 import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
@@ -50,12 +51,12 @@ export default function ComeFunzionaPage() {
             COME FUNZIONA
           </p>
           <h1 className="font-display text-5xl leading-[1.02] text-pine-dark md:text-6xl">
-            Nessuna magia. Un metodo.
+            Non è un assistente. È un&apos;intelligenza costruita per questo.
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-gray-warm md:text-base">
-            Questa pagina mostra il lavoro da vicino: quali documenti chiede
-            l&apos;AI Ver0, che cosa ne estrae, che cosa genera e chi valida.
-            Tutto su norme citate una per una.
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-pine">
+            Un&apos;AI proprietaria specializzata sui documenti d&apos;impresa e
+            sulle norme che li governano: legge quello che hai, compone quello
+            che serve, un professionista valida. Qui vedi il lavoro da vicino.
           </p>
         </div>
       </section>
@@ -106,6 +107,23 @@ export default function ComeFunzionaPage() {
             </p>
           </div>
           <FascicoloPercorso />
+        </div>
+      </section>
+
+      {/* COM'È FATTO IL DOCUMENTO CHE ESCE. */}
+      <section className="bg-white px-5 py-16 md:py-24">
+        <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
+              GLI ELABORATI
+            </p>
+            <h2 className="font-display text-4xl leading-[1.05] text-ink md:text-5xl">
+              Com&apos;è fatto il documento che esce.
+            </h2>
+          </div>
+          <div className="mt-10">
+            <QualitaOutput />
+          </div>
         </div>
       </section>
 

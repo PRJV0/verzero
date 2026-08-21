@@ -6,6 +6,7 @@ import {
   ArrowRight,
   BookMarked,
   ClipboardList,
+  BadgeCheck,
   FileCheck2,
   Info,
   LifeBuoy,
@@ -16,6 +17,7 @@ import {
 import { JsonLd } from "@/components/json-ld";
 import { FasciaListaAttesa } from "@/components/lista-attesa";
 import { OndaParticelle } from "@/components/onda-particelle";
+import { QualitaOutput } from "@/components/qualita-output";
 import { PRESET } from "@/lib/onda";
 import { TracciaApertura } from "@/components/traccia-evento";
 import { EVENTI } from "@/lib/eventi";
@@ -221,6 +223,16 @@ export default async function ServizioPage({
                 </p>
               ))}
             </div>
+          </div>
+
+          {/* COM'È FATTO quello che ottieni: sopra c'è l'elenco dei
+              deliverable, qui il livello. Versione compatta perché la
+              scheda è già densa. */}
+          <div className="mb-3 rounded-xl border border-line bg-white p-4">
+            <p className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
+              <BadgeCheck size={15} className="text-pine" /> Com&apos;è fatto
+            </p>
+            <QualitaOutput compatto />
           </div>
 
           {/* Requisiti e vincoli */}

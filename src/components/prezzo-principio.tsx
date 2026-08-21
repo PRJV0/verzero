@@ -66,13 +66,10 @@ export function PrezzoPrincipio() {
           IL PREZZO
         </p>
         <h2 className="font-display text-4xl leading-[1.04] text-white md:text-6xl">
-          I prezzi li trovi scritti.
-          <br />
-          Prima di cominciare.
+          Pubblici, per fascia dimensionale, tutto incluso.
         </h2>
         <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-moss/80 md:text-base">
-          Pubblici, per fascia dimensionale, con dentro tutto quello che
-          serve. Li leggi, fai il conto, e decidi.
+          Li leggi, li confronti, decidi. Senza preventivi da aspettare.
         </p>
       </div>
 

@@ -30,7 +30,7 @@ import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 export const metadata: Metadata = metadataPagina({
   title: "Chi siamo: siamo partiti da zero, letteralmente",
   description:
-    "Abbiamo ricostruito la consulenza: un motore che lavora sui documenti, professionisti che verificano, standard ufficiali e prezzi leggibili prima di attivare.",
+    "Abbiamo ricostruito la consulenza: un'AI proprietaria che lavora sui documenti d'impresa, professionisti che verificano, standard ufficiali e prezzi leggibili prima di attivare.",
   path: "/chi-siamo",
 });
 
@@ -68,7 +68,7 @@ const POSSIBILE = [
   {
     icon: Users,
     t: "Per ogni impresa",
-    d: "Dalla micro alla grande: percorsi e fasce di prezzo pensati perché la qualifica sia alla portata di chi finora ne restava fuori.",
+    d: "Dalla micro alla grande: i percorsi sono gli stessi e reggono le esigenze delle imprese più strutturate; le fasce di prezzo li rendono accessibili anche a chi finora ne restava fuori.",
   },
 ];
 
@@ -120,7 +120,8 @@ export default function ChiSiamoPage() {
               <em className="font-semibold text-mint">zero</em>. Letteralmente.
             </h1>
             <p className="mt-7 max-w-xl font-display text-xl leading-snug text-pine md:text-2xl">
-              E da zero abbiamo ricostruito la consulenza: un motore AI,
+              E da zero abbiamo ricostruito la consulenza: un&apos;AI
+              proprietaria,
               professionisti veri, standard ufficiali, prezzi che si leggono
               prima di attivare.
             </p>
@@ -151,7 +152,7 @@ export default function ChiSiamoPage() {
             alla grande.
           </p>
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-gray-warm">
-            Un motore proprietario che lavora sui documenti d&apos;impresa,
+            Un&apos;AI proprietaria che lavora sui documenti d&apos;impresa,
             professionisti che verificano ogni output, standard ufficiali come
             unico riferimento. È così che una qualifica diventa una cosa che si
             fa — e si dimostra.
@@ -206,11 +207,12 @@ export default function ChiSiamoPage() {
             QUELLO CHE ABBIAMO COSTRUITO
           </p>
           <h2 className="font-display text-4xl leading-[1.05] text-white md:text-5xl">
-            Un motore nostro, non un assistente con un prompt sopra.
+            Non un assistente con un prompt sopra.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-moss/75">
-            È la cosa su cui abbiamo speso più tempo, ed è la ragione per cui i
-            prezzi possono essere questi.
+            È la cosa su cui abbiamo speso più tempo, ed è quello che rende i
+            documenti precisi: la struttura giusta della norma, ogni dato
+            riconducibile alla sua fonte, e tempi che si misurano in giorni.
           </p>
         </div>
         <div className="relative">
@@ -286,8 +288,8 @@ export default function ChiSiamoPage() {
               },
               {
                 icona: Handshake,
-                t: "Provvigioni ricorrenti",
-                d: "Non una tantum sul primo ordine: finché l'impresa resta cliente.",
+                t: "Percorsi standardizzati, output pronti",
+                d: "Lo stesso impianto per ogni cliente: documenti conformi alle norme citate e tempi che si misurano in giorni. Condizioni dedicate ai partner, su richiesta.",
               },
               {
                 icona: ShieldCheck,
