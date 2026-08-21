@@ -70,7 +70,10 @@ Vale per ogni pagina nuova e per ogni pagina modificata. Le utilità stanno in
   mai un sigillo che non possediamo. I contenuti stanno in
   `src/lib/sicurezza.ts`, con la data delle verifiche.
 - **Prezzi**: fonte unica in `src/lib/pricing.ts`. Nessun prezzo scritto a mano
-  nelle pagine, mai.
+  nelle pagine, mai. E **nessun confronto economico con il mercato**:
+  non si affianca il nostro prezzo a quello di terzi, non si citano
+  cifre altrui, non si esprimono giudizi — diretti o impliciti — sul
+  lavoro dei consulenti. Si parla solo delle nostre caratteristiche.
 - **Catalogo**: fonte unica in `src/lib/catalog.ts`; aggiungere un servizio lì
   lo propaga a vetrina, pagina di dettaglio, funnel e sitemap.
 - **DNS della posta**: l'SPF della radice è quello dell'hosting e **non va
