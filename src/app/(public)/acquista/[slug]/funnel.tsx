@@ -1202,6 +1202,20 @@ function StepConsensi({
           Il consenso viene registrato con data e ora. Formulazione legale in
           revisione con il legale prima del lancio.
         </p>
+
+        {/* Qui si sta dando un mandato: è il momento in cui la domanda
+            «e i miei dati dove finiscono?» viene davvero, non dopo. */}
+        <p className="text-xs leading-relaxed text-gray-warm">
+          Dove vivono i tuoi dati, chi può vederli e cosa non facciamo:{" "}
+          <Link
+            href="/sicurezza"
+            target="_blank"
+            className="font-medium text-pine underline"
+          >
+            sicurezza e riservatezza
+          </Link>
+          .
+        </p>
       </div>
 
       <div className="mt-6 flex gap-2">

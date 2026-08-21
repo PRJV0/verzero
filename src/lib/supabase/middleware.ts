@@ -20,10 +20,13 @@ const PUBLIC_PREFIXES = [
   "/servizi",
   "/acquista",
   "/termini",
-  // Informative legali: devono essere leggibili da chiunque, sempre —
-  // una privacy policy dietro un login non è una privacy policy.
+  // Informative legali e pagina sicurezza: devono essere leggibili da
+  // chiunque, sempre — una privacy policy dietro un login non è una
+  // privacy policy, e una pagina che spiega come proteggiamo i dati la
+  // deve poter leggere chi NON è ancora cliente: è lì che serve.
   "/privacy",
   "/cookie-policy",
+  "/sicurezza",
   "/sigillo",
   "/bollino",
   "/chi-siamo",

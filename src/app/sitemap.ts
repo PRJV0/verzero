@@ -47,6 +47,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
     },
     {
+      url: url("/sicurezza"),
+      lastModified: oggi,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
       url: url("/contatti"),
       lastModified: oggi,
       changeFrequency: "yearly",

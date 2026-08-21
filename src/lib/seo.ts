@@ -22,9 +22,15 @@ import { publicEnv } from "@/lib/env";
  */
 
 export const SITO = {
-  nome: "Ver0",
-  /** Denominazione estesa usata nei dati strutturati. */
-  nomeLegale: "Verzero",
+  /**
+   * Il MARCHIO è il nome per esteso (variante B del brand book): è quello
+   * che compare nel logotipo, nei dati strutturati e nel titolo delle
+   * pagine. «Ver0» resta il monogramma — favicon, Sigillo, spazi stretti —
+   * e resta il nome del PRODOTTO dentro i testi (Sigillo Ver0, AI Ver0).
+   */
+  nome: "Verzero",
+  /** Il monogramma, per gli usi di spazio ridotto. */
+  monogramma: "Ver0",
   descrizione:
     "La piattaforma che qualifica la tua impresa: sostenibilità, sistemi di gestione e consulenza con prezzi in chiaro.",
   get url() {
@@ -96,9 +102,11 @@ export function jsonLdOrganization() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: SITO.nome,
-    alternateName: SITO.nomeLegale,
+    // Il monogramma resta come nome alternativo: chi cerca «Ver0» deve
+    // comunque trovare noi.
+    alternateName: SITO.monogramma,
     url: SITO.url,
-    logo: `${SITO.url}/brand/sigillo-ver0.svg`,
+    logo: `${SITO.url}/brand/logo-verzero.svg`,
     description: SITO.descrizione,
     email: SITO.email,
     areaServed: { "@type": "Country", name: "Italia" },

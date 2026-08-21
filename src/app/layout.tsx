@@ -31,15 +31,15 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   metadataBase: new URL(publicEnv.siteUrl),
   title: {
-    default: "Ver0 — la piattaforma che qualifica la tua impresa",
+    default: "Verzero — la piattaforma che qualifica la tua impresa",
     template: `%s — ${SITO.nome}`,
   },
   description:
     "Consulenza digitale con l'AI Ver0: sostenibilità, sistemi di gestione, consulenti veri. Percorsi verificabili e prezzi in chiaro, per imprese di ogni dimensione.",
   applicationName: SITO.nome,
-  authors: [{ name: SITO.nomeLegale }],
-  creator: SITO.nomeLegale,
-  publisher: SITO.nomeLegale,
+  authors: [{ name: SITO.nome }],
+  creator: SITO.nome,
+  publisher: SITO.nome,
   formatDetection: { telephone: false, address: false, email: false },
   openGraph: {
     type: "website",

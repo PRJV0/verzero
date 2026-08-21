@@ -54,6 +54,21 @@ Vale per ogni pagina nuova e per ogni pagina modificata. Le utilità stanno in
   `/verifica/[codice]`, dove mostrare l'impresa È il servizio — chi
   espone la targa ha chiesto di poter essere controllato, e lì si
   mostra solo ciò che il Sigillo dichiara.
+- **Trasparenza vs riservatezza** (pagina `/sicurezza` e ogni testo
+  pubblico sul tema): si dichiarano le **garanzie**, mai
+  l'implementazione. Ammesso: natura delle protezioni, dove vivono i
+  dati, chi accede e con quale titolo, esistenza e oggetto dei test,
+  revocabilità, tracciabilità. Vietato: struttura del database e nomi di
+  tabelle, testo o logica delle politiche, modelli AI usati e relative
+  istruzioni, schemi di estrazione, soglie e regole di riconoscimento,
+  mappatura dei dati sulle sezioni, costi per pratica, versioni, percorsi
+  e nomi di file. Criterio: se un'informazione permette a un concorrente
+  di replicare il metodo o a un attaccante di orientarsi, non va in
+  pagina. Gli approfondimenti tecnici (questionari fornitori, audit IT)
+  si danno in un documento riservato su richiesta, non sul sito. E
+  nessun claim non dimostrabile: mai «sicurezza di livello bancario»,
+  mai un sigillo che non possediamo. I contenuti stanno in
+  `src/lib/sicurezza.ts`, con la data delle verifiche.
 - **Prezzi**: fonte unica in `src/lib/pricing.ts`. Nessun prezzo scritto a mano
   nelle pagine, mai.
 - **Catalogo**: fonte unica in `src/lib/catalog.ts`; aggiungere un servizio lì

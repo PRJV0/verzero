@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" role="img" aria-label="Verzero">
+  <title>Verzero — logotipo esteso con zero canonico E1</title>
+  <desc>Il nome per esteso in Fraunces, con lo zero canonico E1 (ellisse monolinea) come ultima lettera. Il monogramma Ver0 resta per gli spazi stretti: vedi logo-ver0.svg.</desc>
+  <text x="252" y="46" text-anchor="end" style="font-family: 'Fraunces', Georgia, serif; font-weight: 700; font-size: 44px;" fill="#0E5238">Verzer</text>
+  <ellipse cx="274" cy="31" rx="15" ry="20" fill="none" stroke="#0E5238" stroke-width="4"/>
+</svg>

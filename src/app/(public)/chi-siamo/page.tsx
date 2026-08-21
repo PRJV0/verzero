@@ -10,6 +10,7 @@ import {
   FileSearch,
   Gauge,
   Globe,
+  Handshake,
   ShieldCheck,
   Tag,
   UserCheck,
@@ -19,6 +20,7 @@ import {
 import { Sigillo } from "@/components/brand/sigillo";
 import { JsonLd } from "@/components/json-ld";
 import { OndaParticelle } from "@/components/onda-particelle";
+import { GARANZIE } from "@/lib/sicurezza";
 import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { PhotoDuotone } from "@/components/photo-duotone";
@@ -259,6 +261,110 @@ export default function ChiSiamoPage() {
       </section>
 
       {/* 5. I PRINCIPI — quattro card su salvia */}
+      {/* PROGRAMMA PARTNER — è uscito dal menu principale perché parla a
+          un pubblico diverso: i consulenti, non le imprese. La sua casa è
+          qui, e la pagina dedicata resta a un clic. */}
+      <section className="bg-white px-5 py-16 md:py-24">
+        <div className="mx-auto max-w-4xl">
+          <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
+            PER COMMERCIALISTI E CONSULENTI
+          </p>
+          <h2 className="font-display text-4xl leading-[1.05] text-ink md:text-5xl">
+            Il programma partner
+          </h2>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-warm">
+            Se segui delle imprese, puoi portarle su Ver0 e restare tu il
+            riferimento: la piattaforma fa il lavoro documentale, tu tieni la
+            relazione.
+          </p>
+          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {[
+              {
+                icona: Users,
+                t: "Una dashboard multi-cliente",
+                d: "Un solo accesso, il selettore per passare da un'impresa all'altra. Vedi solo le imprese che ti hanno dato il mandato, e solo finché è attivo.",
+              },
+              {
+                icona: Handshake,
+                t: "Provvigioni ricorrenti",
+                d: "Non una tantum sul primo ordine: finché l'impresa resta cliente.",
+              },
+              {
+                icona: ShieldCheck,
+                t: "La responsabilità resta nostra",
+                d: "I documenti li produce e li valida il nostro team tecnico. Tu non firmi nulla al posto nostro.",
+              },
+            ].map(({ icona: Icona, t: titolo, d }) => (
+              <article
+                key={titolo}
+                className="vz-reveal rounded-2xl border border-line/70 bg-white p-5 shadow-soft"
+              >
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-moss text-pine">
+                  <Icona size={19} />
+                </span>
+                <h3 className="mt-3 font-display text-xl text-pine">{titolo}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-warm">{d}</p>
+              </article>
+            ))}
+          </div>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Link
+              href="/partner"
+              className="vz-press inline-flex items-center gap-2 rounded-xl bg-pine px-6 py-3.5 text-sm font-semibold text-white"
+            >
+              Come si diventa partner <ArrowRight size={16} />
+            </Link>
+            <Link
+              href="/contatti"
+              className="vz-press inline-flex items-center gap-2 rounded-xl border-2 border-pine px-6 py-3.5 text-sm font-semibold text-pine"
+            >
+              Candidati
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* SICUREZZA E RISERVATEZZA — i principi qui, i dettagli tecnici
+          nella pagina dedicata. */}
+      <section className="bg-paper px-5 py-16 md:py-24">
+        <div className="mx-auto max-w-4xl">
+          <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
+            SICUREZZA E RISERVATEZZA
+          </p>
+          <h2 className="font-display text-4xl leading-[1.05] text-ink md:text-5xl">
+            I tuoi documenti restano tuoi.
+          </h2>
+          <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {GARANZIE.map((g) => (
+              <article
+                key={g.titolo}
+                className="rounded-2xl border border-line bg-white p-5"
+              >
+                <h3 className="font-display text-xl leading-tight text-ink">
+                  {g.titolo}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-warm">
+                  {g.punti[0]}
+                </p>
+              </article>
+            ))}
+          </div>
+          <p className="mt-6 rounded-2xl border-2 border-mint/40 bg-mint/5 px-5 py-4 text-sm leading-relaxed text-pine-dark">
+            <strong className="font-semibold">
+              L&apos;isolamento fra imprese è coperto da 53 test automatici
+            </strong>
+            , eseguiti a ogni rilascio: se ne fallisce uno, il rilascio si
+            ferma.
+          </p>
+          <Link
+            href="/sicurezza"
+            className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-pine hover:underline"
+          >
+            I dettagli tecnici <ArrowRight size={15} />
+          </Link>
+        </div>
+      </section>
+
       <section className="bg-gradient-to-b from-paper via-moss to-moss px-5 py-16 md:py-24">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-center font-display text-4xl text-ink md:text-5xl">

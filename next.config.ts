@@ -1,8 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Regione UE per le funzioni serverless (requisito GDPR, SPEC §8).
-  // Su Vercel si imposta anche da dashboard: Functions > Region > fra1.
+  // La regione delle funzioni sta in `vercel.json` (`dub1`, Dublino):
+  // accanto al database, che è in eu-west-1. Non è un dettaglio di
+  // latenza — la predefinita di Vercel è Washington, quindi senza quel
+  // file l'applicazione girerebbe negli Stati Uniti mentre la pagina
+  // pubblica dichiara che i dati vivono in UE.
   experimental: {},
   // Rebranding: "bollino" -> "Sigillo Ver0". La vecchia rotta reindirizza
   // permanentemente alla nuova, così link e segnalibri esistenti non si rompono.

@@ -6,17 +6,22 @@ import { MobileMenu } from "@/components/mobile-menu";
 import type { SessionePubblica } from "@/lib/sessione-pubblica";
 
 /**
- * Voci di navigazione del sito pubblico. "Home" apre il menu anche se il
- * logo resta cliccabile: chi legge una voce di menu non deve indovinare
- * che il marchio sia un link.
+ * CINQUE VOCI, non sette. Un menu si legge se si conta a colpo d'occhio.
+ *
+ * «Home» è uscita: alla home ci si torna dal marchio, che è un link con
+ * l'etichetta accessibile giusta — la convenzione è universale e occupare
+ * una voce per ribadirla è spreco.
+ *
+ * «Partner» è uscita dal menu principale perché parla a un pubblico
+ * diverso (i consulenti, non le imprese): vive dentro Chi siamo, e la
+ * pagina `/partner` resta raggiungibile da lì, dal footer e dalla pagina
+ * di accesso. Nessun link orfano, nessun 404.
  */
-const NAV = [
-  { label: "Home", href: "/" },
+export const NAV = [
   { label: "Chi siamo", href: "/chi-siamo" },
   { label: "Come funziona", href: "/come-funziona" },
   { label: "Servizi", href: "/servizi" },
   { label: "Il Sigillo", href: "/sigillo" },
-  { label: "Partner", href: "/partner" },
   { label: "Contatti", href: "/contatti" },
 ];
 
@@ -31,7 +36,7 @@ const NAV = [
 export function SiteHeader({ sessione }: { sessione: SessionePubblica }) {
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-line bg-white px-5 py-3">
-      <Link href="/" aria-label="Ver0 — home">
+      <Link href="/" aria-label="Verzero — torna alla home">
         <Logo />
       </Link>
       <nav
