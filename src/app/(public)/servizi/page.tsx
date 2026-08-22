@@ -1,18 +1,31 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { CatalogoVetrina } from "@/components/catalogo-vetrina";
+import { CatalogoFamiglie } from "@/components/catalogo-famiglie";
 import { JsonLd } from "@/components/json-ld";
+import { SchemaQualifica } from "@/components/schema-qualifica";
 import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
 export const metadata: Metadata = metadataPagina({
   title: "Servizi e prezzi in chiaro, per ogni dimensione",
   description:
-    "Il catalogo Ver0 per categorie: ambiente, sociale, governance e sistemi di gestione. Per ogni percorso, prezzo e perimetro scritti prima di iniziare.",
+    "Misura e rendiconta, sistemi certificabili, qualifica e accesso: i percorsi Verzero con prezzo a partire da e perimetro scritti prima di iniziare.",
   path: "/servizi",
 });
 
-/** Indice dei servizi: catalogo per categorie (SPEC §12.Y), prezzi dalla matrice. */
+/**
+ * Indice dei servizi.
+ *
+ * ORDINE DELLA PAGINA: prima lo schema — chi ti valuta e cosa può
+ * rispondere la tua impresa — poi il catalogo. Si apriva sull'elenco,
+ * cioè sulla risposta prima della domanda: chi arriva qui non cerca un
+ * listino, cerca di capire se questa roba serve al suo problema.
+ *
+ * Il catalogo è raggruppato per NATURA della qualifica e non più per
+ * pilastri E/S/G (SPEC §12.Y.1): i pilastri reggevano come tassonomia e
+ * non come guida alla scelta, e facevano comparire lo stesso servizio in
+ * due famiglie diverse.
+ */
 export default function ServiziPage() {
   return (
     <main className="mx-auto max-w-4xl px-5 py-16">
@@ -33,13 +46,17 @@ export default function ServiziPage() {
       </p>
 
       <div className="mt-8">
-        <CatalogoVetrina />
+        <SchemaQualifica />
       </div>
 
-      <p className="mt-4 text-center text-xs text-gray-light">
-        Prezzi &quot;da&quot; riferiti alla fascia micro, IVA esclusa · il
-        prezzo per la tua dimensione si compone nella pagina del servizio ·
-        −10% con pagamento annuale
+      <div className="mt-10">
+        <CatalogoFamiglie />
+      </div>
+
+      <p className="mt-6 text-center text-xs leading-relaxed text-gray-light">
+        Gli importi «a partire da» sono quelli della fascia micro, IVA esclusa:
+        il prezzo cresce con la dimensione dell&apos;impresa e si compone per
+        intero nella pagina del percorso · −10% con pagamento annuale
       </p>
 
       {/* Link interni verso le pagine correlate (regola SEO §seo.ts) */}

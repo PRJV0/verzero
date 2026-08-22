@@ -1,6 +1,8 @@
 import {
   Leaf,
   FileText,
+  Gauge,
+  KeyRound,
   LifeBuoy,
   Scale,
   ShieldCheck,
@@ -779,202 +781,248 @@ export function getServizio(slug: string): Servizio | undefined {
 /* ------------------------------------------------------------------ */
 
 /**
- * Una voce della vetrina: attiva (con `slug` verso la pagina servizio) oppure
- * di roadmap ("In arrivo": amplia l'offerta percepita, non acquistabile).
- * Vincolo §12.Y: nessuna voce può suggerire che Verzero certifichi — Verzero
- * prepara e accompagna, certificano gli enti terzi accreditati.
+ * IL CATALOGO PER FAMIGLIE — come si sceglie, non come si classifica.
+ *
+ * Prima l'impalcatura erano i tre pilastri E/S/G più una famiglia
+ * «sistemi di gestione». Reggeva come tassonomia e non come guida
+ * all'acquisto: chi arriva non pensa «mi serve una cosa del pilastro G»,
+ * pensa «la banca mi chiede dei dati» oppure «devo passare un audit».
+ * E lo stesso servizio compariva due volte — ISO 9001 stava in
+ * governance e nei sistemi — che è il modo più rapido di far credere che
+ * siano due cose diverse.
+ *
+ * Ora le famiglie sono tre e rispondono alla NATURA della qualifica:
+ *   misura      — produce un numero che regge un controllo;
+ *   certificabile — produce l'impianto che un organismo verifica;
+ *   accesso     — apre una porta: un questionario, un audit, una gara.
+ * Ogni servizio compare UNA volta sola. Il pilastro E/S/G resta, ma come
+ * etichetta discreta sulla scheda: è un'informazione utile a chi già sa
+ * cosa cerca, non la struttura della pagina.
  */
-export type VoceVetrina = {
-  name: string;
-  /** Una riga di beneficio. */
-  benefit: string;
-  /** Presente solo per i servizi attivi: punta a /servizi/[slug]. */
+
+/** Il pilastro della sostenibilità, come etichetta di scheda. */
+export type Pilastro = "E" | "S" | "G";
+
+export const PILASTRO_LABEL: Record<Pilastro, string> = {
+  E: "Ambiente",
+  S: "Sociale",
+  G: "Governance",
+};
+
+/**
+ * I BISOGNI, per il filtro «perché sono qui».
+ *
+ * Quattro e non dieci: sono le situazioni in cui un'impresa cerca
+ * davvero una qualifica. Ogni servizio dichiara a quali risponde, e la
+ * dichiarazione dev'essere sostenibile con quello che la sua scheda già
+ * scrive — non un'etichetta messa lì per riempire il filtro.
+ */
+export const BISOGNI = [
+  { key: "banca", label: "Me lo chiede la banca" },
+  { key: "committente", label: "Me lo chiede un committente" },
+  { key: "bando", label: "Partecipo a un bando" },
+  { key: "migliorare", label: "Voglio migliorare" },
+] as const;
+
+export type Bisogno = (typeof BISOGNI)[number]["key"];
+
+export type VoceCatalogo = {
+  /** Servizio attivo: punta a /servizi/[slug]. Assente = ancora in arrivo. */
   slug?: string;
-  roadmap?: boolean;
+  /** Nome, solo per le voci in arrivo: gli attivi lo prendono dal catalogo. */
+  nome?: string;
+  /** La riga di beneficio, in lingua corrente. */
+  benefit: string;
+  pilastro: Pilastro;
+  bisogni: Bisogno[];
   /**
    * Etichetta FATTUALE (§12.M). Ammesse solo diciture verificabili:
-   * "Novità", "In arrivo", "Spesso richiesto insieme a X" (se vero nel
-   * catalogo), "Premiante nei bandi" (se documentabile). Vietate le
-   * diciture di domanda ("in forte richiesta", "il più richiesto").
+   * "Novità", "Spesso richiesto insieme a X" (se vero nel catalogo),
+   * "Premiante nei bandi" (se documentabile). Vietate le diciture di
+   * domanda ("in forte richiesta", "il più richiesto").
    */
   etichetta?: string;
+  /** Si aggiunge a un percorso, non si attiva da solo. */
+  addOn?: boolean;
 };
 
-export type CategoriaVetrina = {
+export type Famiglia = {
   key: string;
-  title: string;
-  /** Sottotitolo breve della categoria. */
-  sub: string;
-  voci: VoceVetrina[];
+  titolo: string;
+  /**
+   * Che cosa OTTIENI, non che cosa contiene. Una famiglia che si
+   * presenta con l'elenco di sé stessa non aiuta a scegliere.
+   */
+  ottieni: string;
+  /**
+   * La stessa cosa in mezza riga, per lo schema in testa alla pagina.
+   * Scritta, non ricavata tagliando `ottieni` alla prima punteggiatura:
+   * quel taglio dava frasi di lunghezze diverse e si vedeva.
+   */
+  sintesi: string;
+  icona: LucideIcon;
+  voci: VoceCatalogo[];
 };
 
-/** Sostenibilità nei tre pilastri E/S/G + famiglia Sistemi di gestione. */
-export const VETRINA: CategoriaVetrina[] = [
+export const FAMIGLIE: Famiglia[] = [
   {
-    key: "ambiente",
-    title: "Ambiente",
-    sub: "Sostenibilità · pilastro E",
+    key: "misura",
+    titolo: "Misura e rendiconta",
+    ottieni:
+      "Un numero che regge un controllo: quanto emette la tua impresa, quanto è circolare, che cosa ha fatto nell'anno. Calcolato dai documenti che hai già, con la fonte scritta accanto a ogni dato.",
+    sintesi: "Un numero che regge un controllo.",
+    icona: Gauge,
     voci: [
       {
         slug: "carbon-footprint-scope-1-2",
-        name: "Carbon Light",
-        benefit: "Scope 1 e 2: la misura ufficiale, dai documenti reali.",
+        benefit:
+          "La misura ufficiale delle tue emissioni dirette e dell'energia acquistata.",
+        pilastro: "E",
+        bisogni: ["banca", "committente", "migliorare"],
       },
       {
         slug: "carbon-footprint-scope-1-2-3",
-        name: "Carbon Completa",
-        benefit: "Scope 1, 2 e 3: l'inventario completo, filiera compresa.",
-      },
-      {
-        slug: "rating-economia-circolare",
-        name: "Rating economia circolare",
-        benefit: "Quanto sei circolare, in un punteggio chiaro e migliorabile.",
-      },
-      {
-        slug: "manuale-sistema-gestione-iso-14001",
-        name: "Manuale ISO 14001",
-        benefit: "Il sistema ambientale pronto per l'audit dell'ente terzo.",
-      },
-      {
-        name: "Check-up energetico",
-        benefit: "Scopri se paghi troppo l'energia, dalle bollette che hai già.",
-        roadmap: true,
-      },
-      {
-        name: "Monitoraggio energetico",
-        benefit: "Consumi sotto controllo mese per mese, con alert e benchmark.",
-        roadmap: true,
-      },
-    ],
-  },
-  {
-    key: "sociale",
-    title: "Sociale",
-    sub: "Sostenibilità · pilastro S",
-    voci: [
-      {
-        slug: "parita-di-genere-pdr-125",
-        name: "Parità di genere UNI/PdR 125",
-        benefit: "KPI e fascicolo pronti per l'audit; esonero contributivo.",
-        etichetta: "Premiante nei bandi",
-      },
-      {
-        slug: "manuale-sistema-gestione-iso-45001",
-        name: "Manuale ISO 45001 — sicurezza",
         benefit:
-          "Il sistema sicurezza pronto per l'audit, integrato con il tuo DVR.",
-        etichetta: "Novità",
+          "L'inventario completo, filiera compresa: quello che chiedono i capofiliera.",
+        pilastro: "E",
+        bisogni: ["committente", "migliorare"],
       },
-      {
-        slug: "sa8000",
-        name: "Preparazione SA8000",
-        benefit:
-          "Lo schema internazionale di responsabilità sociale, fascicolo e accompagnamento all'audit.",
-        etichetta: "Novità",
-      },
-      {
-        slug: "iso-45003",
-        name: "Aderenza UNI ISO 45003",
-        benefit:
-          "Rischi psicosociali e benessere organizzativo: aderenza documentata.",
-        etichetta: "Spesso richiesto insieme a ISO 45001",
-      },
-      {
-        slug: "iso-30415",
-        name: "Aderenza UNI ISO 30415",
-        benefit: "Diversità e inclusione: aderenza documentata alla linea guida.",
-        etichetta: "Spesso richiesto insieme a UNI/PdR 125",
-      },
-      {
-        name: "Ospitalità sostenibile UNI ISO 21401",
-        benefit: "Il sistema di gestione per le strutture ricettive.",
-        roadmap: true,
-      },
-      {
-        name: "Eventi sostenibili ISO 20121",
-        benefit: "Il sistema di gestione per eventi, fiere e hospitality.",
-        roadmap: true,
-      },
-    ],
-  },
-  {
-    key: "governance",
-    title: "Governance",
-    sub: "Sostenibilità · pilastro G",
-    voci: [
       {
         slug: "bilancio-sostenibilita-vsme-base",
-        name: "Bilancio VSME Base",
-        benefit: "Un solo report standard al posto di dieci questionari.",
+        benefit: "Un solo report nel formato europeo, al posto di dieci questionari.",
+        pilastro: "G",
+        bisogni: ["banca", "committente"],
       },
       {
         slug: "bilancio-sostenibilita-vsme-avanzato",
-        name: "Bilancio VSME Avanzato",
         benefit:
-          "Base più modulo completo: politiche, azioni e obiettivi per finanziatori esigenti.",
+          "Il modulo completo: politiche, azioni e obiettivi, per partner e finanziatori esigenti.",
+        pilastro: "G",
+        bisogni: ["banca", "committente"],
         etichetta: "Novità",
       },
       {
-        slug: "manuale-sistema-gestione-iso-9001",
-        name: "Manuale ISO 9001",
-        benefit: "Il sistema qualità pronto per l'audit dell'ente terzo.",
+        slug: "rating-economia-circolare",
+        benefit: "Quanto sei circolare, in un punteggio chiaro e migliorabile.",
+        pilastro: "E",
+        bisogni: ["committente", "migliorare"],
       },
       {
-        name: "Preparazione a rating e questionari ESG",
-        benefit: "Risposte pronte e coerenti per banche e capofiliera.",
-        roadmap: true,
+        nome: "Monitoraggio energetico",
+        benefit: "Consumi sotto controllo mese per mese, con soglie e confronti.",
+        pilastro: "E",
+        bisogni: ["migliorare"],
       },
     ],
   },
   {
-    key: "sistemi-di-gestione",
-    title: "Sistemi di gestione",
-    sub: "Manuali e procedure generati sui tuoi dati",
+    key: "certificabili",
+    titolo: "Sistemi certificabili",
+    ottieni:
+      "L'impianto documentale che un organismo accreditato si aspetta di trovare all'audit: manuale, procedure e registrazioni, pronti da presentare. La certificazione la rilascia l'organismo, non noi.",
+    sintesi: "L'impianto documentale pronto per l'audit.",
+    icona: ShieldCheck,
     voci: [
       {
         slug: "manuale-sistema-gestione-iso-9001",
-        name: "Manuale ISO 9001 — qualità",
-        benefit: "Impianto documentale completo, pronto per l'audit.",
+        benefit: "Il sistema qualità documentato, pronto per l'audit dell'ente terzo.",
+        pilastro: "G",
+        bisogni: ["bando", "committente"],
       },
       {
         slug: "manuale-sistema-gestione-iso-14001",
-        name: "Manuale ISO 14001 — ambiente",
-        benefit: "Analisi ambientale precompilata dai tuoi dati carbon.",
+        benefit: "Il sistema ambientale, con l'analisi precompilata dai tuoi dati.",
+        pilastro: "E",
+        bisogni: ["bando", "committente"],
       },
       {
         slug: "manuale-sistema-gestione-iso-45001",
-        name: "ISO 45001 — sicurezza sul lavoro",
         benefit:
-          "Sistema SSL integrato con il DVR, che resta del datore di lavoro.",
+          "Il sistema sicurezza integrato con il tuo DVR, che resta del datore di lavoro.",
+        pilastro: "S",
+        bisogni: ["bando", "committente"],
         etichetta: "Novità",
       },
       {
         slug: "parita-di-genere-pdr-125",
-        name: "UNI/PdR 125 — parità di genere",
-        benefit: "Sistema di gestione della parità e fascicolo per l'audit.",
+        benefit: "KPI e fascicolo pronti per l'audit; esonero contributivo di legge.",
+        pilastro: "S",
+        bisogni: ["bando", "migliorare"],
+        etichetta: "Premiante nei bandi",
       },
       {
         slug: "sa8000",
-        name: "SA8000 — responsabilità sociale",
-        benefit: "Schema internazionale accreditato: non è una norma UNI/ISO.",
+        benefit:
+          "Lo schema internazionale di responsabilità sociale, con accompagnamento all'audit.",
+        pilastro: "S",
+        bisogni: ["committente"],
+        etichetta: "Novità",
       },
       {
-        name: "ISO 26000 e ISO 20400 — aderenza",
+        nome: "Ospitalità sostenibile UNI ISO 21401",
+        benefit: "Il sistema di gestione per le strutture ricettive.",
+        pilastro: "E",
+        bisogni: ["committente", "migliorare"],
+      },
+      {
+        nome: "Eventi sostenibili ISO 20121",
+        benefit: "Il sistema di gestione per eventi, fiere e hospitality.",
+        pilastro: "E",
+        bisogni: ["committente", "bando"],
+      },
+      {
+        slug: "iso-45003",
+        benefit:
+          "Rischi psicosociali e benessere organizzativo: aderenza documentata.",
+        pilastro: "S",
+        bisogni: ["migliorare"],
+        etichetta: "Spesso richiesto insieme a ISO 45001",
+        addOn: true,
+      },
+      {
+        slug: "iso-30415",
+        benefit: "Diversità e inclusione: aderenza documentata alla linea guida.",
+        pilastro: "S",
+        bisogni: ["migliorare"],
+        etichetta: "Spesso richiesto insieme a UNI/PdR 125",
+        addOn: true,
+      },
+      {
+        nome: "Aderenza ISO 26000 e ISO 20400",
         benefit: "Allineamento alle norme guida, spendibile verso le filiere.",
-        roadmap: true,
+        pilastro: "G",
+        bisogni: ["committente"],
+        addOn: true,
       },
     ],
   },
   {
-    key: "trasversali",
-    title: "Trasversali",
-    sub: "Interventi mirati, senza canone",
+    key: "accesso",
+    titolo: "Qualifica e accesso",
+    ottieni:
+      "La risposta pronta quando qualcuno ti valuta: i questionari già compilati, i rilievi dell'organismo chiusi nei tempi, i punti deboli trovati prima che li trovi qualcun altro.",
+    sintesi: "La risposta pronta a chi ti valuta.",
+    icona: KeyRound,
     voci: [
       {
+        nome: "Profilo ESG per questionari e rating di terze parti",
+        benefit:
+          "Risposte pronte e coerenti per banche e capofiliera. Il punteggio lo assegna sempre l'ente terzo.",
+        pilastro: "G",
+        bisogni: ["banca", "committente"],
+      },
+      {
+        nome: "Check-up energetico",
+        benefit: "Scopri se paghi troppo l'energia, dalle bollette che hai già.",
+        pilastro: "E",
+        bisogni: ["migliorare"],
+      },
+      {
         slug: "supporto-audit",
-        name: "Supporto all'audit di certificazione",
         benefit:
           "Rilievi ricevuti dall'organismo? Adeguiamo i documenti, anche se non li abbiamo fatti noi.",
+        pilastro: "G",
+        bisogni: ["committente", "bando"],
       },
     ],
   },
