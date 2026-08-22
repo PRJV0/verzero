@@ -29,26 +29,86 @@ const SOGLIA_NARRAZIONE = "(min-width: 768px)";
  * catalogo, pagine prezzo e funnel d'acquisto.
  */
 
-/** Fase che entra ed esce: il testo che accompagna il palco. */
-const FOTOGRAMMI_FADE: Keyframe[] = [
-  { opacity: 0, transform: "translateY(14px)", offset: 0 },
-  { opacity: 1, transform: "none", offset: 0.12 },
-  { opacity: 1, transform: "none", offset: 0.78 },
-  { opacity: 0, transform: "translateY(-14px)", offset: 1 },
+/**
+ * I FOTOGRAMMI, dichiarati una volta per due esecutori.
+ *
+ * La stessa curva serve alla scroll-timeline CSS — dove il browser la
+ * interpola da sé, fuori dal thread principale — e al calcolo in
+ * JavaScript che subentra dove quella non c'è. Scriverla due volte
+ * vorrebbe dire due animazioni diverse a seconda del browser: la
+ * differenza non darebbe errore da nessuna parte, e nessuno se ne
+ * accorgerebbe finché non la vede il fondatore.
+ */
+type Fotogramma = { offset: number; opacita: number; y?: number };
+
+/** Entra, resta, esce: la fase che lascia il posto alla successiva. */
+const FADE: Fotogramma[] = [
+  { offset: 0, opacita: 0, y: 14 },
+  // Entrata e uscita strette: fra una declinazione e l'altra il palco
+  // resta vuoto per il tempo di un battito, non per un intero respiro —
+  // misurato, con la curva precedente il vuoto durava un sesto di fetta.
+  { offset: 0.08, opacita: 1, y: 0 },
+  { offset: 0.9, opacita: 1, y: 0 },
+  { offset: 1, opacita: 0, y: -14 },
+];
+
+/**
+ * L'ULTIMA fase non esce: resta in scena finché la sezione si sblocca e
+ * la pagina riprende a scorrere. Con la curva normale il palco si
+ * svuotava proprio nell'ultimo tratto — cioè nel momento in cui l'occhio
+ * cerca la conclusione e trova uno schermo vuoto.
+ */
+const ULTIMA: Fotogramma[] = [
+  { offset: 0, opacita: 0, y: 14 },
+  { offset: 0.08, opacita: 1, y: 0 },
+  { offset: 1, opacita: 1, y: 0 },
 ];
 
 /** Variante "keep": una volta accesa resta accesa (l'anello che si riempie).
- *  Solo opacità: sono tracciati SVG, una scala li sposterebbe nel viewBox. */
-const FOTOGRAMMI_KEEP: Keyframe[] = [
-  { opacity: 0, offset: 0 },
-  { opacity: 1, offset: 0.35 },
-  { opacity: 1, offset: 1 },
+ *  Solo opacità: sono tracciati SVG, una traslazione li sposterebbe nel viewBox. */
+const KEEP: Fotogramma[] = [
+  { offset: 0, opacita: 0 },
+  { offset: 0.35, opacita: 1 },
+  { offset: 1, opacita: 1 },
 ];
 
 const FOTOGRAMMI_PROGRESS: Keyframe[] = [
   { transform: "scaleX(0)" },
   { transform: "scaleX(1)" },
 ];
+
+/** La stessa curva in forma di Keyframe, per la scroll-timeline. */
+function inKeyframe(fotogrammi: Fotogramma[]): Keyframe[] {
+  return fotogrammi.map((k) => ({
+    offset: k.offset,
+    opacity: k.opacita,
+    ...(k.y === undefined
+      ? {}
+      : { transform: k.y === 0 ? "none" : `translateY(${k.y}px)` }),
+  }));
+}
+
+/** La stessa curva calcolata a mano, per il ripiego a progressione. */
+function valore(fotogrammi: Fotogramma[], t: number): { opacita: number; y: number } {
+  if (t <= fotogrammi[0].offset) {
+    return { opacita: fotogrammi[0].opacita, y: fotogrammi[0].y ?? 0 };
+  }
+  for (let i = 1; i < fotogrammi.length; i++) {
+    const a = fotogrammi[i - 1];
+    const b = fotogrammi[i];
+    if (t > b.offset) continue;
+    const arco = b.offset - a.offset;
+    // Interpolazione lineare, come `easing: "linear"` sulla timeline:
+    // il ritmo lo detta lo scorrimento, non una curva sopra di esso.
+    const q = arco === 0 ? 1 : (t - a.offset) / arco;
+    return {
+      opacita: a.opacita + (b.opacita - a.opacita) * q,
+      y: (a.y ?? 0) + ((b.y ?? 0) - (a.y ?? 0)) * q,
+    };
+  }
+  const ultimo = fotogrammi[fotogrammi.length - 1];
+  return { opacita: ultimo.opacita, y: ultimo.y ?? 0 };
+}
 
 /** Opzioni di animazione legate a una scroll-timeline: `timeline`,
  *  `rangeStart` e `rangeEnd` non sono ancora nei tipi DOM di TypeScript. */
@@ -79,7 +139,7 @@ export function Scrolly({
    * reveal. Si disattiva quando lo schermo stretto ha GIÀ una sua
    * presentazione — in home il nastro dello Zero — perché lì questa copia
    * è nascosta, e accenderla sarebbe un terzo comportamento su nodi che
-   * nessuno vede. Non tocca il ripiego sul largo, che resta sempre.
+   * nessuno vede.
    */
   revealSuStretto?: boolean;
   children: ReactNode;
@@ -102,24 +162,15 @@ export function Scrolly({
     if (!root) return;
 
     /*
-     * IL RIPIEGO — quando la narrazione non parte, le fasi si accendono
-     * lo stesso.
+     * IL RIPIEGO SULLO STRETTO — sequenza impilata con le comparse.
      *
-     * «Niente narrazione» era diventato «niente animazione»: la lista
-     * restava statica e compariva tutta insieme. Succedeva su schermo
-     * stretto, dove il palco sticky non si usa (SPEC §12.O), ma succede
-     * anche su schermo LARGO ogni volta che le scroll-timeline non ci
-     * sono — Safari fino a poco fa — o che ci sono e mentono (Chrome
-     * in-app: progresso congelato). In tutti quei casi la sequenza resta
-     * impilata, ma si accende una fase alla volta mentre si scorre, con
-     * lo stesso motore dei reveal del resto del sito.
-     *
-     * Unica eccezione voluta: «riduci movimento», dove lo statico è la
-     * risposta giusta e non un ripiego.
+     * Sotto i 768px il palco sticky non si usa (SPEC §12.O): la sezione
+     * resta una lista, ma le fasi si accendono una alla volta mentre si
+     * scorre, invece di comparire tutte insieme.
      */
     let spegniReveal: (() => void) | null = null;
     let accese: HTMLElement[] = [];
-    const ripiego = () => {
+    const ripiegoImpilato = () => {
       if (spegniReveal) return;
       accese = Array.from(root.querySelectorAll<HTMLElement>("[data-fase]"));
       for (const f of accese) f.classList.add("vz-reveal");
@@ -133,135 +184,199 @@ export function Scrolly({
     };
 
     if (!largo) {
-      if (revealSuStretto) ripiego();
+      if (revealSuStretto) ripiegoImpilato();
       return spegniIlRipiego;
     }
 
-    // Chi ha chiesto meno movimento resta sulla versione statica completa.
+    // Chi ha chiesto meno movimento resta sulla versione statica completa:
+    // tutte le declinazioni visibili, nessun palco, nessun avvicendamento.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+    const fasi = Array.from(root.querySelectorAll<HTMLElement>("[data-fase]"))
+      .map((el) => {
+        const indice = Number(el.dataset.fase);
+        const fotogrammi =
+          el.dataset.modo === "keep"
+            ? KEEP
+            : indice === steps
+              ? ULTIMA
+              : FADE;
+        return { el, indice, fotogrammi };
+      })
+      .filter((f) => f.indice > 0);
+    if (fasi.length === 0) return;
+    const barra = root.querySelector<HTMLElement>(".vz-scrolly-progress");
+
+    /*
+     * ═══ LA PROGRESSIONE, CALCOLATA ═══
+     *
+     * La fascia "contain" è il tratto in cui la sezione copre lo schermo,
+     * cioè esattamente il tratto in cui il palco resta ancorato: comincia
+     * quando il bordo alto della sezione tocca il bordo alto della
+     * finestra e finisce quando il bordo basso raggiunge quello basso.
+     * È la stessa fascia che la scroll-timeline usa in CSS — per questo i
+     * due modi mostrano la stessa cosa nello stesso punto.
+     */
+    const progresso = () => {
+      const r = root.getBoundingClientRect();
+      const corsa = r.height - window.innerHeight;
+      if (corsa <= 0) return 1;
+      return Math.min(1, Math.max(0, -r.top / corsa));
+    };
+
+    let inCoda = false;
+    let dipingiAttivo = false;
+    const dipingi = () => {
+      inCoda = false;
+      try {
+        const p = progresso();
+        const fetta = 1 / steps;
+        for (const f of fasi) {
+          const t = Math.min(
+            1,
+            Math.max(0, (p - (f.indice - 1) * fetta) / fetta),
+          );
+          const v = valore(f.fotogrammi, t);
+          f.el.style.opacity = String(Math.round(v.opacita * 1000) / 1000);
+          f.el.style.transform = v.y === 0 ? "none" : `translateY(${v.y}px)`;
+        }
+        if (barra) barra.style.transform = `scaleX(${p})`;
+      } catch {
+        // PARACADUTE. Se il calcolo si rompe, la sezione torna leggibile
+        // invece di restare a schermo vuoto: senza `data-live` il CSS non
+        // nasconde più nulla.
+        smettiDiDipingere();
+        delete root.dataset.live;
+      }
+    };
+    const suScorrimento = () => {
+      if (inCoda) return;
+      inCoda = true;
+      requestAnimationFrame(dipingi);
+    };
+    const dipingiSempre = () => {
+      if (dipingiAttivo) return;
+      dipingiAttivo = true;
+      // Passivo: non si intercetta e non si ferma nulla. Lo scorrimento
+      // resta dell'utente — mai «scroll hijacking».
+      window.addEventListener("scroll", suScorrimento, { passive: true });
+      window.addEventListener("resize", suScorrimento, { passive: true });
+      dipingi();
+    };
+    const smettiDiDipingere = () => {
+      if (!dipingiAttivo) return;
+      dipingiAttivo = false;
+      window.removeEventListener("scroll", suScorrimento);
+      window.removeEventListener("resize", suScorrimento);
+      for (const f of fasi) {
+        f.el.style.opacity = "";
+        f.el.style.transform = "";
+      }
+      if (barra) barra.style.transform = "";
+    };
+
+    /* ═══ IL MODO PREFERITO: la scroll-timeline in CSS ═══ */
+    const animazioni: Animation[] = [];
     const Timeline = (
       window as unknown as { ViewTimeline?: new (o: object) => AnimationTimeline }
     ).ViewTimeline;
-    if (typeof Timeline !== "function") {
-      ripiego();
-      return spegniIlRipiego;
+
+    let timeline: AnimationTimeline | null = null;
+    if (typeof Timeline === "function") {
+      try {
+        const t = new Timeline({ subject: root, axis: "block" });
+        if (t.currentTime != null) timeline = t;
+      } catch {
+        timeline = null;
+      }
     }
 
-    let timeline: AnimationTimeline;
-    try {
-      timeline = new Timeline({ subject: root, axis: "block" });
-    } catch {
-      ripiego();
-      return spegniIlRipiego;
-    }
-
-    // Prova di vitalità: una timeline inattiva non ha tempo corrente. In quel
-    // caso non si narra — ma le fasi si accendono comunque, una alla volta.
-    if (timeline.currentTime == null) {
-      ripiego();
-      return spegniIlRipiego;
-    }
-
-    const animazioni: Animation[] = [];
-    const anima = (
-      el: Element,
-      fotogrammi: Keyframe[],
-      opzioni: OpzioniScorrimento,
-    ) => {
-      const complete: OpzioniScorrimento = {
-        timeline,
-        fill: "both",
-        easing: "linear",
-        ...opzioni,
-      };
-      animazioni.push(el.animate(fotogrammi, complete));
-    };
-
-    // Da qui in poi le fasi si sovrappongono: lo dice il CSS su data-live.
+    // Da qui in poi la sezione si ancora e le fasi si sovrappongono: lo
+    // dice il CSS su data-live. Lo si accende SOLO ora, quando è certo
+    // che qualcuno — la timeline o il calcolo — le farà comparire.
     root.dataset.live = "1";
 
-    root.querySelectorAll<HTMLElement>("[data-fase]").forEach((el) => {
-      const indice = Number(el.dataset.fase);
-      if (!indice) return;
-      const tieni = el.dataset.modo === "keep";
-      anima(
-        el,
-        tieni ? FOTOGRAMMI_KEEP : FOTOGRAMMI_FADE,
-        finestra(indice, steps),
-      );
-    });
-
-    const barra = root.querySelector(".vz-scrolly-progress");
-    if (barra) {
-      anima(barra, FOTOGRAMMI_PROGRESS, {
-        rangeStart: "contain 0%",
-        rangeEnd: "contain 100%",
-      });
+    if (timeline) {
+      const anima = (
+        el: Element,
+        fotogrammi: Keyframe[],
+        opzioni: OpzioniScorrimento,
+      ) => {
+        animazioni.push(
+          el.animate(fotogrammi, {
+            timeline,
+            fill: "both",
+            easing: "linear",
+            ...opzioni,
+          }),
+        );
+      };
+      for (const f of fasi) {
+        anima(f.el, inKeyframe(f.fotogrammi), finestra(f.indice, steps));
+      }
+      if (barra) {
+        anima(barra, FOTOGRAMMI_PROGRESS, {
+          rangeStart: "contain 0%",
+          rangeEnd: "contain 100%",
+        });
+      }
+    } else {
+      // Nessuna scroll-timeline (Safari fino a poco fa): si calcola.
+      dipingiSempre();
     }
 
-    const spegni = () => {
-      window.removeEventListener("scroll", sorveglia);
-      animazioni.forEach((a) => a.cancel());
-      delete root.dataset.live;
-      // La timeline ha mentito: si torna alla sequenza impilata, ma con
-      // le comparse — non con sei blocchi che appaiono tutti insieme.
-      ripiego();
-    };
-
     /*
-     * IL GUARDIANO — misura l'EFFETTO, non l'API.
+     * ═══ IL GUARDIANO — misura l'EFFETTO, non l'API ═══
      *
      * Una timeline può esistere, dichiararsi attiva e restare ferma
      * (Chrome 148 in-app: progresso congelato a ogni scorrimento). Allora
-     * la narrazione non narra e le fasi restano tutte alla stessa
-     * opacità, cioè cinque su sei invisibili: contenuto perso.
+     * il palco resta ancorato con una sola fase accesa e le altre
+     * invisibili: contenuto perso.
      *
-     * La versione precedente confrontava `timeline.currentTime` con la
-     * geometria della sezione, e sbagliava: in Chrome quel valore letto
-     * dal thread principale resta indietro — misurato, costante a 0,492
-     * mentre le fasi si avvicendavano correttamente sotto gli occhi. Il
-     * guardiano spegneva così una narrazione sana, che è esattamente il
-     * danno da cui doveva proteggere.
+     * Non si legge `timeline.currentTime` per deciderlo: in Chrome quel
+     * valore letto dal thread principale resta indietro — misurato,
+     * costante a 0,492 mentre le fasi si avvicendavano correttamente — e
+     * chi lo usava spegneva narrazioni sane. Si guarda invece il quadro
+     * delle opacità: se scorrendo dentro la sezione cambia, il meccanismo
+     * è reale e i controlli finiscono; se dopo tre scorrimenti utili è
+     * identico a se stesso, la timeline è inerte.
      *
-     * Ora la domanda è quella giusta: scorrendo dentro la sezione, le
-     * opacità CAMBIANO? Se cambiano, il meccanismo è reale e i controlli
-     * finiscono lì. Se dopo cinque scorrimenti utili il quadro è identico
-     * a se stesso, la timeline è inerte e si torna alla sequenza
-     * impilata, con le comparse.
+     * E il rimedio non è più rinunciare al palco: si passa al calcolo
+     * della progressione, che fa la stessa cosa sullo stesso tratto.
      */
-    const fasiSorvegliate = Array.from(
-      root.querySelectorAll<HTMLElement>("[data-fase]"),
-    );
-    const quadro = () =>
-      fasiSorvegliate.map((f) => getComputedStyle(f).opacity).join(",");
+    const quadro = () => fasi.map((f) => f.el.style.opacity || getComputedStyle(f.el).opacity).join(",");
 
     let campioni = 0;
     let precedente = "";
     const sorveglia = () => {
-      const rect = root.getBoundingClientRect();
-      const vh = window.innerHeight;
-      // Progresso della fascia "cover": 0 quando la sezione entra dal
-      // basso, 1 quando esce dall'alto. Fuori da questa finestra la
-      // narrazione non ha nulla da mostrare e non si giudica.
-      const atteso = (vh - rect.top) / (vh + rect.height);
-      if (atteso < 0.05 || atteso > 0.95) return;
+      if (dipingiAttivo) return;
+      // Si giudica SOLO dentro il tratto ancorato, dove le fasi devono
+      // avvicendarsi. Fuori di lì il quadro è fermo anche quando tutto
+      // funziona — è fermo perché non c'è ancora niente da mostrare — e
+      // un guardiano che giudicasse anche lì boccerebbe sempre.
+      const p = progresso();
+      if (p <= 0.02 || p >= 0.98) return;
 
       const ora = quadro();
       if (precedente && ora !== precedente) {
-        // Si muove davvero: il meccanismo è reale, bastano i controlli.
         window.removeEventListener("scroll", sorveglia);
         return;
       }
       precedente = ora;
       campioni += 1;
-      if (campioni >= 5) spegni();
+      if (campioni >= 3) {
+        window.removeEventListener("scroll", sorveglia);
+        animazioni.forEach((a) => a.cancel());
+        animazioni.length = 0;
+        dipingiSempre();
+      }
     };
-    window.addEventListener("scroll", sorveglia, { passive: true });
+    if (timeline) {
+      window.addEventListener("scroll", sorveglia, { passive: true });
+    }
     // Il primo quadro si prende a layout assestato: attivando la modalità
-    // narrata la sezione cambia altezza di migliaia di pixel, e prima che
-    // il cambio finisca qualunque lettura è rumore. Da lì in poi decide
-    // lo scorrimento.
+    // narrata la sezione cresce di migliaia di pixel, e prima che il
+    // cambio finisca qualunque lettura è rumore.
     const primo = window.setTimeout(() => {
       precedente = quadro();
     }, 450);
@@ -270,6 +385,7 @@ export function Scrolly({
       window.clearTimeout(primo);
       window.removeEventListener("scroll", sorveglia);
       animazioni.forEach((a) => a.cancel());
+      smettiDiDipingere();
       delete root.dataset.live;
       spegniIlRipiego();
     };

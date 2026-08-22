@@ -159,7 +159,12 @@ export default function HomePage() {
           animazioni, quindi non c'è nulla che giri o venga letto due
           volte — e non c'è lo sfarfallio che darebbe una scelta fatta
           dopo l'idratazione. */}
-      <section className="relative overflow-hidden bg-moss py-16 md:py-24">
+      {/* NIENTE `overflow-hidden` su questa sezione: un antenato che
+          ritaglia annulla il `position: sticky` del palco, e la
+          narrazione perde l'ancoraggio senza dare alcun errore. Chi
+          ritaglia lo fa per conto suo — la filigrana qui sotto e il
+          nastro dentro di sé. */}
+      <section className="relative bg-moss py-16 md:py-24">
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
           <ZeroWatermark tone="pine" className="-bottom-24 -left-10 text-[26rem]" />
         </div>

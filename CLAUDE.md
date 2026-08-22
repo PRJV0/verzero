@@ -90,6 +90,13 @@ Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs`.
   riscrive — due copie diventano due tarature diverse alla prima
   modifica. E disattivare la narrazione su schermo stretto non deve mai
   disattivare anche la comparsa (SPEC §12.O).
+- **`overflow-hidden` uccide il palco.** Un antenato che ritaglia annulla
+  il `position: sticky` dei discendenti E rende inerte una
+  scroll-timeline, perché diventa lui il contenitore di scorrimento — e
+  non scorre. Non dà errore: la sezione smette semplicemente di
+  ancorarsi e le fasi restano ferme. Ci è già costato due sessioni. Chi
+  deve ritagliare lo faccia sull'elemento che ritaglia (la filigrana, il
+  nastro), mai sulla sezione che contiene una narrazione.
 - **Adattare, non degradare**. Quando desktop e mobile hanno vincoli
   diversi si adatta la PRESENTAZIONE, non si abbassa il desktop al
   livello del mobile: un contenuto solo, due rese. Il caso di scuola è
