@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { InBreve } from "@/components/in-breve";
 import { JsonLd } from "@/components/json-ld";
 import { FasciaListaAttesa } from "@/components/lista-attesa";
 import { OndaParticelle } from "@/components/onda-particelle";
@@ -29,7 +30,13 @@ import {
   getServizio,
 } from "@/lib/catalog";
 import { prezzoDa, prezzoDettaglio, prezzoUnaTantum } from "@/lib/pricing";
-import { jsonLdBreadcrumb, jsonLdService, metadataPagina } from "@/lib/seo";
+import { faqServizio } from "@/lib/faq-servizio";
+import {
+  jsonLdBreadcrumb,
+  jsonLdFaq,
+  jsonLdService,
+  metadataPagina,
+} from "@/lib/seo";
 
 import { PrezzoBox } from "./prezzo-box";
 
@@ -80,6 +87,10 @@ export default async function ServizioPage({
   const canone = prezzoDettaglio(s.slug, "micro");
   const unaTantum = prezzoUnaTantum(s.slug, "micro");
 
+  // Le domande frequenti: una sola lista, mostrata in pagina e dichiarata
+  // nel markup. Se le due cose divergono, il markup mente.
+  const domande = faqServizio(s);
+
   return (
     <>
       {/* Primo segnale d'interesse reale: chi apre una scheda servizio
@@ -110,6 +121,9 @@ export default async function ServizioPage({
           { nome: s.name, path: `/servizi/${s.slug}` },
         ])}
       />
+      {/* FAQPage: le stesse domande stampate nel blocco «In breve», mai
+          una in più. Il markup descrive solo contenuto visibile. */}
+      <JsonLd dati={jsonLdFaq(domande)} />
 
       {/* L'intestazione porta la firma dell'onda, appena percepibile:
           sotto c'è il listino, cioè dati — e sui dati il fondale tace. */}
@@ -167,6 +181,12 @@ export default async function ServizioPage({
               </p>
             </div>
           )}
+
+          {/* IN BREVE: le risposte autoconclusive, prima del racconto.
+              Sta qui perché è la prima cosa che serve sia a chi arriva da
+              una ricerca sia a chi arriva da una risposta generata e
+              vuole verificarla. */}
+          <InBreve voci={domande} />
 
           {/* Come funziona con Ver0 */}
           <div className="mb-3 rounded-xl border border-line bg-white p-4">

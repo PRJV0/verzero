@@ -31,8 +31,24 @@ export const SITO = {
   nome: "Verzero",
   /** Il monogramma, per gli usi di spazio ridotto. */
   monogramma: "Ver0",
+  /**
+   * LA DESCRIZIONE DELL'ENTITÀ — una sola, ovunque si descriva l'azienda.
+   *
+   * Non è la meta description di una pagina: quelle descrivono PAGINE e
+   * restano diverse l'una dall'altra. Questa descrive VERZERO, e va usata
+   * identica nei dati strutturati, in llms.txt e — quando esisteranno —
+   * nei profili esterni (LinkedIn, Google Business Profile, registri di
+   * settore). Un'entità descritta in tre modi diversi in tre posti è
+   * un'entità che un modello fatica a riconoscere come una sola.
+   *
+   * Scritta per reggere FUORI dal sito: soggetto esplicito, nessun
+   * rimando al contesto, ogni affermazione verificabile in pagina.
+   */
   descrizione:
-    "La piattaforma che qualifica la tua impresa: sostenibilità, sistemi di gestione e consulenza con prezzi in chiaro.",
+    "Verzero è la piattaforma italiana che qualifica le imprese su sostenibilità e sistemi di gestione: un'AI proprietaria compone i documenti a partire da quelli che l'impresa ha già, un professionista li valida prima della consegna e i prezzi sono pubblici per fascia dimensionale.",
+  /** Le due righe di contesto che accompagnano la descrizione in llms.txt. */
+  contesto:
+    "I percorsi coprono carbon footprint di organizzazione, bilancio di sostenibilità in formato VSME, sistemi di gestione ISO, parità di genere UNI/PdR 125 e altri standard ufficiali. I documenti prodotti sono di parte prima: la certificazione, dove prevista, resta di competenza di un organismo accreditato. Il Sigillo Ver0 è la targa verificabile che attesta i percorsi conclusi.",
   get url() {
     return publicEnv.siteUrl;
   },
@@ -96,20 +112,74 @@ export function metadataPagina({
 /* Dati strutturati (JSON-LD)                                          */
 /* ------------------------------------------------------------------ */
 
-/** L'organizzazione: una volta sola, in home. */
+/**
+ * I PROFILI UFFICIALI, per `sameAs`.
+ *
+ * `sameAs` è la riga che dice «questa azienda e quel profilo sono la
+ * stessa entità»: è il modo più diretto per far convergere ciò che di noi
+ * sta in posti diversi su un'identità sola. Oggi l'elenco è VUOTO, e deve
+ * restarlo finché i profili non esistono davvero: dichiarare un URL che
+ * non risponde, o che appartiene a qualcun altro, è peggio che tacere.
+ *
+ * Quando nascono — LinkedIn, Google Business Profile, registri di settore
+ * — si aggiungono qui e compaiono nei dati strutturati da soli. Sul
+ * profilo va usata la STESSA descrizione (`SITO.descrizione`) e lo stesso
+ * nome: è quella coincidenza a rendere il collegamento credibile.
+ */
+export const PROFILI_UFFICIALI: string[] = [];
+
+/**
+ * Gli argomenti su cui l'entità è competente.
+ *
+ * `knowsAbout` non è una lista di parole chiave da riempire: è la
+ * dichiarazione di che cosa questa organizzazione sa fare, e ogni voce
+ * deve corrispondere a un percorso o a un contenuto che il sito espone
+ * davvero. Sono gli argomenti su cui vogliamo essere l'entità che un
+ * modello nomina quando qualcuno chiede «chi lo fa in Italia».
+ */
+const COMPETENZE = [
+  "Carbon footprint di organizzazione",
+  "Rendicontazione di sostenibilità VSME",
+  "Sistemi di gestione ISO 9001, ISO 14001, ISO 45001",
+  "Parità di genere UNI/PdR 125",
+  "Responsabilità sociale SA8000",
+  "Economia circolare UNI/TS 11820",
+  "Qualifica fornitori e questionari ESG",
+];
+
+/**
+ * L'organizzazione: una volta sola, in home.
+ *
+ * `@id` stabile e riusato altrove (WebSite, provider dei servizi): senza,
+ * ogni blocco JSON-LD descrive un'organizzazione che sembra diversa dalle
+ * altre, e il grafo che ne esce ha tre nodi invece di uno.
+ */
+export function idOrganizzazione() {
+  return `${SITO.url}/#organizzazione`;
+}
+
 export function jsonLdOrganization() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
+    "@id": idOrganizzazione(),
     name: SITO.nome,
     // Il monogramma resta come nome alternativo: chi cerca «Ver0» deve
     // comunque trovare noi.
     alternateName: SITO.monogramma,
     url: SITO.url,
-    logo: `${SITO.url}/brand/logo-verzero.svg`,
+    logo: {
+      "@type": "ImageObject",
+      url: `${SITO.url}/brand/logo-verzero.svg`,
+    },
+    image: `${SITO.url}${SITO.ogImage}`,
     description: SITO.descrizione,
     email: SITO.email,
     areaServed: { "@type": "Country", name: "Italia" },
+    knowsAbout: COMPETENZE,
+    // `sameAs` compare solo se abbiamo davvero dei profili: una riga
+    // vuota nel markup è una promessa non mantenuta.
+    ...(PROFILI_UFFICIALI.length > 0 ? { sameAs: PROFILI_UFFICIALI } : {}),
     contactPoint: [
       {
         "@type": "ContactPoint",
@@ -119,6 +189,26 @@ export function jsonLdOrganization() {
         url: `${SITO.url}/contatti`,
       },
     ],
+  };
+}
+
+/**
+ * Il sito come entità distinta dall'organizzazione che lo pubblica.
+ *
+ * Serve a legare i due nodi: senza, restano un'azienda e un dominio che
+ * si somigliano. Il collegamento `publisher` dice che sono la stessa
+ * storia.
+ */
+export function jsonLdWebSite() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${SITO.url}/#sito`,
+    url: SITO.url,
+    name: SITO.nome,
+    description: SITO.descrizione,
+    inLanguage: "it-IT",
+    publisher: { "@id": idOrganizzazione() },
   };
 }
 
@@ -158,8 +248,11 @@ export function jsonLdService({
     description: descrizione,
     url: `${SITO.url}${path}`,
     serviceType: "Consulenza per la qualifica d'impresa",
+    // Stesso `@id` dell'Organization dichiarata in home: il fornitore di
+    // questo servizio dev'essere lo STESSO nodo, non un omonimo.
     provider: {
       "@type": "Organization",
+      "@id": idOrganizzazione(),
       name: SITO.nome,
       url: SITO.url,
     },

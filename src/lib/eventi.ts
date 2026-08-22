@@ -47,6 +47,21 @@ export const EVENTI = {
   CONTATTO_INVIATO: "contatto_inviato",
   /** Iscrizione alla lista d'attesa. */
   WAITLIST_ISCRITTO: "waitlist_iscritto",
+  /**
+   * Una persona è arrivata da un assistente AI: `dettagli.canale` dice
+   * quale (chatgpt, perplexity, claude, gemini…). Si riconosce dal
+   * referrer, quindi lo registra il browser.
+   */
+  ARRIVO_AI: "arrivo_ai",
+  /**
+   * Un agente AI ha letto una pagina: `dettagli.agente` dice quale e
+   * `dettagli.famiglia` se è di ricerca o di addestramento. Non ha un
+   * browser e non esegue JavaScript, quindi lo registra il server.
+   *
+   * Sono due eventi e non uno di proposito: una scansione non è una
+   * visita, e sommarle vorrebbe dire credere di avere traffico.
+   */
+  CRAWLER_AI: "crawler_ai",
 } as const;
 
 export type NomeEvento = (typeof EVENTI)[keyof typeof EVENTI];

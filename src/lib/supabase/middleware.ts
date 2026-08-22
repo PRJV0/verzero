@@ -3,6 +3,13 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { publicEnv } from "@/lib/env";
 
+/**
+ * L'intestazione con cui il proxy passa il percorso ai componenti server.
+ * Nome nostro, prefissato: le intestazioni interne di Next non sono un
+ * contratto pubblico e cambiano fra una versione e l'altra.
+ */
+export const PERCORSO_HEADER = "x-vz-percorso";
+
 /** Percorsi accessibili senza login (sito pubblico, auth, pagine di verifica del Sigillo). */
 const PUBLIC_PREFIXES = [
   "/",
@@ -39,6 +46,7 @@ const PUBLIC_PREFIXES = [
   // alla pagina di login, rendendoli invisibili ai crawler.
   "/robots.txt",
   "/sitemap.xml",
+  "/llms.txt",
 ];
 
 function isPublic(pathname: string) {
@@ -53,7 +61,28 @@ function isPublic(pathname: string) {
  * middleware è comodità di navigazione, non un controllo di autorizzazione.
  */
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  /*
+   * Il percorso, passato ai componenti server come intestazione: dentro un
+   * layout non esiste altro modo di sapere quale pagina si sta rendendo, e
+   * serve per registrare QUALI pagine un agente AI legge (lib/accessi-ai).
+   * Senza, potremmo dire solo che qualcuno è passato.
+   *
+   * Le intestazioni si ricostruiscono a OGNI chiamata, non una volta sola:
+   * `request.cookies.set()` scrive nell'intestazione `cookie` della
+   * richiesta, e una copia fatta prima del refresh dei token porterebbe
+   * ai componenti server la sessione vecchia. È lo stesso motivo per cui
+   * il modello di Supabase ricrea la risposta dentro `setAll`.
+   *
+   * Il valore in ingresso, se qualcuno lo inventasse, viene sovrascritto:
+   * `set` sostituisce, non aggiunge.
+   */
+  const conPercorso = () => {
+    const intestazioni = new Headers(request.headers);
+    intestazioni.set(PERCORSO_HEADER, request.nextUrl.pathname);
+    return { headers: intestazioni };
+  };
+
+  let response = NextResponse.next({ request: conPercorso() });
 
   const supabase = createServerClient(
     publicEnv.supabaseUrl,
@@ -67,7 +96,7 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value),
           );
-          response = NextResponse.next({ request });
+          response = NextResponse.next({ request: conPercorso() });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options),
           );

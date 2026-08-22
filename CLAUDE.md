@@ -32,6 +32,49 @@ Vale per ogni pagina nuova e per ogni pagina modificata. Le utilità stanno in
    restano `lazy`; i contenitori hanno rapporto d'aspetto fisso per non
    spostare il layout durante il caricamento.
 
+## Visibilità nelle risposte generate (AEO/GEO)
+
+Vale insieme alla regola SEO, non al suo posto: un motore manda una
+persona sulla pagina, un assistente legge la pagina e risponde al posto
+suo. Cambia cosa deve fare il testo.
+
+1. **Ogni affermazione regge da sola.** Una risposta che serve solo se si
+   è letto il paragrafo sopra è inutilizzabile fuori dal sito. Soggetto
+   esplicito (Verzero), oggetto per esteso (il percorso con il suo
+   taglio), niente «questo servizio», «come visto», «il prezzo indicato».
+   Il criterio: se la frase, ritagliata e incollata altrove, diventa
+   ambigua, va riscritta.
+2. **Le domande frequenti si compongono, non si scrivono.** Vivono in
+   `src/lib/faq-servizio.ts` e nascono da catalogo e listino: quattordici
+   testi scritti a mano, alla seconda revisione di prezzo, sono
+   quattordici testi che mentono. Le stesse voci si mostrano in pagina
+   (`InBreve`) e si marcano con `FAQPage` — mai una in più nel markup che
+   in pagina.
+3. **`robots.txt` distingue le famiglie** (`src/lib/ai-canali.ts`):
+   crawler di ricerca e citazione, crawler di addestramento, tutti gli
+   altri. Oggi sono tutti ammessi, con le stesse esclusioni
+   (`/acquista/`, `/login`, `/dashboard`, `/api/`, `/auth/`): per un
+   marchio nuovo la presenza nella conoscenza dei modelli vale più del
+   controllo su un contenuto che è comunque pubblico. Aggiungere un
+   agente significa aggiungerlo lì, non scrivere una riga nel file.
+4. **Una sola entità.** Nome (`Verzero`) e descrizione (`SITO.descrizione`)
+   sono identici in sito, dati strutturati, `llms.txt` e — quando
+   esisteranno — profili esterni. `sameAs` resta vuoto finché i profili
+   non esistono: un URL dichiarato e assente è peggio del silenzio.
+   `@id` condiviso fra `Organization`, `WebSite` e `provider` dei
+   servizi, altrimenti il grafo ha tre nodi al posto di uno.
+5. **`llms.txt` è un segnale complementare**, generato dalle stesse fonti
+   di sitemap e catalogo. Nessuna aspettativa di effetto: se la
+   convenzione muore, il file si cancella e non lascia debiti. Non può
+   contenere nulla che il sito non dica già — in particolare nessuna
+   mappatura operativa (v. «metodo sì, mappature no»).
+6. **Si misura.** `arrivo_ai` (referrer, lo manda il browser) e
+   `crawler_ai` (user agent, lo scrive il server dopo la risposta) sono
+   due eventi distinti: una scansione non è una visita, e sommarle
+   significa credere di avere traffico.
+
+Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs`.
+
 ## Altre regole già in vigore
 
 - **Movimento**: fonte unica in `src/app/globals.css` (token `--vz-micro`

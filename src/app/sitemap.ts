@@ -1,11 +1,14 @@
 import type { MetadataRoute } from "next";
 
 import { SERVIZI } from "@/lib/catalog";
+import { PAGINE_PUBBLICHE } from "@/lib/pagine-pubbliche";
 import { SITO } from "@/lib/seo";
 
 /**
  * Sitemap generata dalle stesse fonti che generano le pagine: aggiungere
- * un servizio al catalogo lo mette in sitemap senza doverselo ricordare.
+ * un servizio al catalogo, o una pagina a `pagine-pubbliche.ts`, la mette
+ * in sitemap senza doverselo ricordare — e nello stesso momento la mette
+ * in llms.txt, che legge lo stesso elenco.
  *
  * Restano FUORI le pagine transazionali (/acquista, /login, /dashboard):
  * non portano traffico organico e diluiscono la scansione.
@@ -14,69 +17,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const oggi = new Date();
   const url = (path: string) => `${SITO.url}${path}`;
 
-  const pagine: MetadataRoute.Sitemap = [
-    { url: url("/"), lastModified: oggi, changeFrequency: "weekly", priority: 1 },
-    {
-      url: url("/servizi"),
-      lastModified: oggi,
-      changeFrequency: "weekly",
-      priority: 0.9,
-    },
-    {
-      url: url("/come-funziona"),
-      lastModified: oggi,
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: url("/sigillo"),
-      lastModified: oggi,
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
-      url: url("/chi-siamo"),
-      lastModified: oggi,
-      changeFrequency: "monthly",
-      priority: 0.7,
-    },
-    {
-      url: url("/partner"),
-      lastModified: oggi,
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
-      url: url("/sicurezza"),
-      lastModified: oggi,
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
-      url: url("/contatti"),
-      lastModified: oggi,
-      changeFrequency: "yearly",
-      priority: 0.6,
-    },
-    {
-      url: url("/termini"),
-      lastModified: oggi,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
-    {
-      url: url("/privacy"),
-      lastModified: oggi,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
-    {
-      url: url("/cookie-policy"),
-      lastModified: oggi,
-      changeFrequency: "yearly",
-      priority: 0.3,
-    },
-  ];
+  const pagine: MetadataRoute.Sitemap = PAGINE_PUBBLICHE.map((p) => ({
+    url: url(p.path),
+    lastModified: oggi,
+    changeFrequency: p.frequenza,
+    priority: p.priorita,
+  }));
 
   const servizi: MetadataRoute.Sitemap = SERVIZI.map((s) => ({
     url: url(`/servizi/${s.slug}`),

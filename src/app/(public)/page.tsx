@@ -13,7 +13,7 @@ import { MotoreInAzione } from "@/components/motore-in-azione";
 import { JsonLd } from "@/components/json-ld";
 import { PhotoDuotone } from "@/components/photo-duotone";
 import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
-import { SITO, jsonLdOrganization } from "@/lib/seo";
+import { SITO, jsonLdOrganization, jsonLdWebSite } from "@/lib/seo";
 
 /**
  * Home come MANIFESTO (SPEC §12.J): vende la potenza del Motore e il
@@ -130,7 +130,11 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <>
+      {/* L'entità: chi siamo, e il sito che la pubblica. Due nodi legati
+          dallo stesso `@id`, così chi legge il markup trova un'azienda
+          sola invece di due che si somigliano. */}
       <JsonLd dati={jsonLdOrganization()} />
+      <JsonLd dati={jsonLdWebSite()} />
 
       <HeroHome />
 

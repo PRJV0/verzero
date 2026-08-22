@@ -31,6 +31,17 @@ export type Servizio = {
   featured?: boolean;
   /** Riga breve per le card di home e indice. */
   short: string;
+  /**
+   * A CHI SERVE, in una frase che regge da sola.
+   *
+   * È la risposta alla domanda che nessun campo copriva: «chi può fare
+   * questo percorso, e perché lo farebbe». Va scritta per essere letta
+   * FUORI dalla pagina — dentro una risposta generata, dove non c'è il
+   * titolo sopra né il prezzo accanto — quindi con soggetto esplicito e
+   * senza rimandi al contesto. Niente promesse di risultato: si dice a
+   * chi si rivolge e perché lo chiedono, non cosa otterrà.
+   */
+  perChi: string;
   /** Cos'è: apertura della pagina di dettaglio. */
   cosE: string;
   /** Come funziona con Ver0: i passi, in ordine. */
@@ -66,6 +77,19 @@ export type Servizio = {
   riferimenti: string[];
 };
 
+/**
+ * Il titolo completo di un percorso: nome più taglio.
+ *
+ * Serve ovunque il servizio vada NOMINATO fuori dalla sua pagina —
+ * llms.txt, domande frequenti, dati strutturati — perché due percorsi
+ * possono avere lo stesso nome e distinguersi solo per il taglio
+ * (Carbon Footprint Scope 1 e 2 contro Scope 1, 2 e 3). Senza il taglio
+ * sarebbero due voci identiche che puntano a pagine diverse.
+ */
+export function titoloServizio(s: Servizio): string {
+  return s.taglio ? `${s.name} — ${s.taglio}` : s.name;
+}
+
 /** Principio "solo standard ufficiali" (§12.P): formula unica per tutto il sito. */
 export const SOLO_STANDARD_UFFICIALI =
   "Lavoriamo solo su standard e norme nazionali e internazionali riconosciute — mai protocolli proprietari senza validità tecnico-scientifica.";
@@ -73,6 +97,8 @@ export const SOLO_STANDARD_UFFICIALI =
 export const SERVIZI: Servizio[] = [
   {
     slug: "percorso-ver0",
+    perChi:
+      "Serve alle piccole e medie imprese a cui una banca, un capofiliera o un bando chiedono dati di sostenibilità: copre con un solo inserimento l'inventario delle emissioni Scope 1 e 2, il bilancio VSME e le risposte ai questionari ESG.",
     name: "Percorso Ver0",
     taglio: "Carbon Scope 1 e 2 + VSME Base + profilo ESG",
     icon: Leaf,
@@ -122,6 +148,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "carbon-footprint-scope-1-2",
+    perChi:
+      "Serve alle imprese a cui un cliente strutturato, una banca o un bando chiede l'impronta di carbonio dell'organizzazione: è il primo documento richiesto nella qualifica fornitori e riguarda i consumi diretti e l'energia acquistata.",
     name: "Carbon Footprint di Organizzazione",
     taglio: "Scope 1 e 2",
     icon: Leaf,
@@ -164,6 +192,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "carbon-footprint-scope-1-2-3",
+    perChi:
+      "Serve alle imprese che forniscono capofiliera tenuti a rendicontare lo Scope 3, e a chi vuole misurare l'impronta della propria catena del valore oltre ai consumi diretti.",
     name: "Carbon Footprint di Organizzazione",
     taglio: "Scope 1, 2 e 3",
     icon: Leaf,
@@ -211,6 +241,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "bilancio-sostenibilita-vsme-base",
+    perChi:
+      "Serve alle piccole e medie imprese che ricevono un questionario di sostenibilità diverso da ogni banca e da ogni cliente, e vogliono rispondere con un unico documento nel formato europeo pensato per le PMI.",
     name: "Bilancio di Sostenibilità (VSME)",
     taglio: "Base",
     icon: FileText,
@@ -251,6 +283,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "bilancio-sostenibilita-vsme-avanzato",
+    perChi:
+      "Serve alle imprese a cui partner, finanziatori o capofiliera chiedono più del modulo base: politiche, obiettivi e indicatori del modulo completo.",
     name: "Bilancio di Sostenibilità (VSME)",
     taglio: "Avanzato",
     icon: FileText,
@@ -297,6 +331,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "manuale-sistema-gestione-iso-9001",
+    perChi:
+      "Serve alle imprese che devono ottenere o rinnovare la certificazione ISO 9001, richiesta come requisito o come premialità in bandi pubblici e qualifiche fornitori.",
     name: "Manuale del Sistema di Gestione ISO 9001",
     taglio: "UNI EN ISO 9001:2015 — qualità",
     icon: Scale,
@@ -335,6 +371,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "manuale-sistema-gestione-iso-14001",
+    perChi:
+      "Serve alle imprese che devono presentarsi con un sistema di gestione ambientale certificabile in bandi, appalti verdi e qualifiche di filiera.",
     name: "Manuale del Sistema di Gestione ISO 14001",
     taglio: "UNI EN ISO 14001:2015 — ambiente",
     icon: Scale,
@@ -374,6 +412,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "parita-di-genere-pdr-125",
+    perChi:
+      "Serve alle imprese che puntano alla certificazione per la parità di genere, per l'esonero contributivo previsto dalla legge e per i punteggi premiali nei bandi.",
     name: "Sistema di Gestione per la Parità di Genere",
     taglio: "UNI/PdR 125:2022",
     icon: ShieldCheck,
@@ -412,6 +452,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "manuale-sistema-gestione-iso-45001",
+    perChi:
+      "Serve alle imprese che hanno già un DVR in vigore e vogliono strutturare la sicurezza sul lavoro in un sistema di gestione certificabile.",
     name: "Manuale del Sistema di Gestione ISO 45001",
     taglio: "UNI ISO 45001:2018 — sicurezza, DVR escluso",
     icon: ShieldCheck,
@@ -421,7 +463,7 @@ export const SERVIZI: Servizio[] = [
     // Il confine va detto prima di ogni cosa: è la differenza tra un
     // servizio corretto e una promessa che non possiamo mantenere.
     perimetro:
-      "Produciamo il sistema di gestione e lo integriamo con il tuo DVR. Il DVR resta un obbligo indelegabile del datore di lavoro (artt. 17, 28 e 29 D.Lgs. 81/2008): lo redigi tu con il tuo RSPP e non rientra in questo servizio.",
+      "Produciamo il sistema di gestione e lo integriamo con il tuo DVR. Il DVR resta un obbligo indelegabile del datore di lavoro (artt. 17, 28 e 29 D.Lgs. 81/2008): lo redigi tu con il tuo RSPP e non rientra nel Manuale del Sistema di Gestione ISO 45001.",
     perimetroBreve:
       "Il DVR non è incluso: resta obbligo del datore di lavoro.",
     copre: [
@@ -468,6 +510,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "iso-45003",
+    perChi:
+      "Serve alle imprese che hanno già un sistema di gestione della sicurezza e vogliono documentare anche i rischi psicosociali, la parte che di solito resta scoperta.",
     name: "Percorso di Aderenza UNI ISO 45003",
     taglio: "Rischi psicosociali — linea guida, non certificabile",
     icon: ShieldCheck,
@@ -514,6 +558,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "iso-30415",
+    perChi:
+      "Serve alle imprese che vogliono documentare le proprie pratiche di diversità e inclusione oltre il perimetro della parità di genere.",
     name: "Percorso di Aderenza UNI ISO 30415",
     taglio: "Diversità e inclusione — linea guida, non certificabile",
     icon: Users,
@@ -560,6 +606,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "sa8000",
+    perChi:
+      "Serve alle imprese delle filiere labour-intensive — tessile, agroalimentare, logistica, servizi — a cui i committenti chiedono SA8000 come requisito di fornitura.",
     name: "Preparazione alla Certificazione SA8000",
     taglio: "Responsabilità sociale — schema SAI",
     icon: Users,
@@ -568,7 +616,7 @@ export const SERVIZI: Servizio[] = [
     cosE: "La preparazione alla certificazione SA8000, lo schema di responsabilità sociale di Social Accountability International: sistema di gestione, presidio dei requisiti su lavoro minorile, lavoro forzato, salute e sicurezza, libertà di associazione, discriminazione, pratiche disciplinari, orario di lavoro e retribuzione. Verzero prepara il fascicolo e accompagna fino all'audit dell'organismo.",
     // SA8000 non è una norma UNI/ISO: va detto, non lasciato intendere.
     perimetro:
-      "SA8000 non è una norma UNI o ISO: è uno schema privato internazionale di Social Accountability International, certificabile da organismi accreditati SAAS. Lo trattiamo come schema riconosciuto di parte terza, distinto dalle norme UNI/ISO del resto del catalogo.",
+      "SA8000 non è una norma UNI o ISO: è uno schema privato internazionale di Social Accountability International, certificabile da organismi accreditati SAAS. Verzero lo tratta come schema riconosciuto di parte terza, distinto dalle norme UNI e ISO su cui sono costruiti gli altri percorsi.",
     perimetroBreve:
       "Schema internazionale accreditato, non una norma UNI/ISO.",
     copre: [
@@ -614,6 +662,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "rating-economia-circolare",
+    perChi:
+      "Serve alle imprese a cui la filiera chiede evidenze di circolarità su materiali, rifiuti, riuso ed energia.",
     name: "Rating di Economia Circolare",
     taglio: "Metodologia UNI/TS 11820",
     icon: Building2,
@@ -652,6 +702,8 @@ export const SERVIZI: Servizio[] = [
   },
   {
     slug: "supporto-audit",
+    perChi:
+      "Serve alle imprese che hanno ricevuto rilievi da un organismo di certificazione e devono rispondere entro la scadenza, anche su documenti che non abbiamo prodotto noi.",
     name: "Supporto all'Audit di Certificazione",
     taglio: "Una tantum, senza canone",
     icon: LifeBuoy,
