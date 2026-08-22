@@ -68,11 +68,20 @@ function finestra(indice: number, totale: number): OpzioniScorrimento {
 export function Scrolly({
   steps,
   className = "",
+  revealSuStretto = true,
   children,
 }: {
   /** Numero di fasi: guida l'altezza di scorrimento e le finestre. */
   steps: 3 | 4 | 5 | 6;
   className?: string;
+  /**
+   * Sotto i 768px le fasi si accendono una alla volta con il motore dei
+   * reveal. Si disattiva quando lo schermo stretto ha GIÀ una sua
+   * presentazione — in home il nastro dello Zero — perché lì questa copia
+   * è nascosta, e accenderla sarebbe un terzo comportamento su nodi che
+   * nessuno vede. Non tocca il ripiego sul largo, che resta sempre.
+   */
+  revealSuStretto?: boolean;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -93,26 +102,39 @@ export function Scrolly({
     if (!root) return;
 
     /*
-     * SU SCHERMO STRETTO la narrazione non parte: il palco sticky ruba
-     * spazio alla lettura (SPEC §12.O). Ma «niente narrazione» era
-     * diventato «niente animazione»: le fasi restavano una lista statica
-     * che compariva tutta insieme, ed è il difetto segnalato sulla
-     * sezione dei Zeri.
+     * IL RIPIEGO — quando la narrazione non parte, le fasi si accendono
+     * lo stesso.
      *
-     * La sequenza statica resta — non torna il palco sticky — e le fasi
-     * si accendono una alla volta mentre si scorre, con lo stesso motore
-     * dei reveal del resto del sito.
+     * «Niente narrazione» era diventato «niente animazione»: la lista
+     * restava statica e compariva tutta insieme. Succedeva su schermo
+     * stretto, dove il palco sticky non si usa (SPEC §12.O), ma succede
+     * anche su schermo LARGO ogni volta che le scroll-timeline non ci
+     * sono — Safari fino a poco fa — o che ci sono e mentono (Chrome
+     * in-app: progresso congelato). In tutti quei casi la sequenza resta
+     * impilata, ma si accende una fase alla volta mentre si scorre, con
+     * lo stesso motore dei reveal del resto del sito.
+     *
+     * Unica eccezione voluta: «riduci movimento», dove lo statico è la
+     * risposta giusta e non un ripiego.
      */
+    let spegniReveal: (() => void) | null = null;
+    let accese: HTMLElement[] = [];
+    const ripiego = () => {
+      if (spegniReveal) return;
+      accese = Array.from(root.querySelectorAll<HTMLElement>("[data-fase]"));
+      for (const f of accese) f.classList.add("vz-reveal");
+      spegniReveal = attivaReveal(accese);
+    };
+    const spegniIlRipiego = () => {
+      spegniReveal?.();
+      spegniReveal = null;
+      for (const f of accese) f.classList.remove("vz-reveal");
+      accese = [];
+    };
+
     if (!largo) {
-      const fasi = Array.from(
-        root.querySelectorAll<HTMLElement>("[data-fase]"),
-      );
-      for (const f of fasi) f.classList.add("vz-reveal");
-      const spegniReveal = attivaReveal(fasi);
-      return () => {
-        spegniReveal();
-        for (const f of fasi) f.classList.remove("vz-reveal");
-      };
+      if (revealSuStretto) ripiego();
+      return spegniIlRipiego;
     }
 
     // Chi ha chiesto meno movimento resta sulla versione statica completa.
@@ -121,18 +143,25 @@ export function Scrolly({
     const Timeline = (
       window as unknown as { ViewTimeline?: new (o: object) => AnimationTimeline }
     ).ViewTimeline;
-    if (typeof Timeline !== "function") return;
+    if (typeof Timeline !== "function") {
+      ripiego();
+      return spegniIlRipiego;
+    }
 
     let timeline: AnimationTimeline;
     try {
       timeline = new Timeline({ subject: root, axis: "block" });
     } catch {
-      return;
+      ripiego();
+      return spegniIlRipiego;
     }
 
     // Prova di vitalità: una timeline inattiva non ha tempo corrente. In quel
-    // caso usciamo SENZA toccare nulla — meglio statico che invisibile.
-    if (timeline.currentTime == null) return;
+    // caso non si narra — ma le fasi si accendono comunque, una alla volta.
+    if (timeline.currentTime == null) {
+      ripiego();
+      return spegniIlRipiego;
+    }
 
     const animazioni: Animation[] = [];
     const anima = (
@@ -175,47 +204,76 @@ export function Scrolly({
       window.removeEventListener("scroll", sorveglia);
       animazioni.forEach((a) => a.cancel());
       delete root.dataset.live;
+      // La timeline ha mentito: si torna alla sequenza impilata, ma con
+      // le comparse — non con sei blocchi che appaiono tutti insieme.
+      ripiego();
     };
 
-    // Guardiano. Una timeline può esistere, dichiararsi attiva e restare
-    // ferma (Chrome 148 in-app: progresso congelato a ogni scorrimento).
-    // Allora la narrazione non parte e il contenuto resterebbe nascosto.
-    // Controllo: il progresso dichiarato deve corrispondere a quello che
-    // la posizione della sezione impone. Se mente, si torna allo statico.
+    /*
+     * IL GUARDIANO — misura l'EFFETTO, non l'API.
+     *
+     * Una timeline può esistere, dichiararsi attiva e restare ferma
+     * (Chrome 148 in-app: progresso congelato a ogni scorrimento). Allora
+     * la narrazione non narra e le fasi restano tutte alla stessa
+     * opacità, cioè cinque su sei invisibili: contenuto perso.
+     *
+     * La versione precedente confrontava `timeline.currentTime` con la
+     * geometria della sezione, e sbagliava: in Chrome quel valore letto
+     * dal thread principale resta indietro — misurato, costante a 0,492
+     * mentre le fasi si avvicendavano correttamente sotto gli occhi. Il
+     * guardiano spegneva così una narrazione sana, che è esattamente il
+     * danno da cui doveva proteggere.
+     *
+     * Ora la domanda è quella giusta: scorrendo dentro la sezione, le
+     * opacità CAMBIANO? Se cambiano, il meccanismo è reale e i controlli
+     * finiscono lì. Se dopo cinque scorrimenti utili il quadro è identico
+     * a se stesso, la timeline è inerte e si torna alla sequenza
+     * impilata, con le comparse.
+     */
+    const fasiSorvegliate = Array.from(
+      root.querySelectorAll<HTMLElement>("[data-fase]"),
+    );
+    const quadro = () =>
+      fasiSorvegliate.map((f) => getComputedStyle(f).opacity).join(",");
+
+    let campioni = 0;
+    let precedente = "";
     const sorveglia = () => {
       const rect = root.getBoundingClientRect();
       const vh = window.innerHeight;
       // Progresso della fascia "cover": 0 quando la sezione entra dal
-      // basso, 1 quando esce dall'alto.
+      // basso, 1 quando esce dall'alto. Fuori da questa finestra la
+      // narrazione non ha nulla da mostrare e non si giudica.
       const atteso = (vh - rect.top) / (vh + rect.height);
-      // Troppo lontana dal viewport: il confronto non è affidabile.
       if (atteso < 0.05 || atteso > 0.95) return;
 
-      const ora = timeline.currentTime as
-        | { value?: number }
-        | number
-        | null;
-      if (ora == null) return spegni();
-      const letto =
-        (typeof ora === "number" ? ora : (ora.value ?? NaN)) / 100;
-      if (!Number.isFinite(letto) || Math.abs(letto - atteso) > 0.15)
-        return spegni();
-
-      // Coerente con la geometria: il meccanismo è reale, basta controlli.
-      window.removeEventListener("scroll", sorveglia);
+      const ora = quadro();
+      if (precedente && ora !== precedente) {
+        // Si muove davvero: il meccanismo è reale, bastano i controlli.
+        window.removeEventListener("scroll", sorveglia);
+        return;
+      }
+      precedente = ora;
+      campioni += 1;
+      if (campioni >= 5) spegni();
     };
     window.addEventListener("scroll", sorveglia, { passive: true });
-    // Primo controllo al fotogramma successivo: attivando la modalità narrata
-    // la sezione cambia altezza, e va confrontata a layout assestato.
-    const primo = requestAnimationFrame(sorveglia);
+    // Il primo quadro si prende a layout assestato: attivando la modalità
+    // narrata la sezione cambia altezza di migliaia di pixel, e prima che
+    // il cambio finisca qualunque lettura è rumore. Da lì in poi decide
+    // lo scorrimento.
+    const primo = window.setTimeout(() => {
+      precedente = quadro();
+    }, 450);
 
     return () => {
-      cancelAnimationFrame(primo);
+      window.clearTimeout(primo);
       window.removeEventListener("scroll", sorveglia);
       animazioni.forEach((a) => a.cancel());
       delete root.dataset.live;
+      spegniIlRipiego();
     };
-  }, [steps, largo]);
+  }, [steps, largo, revealSuStretto]);
 
   return (
     <div

@@ -90,6 +90,22 @@ Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs`.
   riscrive — due copie diventano due tarature diverse alla prima
   modifica. E disattivare la narrazione su schermo stretto non deve mai
   disattivare anche la comparsa (SPEC §12.O).
+- **Adattare, non degradare**. Quando desktop e mobile hanno vincoli
+  diversi si adatta la PRESENTAZIONE, non si abbassa il desktop al
+  livello del mobile: un contenuto solo, due rese. Il caso di scuola è
+  lo Zero in home — sul largo la narrazione allo scorrimento, sullo
+  stretto il nastro che scorre da sé — con le declinazioni prese dalla
+  stessa fonte (`src/lib/zeri.ts`). Non è la duplicazione che la regola
+  del movimento vieta: lì si parlava di due implementazioni dello STESSO
+  comportamento, qui di due comportamenti voluti. Tre condizioni, tutte
+  obbligatorie: (1) il contenuto resta uno, e viene da una fonte sola;
+  (2) la scelta la fa il CSS, così entrambe stanno nel markup e
+  `display: none` toglie quella inattiva anche dall'albero di
+  accessibilità e ne ferma le animazioni — niente scelte dopo
+  l'idratazione, che producono sfarfallio; (3) il passaggio da una resa
+  all'altra al ridimensionamento non lascia stati incoerenti: mai due
+  rese insieme, mai contenuto rimasto invisibile, mai lo stesso testo
+  letto due volte.
 - **Dati nelle pagine pubbliche**: nelle vetrine, nelle infografiche e in
   ogni grafica del sito pubblico si usano SOLO imprese dichiaratamente
   inventate (oggi «Officina Lombardi S.r.l.») con partita IVA e valori

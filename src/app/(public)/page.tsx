@@ -4,6 +4,7 @@ import { ArrowRight, FileText, UserCheck } from "lucide-react";
 
 import { Sigillo } from "@/components/brand/sigillo";
 import { NastroZero } from "@/components/nastro-zero";
+import { NarrazioneZero } from "@/components/zero-narrazione";
 import { FasciaListaAttesa } from "@/components/lista-attesa";
 import { HeroHome } from "@/components/hero-home";
 import { OndaParticelle } from "@/components/onda-particelle";
@@ -138,15 +139,26 @@ export default function HomePage() {
 
       <HeroHome />
 
-      {/* LO ZERO DI VER0 — il nastro.
-          Qui c'era una narrazione legata allo scorrimento: una fase per
-          scatto di pagina. Su telefono non ha mai retto — chi scorre
-          veloce salta le fasi, chi scorre piano le vede a strappi — e
-          ogni correzione aggiungeva una rete di sicurezza sopra la
-          precedente. Il nastro non dipende da nulla: parte al
-          caricamento, scorre lento e costante, ed è la stessa cosa su
-          ogni schermo. Una implementazione sola, non due tarature da
-          tenere allineate a mano. */}
+      {/* LO ZERO DI VER0 — un contenuto, due presentazioni.
+          Le sei declinazioni vengono dalla stessa fonte (`src/lib/zeri.ts`);
+          cambia il modo di mostrarle, perché i due contesti non hanno gli
+          stessi vincoli.
+
+          SU LARGO la narrazione allo scorrimento: c'è spazio per una
+          parola alla volta grande quanto un titolo, e la corsa di
+          scorrimento è abbastanza lunga perché l'avvicendamento si legga.
+
+          SU STRETTO il nastro che scorre da solo: lì il palco sticky ruba
+          spazio alla lettura (SPEC §12.O) e il movimento legato allo
+          scorrimento non regge — chi scorre veloce salta le fasi, chi
+          scorre piano le vede a strappi.
+
+          La scelta la fa il CSS, non JavaScript: entrambe stanno nel
+          markup e una sola è visibile alla volta. `display: none` toglie
+          l'altra anche dall'albero di accessibilità e ne ferma le
+          animazioni, quindi non c'è nulla che giri o venga letto due
+          volte — e non c'è lo sfarfallio che darebbe una scelta fatta
+          dopo l'idratazione. */}
       <section className="relative overflow-hidden bg-moss py-16 md:py-24">
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
           <ZeroWatermark tone="pine" className="-bottom-24 -left-10 text-[26rem]" />
@@ -162,7 +174,15 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="mt-10 border-y border-pine/12 py-6 md:mt-12 md:py-8">
+          {/* Da 768px in su: la narrazione. */}
+          <div className="hidden px-5 md:block">
+            <div className="mx-auto max-w-4xl">
+              <NarrazioneZero />
+            </div>
+          </div>
+
+          {/* Sotto i 768px: il nastro. */}
+          <div className="mt-10 border-y border-pine/12 py-6 md:hidden">
             <NastroZero />
           </div>
         </div>
