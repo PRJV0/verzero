@@ -10,15 +10,28 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { DocumentoEsito } from "@/components/documento-esito";
+import { IMPRESA_ESEMPIO } from "@/lib/impresa-esempio";
+
 /**
  * IL SISTEMA, non un caso.
  *
  * La versione precedente raccontava un solo documento — l'inventario GHG
  * — riga per riga: bella scena, argomento sbagliato. Chi guarda deve
- * capire il MECCANISMO in tre secondi: cosa entra, chi lavora, cosa esce.
- * Quindi infografica, non racconto: tre colonne, poche parole, e sotto
- * l'unico argomento che vende davvero — quando apri il portale il
- * documento non è vuoto.
+ * capire il MECCANISMO in tre secondi. Quindi infografica, non racconto:
+ * tre fasi, poche parole, e sotto l'unico argomento che vende davvero —
+ * quando apri il portale il documento non è vuoto.
+ *
+ * LE ETICHETTE HANNO UN SOGGETTO. Erano «cosa entra», «chi lavora»,
+ * «cosa esce»: gergo da schema di flusso, che descrive la macchina e non
+ * dice a nessuno cosa deve fare. Ora sono «tu porti quello che hai già» →
+ * «la nostra AI proprietaria legge, incrocia e compone» → «tu ricevi»:
+ * due delle tre fasi sono di chi legge, ed è giusto che si veda.
+ *
+ * E LA TERZA FASE MOSTRA IL DOCUMENTO. Al posto dell'elenco dei percorsi
+ * con la norma accanto — che dice quanti documenti sappiamo fare, non
+ * com'è fatto quello che arriva — c'è la bozza vera: indice, riferimento
+ * normativo, tabella dati, pagina di validazione.
  *
  * ONESTÀ SUI DATI: qui non compare nessuna impresa vera. L'esempio è
  * un'azienda inventata e lo dice in pagina (regola in CLAUDE.md): un
@@ -30,16 +43,7 @@ import {
  * generalista con un prompt sopra.
  */
 
-/** L'impresa d'esempio del sito: inventata, e dichiarata tale. */
-export const IMPRESA_ESEMPIO = {
-  nome: "Officina Lombardi S.r.l.",
-  /* Formato plausibile ma volutamente NON valido: undici cifre con una
-     lettera in mezzo. Una partita IVA formalmente corretta potrebbe
-     appartenere a qualcuno per caso. */
-  piva: "IT 0499X881207",
-} as const;
-
-/* (a) COSA ENTRA — le tre provenienze, dette dal punto di vista di chi legge. */
+/* (a) TU PORTI — le tre provenienze, dette dal punto di vista di chi legge. */
 const FONTI = [
   {
     icona: FileText,
@@ -58,19 +62,11 @@ const FONTI = [
   },
 ];
 
-/* (b) CHI LAVORA — le tre funzioni del motore. */
+/* (b) LA NOSTRA AI — le tre funzioni, che sono anche i tre verbi dell'etichetta. */
 const FUNZIONI = [
   { icona: ScanLine, titolo: "Legge e comprende", testo: "Estrae i dati dai tuoi documenti." },
   { icona: Layers, titolo: "Incrocia e verifica", testo: "Confronta le fonti e segnala ciò che non torna." },
   { icona: FileCheck2, titolo: "Compone secondo norma", testo: "Scrive il documento nella struttura che lo standard richiede." },
-];
-
-/* (c) COSA ESCE — più percorsi, ognuno con la sua norma citata. */
-const ESITI = [
-  { nome: "Carbon Footprint di Organizzazione", norma: "UNI EN ISO 14064-1:2019" },
-  { nome: "Bilancio di Sostenibilità", norma: "standard VSME (EFRAG)" },
-  { nome: "Manuali dei sistemi di gestione", norma: "UNI EN ISO 9001, 14001, 45001" },
-  { nome: "Sistema per la parità di genere", norma: "UNI/PdR 125:2022" },
 ];
 
 /** L'anello della scena finale: quasi pieno, con la fetta che manca. */
@@ -219,18 +215,40 @@ function Dettaglio({ chiave }: { chiave: keyof typeof DETTAGLI }) {
   );
 }
 
+/**
+ * L'ETICHETTA DI UNA FASE.
+ *
+ * Prima erano «Cosa entra», «Chi lavora», «Cosa esce»: gergo da schema di
+ * flusso, che descrive la macchina e non dice a nessuno cosa deve fare.
+ * Ora ogni fase è una frase con un soggetto — tu, noi, tu — e il numero
+ * mette in chiaro che è una sequenza e non tre riquadri affiancati.
+ */
+function Etichetta({ numero, testo }: { numero: number; testo: string }) {
+  return (
+    <p className="mb-3 flex items-baseline gap-2 text-sm font-semibold leading-snug text-mint-bright">
+      <span
+        aria-hidden
+        className="inline-flex h-5 w-5 shrink-0 translate-y-0.5 items-center justify-center rounded-full border border-mint-bright/45 text-[10px] tabular-nums"
+      >
+        {numero}
+      </span>
+      {testo}
+    </p>
+  );
+}
+
 function Colonna({
-  occhiello,
+  numero,
+  etichetta,
   children,
 }: {
-  occhiello: string;
+  numero: number;
+  etichetta: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="min-w-0">
-      <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-mint-bright/70">
-        {occhiello}
-      </p>
+      <Etichetta numero={numero} testo={etichetta} />
       <div className="space-y-2">{children}</div>
     </div>
   );
@@ -239,9 +257,9 @@ function Colonna({
 export function MotoreInAzione({ dettaglio = false }: { dettaglio?: boolean }) {
   return (
     <div className="vz-anello-vivo mx-auto max-w-5xl text-left">
-      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[1fr_1.15fr_1fr]">
-        {/* (a) COSA ENTRA */}
-        <Colonna occhiello="Cosa entra">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-[1fr_1.1fr_1.1fr]">
+        {/* (a) TU PORTI */}
+        <Colonna numero={1} etichetta="Tu porti quello che hai già">
           {FONTI.map(({ icona: Icona, titolo, testo }) => (
             <div
               key={titolo}
@@ -259,16 +277,17 @@ export function MotoreInAzione({ dettaglio = false }: { dettaglio?: boolean }) {
           {dettaglio && <Dettaglio chiave="entra" />}
         </Colonna>
 
-        {/* (b) CHI LAVORA — dominante, e nominata per esteso. */}
+        {/* (b) LA NOSTRA AI — dominante, e nominata per esteso. */}
         <div className="relative min-w-0 rounded-2xl border-2 border-mint-bright/35 bg-mint-bright/[0.07] p-5 sm:p-6">
           <span
             aria-hidden
             className="vz-motore-glow pointer-events-none absolute inset-0 rounded-2xl"
           />
           <div className="relative">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-mint-bright">
-              La nostra AI
-            </p>
+            <Etichetta
+              numero={2}
+              testo="La nostra AI proprietaria legge, incrocia e compone"
+            />
             <p className="mt-1 font-display text-2xl leading-tight text-white md:text-3xl">
               AI Ver0
             </p>
@@ -308,22 +327,11 @@ export function MotoreInAzione({ dettaglio = false }: { dettaglio?: boolean }) {
           </div>
         </div>
 
-        {/* (c) COSA ESCE — più percorsi, ognuno con la norma citata. */}
-        <Colonna occhiello="Cosa esce">
-          {ESITI.map((e) => (
-            <div
-              key={e.nome}
-              className="rounded-xl border border-white/12 bg-white/[0.04] px-4 py-3"
-            >
-              <p className="text-sm font-semibold text-white">{e.nome}</p>
-              <p className="mt-0.5 text-[11px] font-medium text-mint-bright">
-                {e.norma}
-              </p>
-            </div>
-          ))}
-          <p className="px-1 pt-1 text-[11px] leading-relaxed text-moss/60">
-            Solo standard ufficiali: nessuna certificazione inventata da noi.
-          </p>
+        {/* (c) TU RICEVI — il documento, non l'elenco dei percorsi.
+            L'elenco diceva quanti documenti sappiamo fare; la domanda di
+            chi guarda è com'è fatto quello che gli arriva. */}
+        <Colonna numero={3} etichetta="Tu ricevi">
+          <DocumentoEsito />
           {dettaglio && <Dettaglio chiave="esce" />}
         </Colonna>
       </div>

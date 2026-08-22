@@ -63,7 +63,7 @@ export async function generateMetadata({
 
 /**
  * Pagina servizio con la struttura fissa §12.Q:
- * cos'è / come funziona con Ver0 / cosa ottieni / requisiti e vincoli /
+ * cos'è / come funziona con Ver0 / tu ricevi / requisiti e vincoli /
  * Opportunità (che resta in ogni pagina).
  */
 export default async function ServizioPage({
@@ -113,7 +113,10 @@ export default async function ServizioPage({
 
       {/* L'intestazione porta la firma dell'onda, appena percepibile:
           sotto c'è il listino, cioè dati — e sui dati il fondale tace. */}
-      <div className="relative isolate -mx-5 mb-4 overflow-hidden px-5 pb-4 pt-2">
+      {/* Il margine negativo deve valere ESATTAMENTE il padding di <main>
+          (px-4): con -mx-5 la fascia usciva di 4px per lato e la pagina
+          scorreva in orizzontale sul telefono. */}
+      <div className="relative isolate -mx-4 mb-4 overflow-hidden px-4 pb-4 pt-2">
         <OndaParticelle config={PRESET.tenue} className="-z-10" />
         <Link
           href="/servizi"
@@ -187,33 +190,28 @@ export default async function ServizioPage({
             </ol>
           </div>
 
-          {/* Cosa ti chiederemo — raccolta documentale guidata (§12.P) */}
+          {/* LA RACCOLTA, senza la lista.
+              Qui c'era l'elenco preciso dei documenti richiesti da questo
+              percorso: è know-how operativo, e in vetrina era regalato.
+              La lista esiste ancora dove serve — nel portale, dopo
+              l'attivazione, costruita su questo percorso. */}
           <div className="mb-3 rounded-xl border border-line bg-white p-4">
             <p className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
-              <ClipboardList size={15} className="text-pine" /> Cosa ti
-              chiederemo
+              <ClipboardList size={15} className="text-pine" /> Tu porti quello
+              che hai già
             </p>
-            <p className="mb-2 text-xs text-gray-warm">
-              L&apos;AI Ver0 non accetta documenti qualsiasi: per questo
-              percorso chiede esattamente questi, li legge e segnala cosa manca.
+            <p className="text-sm leading-relaxed text-gray-warm">
+              Di norma bastano documenti che hai già in azienda. Quando attivi,
+              il portale ti chiede uno per uno quelli che servono a questo
+              percorso, li legge e ti segnala cosa manca: nessuna lista da
+              interpretare e nessun documento chiesto per scrupolo.
             </p>
-            <ul className="space-y-1.5 text-sm text-gray-warm">
-              {s.documenti.map((d) => (
-                <li key={d} className="flex items-start gap-2">
-                  <ClipboardList
-                    size={15}
-                    className="mt-0.5 shrink-0 text-mint"
-                  />
-                  {d}
-                </li>
-              ))}
-            </ul>
           </div>
 
-          {/* Cosa ottieni */}
+          {/* Tu ricevi */}
           <div className="mb-3 rounded-xl border border-line bg-white p-4">
             <p className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
-              <FileCheck2 size={15} className="text-pine" /> Cosa ottieni
+              <FileCheck2 size={15} className="text-pine" /> Tu ricevi
             </p>
             <div className="space-y-1.5 text-sm text-gray-warm">
               {s.output.map((x) => (

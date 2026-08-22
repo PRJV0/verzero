@@ -53,9 +53,13 @@ export type Servizio = {
   /** Badge "cosa copre": mostrati sotto il titolo del dettaglio. */
   copre?: string[];
   /**
-   * "Cosa ti chiederemo" (§12.P): la lista PRECISA di documenti richiesti dal
-   * percorso. L'AI Ver0 non accetta documenti qualsiasi: chiede esattamente
-   * questi, li legge e segnala cosa manca.
+   * La lista PRECISA di documenti richiesti dal percorso.
+   *
+   * SOLO PORTALE, mai sito pubblico (regola in CLAUDE.md). Stava anche
+   * nella scheda servizio, sotto «Cosa ti chiederemo»: è la mappatura fra
+   * un percorso e ciò che serve per costruirlo, cioè know-how operativo,
+   * e in vetrina era regalato a chiunque passasse. Qui resta perché il
+   * portale la usa per guidare la raccolta dopo l'attivazione.
    */
   documenti: string[];
   /** Norme e standard di riferimento, citati con precisione (§12.P). */

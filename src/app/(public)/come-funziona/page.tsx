@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookMarked, UserCheck } from "lucide-react";
 
-import { FascicoloPercorso } from "@/components/fascicolo-percorso";
+import { DocumentoEsito } from "@/components/documento-esito";
 import { JsonLd } from "@/components/json-ld";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { OndaParticelle } from "@/components/onda-particelle";
@@ -14,22 +14,59 @@ import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 export const metadata: Metadata = metadataPagina({
   title: "Come funziona: l'AI Ver0, i documenti, la validazione",
   description:
-    "Il fascicolo del percorso documento per documento, cosa legge l'AI Ver0, cosa genera e chi valida: la profondità tecnica, con le norme citate.",
+    "Il metodo fase per fase: cosa legge la nostra AI proprietaria, come resta tracciata ogni fonte, chi valida prima della consegna, com'è fatto il documento.",
   path: "/come-funziona",
 });
 
 /**
- * /come-funziona — la casa della profondità tecnica (SPEC §12.J).
+ * LE FASI DEL METODO — generiche per scelta.
  *
- * STESSA GRAMMATICA DELLA HOME, non un secondo schema. Chi arriva da lì
- * deve riconoscere il sistema — fonti, Motore proprietario, esiti,
- * portale già composto — e trovarci sotto quello che in home non c'era:
- * il metodo. Lo schema è LO STESSO COMPONENTE, con il livello di
- * dettaglio acceso; le rappresentazioni verticali di prima (GHG e ISO
- * 9001 come schemi a sé) sono state tolte: erano due grammatiche diverse
- * per la stessa cosa.
+ * Gli esempi restano al livello di «bollette o visure»: mai la mappatura
+ * documento → norma → sezione, che è il modo in cui lavoriamo e non un
+ * contenuto da vetrina (regola in CLAUDE.md). Chi attiva la trova nel
+ * portale, costruita sul suo percorso.
+ */
+const FASI = [
+  {
+    titolo: "Attivi il percorso",
+    testo:
+      "Scegli il percorso dal listino pubblico: prezzo e perimetro sono scritti prima di iniziare. All'attivazione ci dai il mandato per interrogare le banche dati ufficiali al posto tuo — ed è revocabile quando vuoi.",
+  },
+  {
+    titolo: "Ti chiediamo quello che serve, e solo quello",
+    testo:
+      "La raccolta è guidata: il portale ti chiede i documenti che il tuo percorso richiede — di norma documenti che hai già in azienda, come bollette o visure — e ti dice quali mancano. La lista precisa la vedi lì, costruita sul percorso che hai attivato.",
+  },
+  {
+    titolo: "La nostra AI proprietaria legge, incrocia e compone",
+    testo:
+      "Estrae i dati dai tuoi documenti, li confronta con le fonti ufficiali e segnala ciò che non torna. Ogni valore resta legato alla sua origine: quale documento, quale banca dati, quale calcolo. Dove un dato è stimato, nel documento è scritto che è una stima.",
+  },
+  {
+    titolo: "Un professionista valida, e ci mette il nome",
+    testo:
+      "Nessun documento esce senza il controllo di una persona del team tecnico, che verifica perimetro, criteri e completezza e mette per iscritto i rilievi. La responsabilità resta di chi firma la verifica, dentro la piattaforma.",
+  },
+  {
+    titolo: "Quando la norma cambia, il documento si aggiorna",
+    testo:
+      "Gli standard evolvono: seguiamo le revisioni e rivediamo i documenti interessati. Quello che hai in mano non invecchia nel cassetto — ed è compreso nel canone, non un intervento a parte.",
+  },
+];
+
+/**
+ * /come-funziona — la casa del metodo (SPEC §12.J).
  *
- * VINCOLO: si spiega il metodo, mai le regole interne di estrazione.
+ * STESSA GRAMMATICA DELLA HOME, non un secondo schema: chi arriva da lì
+ * deve riconoscere il sistema — tu porti, la nostra AI lavora, tu ricevi
+ * — e trovarci sotto quello che in home non c'era. Lo schema è LO STESSO
+ * COMPONENTE, con il livello di dettaglio acceso.
+ *
+ * VINCOLO (CLAUDE.md): metodo e risultato sì, mappature operative no. Qui
+ * c'era il fascicolo per percorso — quali documenti servono per il
+ * carbon, quali per la 9001 — ed era know-how regalato: al suo posto le
+ * fasi, con esempi generici e non esaustivi. La lista precisa vive nel
+ * portale, dopo l'attivazione.
  *
  * Ritmo chiaro/scuro/chiaro come in home, e nelle sezioni scure il
  * fascio luminoso — la stessa implementazione, calibrata.
@@ -87,42 +124,76 @@ export default function ComeFunzionaPage() {
         </div>
       </section>
 
-      {/* IL FOCUS: un percorso alla volta, dichiarato come esempio. Il
-          selettore mostra lo stesso schema su altri percorsi — è così
-          che si vede che il sistema è trasversale e non è nato per un
-          solo servizio. */}
+      {/* IL METODO, FASE PER FASE.
+          Qui c'era il fascicolo per percorso: quali documenti servono per
+          il carbon, quali per la 9001, con le sezioni che ognuno alimenta.
+          È know-how operativo, ed era regalato a chiunque passasse. La
+          lista precisa esiste ancora, ma dove serve davvero: nel portale,
+          costruita sul percorso attivato. Qui resta il metodo — come
+          lavoriamo e cosa ne esce — con esempi generici e non esaustivi. */}
       <section className="bg-paper px-5 py-16 md:py-24">
         <div className="mx-auto max-w-4xl">
-          <div className="mb-8 text-center">
+          <div className="mb-10 text-center">
             <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
-              UN PERCORSO DA VICINO
+              IL METODO
             </p>
             <h2 className="font-display text-4xl leading-[1.05] text-ink md:text-5xl">
-              Come si riempie un fascicolo.
+              Come lavoriamo, fase per fase.
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-gray-warm">
-              Esempio su un&apos;impresa inventata, con il Carbon Footprint
-              perché è il percorso più leggibile. Cambia scheda per vedere lo
-              stesso schema sugli altri.
+              Lo stesso impianto per ogni percorso: cambia la norma, non il
+              modo di lavorare.
             </p>
           </div>
-          <FascicoloPercorso />
+          <ol className="space-y-3">
+            {FASI.map((f, i) => (
+              <li
+                key={f.titolo}
+                className="flex gap-4 rounded-2xl border border-line bg-white p-5 sm:gap-5 sm:p-6"
+              >
+                <span
+                  aria-hidden
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-moss font-display text-lg tabular-nums text-pine"
+                >
+                  {i + 1}
+                </span>
+                <div className="min-w-0">
+                  <h3 className="font-display text-2xl leading-tight text-ink">
+                    {f.titolo}
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-gray-warm">
+                    {f.testo}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
-      {/* COM'È FATTO IL DOCUMENTO CHE ESCE. */}
+      {/* IL DOCUMENTO CHE RICEVI — prima si vede, poi si legge com'è
+          fatto. In home lo stesso mockup sta dentro la terza fase del
+          flusso; qui ha lo spazio per essere guardato. */}
       <section className="bg-white px-5 py-16 md:py-24">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
             <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
-              GLI ELABORATI
+              TU RICEVI
             </p>
             <h2 className="font-display text-4xl leading-[1.05] text-ink md:text-5xl">
-              Com&apos;è fatto il documento che esce.
+              Un documento, non una scheda.
             </h2>
+            <p className="mx-auto mt-4 text-sm leading-relaxed text-gray-warm">
+              Impaginato, con l&apos;indice, il riferimento normativo del
+              percorso, i dati in tabella e la pagina di validazione firmata da
+              chi l&apos;ha controllato.
+            </p>
           </div>
-          <div className="mt-10">
-            <QualitaOutput />
+          <div className="mt-10 grid grid-cols-1 items-start gap-10 lg:grid-cols-[minmax(0,26rem)_1fr]">
+            <DocumentoEsito tono="chiaro" grande />
+            {/* Versione compatta: accanto al mockup la colonna è stretta,
+                e le card a tre colonne diventerebbero sei parole a capo. */}
+            <QualitaOutput compatto />
           </div>
         </div>
       </section>
@@ -176,8 +247,9 @@ export default function ComeFunzionaPage() {
           Visto il metodo, scegli il percorso.
         </h2>
         <p className="mx-auto mt-3 max-w-lg text-sm text-gray-warm">
-          Ogni pagina servizio elenca il suo «Cosa ti chiederemo»: la lista
-          esatta dei documenti, prima di attivare.
+          Ogni pagina servizio dichiara prezzo, perimetro e cosa produce.
+          Quando attivi, il portale ti chiede esattamente i documenti che
+          servono a quel percorso.
         </p>
         <div className="mt-7 flex justify-center">
           <Link

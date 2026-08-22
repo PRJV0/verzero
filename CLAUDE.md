@@ -74,6 +74,20 @@ Vale per ogni pagina nuova e per ogni pagina modificata. Le utilità stanno in
   nessun claim non dimostrabile: mai «sicurezza di livello bancario»,
   mai un sigillo che non possediamo. I contenuti stanno in
   `src/lib/sicurezza.ts`, con la data delle verifiche.
+- **Metodo sì, mappature no** (sito pubblico). Sulle pagine pubbliche si
+  mostrano **il metodo e il risultato**, MAI le mappature operative
+  documento → norma → sezione: quali documenti servono per il carbon,
+  quali per la 9001, quale sezione alimenta ciascuno. Ammesso: come
+  lavoriamo (tracciabilità delle fonti, validazione professionale,
+  aggiornamento normativo), esempi **generici e non esaustivi**
+  («documenti che hai già in azienda, come bollette o visure»), com'è
+  fatto l'elaborato. Le norme si citano in modo generico («conforme alla
+  norma di riferimento del percorso scelto»), non con l'elenco
+  percorso-per-percorso. Le checklist precise vivono **nel portale**,
+  dopo l'attivazione, costruite sul percorso del cliente: `documenti` in
+  `src/lib/catalog.ts` è dato di portale, non di vetrina. Criterio: se
+  un'informazione permette di ricostruire come si assembla un percorso,
+  non va in pagina.
 - **Prezzi**: fonte unica in `src/lib/pricing.ts`. Nessun prezzo scritto a mano
   nelle pagine, mai. E **nessun confronto economico con il mercato**:
   non si affianca il nostro prezzo a quello di terzi, non si citano

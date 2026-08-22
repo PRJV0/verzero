@@ -43,6 +43,10 @@
   --vz-ingresso: 400ms;
   --vz-scaglione: 70ms;
   --vz-curva: cubic-bezier(0.22, 0.9, 0.34, 1);
+  /* Ambiente: il nastro dello Zero. Un ciclo intero, lento e costante —
+     la velocità apparente non dipende dalla larghezza dello schermo,
+     perché la corsa è una frazione della pista e non un numero di pixel. */
+  --vz-nastro: 64s;
 
   /* Le utility Tailwind senza duration/easing espliciti ereditano queste:
      il default è la micro-interazione, che è il 90% dei casi. */
@@ -173,6 +177,85 @@ body {
        mobile i blocchi impilati entrano quasi insieme, e senza ritardo
        si accenderebbero tutti in una volta. */
     animation-delay: calc(min(var(--vz-i, 0), 5) * var(--vz-scaglione));
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * IL NASTRO DELLO ZERO — scorrimento continuo, da destra a sinistra.
+ *
+ * Movimento d'AMBIENTE: non risponde a un gesto e non dipende dalla
+ * posizione della pagina. Nessun JavaScript, nessun observer, nessuna
+ * scroll-timeline — è per questo che esiste, dopo che la narrazione
+ * legata allo scorrimento non ha retto sui telefoni.
+ *
+ * IL CICLO. La pista contiene due gruppi identici e trasla di -50%: a
+ * fine corsa il secondo gruppo occupa la posizione di partenza del primo,
+ * quindi il ritorno a zero non si vede. Niente `gap` sulla pista — lo
+ * spazio fra le voci sta dentro le voci, altrimenti la giunzione fra i
+ * due gruppi sarebbe più stretta delle altre e il salto tornerebbe.
+ *
+ * BASE STATICA, ANIMAZIONE COME ECCEZIONE. Fermo e ritagliato, il nastro
+ * nasconderebbe metà delle voci: contenuto perso, non effetto mancato.
+ * Perciò lo stato di riposo è un elenco che va a capo e si legge tutto, e
+ * solo dentro `no-preference` diventa una riga sola che scorre.
+ * ------------------------------------------------------------------- */
+@keyframes vz-nastro-scorre {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.vz-nastro-pista,
+.vz-nastro-gruppo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+/* La ripetizione serve solo al ciclo: da ferma sarebbe un elenco letto due
+   volte. `display: none` qui non toglie contenuto — è già `aria-hidden`. */
+.vz-nastro-gruppo[aria-hidden="true"] {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .vz-nastro {
+    overflow: hidden;
+    /* I bordi sfumano invece di tagliare di netto: una voce che entra o
+       esce non deve sembrare troncata. */
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      #000 7%,
+      #000 93%,
+      transparent
+    );
+  }
+  .vz-nastro-pista {
+    flex-wrap: nowrap;
+    width: max-content;
+    animation: vz-nastro-scorre var(--vz-nastro) linear infinite;
+  }
+  .vz-nastro-gruppo {
+    flex-wrap: nowrap;
+  }
+  .vz-nastro-gruppo[aria-hidden="true"] {
+    display: flex;
+  }
+  .vz-nastro-gruppo > li {
+    white-space: nowrap;
+  }
+}
+
+/* Pausa al passaggio del puntatore: solo dove un puntatore esiste
+   davvero. Su touch `:hover` resta attaccato dopo il tocco e fermerebbe
+   il nastro senza che nessuno l'abbia chiesto. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .vz-nastro:hover .vz-nastro-pista {
+    animation-play-state: paused;
   }
 }
 

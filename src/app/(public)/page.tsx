@@ -1,20 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, FileText, Leaf, UserCheck } from "lucide-react";
+import { ArrowRight, FileText, UserCheck } from "lucide-react";
 
 import { Sigillo } from "@/components/brand/sigillo";
-import {
-  Scrolly,
-  ScrollyProgress,
-  ScrollyStage,
-  ScrollyStep,
-  ScrollySteps,
-} from "@/components/scrolly";
+import { NastroZero } from "@/components/nastro-zero";
 import { FasciaListaAttesa } from "@/components/lista-attesa";
 import { HeroHome } from "@/components/hero-home";
 import { OndaParticelle } from "@/components/onda-particelle";
 import { PrezzoPrincipio } from "@/components/prezzo-principio";
-import { QualitaOutput } from "@/components/qualita-output";
 import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { JsonLd } from "@/components/json-ld";
@@ -110,41 +103,6 @@ function CtaGrande({
 
 /* --- Dati di pagina --- */
 
-// Lo Zero, principio unico: già manifesto per natura. Messaggi a una riga.
-const ZERI = [
-  {
-    accent: "Zero",
-    tail: "effort",
-    m: "Bastano i documenti che hai già: l'AI Ver0 li trasforma, un professionista valida.",
-  },
-  {
-    accent: "Zero",
-    tail: "documenti che invecchiano",
-    m: "Quando una norma cambia, i documenti interessati vengono rivisti.",
-  },
-  {
-    accent: "Zero",
-    tail: "domande inutili",
-    m: "La visura l'abbiamo già letta noi.",
-  },
-  {
-    accent: "Zero",
-    tail: "blocchi",
-    m: "Se un dato manca, lo stimiamo insieme e lo dichiariamo.",
-  },
-  {
-    accent: "Zero",
-    tail: "scorciatoie",
-    m: "Il Sigillo non si compra, si dimostra. Ogni anno.",
-  },
-  {
-    accent: "Verso zero",
-    tail: "emissioni",
-    m: "L'impronta della tua impresa: misurata, ridotta, dimostrata.",
-    leaf: true,
-  },
-];
-
 /** Le tre battute della sezione documenti (§12.J): secche, senza processo. */
 const BATTUTE = [
   { icon: FileText, t: "Solo il necessario." },
@@ -176,13 +134,21 @@ export default function HomePage() {
 
       <HeroHome />
 
-      {/* LO ZERO DI VER0 — la sezione distintiva: statements per natura. */}
-      <section className="relative bg-moss px-5 py-16 md:py-24">
+      {/* LO ZERO DI VER0 — il nastro.
+          Qui c'era una narrazione legata allo scorrimento: una fase per
+          scatto di pagina. Su telefono non ha mai retto — chi scorre
+          veloce salta le fasi, chi scorre piano le vede a strappi — e
+          ogni correzione aggiungeva una rete di sicurezza sopra la
+          precedente. Il nastro non dipende da nulla: parte al
+          caricamento, scorre lento e costante, ed è la stessa cosa su
+          ogni schermo. Una implementazione sola, non due tarature da
+          tenere allineate a mano. */}
+      <section className="relative overflow-hidden bg-moss py-16 md:py-24">
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
           <ZeroWatermark tone="pine" className="-bottom-24 -left-10 text-[26rem]" />
         </div>
-        <div className="relative mx-auto max-w-4xl">
-          <div className="text-center">
+        <div className="relative">
+          <div className="mx-auto max-w-4xl px-5 text-center">
             <h2 className="font-display text-5xl text-ink md:text-6xl">
               Lo <ZeroWord>Zero</ZeroWord> di Ver0
             </h2>
@@ -192,42 +158,9 @@ export default function HomePage() {
             </p>
           </div>
 
-          <Scrolly steps={6} className="mt-8">
-            <ScrollyStage>
-              <div className="relative mx-auto max-w-2xl py-6 text-center">
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute left-1/2 top-1/2 -z-10 -translate-x-1/2 -translate-y-1/2 select-none font-display text-[18rem] leading-none text-pine/[0.07] md:text-[26rem]"
-                >
-                  0
-                </span>
-
-                <ScrollySteps className="min-h-[12rem] place-items-center">
-                  {ZERI.map((z, i) => (
-                    <ScrollyStep key={z.tail} index={i + 1}>
-                      <h3 className="font-display text-4xl text-ink md:text-6xl">
-                        <ZeroWord>{z.accent}</ZeroWord> {z.tail}
-                        {z.leaf && (
-                          <Leaf
-                            size={24}
-                            aria-hidden
-                            className="ml-2 inline text-mint"
-                          />
-                        )}
-                      </h3>
-                      <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-gray-warm md:text-base">
-                        {z.m}
-                      </p>
-                    </ScrollyStep>
-                  ))}
-                </ScrollySteps>
-
-                <div className="mx-auto mt-8 max-w-xs">
-                  <ScrollyProgress />
-                </div>
-              </div>
-            </ScrollyStage>
-          </Scrolly>
+          <div className="mt-10 border-y border-pine/12 py-6 md:mt-12 md:py-8">
+            <NastroZero />
+          </div>
         </div>
       </section>
 
@@ -361,29 +294,6 @@ export default function HomePage() {
           >
             Le norme, citate una per una <ArrowRight size={15} />
           </Link>
-        </div>
-      </section>
-
-      {/* LA QUALITÀ DEGLI ELABORATI. Mancava: si raccontava il metodo e
-          il prezzo, mai il livello del documento che esce — che è la
-          prima cosa che guarda chi deve portarlo in banca o in audit. */}
-      <section className="bg-paper px-5 py-16 md:py-24">
-        <div className="mx-auto max-w-5xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
-              GLI ELABORATI
-            </p>
-            <h2 className="font-display text-4xl leading-[1.05] text-ink md:text-5xl">
-              Documenti che reggono la lettura di chi li riceve.
-            </h2>
-            <p className="mx-auto mt-4 text-sm leading-relaxed text-gray-warm md:text-base">
-              Banca, capofiliera, stazione appaltante, organismo di
-              certificazione: chi li legge sa cosa cercare.
-            </p>
-          </div>
-          <div className="mt-10">
-            <QualitaOutput />
-          </div>
         </div>
       </section>
 
