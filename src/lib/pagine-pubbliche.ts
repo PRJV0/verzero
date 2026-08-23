@@ -62,6 +62,13 @@ export const PAGINE_PUBBLICHE: PaginaPubblica[] = [
     frequenza: "monthly",
   },
   {
+    path: "/guide",
+    titolo: "Guide: perché te lo chiedono",
+    riga: "Perché banche, committenti e bandi chiedono dati di sostenibilità alle imprese: le norme che lo impongono, spiegate una per una con la fonte da controllare.",
+    priorita: 0.7,
+    frequenza: "monthly",
+  },
+  {
     path: "/partner",
     titolo: "Programma partner",
     riga: "Come commercialisti e consulenti possono portare le imprese che seguono su Verzero restando loro il riferimento della relazione.",

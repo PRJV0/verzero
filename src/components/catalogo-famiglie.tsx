@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Leaf, Mail, Plus } from "lucide-react";
 
@@ -45,6 +45,17 @@ import {
  */
 
 const eur = (n: number) => n.toLocaleString("it-IT");
+
+/**
+ * I bisogni a cui risponde il Percorso Ver0.
+ *
+ * Non stanno in `FAMIGLIE` perché il bundle non appartiene a una
+ * famiglia: qui vale la stessa regola del catalogo — la dichiarazione
+ * dev'essere sostenibile con quello che la scheda già scrive. La sua
+ * riga «a chi serve» dice «imprese a cui una banca, un capofiliera o un
+ * bando chiedono dati di sostenibilità»: sono questi tre.
+ */
+const BISOGNI_PERCORSO_VER0: Bisogno[] = ["banca", "committente", "bando"];
 
 /** «a partire da 45 €/mese», oppure la forma una tantum. `null` se in arrivo. */
 function prezzoDaFascia(slug: string | undefined) {
@@ -174,8 +185,107 @@ function Scheda({ voce }: { voce: VoceCatalogo }) {
   );
 }
 
+/**
+ * LA MAPPA DEL CATALOGO — tre blocchi, uno per famiglia.
+ *
+ * Risponde a una domanda sola: come sono organizzati questi servizi.
+ * Non spiega il contesto normativo (quello vive nelle guide), non elenca
+ * chi chiede cosa, non argomenta: mostra la STRUTTURA. Una riga per
+ * blocco, e i nomi dei primi percorsi come anteprima — perché «Misura e
+ * rendiconta» da solo non dice ancora niente a chi non sa cosa ci trova
+ * dentro.
+ *
+ * Sta dentro il componente del catalogo, non accanto: cliccando un
+ * blocco si azzera il filtro E si scorre alla famiglia. Se fosse un
+ * semplice link ad ancora, con un filtro attivo punterebbe a una sezione
+ * che in quel momento non esiste.
+ *
+ * TRE LAVORI DISTINTI, in fila e senza sovrapposizioni: la mappa mostra
+ * la struttura, il selettore filtra per situazione, il catalogo elenca.
+ */
+function MappaCatalogo({
+  vai,
+}: {
+  vai: (key: string) => void;
+}) {
+  return (
+    <section aria-labelledby="mappa-catalogo" className="mt-10">
+      <h2 id="mappa-catalogo" className="text-center text-sm text-gray-warm">
+        Ogni percorso produce una qualifica documentata della tua impresa.
+      </h2>
+      <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {FAMIGLIE.map((f) => {
+          const Icona = f.icona;
+          const attivi = f.voci.filter((v) => v.slug).length;
+          const inArrivo = f.voci.length - attivi;
+          // Anteprima: i primi nomi, gli attivi per primi. Tre al massimo —
+          // oltre, il blocco torna a essere un elenco.
+          const primi = [...f.voci]
+            .sort((a, b) => Number(Boolean(b.slug)) - Number(Boolean(a.slug)))
+            .slice(0, 3)
+            .map((v) => {
+              const s = v.slug ? getServizio(v.slug) : undefined;
+              return { nome: s ? s.name : (v.nome ?? ""), servizio: s };
+            });
+          // Due percorsi possono avere lo stesso nome e distinguersi solo
+          // per il taglio (Carbon Scope 1 e 2 contro Scope 1, 2 e 3):
+          // nell'anteprima comparivano due volte identici. Il taglio si
+          // aggiunge solo dove serve a distinguerli.
+          const anteprima = primi.map((x) =>
+            primi.filter((y) => y.nome === x.nome).length > 1 && x.servizio
+              ? titoloServizio(x.servizio)
+              : x.nome,
+          );
+          return (
+            <li key={f.key}>
+              <button
+                type="button"
+                onClick={() => vai(f.key)}
+                className="vz-interattivo flex h-full w-full flex-col rounded-2xl border border-line bg-white p-4 text-left hover:-translate-y-0.5 hover:border-pine hover:shadow-soft"
+              >
+                <span
+                  aria-hidden
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-moss text-pine"
+                >
+                  <Icona size={18} />
+                </span>
+                <span className="mt-2.5 font-display text-lg leading-tight text-ink">
+                  {f.titolo}
+                </span>
+                <span className="mt-1 text-xs leading-relaxed text-gray-warm">
+                  {f.sintesi}
+                </span>
+                <span className="mt-2.5 text-[11px] font-semibold text-pine">
+                  {attivi} {attivi === 1 ? "percorso attivo" : "percorsi attivi"}
+                  {inArrivo > 0 ? ` · ${inArrivo} in arrivo` : ""}
+                </span>
+                <span className="mt-1.5 text-[11px] leading-relaxed text-gray-light">
+                  {anteprima.join(" · ")}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 export function CatalogoFamiglie() {
   const [bisogno, setBisogno] = useState<Bisogno | null>(null);
+  const sezioni = useRef(new Map<string, HTMLElement>());
+
+  /** Dalla mappa alla famiglia: si toglie il filtro e poi si scorre. */
+  const vaiAllaFamiglia = (key: string) => {
+    setBisogno(null);
+    // Dopo il render: con un filtro attivo la sezione può non esistere
+    // ancora nel momento del click.
+    requestAnimationFrame(() => {
+      sezioni.current
+        .get(key)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   const famiglie = FAMIGLIE.map((f) => ({
     ...f,
@@ -186,53 +296,7 @@ export function CatalogoFamiglie() {
 
   return (
     <div>
-      {/* IL PERCORSO VER0 — resta in testa: è l'unico che unisce tre
-          risultati con un solo inserimento dati, e non appartiene a una
-          famiglia sola. Non entra nel filtro per la stessa ragione. */}
-      <Link
-        href="/servizi/percorso-ver0"
-        className="group relative block overflow-hidden rounded-3xl bg-pine-deep p-6 shadow-lift transition-all hover:-translate-y-1 sm:p-8"
-      >
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -right-10 -top-16 select-none font-display text-[16rem] leading-none text-white/[0.04]"
-        >
-          0
-        </span>
-        <div className="relative flex flex-wrap items-end justify-between gap-6">
-          <div className="min-w-0 max-w-md">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-mint-bright/20 px-3 py-1 text-xs font-semibold text-mint-bright">
-              <Leaf size={13} aria-hidden /> Tre risultati, un solo inserimento
-            </span>
-            <p className="mt-3 font-display text-3xl text-white md:text-4xl">
-              Percorso Ver0
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-moss">
-              Carbon Footprint Scope 1 e 2, Bilancio di Sostenibilità VSME e
-              profilo ESG per i questionari di banche e capofiliera.
-            </p>
-          </div>
-          <div className="min-w-0 shrink-0">
-            {percorso && (
-              <>
-                <p className="text-[11px] uppercase tracking-wide text-moss/70">
-                  a partire da
-                </p>
-                <p className="font-display text-4xl tabular-nums text-white">
-                  {eur(percorso.mensile)} €
-                  <span className="text-lg text-moss">/mese</span>
-                </p>
-                <p className="mt-0.5 text-xs text-moss/80">
-                  varia per dimensione d&apos;impresa
-                </p>
-              </>
-            )}
-            <span className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-pine transition-transform group-hover:translate-x-0.5">
-              Scopri il Percorso <ArrowRight size={15} aria-hidden />
-            </span>
-          </div>
-        </div>
-      </Link>
+      <MappaCatalogo vai={vaiAllaFamiglia} />
 
       {/* IL FILTRO PER BISOGNO. Toglie, non aggiunge: senza JavaScript
           resta il catalogo intero, che è lo stato di partenza. */}
@@ -284,11 +348,77 @@ export function CatalogoFamiglie() {
         </p>
       </div>
 
+      {/* IL PERCORSO VER0 — la testa del catalogo, dopo il selettore.
+          Stava sopra la mappa, e interrompeva la sequenza: la mappa dice
+          come sono organizzati i percorsi, e arrivare dopo un percorso
+          specifico la faceva leggere al contrario.
+
+          Non appartiene a una famiglia sola — unisce tre risultati con un
+          solo inserimento dati — ma il filtro lo riguarda lo stesso: la
+          sua riga «a chi serve» nomina banca, capofiliera e bandi, e
+          mostrarlo a chi ha chiesto «voglio migliorare» sarebbe una
+          risposta fuori tema. */}
+      {(bisogno === null || BISOGNI_PERCORSO_VER0.includes(bisogno)) && (
+      <Link
+        href="/servizi/percorso-ver0"
+        className="group relative block overflow-hidden rounded-3xl bg-pine-deep p-6 shadow-lift transition-all hover:-translate-y-1 sm:p-8"
+      >
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -right-10 -top-16 select-none font-display text-[16rem] leading-none text-white/[0.04]"
+        >
+          0
+        </span>
+        <div className="relative flex flex-wrap items-end justify-between gap-6">
+          <div className="min-w-0 max-w-md">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-mint-bright/20 px-3 py-1 text-xs font-semibold text-mint-bright">
+              <Leaf size={13} aria-hidden /> Tre risultati, un solo inserimento
+            </span>
+            <p className="mt-3 font-display text-3xl text-white md:text-4xl">
+              Percorso Ver0
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-moss">
+              Carbon Footprint Scope 1 e 2, Bilancio di Sostenibilità VSME e
+              profilo ESG per i questionari di banche e capofiliera.
+            </p>
+          </div>
+          <div className="min-w-0 shrink-0">
+            {percorso && (
+              <>
+                <p className="text-[11px] uppercase tracking-wide text-moss/70">
+                  a partire da
+                </p>
+                <p className="font-display text-4xl tabular-nums text-white">
+                  {eur(percorso.mensile)} €
+                  <span className="text-lg text-moss">/mese</span>
+                </p>
+                <p className="mt-0.5 text-xs text-moss/80">
+                  varia per dimensione d&apos;impresa
+                </p>
+              </>
+            )}
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-pine transition-transform group-hover:translate-x-0.5">
+              Scopri il Percorso <ArrowRight size={15} aria-hidden />
+            </span>
+          </div>
+        </div>
+      </Link>
+      )}
+
       {/* LE FAMIGLIE. Ognuna si apre dicendo cosa OTTIENI, non cosa contiene. */}
       {famiglie.map((f) => {
         const Icona = f.icona;
         return (
-          <section key={f.key} className="mt-10">
+          <section
+            key={f.key}
+            ref={(el) => {
+              if (el) sezioni.current.set(f.key, el);
+              else sezioni.current.delete(f.key);
+            }}
+            // Lo scorrimento si ferma sotto l'intestazione fissa, non
+            // dietro: senza questo il titolo della famiglia resta coperto.
+            className="mt-10 scroll-mt-24"
+          >
             <header className="flex items-start gap-3 border-b-2 border-line pb-4">
               <span
                 aria-hidden

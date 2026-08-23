@@ -283,6 +283,42 @@ export function jsonLdService({
   };
 }
 
+/**
+ * Un contenuto informativo: le guide.
+ *
+ * `Article` e non `BlogPosting`: non è un blog e non finge di esserlo —
+ * sono schede di fatto, aggiornate quando la norma cambia, non post
+ * datati che invecchiano in ordine cronologico. Per lo stesso motivo
+ * non si dichiara `datePublished` se non lo si tiene aggiornato: una
+ * data sbagliata nei dati strutturati è peggio di una data assente.
+ */
+export function jsonLdArticle({
+  titolo,
+  descrizione,
+  path,
+  aggiornatoIl,
+}: {
+  titolo: string;
+  descrizione: string;
+  path: string;
+  /** ISO 8601. La data in cui la fonte è stata verificata l'ultima volta. */
+  aggiornatoIl: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: titolo,
+    description: descrizione,
+    inLanguage: "it-IT",
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${SITO.url}${path}` },
+    dateModified: aggiornatoIl,
+    // Stesso `@id` dell'organizzazione: l'autore delle guide è l'entità
+    // già descritta in home, non un secondo soggetto con lo stesso nome.
+    author: { "@id": idOrganizzazione() },
+    publisher: { "@id": idOrganizzazione() },
+  };
+}
+
 /** Domande e risposte reali presenti in pagina: mai inventate per il markup. */
 export function jsonLdFaq(voci: { domanda: string; risposta: string }[]) {
   return {

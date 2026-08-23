@@ -22,6 +22,7 @@ import { QualitaOutput } from "@/components/qualita-output";
 import { PRESET } from "@/lib/onda";
 import { TracciaApertura } from "@/components/traccia-evento";
 import { EVENTI } from "@/lib/eventi";
+import { guidePerServizio } from "@/lib/guide";
 import {
   RICHIAMO_SUPPORTO_AUDIT,
   SERVIZI,
@@ -85,6 +86,9 @@ export default async function ServizioPage({
   // Prezzo di partenza (fascia micro): è quello che dichiariamo nei dati
   // strutturati, coerente con il "da" mostrato in vetrina.
   const canone = prezzoDettaglio(s.slug, "micro");
+  // Una sola guida, la prima pertinente: il rimando serve a chi si chiede
+  // perché gli stiano chiedendo questo documento, non a riempire la barra.
+  const guida = guidePerServizio(s.slug)[0];
   const unaTantum = prezzoUnaTantum(s.slug, "micro");
 
   // Le domande frequenti: una sola lista, mostrata in pagina e dichiarata
@@ -313,6 +317,14 @@ export default async function ServizioPage({
             aria-label="Pagine correlate"
             className="mt-4 flex flex-col gap-1.5 border-t border-line pt-4 text-sm"
           >
+            {guida && (
+              <Link
+                href={`/guide/${guida.slug}`}
+                className="font-medium text-pine hover:underline"
+              >
+                Perché te lo chiedono
+              </Link>
+            )}
             <Link
               href="/sigillo"
               className="font-medium text-pine hover:underline"

@@ -140,6 +140,12 @@ Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs`.
   nessun claim non dimostrabile: mai «sicurezza di livello bancario»,
   mai un sigillo che non possediamo. I contenuti stanno in
   `src/lib/sicurezza.ts`, con la data delle verifiche.
+- **Ogni pagina fa un mestiere solo.** Il catalogo contiene i servizi, il
+  prezzo, cosa tratta ciascuno e il modo di scegliere; il contesto — le
+  norme, il perché te lo chiedono — vive in `/guide`, fuori dal menu e
+  raggiungibile dal footer e da un rimando contestuale per pagina. Un
+  contenuto corretto nel posto sbagliato costa comunque: allunga la
+  strada verso quello che il lettore era venuto a fare.
 - **Fatti con la fonte, o niente fatti.** Ogni affermazione su norme,
   obblighi o numeri di mercato pubblicata sul sito porta il riferimento
   per esteso (numero, data, articolo o paragrafo) e un link alla fonte

@@ -21,6 +21,9 @@ import type { SessionePubblica } from "@/lib/sessione-pubblica";
 const AZIENDA = [
   { label: "Chi siamo", href: "/chi-siamo" },
   { label: "Come funziona", href: "/come-funziona" },
+  // Fuori dal menu principale per scelta (v. /guide): il footer è la
+  // mappa del sito, ed è lì che i contenuti informativi si trovano.
+  { label: "Guide: perché te lo chiedono", href: "/guide" },
   { label: "Programma partner", href: "/partner" },
   { label: "Contatti", href: "/contatti" },
 ];

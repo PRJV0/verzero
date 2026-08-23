@@ -3,7 +3,6 @@ import Link from "next/link";
 
 import { CatalogoFamiglie } from "@/components/catalogo-famiglie";
 import { JsonLd } from "@/components/json-ld";
-import { PercheChiedono } from "@/components/perche-chiedono";
 import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
 export const metadata: Metadata = metadataPagina({
@@ -14,17 +13,21 @@ export const metadata: Metadata = metadataPagina({
 });
 
 /**
- * Indice dei servizi.
+ * Indice dei servizi — il catalogo, e nient'altro.
  *
- * ORDINE DELLA PAGINA: prima i fatti — perché le richieste di dati alle
- * imprese stanno aumentando, con la norma accanto — poi il catalogo. Si
- * apriva sull'elenco, cioè sulla risposta prima della domanda: chi
- * arriva qui non cerca un listino, cerca di capire se questa roba serve
- * al suo problema.
+ * ORDINE DELLA PAGINA, tre lavori distinti in fila: la MAPPA mostra come
+ * sono organizzati i percorsi (tre famiglie, una riga ciascuna), il
+ * SELETTORE filtra per situazione, il CATALOGO elenca. Nessuno dei tre
+ * ripete il lavoro degli altri.
  *
- * Al posto dei fatti c'era uno schema — chi ti valuta, e le tre famiglie
- * come risposte. Vero, e inutile: diceva in forma astratta quello che il
- * selettore per situazione fa già in concreto due schermate più giù.
+ * QUI DENTRO NON C'È PIÙ IL CONTESTO NORMATIVO. C'è stato, in due forme:
+ * prima uno schema astratto su chi valuta l'impresa, poi quattro fatti
+ * con le norme citate. Il secondo era corretto e verificato, e restava
+ * nel posto sbagliato — chi apre un catalogo ha già deciso di guardare
+ * cosa vendiamo, e una lezione di contesto davanti all'elenco allunga la
+ * strada verso l'unica cosa che era venuto a fare. Quel contenuto vive
+ * in /guide, dove la domanda «perché me lo chiedono» nasce davvero, e da
+ * qui ci arriva un rimando solo.
  *
  * Il catalogo è raggruppato per NATURA della qualifica e non più per
  * pilastri E/S/G (SPEC §12.Y.1): i pilastri reggevano come tassonomia e
@@ -49,11 +52,19 @@ export default function ServiziPage() {
         così il secondo costa meno lavoro del primo.
       </p>
 
-      <div className="mt-8">
-        <PercheChiedono />
-      </div>
+      {/* Un solo rimando, e discreto: il contesto normativo — perché la
+          banca, il committente o un bando chiedono quei dati — è uscito
+          da qui. Un catalogo contiene i servizi, il prezzo, cosa tratta
+          ciascuno e il modo di scegliere; la lezione di contesto stava
+          davanti a chi aveva già deciso di guardare cosa vendiamo. */}
+      <p className="mt-5 text-center text-sm text-gray-warm">
+        <Link href="/guide" className="font-medium text-pine hover:underline">
+          Perché te lo chiedono
+        </Link>{" "}
+        — le norme dietro le richieste di banche, committenti e bandi.
+      </p>
 
-      <div className="mt-10">
+      <div className="mt-4">
         <CatalogoFamiglie />
       </div>
 

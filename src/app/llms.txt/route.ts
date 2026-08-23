@@ -1,4 +1,5 @@
 import { SERVIZI, titoloServizio } from "@/lib/catalog";
+import { GUIDE } from "@/lib/guide";
 import { PAGINE_PUBBLICHE } from "@/lib/pagine-pubbliche";
 import { prezzoDa } from "@/lib/pricing";
 import { SITO } from "@/lib/seo";
@@ -56,6 +57,10 @@ export function GET() {
         (norme ? ` Riferimenti normativi: ${norme}.` : "")
       );
     }),
+    "",
+    "## Guide",
+    "",
+    ...GUIDE.map((g) => `- [${g.domanda}](${url(`/guide/${g.slug}`)}): ${g.descrizione}`),
     "",
     "## Note",
     "",

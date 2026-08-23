@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { SERVIZI } from "@/lib/catalog";
+import { GUIDE } from "@/lib/guide";
 import { PAGINE_PUBBLICHE } from "@/lib/pagine-pubbliche";
 import { SITO } from "@/lib/seo";
 
@@ -31,5 +32,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  return [...pagine, ...servizi];
+  const guide: MetadataRoute.Sitemap = GUIDE.map((g) => ({
+    url: url(`/guide/${g.slug}`),
+    lastModified: oggi,
+    changeFrequency: "monthly",
+    priority: 0.6,
+  }));
+
+  return [...pagine, ...servizi, ...guide];
 }
