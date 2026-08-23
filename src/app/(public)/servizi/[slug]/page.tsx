@@ -14,7 +14,7 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { InBreve } from "@/components/in-breve";
+import { DomandeFrequenti } from "@/components/domande-frequenti";
 import { JsonLd } from "@/components/json-ld";
 import { FasciaListaAttesa } from "@/components/lista-attesa";
 import { OndaParticelle } from "@/components/onda-particelle";
@@ -121,8 +121,9 @@ export default async function ServizioPage({
           { nome: s.name, path: `/servizi/${s.slug}` },
         ])}
       />
-      {/* FAQPage: le stesse domande stampate nel blocco «In breve», mai
-          una in più. Il markup descrive solo contenuto visibile. */}
+      {/* FAQPage: le stesse domande stampate in fondo alla pagina, mai
+          una in più e carattere per carattere. Il markup descrive solo
+          contenuto visibile. */}
       <JsonLd dati={jsonLdFaq(domande)} />
 
       {/* L'intestazione porta la firma dell'onda, appena percepibile:
@@ -165,146 +166,139 @@ export default async function ServizioPage({
             </div>
           )}
 
-          {/* Cos'è */}
-          <p className="mb-4 text-sm leading-relaxed text-gray-warm">
+          {/* ═══ 1. CHE COS'È, E A CHI SERVE ═══
+              `perChi` viveva solo dentro «In breve»: spostando le domande
+              in fondo sarebbe sparito dall'apertura, che è l'unico posto
+              in cui serve davvero — chi legge deve capire in due righe se
+              la pagina parla di lui. */}
+          <p className="text-[15px] leading-relaxed text-gray-warm">
             {s.cosE}
           </p>
+          <p className="mt-3 text-[15px] leading-relaxed text-gray-warm">
+            {s.perChi}
+          </p>
 
-          {/* Perimetro del servizio: quando c'è un confine, si dichiara qui,
-              subito, non in fondo tra i vincoli (§12.M — DVR escluso). */}
+          {/* ═══ 2. COME LO PRODUCIAMO ═══
+              Qui dentro confluisce quello che prima era sparso in cinque
+              riquadri affiancati — cosa serve dall'impresa, il lavoro
+              passo per passo, cosa si consegna e com'è fatto, su quali
+              norme, dove si ferma — perché sono le fasi di una cosa
+              sola e si leggono in fila, non a blocchi. */}
+          <h2 className="mt-8 font-display text-2xl text-ink">
+            Come lo produciamo
+          </h2>
+
+          <h3 className="mt-5 flex items-center gap-2 font-display text-xl text-ink">
+            <ClipboardList size={16} className="text-pine" aria-hidden /> Tu
+            porti quello che hai già
+          </h3>
+          <p className="mt-2 text-sm leading-relaxed text-gray-warm">
+            Di norma bastano documenti che hai già in azienda. Quando attivi,
+            il portale ti chiede uno per uno quelli che servono a questo
+            percorso, li legge e ti segnala cosa manca: nessuna lista da
+            interpretare e nessun documento chiesto per scrupolo.
+          </p>
+          {/* I requisiti stavano in un riquadro a parte, in fondo: sono la
+              parte scomoda di «cosa serve», e separarli dal resto li
+              faceva sembrare una postilla. */}
+          <ul className="mt-2.5 space-y-1.5">
+            {s.requisiti.map((x) => (
+              <li key={x} className="flex items-start gap-2 text-sm leading-relaxed text-gray-warm">
+                <span
+                  aria-hidden
+                  className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gray-warm"
+                />
+                {x}
+              </li>
+            ))}
+          </ul>
+
+          <h3 className="mt-6 flex items-center gap-2 font-display text-xl text-ink">
+            <ListOrdered size={16} className="text-pine" aria-hidden /> Il
+            lavoro, passo per passo
+          </h3>
+          <ol className="mt-2 space-y-2">
+            {s.comeFunziona.map((x, i) => (
+              <li key={x} className="flex items-start gap-2.5 text-sm leading-relaxed text-gray-warm">
+                <span
+                  aria-hidden
+                  className="mt-0.5 inline-flex shrink-0 items-center justify-center rounded-full bg-moss text-[10px] font-semibold text-pine"
+                  style={{ height: 18, width: 18 }}
+                >
+                  {i + 1}
+                </span>
+                {x}
+              </li>
+            ))}
+          </ol>
+
+          <h3 className="mt-6 flex items-center gap-2 font-display text-xl text-ink">
+            <FileCheck2 size={16} className="text-pine" aria-hidden /> Tu ricevi
+          </h3>
+          <ul className="mt-2 space-y-1.5">
+            {s.output.map((x) => (
+              <li key={x} className="flex items-start gap-2 text-sm leading-relaxed text-gray-warm">
+                <FileCheck2
+                  size={15}
+                  aria-hidden
+                  className="mt-0.5 shrink-0 text-pine"
+                />
+                {x}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 rounded-xl border border-line bg-paper p-4">
+            <p className="mb-2.5 flex items-center gap-2 text-sm font-semibold text-ink">
+              <BadgeCheck size={15} className="text-pine" aria-hidden /> Com&apos;è
+              fatto quello che ricevi
+            </p>
+            <QualitaOutput compatto />
+          </div>
+
+          <h3 className="mt-6 flex items-center gap-2 font-display text-xl text-ink">
+            <BookMarked size={16} className="text-pine" aria-hidden /> Su quali
+            norme
+          </h3>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {s.riferimenti.map((r) => (
+              <span
+                key={r}
+                className="rounded-full border border-line bg-paper px-2.5 py-1 text-xs text-pine"
+              >
+                {r}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-gray-warm">
+            {SOLO_STANDARD_UFFICIALI}
+          </p>
+
+          {/* DOVE SI FERMA. Resta in evidenza (§12.M): il confine non è
+              una postilla, e chi legge deve incontrarlo prima di
+              decidere — non dopo. */}
           {s.perimetro && (
-            <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-ink/25 bg-amber-soft p-4">
-              <Info size={16} className="mt-0.5 shrink-0 text-amber-ink" />
+            <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-ink/25 bg-amber-soft p-4">
+              <Info size={16} className="mt-0.5 shrink-0 text-amber-ink" aria-hidden />
               <p className="text-sm leading-relaxed text-amber-ink">
-                <strong className="font-semibold">Perimetro del servizio: </strong>
+                <strong className="font-semibold">Dove si ferma: </strong>
                 {s.perimetro}
               </p>
             </div>
           )}
 
-          {/* IN BREVE: le risposte autoconclusive, prima del racconto.
-              Sta qui perché è la prima cosa che serve sia a chi arriva da
-              una ricerca sia a chi arriva da una risposta generata e
-              vuole verificarla. */}
-          <InBreve voci={domande} />
-
-          {/* Come funziona con Ver0 */}
-          <div className="mb-3 rounded-xl border border-line bg-white p-4">
-            <p className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
-              <ListOrdered size={15} className="text-pine" /> Come funziona con
-              Ver0
-            </p>
-            <ol className="space-y-1.5 text-sm text-gray-warm">
-              {s.comeFunziona.map((x, i) => (
-                <li key={x} className="flex items-start gap-2">
-                  <span
-                    aria-hidden
-                    className="mt-0.5 inline-flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full bg-moss text-[10px] font-semibold text-pine"
-                    style={{ height: 18, width: 18 }}
-                  >
-                    {i + 1}
-                  </span>
-                  {x}
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          {/* LA RACCOLTA, senza la lista.
-              Qui c'era l'elenco preciso dei documenti richiesti da questo
-              percorso: è know-how operativo, e in vetrina era regalato.
-              La lista esiste ancora dove serve — nel portale, dopo
-              l'attivazione, costruita su questo percorso. */}
-          <div className="mb-3 rounded-xl border border-line bg-white p-4">
-            <p className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
-              <ClipboardList size={15} className="text-pine" /> Tu porti quello
-              che hai già
-            </p>
-            <p className="text-sm leading-relaxed text-gray-warm">
-              Di norma bastano documenti che hai già in azienda. Quando attivi,
-              il portale ti chiede uno per uno quelli che servono a questo
-              percorso, li legge e ti segnala cosa manca: nessuna lista da
-              interpretare e nessun documento chiesto per scrupolo.
-            </p>
-          </div>
-
-          {/* Tu ricevi */}
-          <div className="mb-3 rounded-xl border border-line bg-white p-4">
-            <p className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
-              <FileCheck2 size={15} className="text-pine" /> Tu ricevi
-            </p>
-            <div className="space-y-1.5 text-sm text-gray-warm">
-              {s.output.map((x) => (
-                <p key={x} className="flex items-start gap-2">
-                  <FileCheck2 size={15} className="mt-0.5 shrink-0 text-pine" />{" "}
-                  {x}
-                </p>
-              ))}
-            </div>
-          </div>
-
-          {/* COM'È FATTO quello che ottieni: sopra c'è l'elenco dei
-              deliverable, qui il livello. Versione compatta perché la
-              scheda è già densa. */}
-          <div className="mb-3 rounded-xl border border-line bg-white p-4">
-            <p className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
-              <BadgeCheck size={15} className="text-pine" /> Com&apos;è fatto
-            </p>
-            <QualitaOutput compatto />
-          </div>
-
-          {/* Requisiti e vincoli */}
-          <div className="mb-3 rounded-xl border border-line bg-paper p-4">
-            <p className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
-              <Info size={15} className="text-gray-warm" /> Requisiti e vincoli
-            </p>
-            <div className="space-y-1.5 text-sm text-gray-warm">
-              {s.requisiti.map((x) => (
-                <p key={x} className="flex items-start gap-2">
-                  <span
-                    aria-hidden
-                    className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gray-warm"
-                  />
-                  {x}
-                </p>
-              ))}
-            </div>
-          </div>
-
-          {/* Riferimenti normativi — solo standard ufficiali (§12.P) */}
-          <div className="mb-3 rounded-xl border border-pine/20 bg-white p-4">
-            <p className="mb-3 flex items-center gap-2 font-display text-xl text-ink">
-              <BookMarked size={15} className="text-pine" /> Riferimenti
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {s.riferimenti.map((r) => (
-                <span
-                  key={r}
-                  className="rounded-full border border-line bg-paper px-2.5 py-1 text-xs text-pine"
-                >
-                  {r}
-                </span>
-              ))}
-            </div>
-            <p className="mt-2 text-xs leading-relaxed text-gray-warm">
-              {SOLO_STANDARD_UFFICIALI}
-            </p>
-          </div>
-
-          {/* Opportunità (resta in ogni pagina, §12.Q) */}
-          <div className="rounded-xl bg-moss p-4">
-            <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-pine-dark">
-              <Sparkles size={15} className="text-mint" /> Opportunità
-            </p>
-            <div className="space-y-1.5 text-sm text-pine">
-              {s.opportunita.map((x) => (
-                <p key={x} className="flex items-start gap-2">
-                  <Sparkles size={15} className="mt-0.5 shrink-0 text-mint" />{" "}
-                  {x}
-                </p>
-              ))}
-            </div>
-          </div>
+          {/* ═══ 3. CHE COSA APRE ═══ */}
+          <h2 className="mt-8 flex items-center gap-2 font-display text-2xl text-ink">
+            <Sparkles size={17} className="text-mint" aria-hidden /> Che cosa
+            ti apre
+          </h2>
+          <ul className="mt-3 space-y-2 rounded-xl bg-moss p-4">
+            {s.opportunita.map((x) => (
+              <li key={x} className="flex items-start gap-2 text-sm leading-relaxed text-pine">
+                <Sparkles size={15} aria-hidden className="mt-0.5 shrink-0 text-mint" />
+                {x}
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Box prezzo con selettore di dimensione (matrice §12.X, ciclo §12.Q) */}
@@ -366,6 +360,10 @@ export default async function ServizioPage({
           </div>
         </section>
       )}
+
+      {/* ═══ 4. LE DOMANDE FREQUENTI ═══ Le stesse voci del markup
+          FAQPage dichiarato in cima: una fonte sola, `domande`. */}
+      <DomandeFrequenti voci={domande} />
     </main>
 
       {/* La stessa fascia in fondo alla scheda: chi è arrivato a leggere

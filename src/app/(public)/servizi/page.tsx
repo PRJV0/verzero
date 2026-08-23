@@ -36,13 +36,12 @@ export default function ServiziPage() {
         ])}
       />
       <h1 className="text-center font-display text-4xl text-ink md:text-5xl">
-        Servizi, con i prezzi in chiaro
+        I percorsi che qualificano la tua impresa.
       </h1>
-      <p className="mx-auto mt-3 max-w-xl text-center text-sm text-gray-warm">
-        Per ogni percorso trovi scritto prima il prezzo e il perimetro: cosa
-        produce, e dove si ferma. Attivi quello che ti serve, quando ti serve,
-        e ogni servizio riusa i dati che hai già — più percorsi attivi, meno
-        lavoro per ciascuno.
+      <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-gray-warm">
+        Scegli quello che ti serve: prezzo, perimetro e norme di riferimento
+        sono scritti prima di iniziare. Ogni percorso riusa i dati che hai già,
+        così il secondo costa meno lavoro del primo.
       </p>
 
       <div className="mt-8">

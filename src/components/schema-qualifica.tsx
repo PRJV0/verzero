@@ -54,12 +54,15 @@ export function SchemaQualifica() {
         id="schema-qualifica"
         className="text-center font-display text-2xl leading-tight text-ink sm:text-3xl"
       >
-        Questi servizi qualificano la tua impresa davanti a chi la valuta.
+        Qualcuno ti chiede una prova, un percorso Verzero la produce.
       </h2>
 
-      {/* Piano 1 — chi chiede. */}
-      <p className="mt-6 text-center text-[11px] font-semibold uppercase tracking-widest text-gray-light">
-        Chi ti chiede di dimostrare
+      {/* Piano 1 — chi chiede.
+          Le etichette erano occhielli in maiuscoletto: leggibili come
+          categorie, non come frasi. Chi arriva qui non deve decifrare
+          un'intestazione, deve capire una situazione. */}
+      <p className="mt-6 text-center text-sm font-semibold text-ink">
+        Banche, committenti, bandi e clienti chiedono prove
       </p>
       <ul className="mt-3 flex flex-wrap justify-center gap-2">
         {CHI_VALUTA.map(({ icona: Icona, nome, cosa }) => (
@@ -85,8 +88,8 @@ export function SchemaQualifica() {
       <Filo />
 
       {/* Piano 3 — le tre famiglie, come risposte. */}
-      <p className="text-center text-[11px] font-semibold uppercase tracking-widest text-gray-light">
-        Che cosa può portare in risposta
+      <p className="text-center text-sm font-semibold text-ink">
+        I percorsi che producono quelle prove
       </p>
       <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {FAMIGLIE.map(({ key, titolo, sintesi, icona: Icona }) => (
