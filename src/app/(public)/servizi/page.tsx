@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { CatalogoFamiglie } from "@/components/catalogo-famiglie";
 import { JsonLd } from "@/components/json-ld";
-import { SchemaQualifica } from "@/components/schema-qualifica";
+import { PercheChiedono } from "@/components/perche-chiedono";
 import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
 export const metadata: Metadata = metadataPagina({
@@ -16,10 +16,15 @@ export const metadata: Metadata = metadataPagina({
 /**
  * Indice dei servizi.
  *
- * ORDINE DELLA PAGINA: prima lo schema — chi ti valuta e cosa può
- * rispondere la tua impresa — poi il catalogo. Si apriva sull'elenco,
- * cioè sulla risposta prima della domanda: chi arriva qui non cerca un
- * listino, cerca di capire se questa roba serve al suo problema.
+ * ORDINE DELLA PAGINA: prima i fatti — perché le richieste di dati alle
+ * imprese stanno aumentando, con la norma accanto — poi il catalogo. Si
+ * apriva sull'elenco, cioè sulla risposta prima della domanda: chi
+ * arriva qui non cerca un listino, cerca di capire se questa roba serve
+ * al suo problema.
+ *
+ * Al posto dei fatti c'era uno schema — chi ti valuta, e le tre famiglie
+ * come risposte. Vero, e inutile: diceva in forma astratta quello che il
+ * selettore per situazione fa già in concreto due schermate più giù.
  *
  * Il catalogo è raggruppato per NATURA della qualifica e non più per
  * pilastri E/S/G (SPEC §12.Y.1): i pilastri reggevano come tassonomia e
@@ -45,7 +50,7 @@ export default function ServiziPage() {
       </p>
 
       <div className="mt-8">
-        <SchemaQualifica />
+        <PercheChiedono />
       </div>
 
       <div className="mt-10">

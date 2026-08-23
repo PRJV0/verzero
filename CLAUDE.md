@@ -47,9 +47,9 @@ suo. Cambia cosa deve fare il testo.
 2. **Le domande frequenti si compongono, non si scrivono.** Vivono in
    `src/lib/faq-servizio.ts` e nascono da catalogo e listino: quattordici
    testi scritti a mano, alla seconda revisione di prezzo, sono
-   quattordici testi che mentono. Le stesse voci si mostrano in pagina
-   (`InBreve`) e si marcano con `FAQPage` — mai una in più nel markup che
-   in pagina.
+   quattordici testi che mentono. Le stesse voci si mostrano in fondo
+   alla pagina (`DomandeFrequenti`) e si marcano con `FAQPage`, carattere
+   per carattere — mai una in più nel markup che in pagina.
 3. **`robots.txt` distingue le famiglie** (`src/lib/ai-canali.ts`):
    crawler di ricerca e citazione, crawler di addestramento, tutti gli
    altri. Oggi sono tutti ammessi, con le stesse esclusioni
@@ -140,6 +140,18 @@ Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs`.
   nessun claim non dimostrabile: mai «sicurezza di livello bancario»,
   mai un sigillo che non possediamo. I contenuti stanno in
   `src/lib/sicurezza.ts`, con la data delle verifiche.
+- **Fatti con la fonte, o niente fatti.** Ogni affermazione su norme,
+  obblighi o numeri di mercato pubblicata sul sito porta il riferimento
+  per esteso (numero, data, articolo o paragrafo) e un link alla fonte
+  UFFICIALE — EUR-Lex, EBA, Commissione, l'ente che pubblica il dato —
+  mai a un blog che riassume. Si verifica PRIMA di scrivere: se una
+  fonte non regge, la riga si toglie invece di genericizzarla («le
+  banche chiedono sempre più spesso dati ESG» senza riferimento è
+  riempitivo, non informazione). Le fonti stanno in un file di dati con
+  la data dell'ultima verifica (`src/lib/richieste.ts`), perché le norme
+  cambiano — l'Omnibus del 2026 ne è la prova — e un riferimento
+  sbagliato in pagina vale meno di una sezione assente. Se dopo la
+  verifica restano meno di tre righe solide, la sezione si elimina.
 - **Metodo sì, mappature no** (sito pubblico). Sulle pagine pubbliche si
   mostrano **il metodo e il risultato**, MAI le mappature operative
   documento → norma → sezione: quali documenti servono per il carbon,
