@@ -37,7 +37,7 @@ export function SiteHeader({ sessione }: { sessione: SessionePubblica }) {
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-line bg-white px-5 py-3">
       <Link href="/" aria-label="Verzero — torna alla home">
-        <Logo />
+        <Logo className="text-pine" />
       </Link>
       <nav
         aria-label="Navigazione principale"

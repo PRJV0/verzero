@@ -43,7 +43,13 @@ function ZeroE1() {
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-[0.04em] font-display text-xl font-semibold leading-none text-pine ${className}`}
+      // NESSUN COLORE QUI: si eredita da chi lo usa (`currentColor`,
+      // come dichiara il commento in testa al file). Prima era fissato a
+      // `text-pine` e su fondo scuro il marchio spariva — verde su verde
+      // — perché una classe passata dall'esterno non vince su una scritta
+      // dentro il componente: hanno la stessa specificità, e decide
+      // l'ordine nel foglio di stile, che non si controlla da qui.
+      className={`inline-flex items-center gap-[0.04em] font-display text-xl font-semibold leading-none ${className}`}
     >
       Verzer
       <ZeroE1 />
@@ -61,7 +67,7 @@ export function Logo({ className = "" }: { className?: string }) {
 export function Monogramma({ className = "" }: { className?: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-[0.06em] font-display text-xl font-semibold leading-none text-pine ${className}`}
+      className={`inline-flex items-center gap-[0.06em] font-display text-xl font-semibold leading-none ${className}`}
     >
       Ver
       <ZeroE1 />

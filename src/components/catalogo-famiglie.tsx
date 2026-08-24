@@ -411,6 +411,10 @@ export function CatalogoFamiglie() {
         return (
           <section
             key={f.key}
+            // L'ancora è reale, non solo un bersaglio per il JavaScript
+            // della mappa: il footer ci punta con un link normale, e un
+            // link normale deve funzionare anche senza JavaScript.
+            id={`famiglia-${f.key}`}
             ref={(el) => {
               if (el) sezioni.current.set(f.key, el);
               else sezioni.current.delete(f.key);
