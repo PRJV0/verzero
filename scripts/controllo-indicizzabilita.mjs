@@ -130,12 +130,19 @@ for (const u of urls) {
 
 /* ── 3. Le stesse pagine viste dagli altri crawler ──────────────────── */
 console.log("\n── Le stesse pagine, altri crawler (campione: home, servizi, una scheda, una guida)");
+/*
+ * Il campione si PESCA dalla sitemap, non si scrive a mano: scritto a
+ * mano conteneva `${BASE}/` con la barra finale, mentre la sitemap
+ * dichiara la home senza — e il confronto col canonical falliva per
+ * colpa del controllo, non del sito.
+ */
+const scegli = (frammento) => urls.find((u) => new URL(u).pathname.startsWith(frammento));
 const campione = [
-  `${BASE}/`,
-  `${BASE}/servizi`,
-  `${BASE}/servizi/carbon-footprint-scope-1-2`,
-  `${BASE}/guide/perche-la-banca-chiede-dati-di-sostenibilita`,
-];
+  urls.find((u) => new URL(u).pathname === "/") ?? urls[0],
+  scegli("/servizi"),
+  scegli("/servizi/"),
+  scegli("/guide/"),
+].filter(Boolean);
 for (const agente of Object.keys(AGENTI)) {
   const righe = [];
   for (const u of campione) {
