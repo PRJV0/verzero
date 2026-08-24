@@ -32,8 +32,15 @@ import {
  */
 
 export type StatoSezione =
-  /** Leggibile coi dati veri, provenienza dichiarata. */
+  /** Leggibile coi dati veri CONFERMATI dal cliente. Peso pieno. */
   | "popolata"
+  /**
+   * I dati ci sono e sono leggibili, ma il cliente non li ha ancora
+   * confermati. Non è «popolata», e la differenza non è formale: finché
+   * un dato è da confermare non entra nei calcoli e non ha titolo per
+   * far dire all'anello che il lavoro è finito (docs/motore.md §4.4).
+   */
+  | "letta"
   /** I documenti che servono sono arrivati: manca la lettura. */
   | "ricevuta"
   /** Struttura e riferimenti già impostati dal Motore. */
@@ -95,7 +102,28 @@ function annoDi(org: DatiOrg): number {
  * così che l'arricchimento si vede nei documenti e fa salire l'anello,
  * invece di restare un dettaglio nascosto nella scheda.
  */
-export type CampiNoti = Record<string, { valore: string; fonte: string | null }>;
+export type CampiNoti = Record<
+  string,
+  {
+    valore: string;
+    fonte: string | null;
+    /**
+     * Il campo è stato recuperato dal Motore e il cliente non l'ha ancora
+     * confermato. Entra lo stesso nel foglio — è il modo in cui il
+     * cliente lo vede e lo controlla — ma la sezione che lo usa resta
+     * «letta» e non «popolata»: l'anello sale a peso pieno solo dopo la
+     * conferma (docs/motore.md §4.4).
+     */
+    daConfermare?: boolean;
+  }
+>;
+
+/** La sezione è piena, ma di dati che nessuno ha ancora confermato? */
+function statoDati(
+  contributi: ({ daConfermare?: boolean } | undefined)[],
+): "popolata" | "letta" {
+  return contributi.some((c) => c?.daConfermare) ? "letta" : "popolata";
+}
 
 
 /* ------------------------------------------------------------------ */
@@ -172,7 +200,7 @@ function sezioneAnagrafica(org: DatiOrg, campi: CampiNoti = {}): SezioneBozza {
 
   return {
     titolo: "Anagrafica e identificazione dell'organizzazione",
-    stato: "popolata",
+    stato: statoDati([campi.forma_giuridica, campi.ateco]),
     fonte:
       recuperate.length > 0
         ? `registrazione · ${[...new Set(recuperate)].join(" · ")}`
@@ -201,7 +229,11 @@ function estratto(valore: string, massimo = 170): string {
 function righeDalSito(
   campi: CampiNoti,
   chiavi: { chiave: string; etichetta: string }[],
-): { righe: { etichetta: string; valore: string }[]; fonte: string | null } {
+): {
+  righe: { etichetta: string; valore: string }[];
+  fonte: string | null;
+  daConfermare: boolean;
+} {
   const righe = chiavi
     .filter((c) => campi[c.chiave])
     .map((c) => ({
@@ -211,7 +243,11 @@ function righeDalSito(
   const fonti = chiavi
     .map((c) => campi[c.chiave]?.fonte)
     .filter((f): f is string => !!f);
-  return { righe, fonte: fonti.length > 0 ? [...new Set(fonti)][0] : null };
+  return {
+    righe,
+    fonte: fonti.length > 0 ? [...new Set(fonti)][0] : null,
+    daConfermare: chiavi.some((c) => campi[c.chiave]?.daConfermare),
+  };
 }
 
 /**
@@ -231,7 +267,7 @@ function sezionePerimetro(campi: CampiNoti, anno: number): SezioneBozza {
   }
   return {
     titolo: "Perimetro organizzativo e periodo di rendicontazione",
-    stato: "popolata",
+    stato: statoDati([sede]),
     fonte: sede.fonte
       ? `${sede.fonte} · UNI EN ISO 14064-1:2019 §5`
       : "UNI EN ISO 14064-1:2019 §5",
@@ -249,7 +285,7 @@ function sezionePerimetro(campi: CampiNoti, anno: number): SezioneBozza {
 
 /** VSME: chi è l'impresa e cosa fa, con le sue stesse parole. */
 function sezioneProfiloImpresa(campi: CampiNoti): SezioneBozza {
-  const { righe, fonte } = righeDalSito(campi, [
+  const { righe, fonte, daConfermare } = righeDalSito(campi, [
     { chiave: "descrizione_attivita", etichetta: "Attività" },
     { chiave: "prodotti_servizi", etichetta: "Prodotti e servizi" },
     { chiave: "mercati", etichetta: "Mercati" },
@@ -266,7 +302,7 @@ function sezioneProfiloImpresa(campi: CampiNoti): SezioneBozza {
   }
   return {
     titolo: "Profilo dell'impresa e modello di business",
-    stato: "popolata",
+    stato: daConfermare ? "letta" : "popolata",
     fonte: fonte ?? "Sito ufficiale",
     spiega:
       "Chi sei e cosa fai, riportato dalle tue stesse pagine: nessuna parola messa in bocca all'impresa.",
@@ -276,7 +312,7 @@ function sezioneProfiloImpresa(campi: CampiNoti): SezioneBozza {
 
 /** Manuali ISO: il contesto dell'organizzazione (punto 4 della norma). */
 function sezioneContesto(campi: CampiNoti): SezioneBozza {
-  const { righe, fonte } = righeDalSito(campi, [
+  const { righe, fonte, daConfermare } = righeDalSito(campi, [
     { chiave: "descrizione_attivita", etichetta: "Attività" },
     { chiave: "sedi_operative", etichetta: "Sedi e stabilimenti" },
     { chiave: "mercati", etichetta: "Mercati" },
@@ -291,7 +327,7 @@ function sezioneContesto(campi: CampiNoti): SezioneBozza {
   }
   return {
     titolo: "Contesto dell'organizzazione e parti interessate",
-    stato: "popolata",
+    stato: daConfermare ? "letta" : "popolata",
     fonte: fonte ?? "Sito ufficiale",
     spiega:
       "Chi sei, dove operi e su quali mercati: la norma parte da qui, e queste sono le tue parole.",
@@ -312,7 +348,7 @@ function sezionePoliticaParita(campi: CampiNoti): SezioneBozza {
   }
   return {
     titolo: "Politica della parità e piano strategico",
-    stato: "popolata",
+    stato: statoDati([policy]),
     fonte: policy.fonte ?? "Sito ufficiale",
     spiega:
       "Gli impegni scritti e il piano per mantenerli. Partiamo dalle politiche che hai già pubblicato.",
@@ -774,14 +810,23 @@ export function completamentoBozza(bozza: Bozza): number {
   // è in nostre mani — che è progresso vero e verificabile — ma il dato
   // non è ancora dentro. Gonfiarla a 1 sarebbe dire che il lavoro è
   // fatto quando manca proprio la parte che il cliente ci paga.
+  // «letta» pesa 0,9 e non 1: i dati ci sono, si vedono, si possono
+  // controllare — ma nessuno li ha ancora confermati, e finché è così non
+  // entrano nei calcoli. L'ultimo decimo è il gesto del cliente, ed è
+  // esattamente il gesto su cui si regge il prodotto: l'AI assiste, il
+  // cliente valida. Dare peso pieno a un dato non confermato significa
+  // dire che il lavoro è finito mentre manca proprio la parte che rende
+  // il documento difendibile.
   const peso = (s: SezioneBozza) =>
     s.stato === "popolata"
       ? 1
-      : s.stato === "ricevuta"
-        ? 0.75
-        : s.stato === "impostata"
-          ? 0.5
-          : 0;
+      : s.stato === "letta"
+        ? 0.9
+        : s.stato === "ricevuta"
+          ? 0.75
+          : s.stato === "impostata"
+            ? 0.5
+            : 0;
   const somma = bozza.sezioni.reduce((t, s) => t + peso(s), 0);
   return Math.round((somma / bozza.sezioni.length) * 100);
 }
@@ -789,15 +834,17 @@ export function completamentoBozza(bozza: Bozza): number {
 /** Il riempimento di ciascun segmento dell'anello, sezione per sezione. */
 export function segmentiBozza(
   bozza: Bozza,
-): ("piena" | "quasi" | "mezza" | "vuota")[] {
+): ("piena" | "letta" | "quasi" | "mezza" | "vuota")[] {
   return bozza.sezioni.map((s) =>
     s.stato === "popolata"
       ? "piena"
-      : s.stato === "ricevuta"
-        ? "quasi"
-        : s.stato === "impostata"
-          ? "mezza"
-          : "vuota",
+      : s.stato === "letta"
+        ? "letta"
+        : s.stato === "ricevuta"
+          ? "quasi"
+          : s.stato === "impostata"
+            ? "mezza"
+            : "vuota",
   );
 }
 
@@ -807,17 +854,55 @@ export function segmentiBozza(
  * che il fascicolo e l'anello reagiscono a un caricamento, invece di
  * restare fermi mentre il cliente vede crescere l'archivio.
  */
-export function bozzaConDocumenti(bozza: Bozza, tipiCaricati: Set<string>): Bozza {
-  if (tipiCaricati.size === 0) return bozza;
+export function bozzaConDocumenti(
+  bozza: Bozza,
+  tipiCaricati: Set<string>,
+  letti: DatiLetti = {},
+): Bozza {
+  const qualcosaDaLeggere = Object.keys(letti).length > 0;
+  if (tipiCaricati.size === 0 && !qualcosaDaLeggere) return bozza;
+
   return {
     ...bozza,
     sezioni: bozza.sezioni.map((s) => {
-      if (s.stato !== "in-attesa") return s;
       const attesi = s.attendeTipi ?? [];
-      if (attesi.length === 0 || !attesi.every((t) => tipiCaricati.has(t))) {
-        return s;
+      if (attesi.length === 0) return s;
+
+      // I dati LETTI da quei documenti: se ci sono, la sezione non è più
+      // «ricevuta» — ha dentro dei valori, e il cliente li deve vedere
+      // proprio lì, nella sezione che li aspettava, non in un pannello a
+      // parte. È il senso della bozza: il documento che si sta formando.
+      const righe = attesi.flatMap((t) => letti[t]?.righe ?? []);
+      if (righe.length > 0) {
+        const daConfermare = attesi.some((t) => (letti[t]?.daConfermare ?? 0) > 0);
+        const fonti = [...new Set(attesi.flatMap((t) => letti[t]?.fonti ?? []))];
+        return {
+          ...s,
+          stato: daConfermare ? ("letta" as const) : ("popolata" as const),
+          righe: [...(s.righe ?? []), ...righe],
+          fonte: [s.fonte, ...fonti].filter(Boolean).join(" · ") || undefined,
+        };
       }
+
+      if (s.stato !== "in-attesa") return s;
+      if (!attesi.every((t) => tipiCaricati.has(t))) return s;
       return { ...s, stato: "ricevuta" as const };
     }),
   };
 }
+
+/**
+ * Quello che il Motore ha letto, raccolto per tipo di documento. Le righe
+ * sono già pronte da mostrare; `daConfermare` è il numero di valori che
+ * aspettano il gesto del cliente, e finché è maggiore di zero la sezione
+ * resta «letta» — mai «popolata».
+ */
+export type DatiLetti = Record<
+  string,
+  {
+    righe: { etichetta: string; valore: string }[];
+    fonti: string[];
+    daConfermare: number;
+    confermati: number;
+  }
+>;

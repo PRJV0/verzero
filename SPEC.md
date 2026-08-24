@@ -121,37 +121,27 @@ Durante l'inserimento, un pannello mostra l'impatto in tCO2e calcolato in tempo 
 
 **Generazione report.** Quando tutte le categorie obbligatorie sono confermate → bottone "Genera report" → calcolo dei totali → PDF brandizzato con metodologia, tabelle per categoria, grafici, dichiarazione di conformità GHG Protocol / ISO 14064-1 → salvato in `reports` e scaricabile. Il report riporta sempre Scope 2 in doppia lettura: location-based e market-based.
 
-## 6. Motore di estrazione documenti (Claude API)
+## 6. Il Motore Ver0 (sintesi — l'architettura sta in `docs/motore.md`)
 
-Pipeline server-side per ogni documento caricato:
-1. Route `POST /api/documents/{id}/extract`: scarica il PDF dallo storage, lo invia all'API Claude come documento (base64) con un prompt di estrazione specifico per `kind`.
-2. Il prompt chiede **solo JSON** conforme a uno schema per tipo documento. Esempio per `electricity_bill`:
+Il Motore legge i documenti che l'impresa ha già, ne ricava dati tracciabili e con quei dati compone l'elaborato finale conforme alla norma del percorso. **L'architettura completa, con le scelte motivate e i rischi dichiarati, vive in `docs/motore.md`**: qui c'è ciò che serve per non contraddirla.
 
-```
-Sei un estrattore di dati da bollette elettriche italiane. Analizza il documento
-e restituisci SOLO un oggetto JSON, senza testo aggiuntivo, con questo schema:
-{
-  "pod": string | null,
-  "supplier": string | null,
-  "period_start": "YYYY-MM-DD" | null,
-  "period_end": "YYYY-MM-DD" | null,
-  "total_kwh": number | null,
-  "supply_type": "go_renewable" | "national_mix" | "unknown",
-  "confidence": "high" | "medium" | "low",
-  "notes": string | null
-}
-Regole: se un campo non è leggibile usa null, non inventare mai valori.
-total_kwh è il consumo fatturato del periodo, non la potenza impegnata.
-supply_type è "go_renewable" solo se la bolletta menziona esplicitamente
-energia 100% rinnovabile o Garanzia d'Origine. In notes segnala anomalie
-(conguagli, stime, più POD nello stesso documento).
-```
+**Due famiglie di documenti.** *FONTE* (bollette, visure, registri, tabelle): se ne estraggono dati puntuali, e l'uscita è un insieme di campi con confidenza e provenienza. *OPERA* (manuali di sistema, procedure, documenti già redatti): se ne estrae la struttura — indice, designazioni normative citate, responsabilità, procedure — per l'analisi degli scostamenti e la rigenerazione. L'astrazione è `tipo documento → famiglia → schema di estrazione` (`src/lib/motore/famiglie.ts`): aggiungere un tipo è una riga più il suo schema, nessun ramo condizionale altrove.
 
-3. Parsing difensivo della risposta (strip di eventuali backtick, `JSON.parse` in try/catch). Salvataggio integrale in `extractions.raw_json`.
-4. Se `confidence` è `low` o campi chiave sono null → il form si apre con un avviso "verifica con attenzione" e i campi mancanti evidenziati. **L'utente conferma sempre**: nessun dato entra in `activity_data` senza conferma umana. Questo è anche il posizionamento legale del prodotto: l'AI assiste, il cliente valida.
-5. Prompt analoghi per `gas_bill` (Smc, coefficiente C) e `fuel_invoice` (litri per carburante).
+**Documenti non nativi digitali.** Il PDF si invia all'API così com'è come blocco `document`, la fotografia come blocco `image`. Il rilevamento locale di **strato di testo o scansione** (nessuna dipendenza: `zlib`) non decide come si manda il file, decide come si tratta il risultato — provenienza `testo` o `immagine`, attesa di confidenza, avvisi di qualità, costo previsto. **Lettura diretta dal modello multimodale, non OCR preliminare né rasterizzazione nostra**: su documenti dove il significato sta nella posizione (la tabella delle fasce di una bolletta) il contesto vale più della trascrizione, e un OCR che sbaglia produce un errore invisibile. La pre-elaborazione delle immagini non la facciamo noi: è un altro posto dove si può peggiorare in silenzio.
 
-Costo stimato: pochi centesimi per documento. Prevedere un limite di dimensione upload (10 MB) e un contatore di estrazioni per organizzazione.
+**Manoscritto — regola inviolabile.** Ogni dato letto da una scrittura a mano è marcato `fonteLettura: "manoscritto"`, riceve **confidenza massima 0,6** imposta dal nostro codice (non chiesta al modello), richiede **conferma esplicita** e non entra in nessun calcolo prima di quella. Nessun automatismo di conferma massiva può includerlo. Se la grafia non si legge, il campo resta vuoto con la ragione e il cliente lo compila vedendo l'immagine accanto.
+
+**Le sei regole di affidabilità** (dettaglio in `docs/motore.md` §4): nessun dato inventato — il campo non leggibile resta vuoto con la ragione; ogni valore porta documento, pagina ed estratto di origine; confidenza **per campo**, non per documento; stato `da confermare` sempre, e finché non c'è la conferma il dato non entra nei calcoli e **non fa salire l'anello a peso pieno**; documento di altro tipo, illeggibile o fuori dall'anno di rendicontazione → lo si dice con chiarezza e con il rimedio, mai un errore generico; validazione **Zod lato server** più controlli di **plausibilità** (forma del POD, coerenza del periodo, somma delle fasce sul totale), indipendenti da ciò che il modello promette.
+
+**Generazione.** L'elaborato esce con struttura conforme alla norma, designazione ed **edizione vigente prese da `src/lib/norme.ts`** (mai scritte a mano), metodologia dichiarata, tracciabilità di dati e fonti, pagina di validazione professionale. Prima della consegna gira un **controllo di conformità bloccante**: se manca una sezione obbligatoria, o una designazione citata risulta ritirata, o un valore non ha fonte e stato `confermato`, il documento non si genera e si elenca cosa manca. Uscita PDF impaginato sempre, DOCX dove il cliente deve poter intervenire (manuali e procedure).
+
+**Marchio del cliente.** Modelli separati dai contenuti; impostazioni a livello di organizzazione riusate su tutti i suoi documenti; logo con controlli di formato, risoluzione e sfondo; colori sociali con **contrasto verificato** per la stampa; anteprima prima della generazione; e impostazione neutra predefinita che resta professionale per chi non carica nulla.
+
+**Volumi.** Due corsie: interattiva per chi sta guardando, differita in coda (Batch API, metà costo) per i lotti e le riletture. Coda `motore_lavori` con idempotenza su `(documento, lavoro, versione schema)`, ritentativi con arretramento **solo sugli errori ritentabili**, parallelismo controllato per organizzazione, segmentazione oltre le 100 pagine, **tetto di spesa per pratica con allarme**. Log tecnico in tabella `estrazioni`, di solo back-office: documento, modello, token, esito, durata, costo calcolato dai token effettivi.
+
+**Tracciabilità e versioni.** Ogni elaborato è una versione con data, anno di rendicontazione, **edizioni delle norme copiate dentro** (non riferite al registro, che cambia), elenco delle fonti dei dati e stato di validazione. Rigenerabile quando cambiano dati o norme, dicendo **perché** una nuova versione è possibile.
+
+**Modello.** Default `claude-opus-5` con ragionamento adattivo ed `effort` medio per FONTE; `ANTHROPIC_EXTRACTION_MODEL` lo cambia senza deploy. Scendere di modello per costo è una decisione del fondatore da prendere sui documenti veri col log tecnico alla mano, non un'ottimizzazione silenziosa: un dato sbagliato costa più di tutta la spesa di elaborazione di quella pratica. Costo **misurato** di una bolletta di una pagina con Opus 5: $0,05 (PDF nativo, 4.361 token in / 1.154 out, 15 secondi); una pratica da 25 documenti più la generazione sta attorno a $1,75, circa la metà in corsia differita. La sola prima cifra è misurata: le altre sono proporzioni sui listini, da correggere coi token reali che il log tecnico raccoglie.
 
 ## 7. Motore di calcolo
 

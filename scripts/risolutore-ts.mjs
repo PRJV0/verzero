@@ -19,6 +19,18 @@ import { register } from "node:module";
 const RADICE = risolviPercorso(dirname(fileURLToPath(import.meta.url)), "..");
 
 export async function resolve(specificatore, contesto, successivo) {
+  // `server-only` fa fallire di proposito chi lo importa fuori da un
+  // componente di server. In uno script non c'è un pacchetto client da
+  // proteggere: la guardia bloccherebbe soltanto le prove.
+  if (specificatore === "server-only") {
+    return {
+      url: pathToFileURL(
+        risolviPercorso(RADICE, "scripts/_server-only-vuoto.mjs"),
+      ).href,
+      shortCircuit: true,
+    };
+  }
+
   // `@/lib/...` è l'alias di tsconfig verso `src/`: qui lo sciogliamo a mano.
   const alias = specificatore.startsWith("@/");
   const relativo = specificatore.startsWith(".");

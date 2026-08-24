@@ -12,6 +12,8 @@ import {
 
 import { createClient } from "@/lib/supabase/server";
 import { documentiAttivi } from "@/lib/bozza";
+import { siSaLeggere } from "@/lib/motore/famiglie";
+import { formattaValore, livelloConfidenza } from "@/lib/motore/portale";
 import {
   TIPI_DOCUMENTO,
   pesoLeggibile,
@@ -29,7 +31,14 @@ import {
   TestataSezione,
 } from "../_ui";
 import { CaricaDocumenti } from "./carica";
-import { correggiTipoDocumento, eliminaDocumento } from "./azioni";
+import { BottoneLettura } from "./lettura";
+import {
+  confermaCampo,
+  correggiCampo,
+  correggiTipoDocumento,
+  eliminaDocumento,
+  rifiutaCampo,
+} from "./azioni";
 
 export const metadata: Metadata = {
   title: "Documenti — il tuo ecosistema",
@@ -64,7 +73,7 @@ export default async function DocumentiPage({
   const contesto = await caricaContesto(cliente, "/dashboard/documenti");
   const supabase = await createClient();
 
-  const [{ data: moduli }, { data: documenti }] = contesto.org
+  const [{ data: moduli }, { data: documenti }, { data: campiLetti }] = contesto.org
     ? await Promise.all([
         supabase
           .from("module_activations")
@@ -75,8 +84,13 @@ export default async function DocumentiPage({
           .select("*")
           .eq("organization_id", contesto.org.id)
           .order("created_at", { ascending: false }),
+        supabase
+          .from("document_fields")
+          .select("*")
+          .eq("organization_id", contesto.org.id)
+          .order("created_at", { ascending: true }),
       ])
-    : [{ data: [] }, { data: [] }];
+    : [{ data: [] }, { data: [] }, { data: [] }];
 
   const attiviDocs = documentiAttivi(
     (moduli ?? [])
@@ -89,6 +103,16 @@ export default async function DocumentiPage({
     archivio.filter((d) => d.tipo).map((d) => d.tipo as string),
   );
   const daClassificare = archivio.filter((d) => d.stato === "da_classificare");
+
+  // I campi letti, per documento. Restano accanto al loro documento e non
+  // in un pannello a parte: è lì che il cliente può confrontarli con
+  // l'originale, che è tutto il senso della provenienza.
+  const campiPerDocumento = new Map<string, typeof campiLetti>();
+  for (const c of campiLetti ?? []) {
+    const elenco = campiPerDocumento.get(c.document_id) ?? [];
+    elenco.push(c);
+    campiPerDocumento.set(c.document_id, elenco);
+  }
 
   if (!contesto.org) {
     return (
@@ -298,6 +322,206 @@ export default async function DocumentiPage({
                           </p>
                         )}
 
+                        {/* ═══ IL MOTORE: la lettura del contenuto ═══ */}
+                        {contesto.ruolo === "impresa" &&
+                          siSaLeggere(d.tipo) &&
+                          (d.stato === "smistato" || d.stato === "letto") && (
+                            <BottoneLettura
+                              id={d.id}
+                              rilettura={d.stato === "letto"}
+                            />
+                          )}
+
+                        {d.stato === "in_lettura" && (
+                          <p className="mt-2 text-xs font-medium text-pine">
+                            Lo stiamo leggendo adesso: fra poco compaiono i
+                            dati, da controllare.
+                          </p>
+                        )}
+
+                        {d.stato === "illeggibile" && (
+                          <div className="mt-2 rounded-xl border border-amber-ink/25 bg-amber-soft/60 p-3">
+                            <p className="text-xs leading-relaxed text-amber-ink">
+                              {d.lettura_nota ??
+                                "Non siamo riusciti a leggere questo documento."}
+                            </p>
+                            {contesto.ruolo === "impresa" && (
+                              <BottoneLettura id={d.id} rilettura />
+                            )}
+                          </div>
+                        )}
+
+                        {/* I dati letti, con la loro provenienza. Nessuno
+                            di questi conta finché non lo confermi: è il
+                            gesto su cui si regge il prodotto. */}
+                        {(campiPerDocumento.get(d.id)?.length ?? 0) > 0 && (
+                          <div className="mt-3 rounded-xl border border-line bg-paper/60 p-3">
+                            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-warm">
+                              Dati letti dal documento
+                            </p>
+                            {d.lettura_nota && (
+                              <p className="mt-1 text-xs leading-relaxed text-amber-ink">
+                                {d.lettura_nota}
+                              </p>
+                            )}
+                            <ul className="mt-2 space-y-2">
+                              {(campiPerDocumento.get(d.id) ?? []).map((c) => {
+                                const livello = livelloConfidenza(c.confidenza);
+                                return (
+                                  <li
+                                    key={c.id}
+                                    className="rounded-lg border border-line bg-white p-2.5"
+                                  >
+                                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                                      <p className="text-xs text-gray-warm">
+                                        {c.etichetta}
+                                      </p>
+                                      <p className="text-sm font-semibold tabular-nums text-ink">
+                                        {c.valore === null ? (
+                                          <span className="font-normal text-gray-light">
+                                            non trovato
+                                          </span>
+                                        ) : (
+                                          formattaValore(c.valore, c.unita)
+                                        )}
+                                      </p>
+                                    </div>
+
+                                    {/* La provenienza: pagina ed estratto,
+                                        perché il numero si possa controllare
+                                        sul documento invece che credere. */}
+                                    {c.valore !== null && (
+                                      <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-gray-light">
+                                        <span
+                                          className={
+                                            "rounded-full px-1.5 py-0.5 font-medium " +
+                                            (livello.chiave === "alta"
+                                              ? "bg-mint/15 text-mint"
+                                              : livello.chiave === "media"
+                                                ? "bg-paper text-gray-warm"
+                                                : "bg-amber-soft text-amber-ink")
+                                          }
+                                        >
+                                          {livello.etichetta}
+                                        </span>
+                                        {c.pagina && <span>pagina {c.pagina}</span>}
+                                        {c.fonte_lettura === "manoscritto" && (
+                                          <span className="font-medium text-amber-ink">
+                                            scritto a mano
+                                          </span>
+                                        )}
+                                        {c.estratto_da && (
+                                          <span className="italic">
+                                            «{c.estratto_da}»
+                                          </span>
+                                        )}
+                                      </p>
+                                    )}
+
+                                    {c.nota && (
+                                      <p className="mt-1 text-[11px] leading-relaxed text-gray-warm">
+                                        {c.nota}
+                                      </p>
+                                    )}
+                                    {(c.avvisi ?? []).map((a) => (
+                                      <p
+                                        key={a}
+                                        className="mt-1 text-[11px] leading-relaxed text-amber-ink"
+                                      >
+                                        {a}
+                                      </p>
+                                    ))}
+
+                                    {/* Conferma, correzione, rifiuto. */}
+                                    {contesto.ruolo === "impresa" &&
+                                      c.valore !== null && (
+                                        <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-line pt-2">
+                                          {c.stato === "confermato" ? (
+                                            <span className="text-[11px] font-semibold text-mint">
+                                              Confermato da te
+                                            </span>
+                                          ) : c.stato === "rifiutato" ? (
+                                            <span className="text-[11px] font-medium text-gray-light">
+                                              Scartato: non entra in nessun
+                                              documento.
+                                            </span>
+                                          ) : (
+                                            <>
+                                              <form
+                                                action={async () => {
+                                                  "use server";
+                                                  await confermaCampo(c.id);
+                                                }}
+                                              >
+                                                <button
+                                                  type="submit"
+                                                  className="rounded-lg bg-pine px-2.5 py-1 text-[11px] font-semibold text-white"
+                                                >
+                                                  Confermo
+                                                </button>
+                                              </form>
+                                              <form
+                                                action={async (
+                                                  formData: FormData,
+                                                ) => {
+                                                  "use server";
+                                                  await correggiCampo(
+                                                    c.id,
+                                                    String(
+                                                      formData.get("valore") ?? "",
+                                                    ),
+                                                  );
+                                                }}
+                                                className="flex items-center gap-1"
+                                              >
+                                                <label
+                                                  htmlFor={`v-${c.id}`}
+                                                  className="sr-only"
+                                                >
+                                                  Correggi {c.etichetta}
+                                                </label>
+                                                <input
+                                                  id={`v-${c.id}`}
+                                                  name="valore"
+                                                  defaultValue={c.valore}
+                                                  className="w-28 rounded-lg border border-line px-2 py-1 text-[11px] text-ink outline-none focus:border-mint"
+                                                />
+                                                <button
+                                                  type="submit"
+                                                  className="rounded-lg border border-line px-2 py-1 text-[11px] font-medium text-gray-warm hover:border-pine hover:text-pine"
+                                                >
+                                                  Correggo
+                                                </button>
+                                              </form>
+                                              <form
+                                                action={async () => {
+                                                  "use server";
+                                                  await rifiutaCampo(c.id);
+                                                }}
+                                              >
+                                                <button
+                                                  type="submit"
+                                                  className="rounded-lg px-2 py-1 text-[11px] font-medium text-gray-light hover:text-amber-ink"
+                                                >
+                                                  Non è giusto
+                                                </button>
+                                              </form>
+                                            </>
+                                          )}
+                                        </div>
+                                      )}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                            <p className="mt-2 border-t border-line pt-2 text-[11px] leading-relaxed text-gray-light">
+                              Finché non li confermi, questi dati restano fuori
+                              dai calcoli e dai documenti: li abbiamo letti noi,
+                              ma è la tua conferma a farli valere.
+                            </p>
+                          </div>
+                        )}
+
                         {/* Da classificare: si chiede, senza indovinare. */}
                         {d.stato === "da_classificare" &&
                           contesto.ruolo === "impresa" && (
@@ -370,8 +594,9 @@ export default async function DocumentiPage({
       <p className="mt-8 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-line pt-5 text-xs leading-relaxed text-gray-light">
         <span>
           I file restano in un archivio privato della tua impresa, in Unione
-          Europea. Oggi li riconosciamo dal nome; la lettura del contenuto
-          arriva con la prossima tappa.
+          Europea. Li riconosciamo dal nome e, dove sappiamo farlo, ne
+          leggiamo il contenuto: ogni dato letto porta la pagina da cui
+          viene e aspetta la tua conferma prima di contare.
         </span>
         <Link
           href="/privacy"

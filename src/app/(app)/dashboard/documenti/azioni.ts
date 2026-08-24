@@ -11,6 +11,9 @@ import {
   statoIniziale,
   tipoDocumento,
 } from "@/lib/documenti";
+import { siSaLeggere } from "@/lib/motore/famiglie";
+import { eseguiLettura } from "@/lib/motore/registra";
+import { annoRendicontazioneDefault } from "@/lib/periodo";
 
 /**
  * Azioni dell'hub documenti.
@@ -172,6 +175,131 @@ export async function eliminaDocumento(id: string) {
   if (error) return;
 
   await supabase.from("documents").delete().eq("id", id);
+  aggiornaViste();
+}
+
+/* ================================================================== */
+/* IL MOTORE — lettura del contenuto (docs/motore.md)                  */
+/* ================================================================== */
+
+/**
+ * Legge un documento e ne registra i campi.
+ *
+ * Le due cose che questa azione NON fa, e sono le più importanti: non
+ * scrive niente a stato `confermato` — i campi nascono sempre da
+ * confermare — e non legge documenti che non siano dell'organizzazione di
+ * chi chiede, perché il documento si recupera col client di sessione e la
+ * RLS non lascia passare gli altri.
+ */
+export async function leggiDocumentoAzione(
+  id: string,
+): Promise<{ ok: boolean; messaggio: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, messaggio: "Sessione scaduta: rientra e riprova." };
+  }
+
+  // Il documento si legge con la RLS attiva: se non è tuo, non esiste.
+  const { data: documento } = await supabase
+    .from("documents")
+    .select("id, organization_id, percorso, mime, tipo, stato")
+    .eq("id", id)
+    .maybeSingle();
+  if (!documento) {
+    return { ok: false, messaggio: "Documento non trovato." };
+  }
+
+  const { data: profilo } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  // Il consulente legge il fascicolo del cliente, non ci scrive dentro:
+  // la lettura di un documento crea dati che il cliente dovrà confermare,
+  // e chi conferma dev'essere chi risponde di quei dati.
+  if (profilo?.organization_id !== documento.organization_id) {
+    return {
+      ok: false,
+      messaggio: "La lettura dei documenti la avvia l'impresa titolare.",
+    };
+  }
+
+  if (!siSaLeggere(documento.tipo)) {
+    return {
+      ok: false,
+      messaggio:
+        "Questo tipo di documento non lo sappiamo ancora leggere: resta in archivio e alimenta i percorsi come prima.",
+    };
+  }
+  if (documento.stato === "in_lettura") {
+    return { ok: false, messaggio: "Questo documento è già in lettura." };
+  }
+
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("anno_rendicontazione")
+    .eq("id", documento.organization_id)
+    .maybeSingle();
+
+  const esito = await eseguiLettura({
+    documentId: documento.id,
+    organizationId: documento.organization_id,
+    percorso: documento.percorso,
+    mime: documento.mime,
+    tipo: documento.tipo as string,
+    annoRendicontazione:
+      org?.anno_rendicontazione ?? annoRendicontazioneDefault(),
+  });
+
+  aggiornaViste();
+  return { ok: esito.ok, messaggio: esito.messaggio };
+}
+
+/**
+ * Il cliente conferma un campo: da qui in poi il dato conta. È il gesto
+ * che fa salire l'anello a peso pieno, ed è anche il posizionamento
+ * legale del prodotto — l'AI assiste, il cliente valida.
+ */
+export async function confermaCampo(id: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("document_fields")
+    .update({ stato: "confermato", confirmed_at: new Date().toISOString() })
+    .eq("id", id);
+  aggiornaViste();
+}
+
+/** Il cliente dice che il dato è sbagliato: non si ripropone. */
+export async function rifiutaCampo(id: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("document_fields")
+    .update({ stato: "rifiutato", confirmed_at: null })
+    .eq("id", id);
+  aggiornaViste();
+}
+
+/**
+ * Il cliente corregge il valore e con ciò lo conferma: se l'ha scritto
+ * lui, è confermato per definizione. La provenienza (pagina, estratto,
+ * confidenza) resta quella della lettura: dice come ci eravamo arrivati
+ * noi, e serve a capire perché avevamo sbagliato.
+ */
+export async function correggiCampo(id: string, valore: string) {
+  const pulito = valore.trim().slice(0, 500);
+  if (pulito.length === 0) return;
+  const supabase = await createClient();
+  await supabase
+    .from("document_fields")
+    .update({
+      valore: pulito,
+      stato: "confermato",
+      confirmed_at: new Date().toISOString(),
+    })
+    .eq("id", id);
   aggiornaViste();
 }
 

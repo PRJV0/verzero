@@ -17,10 +17,12 @@ import { createClient } from "@/lib/supabase/server";
 import { AVVIO } from "@/lib/avvio";
 import { getServizio } from "@/lib/catalog";
 import {
+  bozzaConDocumenti,
   componentiPercorso,
   completamentoBozza,
   type CampiNoti,
 } from "@/lib/bozza";
+import { raggruppaLetture } from "@/lib/motore/portale";
 import { isUnaTantum } from "@/lib/pricing";
 import { suggerimenti } from "@/lib/suggerimenti";
 
@@ -67,7 +69,13 @@ export default async function PanoramicaPage({
       ? `${href}?cliente=${contesto.org.id}`
       : href;
 
-  const [{ data: moduli }, { data: ordini }, { data: righeScheda }] =
+  const [
+    { data: moduli },
+    { data: ordini },
+    { data: righeScheda },
+    { data: documenti },
+    { data: campiLetti },
+  ] =
     contesto.org
       ? await Promise.all([
           supabase
@@ -84,15 +92,44 @@ export default async function PanoramicaPage({
             .from("company_fields")
             .select("campo, valore, provenienza, fonte, fonte_url, stato")
             .eq("organization_id", contesto.org.id),
+          supabase
+            .from("documents")
+            .select("id, tipo, stato")
+            .eq("organization_id", contesto.org.id),
+          supabase
+            .from("document_fields")
+            .select("document_id, campo, etichetta, valore, unita, stato")
+            .eq("organization_id", contesto.org.id),
         ])
-      : [{ data: [] }, { data: [] }, { data: [] }];
+      : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }, { data: [] }];
 
   // Un campo RIFIUTATO dal cliente non entra in nessun documento: la sua
   // riga resta solo perché il Motore non lo riproponga (SPEC §12.D).
   const campiNoti: CampiNoti = Object.fromEntries(
     (righeScheda ?? [])
       .filter((r) => r.valore && r.stato !== "rifiutato")
-      .map((r) => [r.campo, { valore: r.valore as string, fonte: r.fonte }]),
+      .map((r) => [
+        r.campo,
+        {
+          valore: r.valore as string,
+          fonte: r.fonte,
+          // Non ancora confermato: entra nel foglio ma non porta la
+          // sezione a peso pieno (docs/motore.md §4.4).
+          daConfermare: r.stato === "da_confermare",
+        },
+      ]),
+  );
+
+  // I tipi in archivio e i dati già letti: sono ciò che fa muovere
+  // l'anello quando arriva un documento e quando lo si legge.
+  const tipiCaricati = new Set(
+    (documenti ?? [])
+      .filter((d) => d.tipo && d.stato !== "non_pertinente")
+      .map((d) => d.tipo as string),
+  );
+  const datiLetti = raggruppaLetture(
+    campiLetti ?? [],
+    Object.fromEntries((documenti ?? []).map((d) => [d.id, d.tipo])),
   );
 
   // IL RICONOSCIMENTO (brief §3.4): quanto sappiamo già dell'impresa
@@ -212,7 +249,12 @@ export default async function PanoramicaPage({
             {attivi.map((m) => {
               const s = getServizio(m.module);
               const componenti = contesto.org
-                ? componentiPercorso(m.module, contesto.org, campiNoti)
+                ? componentiPercorso(m.module, contesto.org, campiNoti).map(
+                    (c) => ({
+                      ...c,
+                      bozza: bozzaConDocumenti(c.bozza, tipiCaricati, datiLetti),
+                    }),
+                  )
                 : [];
               return (
                 <article

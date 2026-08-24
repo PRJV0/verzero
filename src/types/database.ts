@@ -170,9 +170,70 @@ type Documento = {
   tipo: string | null;
   /** Vero quando è stato il cliente a dirlo, non una regola sul nome. */
   tipo_confermato: boolean;
-  stato: "smistato" | "da_classificare" | "non_pertinente";
+  stato:
+    | "smistato"
+    | "da_classificare"
+    | "non_pertinente"
+    /** Il Motore lo sta leggendo adesso. */
+    | "in_lettura"
+    /** Letto: i campi stanno in `document_fields`. */
+    | "letto"
+    /** Provato a leggere e non si legge: `lettura_nota` dice perché. */
+    | "illeggibile";
+  /** Il motivo, in italiano, da mostrare in pagina. */
+  lettura_nota: string | null;
+  letto_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+/**
+ * Un campo estratto da un documento (docs/motore.md §4). Ogni riga porta
+ * la propria verificabilità: confidenza, pagina, e la stringa così com'è
+ * scritta nel documento. Nasce sempre `da_confermare`.
+ */
+type CampoDocumento = {
+  id: string;
+  document_id: string;
+  organization_id: string;
+  campo: string;
+  etichetta: string;
+  valore: string | null;
+  unita: string | null;
+  confidenza: number;
+  pagina: number | null;
+  estratto_da: string | null;
+  fonte_lettura: "testo" | "immagine" | "manoscritto";
+  nota: string | null;
+  avvisi: string[];
+  stato: "da_confermare" | "confermato" | "rifiutato";
+  confirmed_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Log tecnico del Motore: solo back-office, nessuna policy per gli utenti. */
+type Estrazione = {
+  id: string;
+  document_id: string | null;
+  organization_id: string | null;
+  famiglia: string | null;
+  tipo: string | null;
+  versione_schema: string | null;
+  modello: string;
+  esito: "ok" | "altro_tipo" | "illeggibile" | "non_valido" | "errore";
+  qualita: string | null;
+  pdf_nativo: boolean | null;
+  pagine: number | null;
+  token_ingresso: number | null;
+  token_uscita: number | null;
+  /** Milionesimi di dollaro, interi. */
+  costo_micro: number | null;
+  durata_ms: number | null;
+  avvisi: string[] | null;
+  errore: string | null;
+  grezzo: unknown;
+  created_at: string;
 };
 
 /** Registro eventi: analitica di prima parte, senza cookie. Scritto
@@ -222,6 +283,8 @@ export type Database = {
       company_fields: Row<CompanyField>;
       enrichment_runs: Row<EnrichmentRun>;
       documents: Row<Documento>;
+      document_fields: Row<CampoDocumento>;
+      extractions: Row<Estrazione>;
       events: Row<Evento>;
       waitlist: Row<Waitlist>;
     };

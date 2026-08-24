@@ -3,9 +3,12 @@ import { NumeroCheSale } from "@/components/numero-che-sale";
 /**
  * L'anello del Sigillo come cruscotto (SPEC §12.G + §12.E).
  *
- * Un segmento per sezione della bozza, con quattro livelli che
+ * Un segmento per sezione della bozza, con cinque livelli che
  * raccontano lo stato reale del documento:
- *   PIENA (menta accesa) — la sezione ha i dati veri dentro;
+ *   PIENA (menta accesa) — dati veri dentro, CONFERMATI dal cliente;
+ *   LETTA (menta viva)   — il Motore ha letto, il cliente non ha ancora
+ *                          confermato: si vede la salita, ma l'ultimo
+ *                          tratto resta al gesto umano;
  *   QUASI (menta media)  — i documenti sono arrivati, manca la lettura;
  *   MEZZA (menta tenue)  — struttura e norma impostate, contenuto in arrivo;
  *   VUOTA (grigio)       — sezione ancora in attesa.
@@ -22,7 +25,7 @@ export function AnelloSigillo({
   dimensione = 112,
   chiave,
 }: {
-  segmenti: ("piena" | "quasi" | "mezza" | "vuota")[];
+  segmenti: ("piena" | "letta" | "quasi" | "mezza" | "vuota")[];
   percentuale: number;
   dimensione?: number;
   /** Identifica l'anello fra un accesso e l'altro: serve al numero che
@@ -45,22 +48,28 @@ export function AnelloSigillo({
     return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${R} ${R} 0 ${ampiezza > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
   };
 
-  // Quattro livelli, non tre: «quasi» è la sezione che ha ricevuto i
-  // documenti e aspetta solo la lettura. Senza questo gradino, caricare
-  // una bolletta non muoverebbe nulla sotto gli occhi del cliente.
+  // Cinque livelli, e ognuno costa un gradino guadagnato: «quasi» è la
+  // sezione che ha ricevuto i documenti e aspetta la lettura, «letta»
+  // quella che ha i dati dentro ma non ancora la conferma del cliente.
+  // Senza il quarto gradino, leggere una bolletta non muoverebbe nulla
+  // sotto gli occhi di chi guarda; senza la distinzione fra «letta» e
+  // «piena», l'anello direbbe che il lavoro è finito quando manca proprio
+  // il gesto su cui si regge il prodotto.
   const colore = {
     piena: "#1D9E75",
+    letta: "#3BAF86",
     quasi: "#5FBF9B",
     mezza: "#9ED9C2",
     vuota: "#DCE4DD",
   };
   const piene = segmenti.filter((s) => s === "piena").length;
+  const lette = segmenti.filter((s) => s === "letta").length;
 
   return (
     <svg
       viewBox="0 0 100 100"
       role="img"
-      aria-label={`Bozza al ${percentuale} per cento: ${piene} sezioni su ${totale} compilate coi tuoi dati`}
+      aria-label={`Bozza al ${percentuale} per cento: ${piene} sezioni su ${totale} compilate con dati confermati${lette > 0 ? `, ${lette} in attesa della tua conferma` : ""}`}
       style={{ width: dimensione, height: dimensione }}
       className="vz-anello-vivo shrink-0"
     >

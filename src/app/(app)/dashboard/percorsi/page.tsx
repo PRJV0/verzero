@@ -25,6 +25,7 @@ import {
   type SezioneBozza,
 } from "@/lib/bozza";
 import { tipiRichiesti, tipoDocumento } from "@/lib/documenti";
+import { raggruppaLetture } from "@/lib/motore/portale";
 import { AVVIO, DOPO_AVVIO } from "@/lib/avvio";
 
 import { CaricaDocumenti } from "../documenti/carica";
@@ -87,6 +88,13 @@ function SezioneFoglio({
           <span className="shrink-0 rounded-full bg-mint/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-mint">
             Documenti ricevuti
           </span>
+        ) : sezione.stato === "letta" ? (
+          // Letta ma non confermata: l'etichetta dice ESATTAMENTE a che
+          // punto siamo. «Dall'AI Ver0» qui suonerebbe come «fatto», e non
+          // lo è finché il cliente non ha guardato i numeri.
+          <span className="shrink-0 rounded-full bg-amber-soft px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-ink">
+            Letta · da confermare
+          </span>
         ) : (
           <span className="shrink-0 rounded-full bg-mint/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-mint">
             Dall&apos;AI Ver0{sezione.fonte ? ` · ${sezione.fonte}` : ""}
@@ -100,7 +108,8 @@ function SezioneFoglio({
         </p>
       )}
 
-      {sezione.stato === "popolata" && sezione.righe && (
+      {(sezione.stato === "popolata" || sezione.stato === "letta") &&
+        sezione.righe && (
         <dl className="mt-2 space-y-1">
           {sezione.righe.map((r) => (
             <div
@@ -114,6 +123,18 @@ function SezioneFoglio({
             </div>
           ))}
         </dl>
+      )}
+
+      {sezione.stato === "letta" && (
+        <p className="mt-1.5 text-xs leading-relaxed text-amber-ink">
+          Questi valori li ha letti l&apos;AI Ver0 dai tuoi documenti e
+          aspettano la tua conferma: finché non la dai restano fuori dal
+          calcolo.{" "}
+          <Link href="/dashboard/documenti" className="font-semibold underline">
+            Controllali
+          </Link>
+          .
+        </p>
       )}
 
       {sezione.stato === "impostata" && <RigheAccennate quante={2} />}
@@ -162,6 +183,7 @@ function FoglioComponente({
   const percentuale = completamentoBozza(bozza);
   const segmenti = segmentiBozza(bozza);
   const conDati = segmenti.filter((s) => s === "piena").length;
+  const lette = segmenti.filter((s) => s === "letta").length;
   const ricevute = segmenti.filter((s) => s === "quasi").length;
   const impostate = segmenti.filter((s) => s === "mezza").length;
   const mancanti = bozza.daFornire.filter(
@@ -199,6 +221,15 @@ function FoglioComponente({
               {conDati} {conDati === 1 ? "sezione" : "sezioni"}
             </span>{" "}
             {conDati === 1 ? "compilata" : "compilate"} coi tuoi dati
+            {lette > 0 && (
+              <>
+                ,{" "}
+                <span className="font-semibold tabular-nums text-amber-ink">
+                  {lette}
+                </span>{" "}
+                {lette === 1 ? "letta" : "lette"} e in attesa della tua conferma
+              </>
+            )}
             {ricevute > 0 && (
               <>
                 ,{" "}
@@ -424,7 +455,12 @@ export default async function PercorsiPage({
   const contesto = await caricaContesto(cliente, "/dashboard/percorsi");
   const supabase = await createClient();
 
-  const [{ data: moduli }, { data: righeScheda }, { data: documenti }] =
+  const [
+    { data: moduli },
+    { data: righeScheda },
+    { data: documenti },
+    { data: campiLetti },
+  ] =
     contesto.org
       ? await Promise.all([
           supabase
@@ -438,10 +474,14 @@ export default async function PercorsiPage({
             .eq("organization_id", contesto.org.id),
           supabase
             .from("documents")
-            .select("tipo, stato")
+            .select("id, tipo, stato")
+            .eq("organization_id", contesto.org.id),
+          supabase
+            .from("document_fields")
+            .select("document_id, campo, etichetta, valore, unita, stato")
             .eq("organization_id", contesto.org.id),
         ])
-      : [{ data: [] }, { data: [] }, { data: [] }];
+      : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }];
 
   // I tipi già in archivio: è ciò che fa cambiare stato alle sezioni e
   // alle voci del fascicolo, e muovere l'anello (SPEC §12.E).
@@ -459,8 +499,29 @@ export default async function PercorsiPage({
   const campiNoti: CampiNoti = Object.fromEntries(
     (righeScheda ?? [])
       .filter((r) => r.valore && r.stato !== "rifiutato")
-      .map((r) => [r.campo, { valore: r.valore as string, fonte: r.fonte }]),
+      .map((r) => [
+        r.campo,
+        {
+          valore: r.valore as string,
+          fonte: r.fonte,
+          // Un campo recuperato dal Motore e non ancora confermato entra
+          // nel foglio — è il modo in cui il cliente lo vede — ma tiene la
+          // sezione a «letta»: l'anello sale a peso pieno solo dopo la
+          // conferma (docs/motore.md §4.4).
+          daConfermare: r.stato === "da_confermare",
+        },
+      ]),
   );
+
+  // Quello che il Motore ha LETTO dai documenti, raggruppato per tipo: è
+  // la chiave con cui le sezioni dichiarano cosa aspettano, e per questo
+  // i valori compaiono nella sezione giusta invece che in un pannello a
+  // parte che non significa niente per chi legge.
+  const tipoPerDocumento = Object.fromEntries(
+    (documenti ?? []).map((d) => [d.id, d.tipo]),
+  );
+  const datiLetti = raggruppaLetture(campiLetti ?? [], tipoPerDocumento);
+
   const attiviDocs = documentiAttivi(attivi.map((m) => m.module));
 
   // I due numeri che rendono concrete le azioni proposte a chi aspetta
@@ -498,7 +559,7 @@ export default async function PercorsiPage({
               ? componentiPercorso(m.module, contesto.org, campiNoti).map(
                   (c) => ({
                     ...c,
-                    bozza: bozzaConDocumenti(c.bozza, tipiCaricati),
+                    bozza: bozzaConDocumenti(c.bozza, tipiCaricati, datiLetti),
                   }),
                 )
               : [];
