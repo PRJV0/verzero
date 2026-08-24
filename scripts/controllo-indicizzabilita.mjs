@@ -146,7 +146,7 @@ const campione = [
 for (const agente of Object.keys(AGENTI)) {
   const righe = [];
   for (const u of campione) {
-    const r = await ispeziona(u, agente);
+    const r = await ispeziona(daInterrogare(u), agente);
     const ok =
       r.stato === 200 &&
       !/noindex|none/i.test(r.xRobots ?? "") &&

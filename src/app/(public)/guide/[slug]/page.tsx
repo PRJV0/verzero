@@ -58,6 +58,10 @@ export default async function GuidaPage({
   const g = getGuida(slug);
   if (!g) notFound();
 
+  const correlate = (g.correlate ?? [])
+    .map((c) => getGuida(c))
+    .filter((c): c is NonNullable<typeof c> => Boolean(c));
+
   return (
     <main className="mx-auto max-w-2xl px-5 py-12">
       <JsonLd
@@ -68,7 +72,16 @@ export default async function GuidaPage({
           aggiornatoIl: VERIFICATE_IL.iso,
         })}
       />
-      <JsonLd dati={jsonLdFaq([{ domanda: g.domanda, risposta: g.risposta }])} />
+      {/* FAQPage: la domanda del titolo con la sua risposta d'apertura,
+          più le domande in fondo alla guida. Tutte visibili in pagina,
+          carattere per carattere: il markup non dichiara nulla che il
+          lettore non trovi. */}
+      <JsonLd
+        dati={jsonLdFaq([
+          { domanda: g.domanda, risposta: g.risposta },
+          ...(g.domande ?? []),
+        ])}
+      />
       <JsonLd
         dati={jsonLdBreadcrumb([
           { nome: "Home", path: "/" },
@@ -96,6 +109,19 @@ export default async function GuidaPage({
         {g.risposta}
       </p>
 
+      {/* Il corpo: solo per le guide che hanno qualcosa da spiegare oltre
+          alla risposta. Le altre rispondono e basta. */}
+      {g.sezioni?.map((s) => (
+        <section key={s.titolo}>
+          <h2 className="mt-9 font-display text-2xl text-ink">{s.titolo}</h2>
+          {s.paragrafi.map((par) => (
+            <p key={par} className="mt-2 text-[15px] leading-relaxed text-gray-warm">
+              {par}
+            </p>
+          ))}
+        </section>
+      ))}
+
       <h2 className="mt-9 font-display text-2xl text-ink">
         Che cosa comporta per la tua impresa
       </h2>
@@ -116,9 +142,47 @@ export default async function GuidaPage({
           <span className="sr-only">(si apre in una nuova scheda)</span>
         </a>
       </p>
+      {g.altreFonti?.map((f) => (
+        <p key={f.url} className="mt-1.5 text-sm leading-relaxed text-gray-warm">
+          <a
+            href={f.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-start gap-1 font-medium text-pine hover:underline"
+          >
+            <span className="min-w-0">{f.testo}</span>
+            <ArrowUpRight size={13} aria-hidden className="mt-0.5 shrink-0" />
+            <span className="sr-only">(si apre in una nuova scheda)</span>
+          </a>
+        </p>
+      ))}
       <p className="mt-1.5 text-xs text-gray-light">
         Verificata il {VERIFICATE_IL.esteso}.
       </p>
+
+      {/* Le domande in fondo: le stesse marcate in FAQPage. */}
+      {g.domande && g.domande.length > 0 && (
+        <section aria-labelledby="altre-domande">
+          <h2
+            id="altre-domande"
+            className="mt-9 font-display text-2xl text-ink"
+          >
+            Altre domande
+          </h2>
+          <dl className="mt-3 divide-y divide-line border-y border-line">
+            {g.domande.map((d) => (
+              <div key={d.domanda} className="py-4">
+                <dt className="font-display text-lg leading-snug text-ink">
+                  {d.domanda}
+                </dt>
+                <dd className="mt-1.5 text-sm leading-relaxed text-gray-warm">
+                  {d.risposta}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
 
       {g.percorsi.length > 0 && (
         <>
@@ -152,6 +216,38 @@ export default async function GuidaPage({
                 </li>
               );
             })}
+          </ul>
+        </>
+      )}
+
+      {correlate.length > 0 && (
+        <>
+          <h2 className="mt-9 font-display text-2xl text-ink">
+            Guide collegate
+          </h2>
+          <ul className="mt-3 space-y-2">
+            {correlate.map((c) => (
+              <li key={c.slug}>
+                <Link
+                  href={`/guide/${c.slug}`}
+                  className="group flex items-center justify-between gap-3 rounded-xl border border-line bg-white p-4 transition-colors hover:border-pine"
+                >
+                  <span className="min-w-0">
+                    <span className="block font-display text-lg leading-tight text-ink">
+                      {c.domanda}
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-gray-warm">
+                      {c.descrizione}
+                    </span>
+                  </span>
+                  <ArrowUpRight
+                    size={16}
+                    aria-hidden
+                    className="shrink-0 text-pine transition-transform group-hover:translate-x-0.5"
+                  />
+                </Link>
+              </li>
+            ))}
           </ul>
         </>
       )}

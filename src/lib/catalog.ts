@@ -21,6 +21,26 @@ import {
  * vincoli / Opportunità. Revisione finale col fondatore prima dei piloti.
  *
  * I prezzi NON vivono qui: fonte unica in src/lib/pricing.ts (§12.X, §12.Q).
+ *
+ * ═══ LE DESIGNAZIONI DELLE NORME SI RIVERIFICANO ═══
+ *
+ * Non basta scriverle giuste una volta: le norme vengono ritirate e
+ * sostituite, e una designazione superata in una pagina che vende
+ * conformità è la peggiore figura possibile. Controllate su store.uni.com
+ * il 24 agosto 2026, che è la fonte ufficiale per la designazione
+ * italiana:
+ *
+ *   UNI EN ISO 9001:2015+A1:2024   in vigore dal 16 ottobre 2024
+ *                                  (la 9001:2015 semplice è ritirata)
+ *   UNI EN ISO 14001:2026          in vigore dal 15 aprile 2026
+ *                                  (la 14001:2015+A1:2024 è ritirata)
+ *   UNI EN ISO 45001:2023+A1:2024  (la UNI ISO 45001:2018 è ritirata
+ *                                  dal 28 settembre 2023)
+ *   UNI EN ISO 14064-1:2019        in vigore dall'11 aprile 2019
+ *   UNI/PdR 125:2022               in vigore dal 16 marzo 2022
+ *
+ * L'aggiornamento «A1:2024» è quello sul cambiamento climatico, che nel
+ * 2024 ha toccato tutte le norme sui sistemi di gestione.
  */
 export type Servizio = {
   slug: string;
@@ -336,10 +356,10 @@ export const SERVIZI: Servizio[] = [
     perChi:
       "Serve alle imprese che devono ottenere o rinnovare la certificazione ISO 9001, richiesta come requisito o come premialità in bandi pubblici e qualifiche fornitori.",
     name: "Manuale del Sistema di Gestione ISO 9001",
-    taglio: "UNI EN ISO 9001:2015 — qualità",
+    taglio: "UNI EN ISO 9001:2015+A1:2024 — qualità",
     icon: Scale,
     short: "Il sistema qualità documentato, pronto per l'audit dell'ente terzo.",
-    cosE: "L'impianto documentale completo di un sistema di gestione per la qualità conforme a UNI EN ISO 9001:2015, generato sui dati e sui processi reali della tua azienda: manuale, politica, procedure e modulistica secondo la struttura di alto livello della norma (punti 4–10).",
+    cosE: "L'impianto documentale completo di un sistema di gestione per la qualità conforme a UNI EN ISO 9001:2015+A1:2024, generato sui dati e sui processi reali della tua azienda: manuale, politica, procedure e modulistica secondo la struttura di alto livello della norma (punti 4–10).",
     comeFunziona: [
       "La piattaforma precompila contesto e anagrafica dai dati camerali; un questionario guidato raccoglie processi, ruoli e responsabilità.",
       "L'AI Ver0 genera i documenti sezione per sezione, applicando i requisiti della norma alla tua realtà operativa.",
@@ -353,7 +373,7 @@ export const SERVIZI: Servizio[] = [
       "Scadenzario di audit interni e riesami incluso nel mantenimento",
     ],
     requisiti: [
-      "Il testo ufficiale della norma UNI EN ISO 9001:2015 è protetto da diritto d'autore: l'acquisto resta a carico del cliente",
+      "Il testo ufficiale della norma UNI EN ISO 9001:2015+A1:2024 è protetto da diritto d'autore: l'acquisto resta a carico del cliente",
       "La certificazione è rilasciata esclusivamente da organismi accreditati dopo audit: Ver0 prepara l'impianto documentale, non certifica",
       "Serve la disponibilità di chi conosce i processi interni per il questionario iniziale",
     ],
@@ -364,7 +384,7 @@ export const SERVIZI: Servizio[] = [
       "Elenco di clienti e fornitori critici (per contesto e parti interessate)",
       "Eventuali certificazioni già possedute e relativi rapporti di audit",
     ],
-    riferimenti: ["UNI EN ISO 9001:2015 (struttura HLS, punti 4-10)"],
+    riferimenti: ["UNI EN ISO 9001:2015+A1:2024 (struttura HLS, punti 4-10)"],
     opportunita: [
       "La certificazione 9001 è requisito o premialità in bandi pubblici e qualifiche fornitori",
       "Impianto costruito sui tuoi processi reali: manuale e procedure rispecchiano come lavori davvero",
@@ -376,11 +396,11 @@ export const SERVIZI: Servizio[] = [
     perChi:
       "Serve alle imprese che devono presentarsi con un sistema di gestione ambientale certificabile in bandi, appalti verdi e qualifiche di filiera.",
     name: "Manuale del Sistema di Gestione ISO 14001",
-    taglio: "UNI EN ISO 14001:2015 — ambiente",
+    taglio: "UNI EN ISO 14001:2026 — ambiente",
     icon: Scale,
     short:
       "Il sistema di gestione ambientale documentato, pronto per l'audit dell'ente terzo.",
-    cosE: "L'impianto documentale completo di un sistema di gestione ambientale conforme a UNI EN ISO 14001:2015: analisi ambientale, aspetti e impatti, obblighi di conformità, procedure e modulistica secondo la struttura di alto livello della norma.",
+    cosE: "L'impianto documentale completo di un sistema di gestione ambientale conforme a UNI EN ISO 14001:2026: analisi ambientale, aspetti e impatti, obblighi di conformità, procedure e modulistica secondo la struttura di alto livello della norma.",
     comeFunziona: [
       "L'analisi ambientale parte precompilata dai tuoi dati carbon, se il modulo è attivo: consumi, emissioni e aspetti già mappati.",
       "Un questionario guidato completa aspetti ambientali, prescrizioni applicabili e controlli operativi.",
@@ -394,7 +414,7 @@ export const SERVIZI: Servizio[] = [
       "Scadenzario di audit interni e riesami",
     ],
     requisiti: [
-      "Il testo ufficiale della norma UNI EN ISO 14001:2015 resta a carico del cliente (diritto d'autore)",
+      "Il testo ufficiale della norma UNI EN ISO 14001:2026 resta a carico del cliente (diritto d'autore)",
       "La certificazione è rilasciata esclusivamente da organismi accreditati dopo audit: Ver0 prepara, non certifica",
       "L'analisi ambientale richiede i dati di consumo: il percorso rende al meglio con il modulo carbon attivo",
     ],
@@ -405,7 +425,7 @@ export const SERVIZI: Servizio[] = [
       "Registri dei rifiuti (MUD o formulari) e contratti di smaltimento",
       "Dati di consumo energetico o modulo carbon attivo",
     ],
-    riferimenti: ["UNI EN ISO 14001:2015 (struttura HLS, punti 4-10)"],
+    riferimenti: ["UNI EN ISO 14001:2026 (struttura HLS, punti 4-10)"],
     opportunita: [
       "Requisito o premialità in bandi, appalti verdi e qualifiche di filiera",
       "Con i dati carbon già in piattaforma l'analisi ambientale nasce precompilata: meno lavoro, più coerenza",
@@ -457,11 +477,11 @@ export const SERVIZI: Servizio[] = [
     perChi:
       "Serve alle imprese che hanno già un DVR in vigore e vogliono strutturare la sicurezza sul lavoro in un sistema di gestione certificabile.",
     name: "Manuale del Sistema di Gestione ISO 45001",
-    taglio: "UNI ISO 45001:2018 — sicurezza, DVR escluso",
+    taglio: "UNI EN ISO 45001:2023+A1:2024 — sicurezza, DVR escluso",
     icon: ShieldCheck,
     short:
       "Il sistema di gestione della sicurezza sul lavoro, integrato con il tuo DVR.",
-    cosE: "L'impianto documentale del sistema di gestione della salute e sicurezza sul lavoro secondo UNI ISO 45001:2018: politica, analisi del contesto, ruoli e responsabilità, procedure operative, gestione delle emergenze, monitoraggio, audit interni e riesame della direzione. Il sistema si innesta sulla valutazione dei rischi che l'impresa ha già.",
+    cosE: "L'impianto documentale del sistema di gestione della salute e sicurezza sul lavoro secondo UNI EN ISO 45001:2023+A1:2024: politica, analisi del contesto, ruoli e responsabilità, procedure operative, gestione delle emergenze, monitoraggio, audit interni e riesame della direzione. Il sistema si innesta sulla valutazione dei rischi che l'impresa ha già.",
     // Il confine va detto prima di ogni cosa: è la differenza tra un
     // servizio corretto e una promessa che non possiamo mantenere.
     perimetro:
@@ -469,7 +489,7 @@ export const SERVIZI: Servizio[] = [
     perimetroBreve:
       "Il DVR non è incluso: resta obbligo del datore di lavoro.",
     copre: [
-      "Sistema di gestione UNI ISO 45001:2018",
+      "Sistema di gestione UNI EN ISO 45001:2023+A1:2024",
       "Integrazione con il DVR esistente",
       "DVR escluso: resta del datore di lavoro",
     ],
@@ -480,7 +500,7 @@ export const SERVIZI: Servizio[] = [
       "Un professionista del team tecnico verifica l'impianto prima della consegna; il fascicolo è pronto per l'audit dell'organismo accreditato.",
     ],
     output: [
-      "Manuale del sistema di gestione SSL secondo UNI ISO 45001:2018",
+      "Manuale del sistema di gestione SSL secondo UNI EN ISO 45001:2023+A1:2024",
       "Politica per la salute e sicurezza, procedure e modulistica operativa",
       "Piano di audit interni, indicatori di monitoraggio e verbale di riesame della direzione",
       "Matrice di correlazione tra requisiti della norma e documenti prodotti, per l'audit dell'ente",
@@ -500,7 +520,7 @@ export const SERVIZI: Servizio[] = [
       "Procedure, istruzioni operative e DUVRI già in uso, se esistenti",
     ],
     riferimenti: [
-      "UNI ISO 45001:2018 (sistemi di gestione per la salute e sicurezza sul lavoro)",
+      "UNI EN ISO 45001:2023+A1:2024 (sistemi di gestione per la salute e sicurezza sul lavoro)",
       "D.Lgs. 81/2008, in particolare artt. 17, 28, 29 e 30",
       "D.Lgs. 231/2001 per la responsabilità amministrativa degli enti",
     ],

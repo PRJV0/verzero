@@ -679,11 +679,11 @@ export function bozzaPercorso(
     case "bilancio-sostenibilita-vsme-avanzato":
       return bozzaVsme(org, true, campi);
     case "manuale-sistema-gestione-iso-9001":
-      return bozzaManualeIso(org, "UNI EN ISO 9001:2015", "ISO 9001", campi);
+      return bozzaManualeIso(org, "UNI EN ISO 9001:2015+A1:2024", "ISO 9001", campi);
     case "manuale-sistema-gestione-iso-14001":
-      return bozzaManualeIso(org, "UNI EN ISO 14001:2015", "ISO 14001", campi);
+      return bozzaManualeIso(org, "UNI EN ISO 14001:2026", "ISO 14001", campi);
     case "manuale-sistema-gestione-iso-45001":
-      return bozzaManualeIso(org, "UNI ISO 45001:2018", "ISO 45001", campi);
+      return bozzaManualeIso(org, "UNI EN ISO 45001:2023+A1:2024", "ISO 45001", campi);
     case "parita-di-genere-pdr-125":
       return bozzaPdr125(org, campi);
     case "percorso-ver0":
