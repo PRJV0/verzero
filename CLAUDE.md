@@ -31,6 +31,16 @@ Vale per ogni pagina nuova e per ogni pagina modificata. Le utilità stanno in
 9. **Core Web Vitals**: l'immagine sopra la piega usa `priority`, le altre
    restano `lazy`; i contenitori hanno rapporto d'aspetto fisso per non
    spostare il layout durante il caricamento.
+10. **Si controlla in produzione**, non a occhio:
+    `node scripts/controllo-indicizzabilita.mjs` interroga il sito con lo
+    user agent dei crawler (Googlebot, Bingbot, OAI-SearchBot,
+    Claude-SearchBot, PerplexityBot, GPTBot) e verifica per ogni URL
+    della sitemap stato, `X-Robots-Tag`, meta robots e canonical — che
+    deve combaciare con la riga di sitemap. Controlla anche che le aree
+    transazionali siano davvero fuori indice e che nessuna pagina
+    pubblica cada sotto un `Disallow`. Da rieseguire dopo ogni rilascio
+    che tocchi metadati, `robots.ts`, `sitemap.ts` o il proxy: un
+    `noindex` di troppo non si vede in pagina e non dà errore.
 
 ## Visibilità nelle risposte generate (AEO/GEO)
 

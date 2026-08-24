@@ -19,7 +19,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const url = (path: string) => `${SITO.url}${path}`;
 
   const pagine: MetadataRoute.Sitemap = PAGINE_PUBBLICHE.map((p) => ({
-    url: url(p.path),
+    // La home senza barra finale, come il canonical che Next emette.
+    // Non è pignoleria: `https://verzero.it/` e `https://verzero.it` sono
+    // lo stesso URL per la specifica, ma sitemap e canonical sono due
+    // segnali che dovrebbero dire la stessa cosa, e qui ne dicevano due
+    // versioni. Next normalizza il canonical della radice togliendo la
+    // barra e non lo si può forzare dall'altra parte: si allinea questa.
+    url: p.path === "/" ? SITO.url : url(p.path),
     lastModified: oggi,
     changeFrequency: p.frequenza,
     priority: p.priorita,
