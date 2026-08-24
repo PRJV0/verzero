@@ -76,6 +76,17 @@ export const TIPI_DOCUMENTO: TipoDocumento[] = [
     ],
   },
   {
+    chiave: "teleriscaldamento",
+    nome: "Bolletta del teleriscaldamento",
+    spiega: `La fattura del teleriscaldamento relativa a ${dodiciMesiDi(ANNO)}, se il sito è allacciato.`,
+    esempi: [`teleriscaldamento_${ANNO}.pdf`, "fattura-calore-a2a.pdf"],
+    indizi: [/\bteleriscaldamento\b/i, /\bteleriscald/i, /\benergia[_\s-]?termica\b/i],
+    destinazioni: [
+      { doc: DOC_CARBON, sezione: "Scope 2 — energia acquistata" },
+      { doc: DOC_VSME, sezione: "Indicatori ambientali" },
+    ],
+  },
+  {
     chiave: "carburanti",
     nome: "Registri o fatture dei carburanti",
     spiega: `Rifornimenti di flotta e mezzi d'opera del ${ANNO}: schede carburante o fatture.`,
@@ -112,11 +123,11 @@ export const TIPI_DOCUMENTO: TipoDocumento[] = [
   {
     chiave: "organico",
     nome: "Dati di organico aggregati",
-    spiega: `Addetti, contratti e formazione al 31 dicembre ${ANNO}, in forma aggregata: mai nominativi.`,
+    spiega: `Addetti, inquadramenti e retribuzioni medie al 31 dicembre ${ANNO}, per genere e in forma aggregata: mai nominativi.`,
     esempi: [`organico_${ANNO}.xlsx`, "dipendenti-aggregati.pdf"],
     indizi: [
       /\b(organico|addetti|dipendenti|personale|libro[_\s-]?unico|lul)\b/i,
-      /\bformazione\b/i,
+      /\b(retribuzion|inquadrament|organico[_\s-]?per[_\s-]?gener)/i,
     ],
     destinazioni: [
       { doc: DOC_VSME, sezione: "Indicatori sociali" },
@@ -132,6 +143,116 @@ export const TIPI_DOCUMENTO: TipoDocumento[] = [
     destinazioni: [
       { doc: DOC_VSME, sezione: "Governance" },
       { doc: DOC_PARITA, sezione: "Governance" },
+    ],
+  },
+  {
+    chiave: "formazione",
+    nome: "Registri di formazione e fogli firma",
+    spiega: `I corsi fatti nel ${ANNO}: registri, attestati o fogli firma, anche compilati a mano.`,
+    esempi: [`formazione_${ANNO}.xlsx`, "foglio-firme-corso-sicurezza.pdf"],
+    indizi: [
+      /\b(formazione|corso|corsi|addestramento)\b/i,
+      /\b(foglio|registro)[_\s-]?(firm|present)/i,
+      /\battestat/i,
+    ],
+    destinazioni: [
+      { doc: DOC_VSME, sezione: "Indicatori sociali" },
+      { doc: DOC_PARITA, sezione: "KPI quantitativi per area" },
+    ],
+  },
+  {
+    chiave: "manutenzione",
+    nome: "Registro di manutenzione",
+    spiega: "Gli interventi su macchine e impianti, anche su quaderno o modulo cartaceo.",
+    esempi: ["registro_manutenzioni.pdf", "manutenzione-linea-2.jpg"],
+    indizi: [
+      /\bmanutenzion/i,
+      /\b(registro|scheda)[_\s-]?(macchin|impiant)/i,
+      /\btaratur/i,
+    ],
+    destinazioni: [{ doc: "Manuale ISO 9001", sezione: "Controllo dei processi" }],
+  },
+  {
+    chiave: "verbali",
+    nome: "Verbali di riunione e riesame",
+    spiega: "I verbali del riesame di direzione o delle riunioni periodiche, anche a mano.",
+    esempi: ["verbale_riesame_direzione.pdf", "riunione-periodica-sicurezza.pdf"],
+    indizi: [
+      /\bverbal/i,
+      /\briesame\b/i,
+      /\briunione[_\s-]?(periodic|direzion)/i,
+    ],
+    destinazioni: [
+      { doc: "Manuale ISO 9001", sezione: "Riesame di direzione" },
+      { doc: DOC_VSME, sezione: "Governance" },
+    ],
+  },
+  {
+    chiave: "procedure",
+    nome: "Procedure e istruzioni operative",
+    spiega: "Le procedure già scritte e le istruzioni di lavoro, con codice e revisione.",
+    esempi: ["PRO-01-gestione-ordini.pdf", "istruzione-operativa-IO-05.pdf"],
+    indizi: [
+      /\bprocedur/i,
+      /\bistruzione[_\s-]?operativ/i,
+      /\b(io|pro|pg)[-_]?\d{2}\b/i,
+    ],
+    destinazioni: [
+      { doc: "Manuale ISO 9001", sezione: "Processi e procedure" },
+      { doc: DOC_VSME, sezione: "Politiche, azioni e obiettivi" },
+    ],
+  },
+  {
+    chiave: "autorizzazioni",
+    nome: "Autorizzazioni ambientali",
+    spiega: "AUA, AIA, scarichi o emissioni in atmosfera: il titolo e le sue prescrizioni.",
+    esempi: ["AUA_provincia.pdf", "autorizzazione-scarichi-2024.pdf"],
+    indizi: [
+      /\bautorizzazion/i,
+      /\b(aua|aia)\b/i,
+      /\b(scarichi|emissioni)[_\s-]?(idric|atmosfer)/i,
+    ],
+    destinazioni: [
+      { doc: DOC_VSME, sezione: "Indicatori ambientali" },
+      { doc: "Manuale ISO 14001", sezione: "Obblighi di conformità" },
+    ],
+  },
+  {
+    chiave: "contratti",
+    nome: "Contratti e capitolati con requisiti di sostenibilità",
+    spiega: "Il capitolato o il contratto del committente che chiede la prova: serve a sapere cosa chiede.",
+    esempi: ["capitolato_fornitura.pdf", "contratto-quadro-2026.pdf"],
+    indizi: [/\bcapitolat/i, /\bcontratt/i, /\bbando[_\s-]?di[_\s-]?gara\b/i],
+    destinazioni: [
+      { doc: DOC_SCORE, sezione: "Requisiti del committente" },
+    ],
+  },
+  {
+    chiave: "questionari-esg",
+    nome: "Questionari ESG già compilati",
+    spiega: "Un questionario di sostenibilità già compilato per una banca o un committente.",
+    esempi: ["ecovadis_2025.xlsx", "questionario-esg-banca.pdf"],
+    indizi: [
+      /\bquestionar/i,
+      /\b(ecovadis|synesgy|open-?es|cdp|sustainalytics)\b/i,
+      /\besg[_\s-]?(assessment|rating|score)/i,
+    ],
+    destinazioni: [{ doc: DOC_SCORE, sezione: "Risposte ai questionari" }],
+  },
+  {
+    chiave: "manuale-sistema",
+    nome: "Manuale del sistema di gestione esistente",
+    spiega: "Il manuale che hai già in azienda: serve a partire da lì invece che da zero.",
+    esempi: ["manuale_qualita_rev4.pdf", "manuale-sgi-2019.pdf"],
+    indizi: [
+      /\bmanuale\b/i,
+      /\bsgi\b/i,
+      /\bmanuale[_\s-]?(qualit|ambient|sicurezz|integrat)/i,
+    ],
+    destinazioni: [
+      { doc: "Manuale ISO 9001", sezione: "Analisi degli scostamenti" },
+      { doc: "Manuale ISO 14001", sezione: "Analisi degli scostamenti" },
+      { doc: "Manuale ISO 45001", sezione: "Analisi degli scostamenti" },
     ],
   },
   {

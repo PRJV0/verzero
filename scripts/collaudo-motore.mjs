@@ -45,6 +45,24 @@ const ATTESI = {
   importoEuro: 3187.45,
 };
 
+/** Un registro di formazione: la forma TABELLA, N righe uguali. */
+const RIGHE_FORMAZIONE = [
+  ["REGISTRO DELLA FORMAZIONE - ANNO 2025", 14],
+  ["Officina Lombardi S.r.l. (impresa di esempio)", 10],
+  ["", 10],
+  ["Corso                          Data        Ore  Part.  Donne  Ambito", 10],
+  ["Sicurezza generale             12/03/2025   4     8      3    sicurezza", 10],
+  ["Antincendio rischio medio      08/04/2025   8    12      4    sicurezza", 10],
+  ["Aggiornamento ISO 9001         21/05/2025   6     5      2    qualita", 10],
+  ["Gestione rifiuti               17/06/2025   4     7      1    ambiente", 10],
+  ["Parita di genere e inclusione  09/09/2025   3    22     11    parita", 10],
+  ["Primo soccorso                 14/10/2025  12     6      2    sicurezza", 10],
+  ["", 10],
+  ["Docente: Studio Formazione Padana - Documento di esempio.", 8],
+];
+
+const ATTESI_FORMAZIONE = { righe: 6, primoCorso: "Sicurezza generale" };
+
 const RIGHE = [
   ["ENERGIA PADANA S.p.A.", 16],
   ["Fattura per la fornitura di energia elettrica", 11],
@@ -124,15 +142,19 @@ function verifica(descrizione, condizione, dettaglio = "") {
   condizione ? superati++ : falliti++;
 }
 
-const percorso = process.argv[2];
+const tipoScelto =
+  process.argv.find((a) => a.startsWith("--tipo="))?.slice(7) ?? "bolletta-elettrica";
+const percorso = process.argv.find((a) => !a.startsWith("--") && a !== process.argv[0] && a !== process.argv[1]);
 const vero = Boolean(percorso);
+const tabella = tipoScelto === "formazione";
 const dati = vero
   ? new Uint8Array(readFileSync(percorso))
-  : new Uint8Array(costruisciPdf(RIGHE));
+  : new Uint8Array(costruisciPdf(tabella ? RIGHE_FORMAZIONE : RIGHE));
 
 if (!vero) {
-  writeFileSync("/tmp/bolletta-collaudo.pdf", dati);
-  console.log("Bolletta di collaudo scritta in /tmp/bolletta-collaudo.pdf");
+  const nome = tabella ? "/tmp/formazione-collaudo.pdf" : "/tmp/bolletta-collaudo.pdf";
+  writeFileSync(nome, dati);
+  console.log(`Documento di collaudo scritto in ${nome}`);
 }
 
 const config = extractionConfig();
@@ -151,7 +173,7 @@ const esito = await leggiDocumento({
   mime: percorso?.match(/\.(jpe?g|png|webp)$/i)
     ? `image/${percorso.toLowerCase().endsWith(".png") ? "png" : percorso.toLowerCase().endsWith(".webp") ? "webp" : "jpeg"}`
     : "application/pdf",
-  voce: voceMotore("bolletta-elettrica"),
+  voce: voceMotore(tipoScelto),
   annoRendicontazione: 2025,
 });
 
@@ -167,6 +189,63 @@ verifica("l'esito è una lettura riuscita", esito.esito === "ok", esito.esito);
 if (esito.esito !== "ok") {
   console.log(`\n${"messaggio" in esito ? esito.messaggio : ""}\n`);
   process.exit(1);
+}
+
+if (esito.forma === "tabella") {
+  console.log(`— le ${esito.righe.length} righe lette —\n`);
+  for (const r of esito.righe) {
+    const testo = r.celle
+      .filter((c) => c.valore !== null)
+      .map((c) => `${c.etichetta}: ${formattaValore(c.valore, c.unita)}`)
+      .join(" · ");
+    console.log(`  ${String(r.indice).padStart(2)}. ${testo}`);
+    console.log(
+      `      confidenza ${r.confidenza.toFixed(2)} · ${r.fonteLettura}${r.pagina ? ` · pag. ${r.pagina}` : ""}`,
+    );
+    for (const a of r.avvisi) console.log(`      ⚠ ${a}`);
+  }
+
+  if (!vero) {
+    console.log("\n— confronto con i valori attesi —\n");
+    verifica(
+      `${ATTESI_FORMAZIONE.righe} righe`,
+      esito.righe.length === ATTESI_FORMAZIONE.righe,
+      `lette ${esito.righe.length}`,
+    );
+    const primo = esito.righe[0]?.celle.find((c) => c.chiave === "corso")?.valore;
+    verifica(
+      `il primo corso è «${ATTESI_FORMAZIONE.primoCorso}»`,
+      primo === ATTESI_FORMAZIONE.primoCorso,
+      String(primo),
+    );
+    const parita = esito.righe.find(
+      (r) => r.celle.find((c) => c.chiave === "ambito")?.valore === "parita-e-inclusione",
+    );
+    verifica(
+      "il corso sulla parità è stato ricondotto all'ambito giusto",
+      parita !== undefined,
+      esito.righe
+        .map((r) => r.celle.find((c) => c.chiave === "ambito")?.valore)
+        .join(", "),
+    );
+    verifica(
+      "le date sono canoniche",
+      esito.righe.every((r) => {
+        const d = r.celle.find((c) => c.chiave === "data")?.valore;
+        return d === null || /^\d{4}-\d{2}-\d{2}$/.test(d ?? "");
+      }),
+    );
+    verifica(
+      "ogni riga porta pagina ed estratto: la provenienza c'è",
+      esito.righe.every((r) => r.pagina !== null && r.estrattoDa),
+    );
+    verifica("nessun avviso di plausibilità", esito.avvisi.length === 0, esito.avvisi.join(" | "));
+  }
+
+  console.log(
+    `\nRisultato: ${superati}/${superati + falliti} controlli superati${falliti ? ` — ${falliti} FALLITI` : ""}\n`,
+  );
+  process.exit(falliti === 0 ? 0 : 1);
 }
 
 console.log("— i campi letti —\n");

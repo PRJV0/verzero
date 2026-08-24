@@ -89,15 +89,44 @@ Serve a due cose che il catalogo vende già:
   conservando i contenuti propri dell'impresa. È il servizio «Aggiornamento
   del Sistema di Gestione», e senza la famiglia OPERA non esiste.
 
-### L'astrazione: tipo → famiglia → schema
+### Due FORME, dentro le famiglie
+
+La bolletta ci ha ingannati: è una **scheda**, un insieme di campi fissi.
+Ma la maggior parte dei documenti che una PMI ha in casa è una **tabella**
+— un registro di formazione con venti partecipanti, i dati di organico per
+genere e inquadramento, un organigramma con quindici ruoli, un registro di
+manutenzione con trenta interventi. Righe ripetute della stessa forma.
+
+| Forma | Che cos'è | Esempi |
+|---|---|---|
+| **scheda** | campi fissi, una volta sola | bolletta, visura, autorizzazione |
+| **tabella** | N righe della stessa forma | formazione, organico, organigramma, manutenzione |
+
+Trattare una tabella come scheda significa inventare chiavi
+(«partecipante1», «partecipante2») o perdere tutte le righe dopo la prima.
+La forma non è un dettaglio di implementazione: cambia lo schema, cambia
+la banca dati (`document_fields.riga`) e cambia soprattutto **come si
+conferma**, che è dove si gioca l'usabilità (§3).
+
+### L'astrazione: tipo → famiglia → forma → schema
 
 ```
-TipoDocumento.chiave    →   famiglia          →   schema di estrazione
-"bolletta-elettrica"    →   fonte             →   SchemaBollettaElettrica
-"bolletta-gas"          →   fonte             →   SchemaBollettaGas
-"visura"                →   fonte             →   SchemaVisura
-"politiche" | "dvr"     →   opera             →   SchemaStrutturaDocumento
+TipoDocumento.chiave    →   famiglia   →   forma      →   schema
+"bolletta-elettrica"    →   fonte      →   scheda     →   si legge
+"visura"                →   fonte      →   scheda     →   si legge
+"organico"              →   fonte      →   tabella    →   si legge
+"formazione"            →   fonte      →   tabella    →   si legge
+"organigramma"          →   opera      →   tabella    →   si legge
+"manuale-sistema"       →   opera      →   tabella    →   dichiarato
 ```
+
+**La mappa completa dei venti tipi — famiglia, forma, cosa si estrae,
+percorsi serviti, attesa di qualità — sta in
+`docs/tassonomia-documentale.md`, ed è GENERATA dal registro**
+(`node --import ./scripts/risolutore-ts.mjs scripts/mappa-documentale.mjs`).
+Non si scrive a mano: una mappa scritta a mano diverge al primo tipo
+aggiunto, e una mappa che mente è peggio di nessuna mappa. Il controllo
+`--controlla` fallisce se il file su disco non è allineato al codice.
 
 Il registro vive in `src/lib/motore/famiglie.ts` ed è **una riga per tipo**.
 Aggiungere un tipo significa: dichiararlo in `src/lib/documenti.ts` (dove già
@@ -243,6 +272,38 @@ In dettaglio, e senza eccezioni:
 
 Il motivo non è tecnico ma di responsabilità: una cifra scritta a mano letta
 male produce un documento sbagliato **che porta la nostra validazione**.
+
+### Il manoscritto è un CASO NORMALE, non un degrado
+
+Registri di manutenzione, fogli firma, verbali: in una PMI italiana il
+manoscritto non è l'eccezione, è metà dell'archivio. Le regole qui sopra
+non si toccano — tetto di confidenza e conferma obbligatoria restano — ma
+c'è un secondo problema, e ignorarlo le renderebbe inutili:
+
+> **Se confermare venti righe costa venti viaggi fra lo schermo e il
+> foglio, nessuno lo fa. E una regola che nessuno rispetta non protegge
+> nessuno.** La conferma obbligatoria si difende rendendola VELOCE, non
+> alleggerendola.
+
+L'obiettivo dichiarato: **confermare venti righe scritte a mano deve
+costare un minuto, non venti.** Come:
+
+1. **Il documento sta accanto**, sempre, e si apre da solo sulla pagina
+   della riga in corso. Nessuna finestra da cercare, nessuno zoom da
+   rifare.
+2. **Una riga alla volta**, grande, con accanto la riga **così com'è
+   scritta sul foglio** (`estrattoDa`): il confronto è un colpo d'occhio.
+3. **La tastiera basta**: Invio conferma e passa avanti, `E` corregge,
+   `X` scarta, `↑ ↓` si muovono. Venti righe diventano venti battute.
+4. **L'interfaccia avanza subito** e il salvataggio la insegue: aspettare
+   il server a ogni riga trasformerebbe un minuto in cinque.
+5. **Avanzamento visibile**: si vede quanto manca, e si vede che finisce.
+6. **Il blocco «conferma quelle che tornano» esiste, e NON tocca il
+   manoscritto**: conferma solo le righe lette in chiaro, senza avvisi e
+   sopra la soglia di confidenza. Le righe a mano restano una per una, e
+   la schermata lo dice — «una grafia non la conferma un automatismo».
+
+Vive in `src/app/(app)/dashboard/documenti/[id]`.
 
 **Rischio dichiarato.** Su registri interamente manoscritti — registri
 rifiuti a penna, quaderni di manutenzione — l'accuratezza attesa non è
@@ -450,15 +511,50 @@ proprio intervallo di pagine perché la provenienza resti esatta. Per FONTE
 serve di rado (una bolletta sta in poche pagine) e riguarda registri e
 bilanci; per OPERA è la norma, e l'indice si ricompone dai segmenti.
 
-### Tetto di spesa per pratica
+### Tetti di spesa — invisibili al cliente
 
-Prima di ogni chiamata si conta il costo previsto (`messages.countTokens`) e
-lo si somma allo speso della pratica. Superata la **soglia di allarme** si
-avvisa; superato il **tetto**, la coda si ferma per quella pratica e la cosa
-compare in back-office. Una pratica che costa dieci volte le altre è quasi
-sempre un difetto, non un cliente complicato — e un ciclo di ritentativi
-impazzito è il modo classico di spendere cento euro senza che nessuno se ne
-accorga.
+**La regola che viene prima di tutte: i tetti non si mostrano mai al
+cliente.** Nessun messaggio in pagina dice «hai superato il limite»,
+nessuna barra di consumo, nessuna quota. Un cliente che paga un canone non
+deve sapere quanto ci costa leggere i suoi documenti, e soprattutto non
+deve regolarci sopra il proprio lavoro. Il tetto è un dispositivo di
+sicurezza NOSTRO: ferma un difetto — un ciclo impazzito, un PDF di
+quattrocento pagine caricato per sbaglio, un archivio dieci volte più
+grande della media — prima che diventi una fattura.
+
+Tre ambiti, con soglia (si avvisa e si continua) e tetto (ci si ferma).
+Tarati sul costo misurato: una lettura ≈ $0,05, una pratica tipica ≈ $1,75.
+
+| Ambito | Finestra | Soglia | Tetto | Perché lì |
+|---|---|---|---|---|
+| **pratica** | tutto lo storico del cliente | $5 | $15 | quasi dieci volte la pratica tipica: oltre, è quasi certamente un ciclo che si ripete |
+| **organizzazione** | mese corrente | $20 | $60 | un cliente con quattro percorsi e archivio ricco arriva a ~$7: a $20 si guarda, a $60 si chiama |
+| **giorno** | l'intero servizio | $50 | $150 | rete di sicurezza su un difetto che colpisce tutti insieme; da rialzare quando i clienti crescono |
+
+Si ferma al **primo tetto superato**, guardando prima il giorno, poi
+l'organizzazione, poi la pratica: fermare per il tetto più generale è più
+informativo, perché dice che il problema non è di quel cliente.
+
+Quando un tetto ferma il lavoro, il cliente legge che la lettura è **in
+coda e riprende a breve** — che è vero — e il back-office riceve
+l'allarme coi numeri in `motore_allarmi`. La seconda metà di quella frase
+(«se fra qualche ora è ancora qui, scrivici») è vera proprio perché
+l'allarme esiste: un blocco silenzioso è indistinguibile da un guasto.
+
+**Mai attribuire all'ambiente un limite che è di budget.** È la regola che
+tiene onesto tutto il resto (§7bis): se un tetto di spesa venisse
+raccontato come attenzione ambientale, il primo cliente che se ne accorge
+avrebbe ragione a non credere più a nient'altro.
+
+### Cruscotto di back-office
+
+`/dashboard/motore`, riservato all'amministratore — e la barriera è la
+**RLS** (`is_admin()` sulle policy di `extractions` e `motore_allarmi`),
+non un controllo dentro la pagina. Mostra: allarmi non ancora visti,
+speso totale e di oggi, **costo per cliente** (che oggi è il costo per
+pratica) con la percentuale sul tetto, **costo ed errori per tipo di
+documento** — è così che si decide dove intervenire invece di supporlo —
+e la tassonomia con ciò che si legge e ciò che è solo dichiarato.
 
 ### Log tecnico
 
@@ -516,6 +612,45 @@ costo del Motore non è l'inferenza: è il tempo del professionista che
 valida. Ottimizzare il modello prima di aver misurato il resto è
 ottimizzare la voce sbagliata — e un dato sbagliato costa più di tutta la
 spesa di elaborazione di quella pratica.
+
+---
+
+## 7bis. Il riuso — non rifare due volte la stessa cosa
+
+Da non confondere con i tetti, mai: **il tetto è un limite di budget ed è
+invisibile; il riuso è una scelta di merito e si dice per quello che è.**
+Se nulla è cambiato dall'ultima versione, rigenerare produce lo stesso
+documento — e un'elaborazione che non cambia nulla è energia spesa per
+niente.
+
+**L'impronta** di un elaborato è l'hash dei suoi INGRESSI: dati confermati,
+documenti di origine coi loro stati di lettura, edizioni delle norme,
+modello del documento. Non del file prodotto — quello si conosce solo dopo
+averlo prodotto, cioè dopo aver speso.
+
+- **Impronta identica** → si riapre il documento esistente, con il
+  messaggio: *«Nulla è cambiato dall'ultima versione: ti riapriamo il
+  documento già generato. Ogni elaborazione ha un costo energetico e non ha
+  senso spenderlo due volte per lo stesso risultato»*, e **accanto sempre**
+  il modo di generare comunque una nuova versione. Un riuso senza via
+  d'uscita non è un riuso, è un divieto.
+- **Impronta diversa** (dati confermati, documenti nuovi, norma aggiornata,
+  modello aggiornato) → **si rigenera, senza obiezioni, senza messaggi e
+  senza chiedere conferma**, dicendo che cosa è cambiato. Il riuso non è un
+  attrito da mettere in mezzo al lavoro: è una cortesia per il caso in cui
+  il lavoro non c'è.
+- **Cicli ripetuti ravvicinati** (tre versioni in un'ora) → si rigenera
+  comunque, con un invito gentile a finire le modifiche prima. Invita, non
+  vieta e non blocca.
+
+Lo stesso principio vale già sulla **lettura** di un documento, dove è
+implementato: rileggere lo stesso file con lo stesso schema restituisce gli
+stessi dati, quindi non si rilegge — si riaprono i dati che ci sono, con la
+stessa frase e con «rileggilo comunque» accanto. Si rilegge quando il file
+è cambiato, quando lo schema è cambiato, o quando il cliente lo chiede.
+
+Le decisioni sono pure e provate in `src/lib/motore/riuso.ts`: la
+generazione, quando esisterà, ci si innesta senza riscriverle.
 
 ---
 
@@ -616,19 +751,28 @@ strutturale. Si abbassa l'effort, non si disattiva il ragionamento.
 
 ## 11. Ordine di implementazione
 
-1. **Bolletta elettrica** — schema, rilevamento nativo/scansione,
-   estrazione, validazione, plausibilità, confidenza, provenienza, stato
-   «da confermare», **effetto visibile nel portale**. Prove con risposte
-   simulate e casi storti, poi con una bolletta vera. ← *questa tappa*
-2. Gli altri documenti-FONTE: gas, carburanti, visura, bilancio. Due schemi
-   in più, nessun codice nuovo.
-3. Coda, corsia differita, tetto di spesa attivo — quando i volumi lo
-   giustificano, non prima.
-4. Famiglia OPERA: struttura del manuale e analisi degli scostamenti
-   (percorso «Aggiornamento del Sistema di Gestione»).
-5. Generazione dell'elaborato con controllo di conformità bloccante.
-6. Marchio del cliente e anteprima.
-7. Versioni e rigenerazione.
+1. ~~**Bolletta elettrica**~~ — fatta: schema, rilevamento
+   nativo/scansione, estrazione, validazione, plausibilità, confidenza,
+   provenienza, stato «da confermare», effetto visibile nel portale.
+2. ~~**Tassonomia completa**~~ — fatta: venti tipi dichiarati con famiglia,
+   forma, cosa si estrae e attesa di qualità
+   (`docs/tassonomia-documentale.md`).
+3. ~~**I quattro tipi del cuneo**~~ — fatti: visura, organigramma,
+   organico, formazione. Aprono parità di genere, indicatori sociali VSME e
+   la parte anagrafica di ogni manuale.
+4. ~~**Manoscritto come caso normale**~~ — fatta la vista affiancata con
+   conferma per riga.
+5. ~~**Tetti di spesa e riuso**~~ — fatti, col cruscotto di back-office.
+6. **Gas, teleriscaldamento, carburanti** — completano Scope 1 e 2. Tre
+   schemi, nessun codice nuovo. ← *prossima tappa*
+7. Coda e corsia differita (Batch API) — quando i volumi lo giustificano.
+8. Famiglia OPERA piena: manuale di sistema, procedure, verbali, e
+   l'analisi degli scostamenti che apre l'Aggiornamento del Sistema di
+   Gestione.
+9. Generazione dell'elaborato con controllo di conformità bloccante — ed è
+   lì che il riuso (§7bis) trova il suo caso principale.
+10. Marchio del cliente e anteprima.
+11. Versioni e rigenerazione.
 
 L'ordine non è negoziabile su un punto: **la tappa 1 arriva fino al
 portale**. Un'estrazione che funziona nei test e non si vede in pagina non è

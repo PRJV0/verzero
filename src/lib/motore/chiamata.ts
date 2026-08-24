@@ -11,10 +11,10 @@ import {
   costoMicroDollari,
   extractionConfig,
 } from "./costi";
-import type { VoceMotore } from "./famiglie";
+import type { VoceLeggibile } from "./famiglie";
 import {
   interpretaRisposta,
-  istruzioniBollettaElettrica,
+  istruzioni,
   type ContestoLettura,
   type EsitoEstrazione,
   type Uso,
@@ -42,7 +42,7 @@ export type EsitoConUso = EsitoEstrazione & { uso?: Uso; natura?: NaturaPdf };
 export async function leggiDocumento(opzioni: {
   dati: Uint8Array;
   mime: string;
-  voce: VoceMotore;
+  voce: VoceLeggibile;
   annoRendicontazione: number;
 }): Promise<EsitoConUso> {
   const { dati, mime, voce, annoRendicontazione } = opzioni;
@@ -93,7 +93,7 @@ export async function leggiDocumento(opzioni: {
             data: base64,
           },
         },
-        { type: "text" as const, text: istruzioniBollettaElettrica(ctx) },
+        { type: "text" as const, text: istruzioni(voce, ctx) },
       ])
     : ([
         {
@@ -104,7 +104,7 @@ export async function leggiDocumento(opzioni: {
             data: base64,
           },
         },
-        { type: "text" as const, text: istruzioniBollettaElettrica(ctx) },
+        { type: "text" as const, text: istruzioni(voce, ctx) },
       ]);
 
   const cliente = new Anthropic({ apiKey: serverEnv().anthropicApiKey });
@@ -120,7 +120,7 @@ export async function leggiDocumento(opzioni: {
       // governa l'effort (docs/motore.md §9).
       thinking: { type: "adaptive" },
       output_config: {
-        effort: voce.effort,
+        effort: voce.effort ?? "medium",
         format: zodOutputFormat(voce.schema),
       },
       messages: [{ role: "user", content: contenuto }],

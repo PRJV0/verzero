@@ -193,7 +193,13 @@ export async function eliminaDocumento(id: string) {
  */
 export async function leggiDocumentoAzione(
   id: string,
-): Promise<{ ok: boolean; messaggio: string }> {
+  opzioni: { forza?: boolean; sostituisci?: boolean } = {},
+): Promise<{
+  ok: boolean;
+  messaggio: string;
+  riusato?: boolean;
+  chiedeSostituzione?: boolean;
+}> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -252,10 +258,17 @@ export async function leggiDocumentoAzione(
     tipo: documento.tipo as string,
     annoRendicontazione:
       org?.anno_rendicontazione ?? annoRendicontazioneDefault(),
+    forza: opzioni.forza,
+    sostituisci: opzioni.sostituisci,
   });
 
   aggiornaViste();
-  return { ok: esito.ok, messaggio: esito.messaggio };
+  return {
+    ok: esito.ok,
+    messaggio: esito.messaggio,
+    riusato: esito.riusato,
+    chiedeSostituzione: esito.chiedeSostituzione,
+  };
 }
 
 /**
@@ -301,6 +314,112 @@ export async function correggiCampo(id: string, valore: string) {
     })
     .eq("id", id);
   aggiornaViste();
+}
+
+/* ------------------------------------------------------------------ */
+/* Conferma delle TABELLE — una riga alla volta, in fretta              */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Conferma un'intera riga: tutte le sue celle in un gesto solo.
+ *
+ * È il cuore della conferma efficiente (docs/motore.md §3): su un foglio
+ * firma la riga è l'unità che l'occhio legge, quindi dev'essere l'unità
+ * che la mano conferma. Confermare cella per cella su venti righe per sei
+ * colonne significherebbe centoventi gesti, e nessuno lo farebbe.
+ */
+export async function confermaRiga(documentId: string, riga: number) {
+  const supabase = await createClient();
+  await supabase
+    .from("document_fields")
+    .update({ stato: "confermato", confirmed_at: new Date().toISOString() })
+    .eq("document_id", documentId)
+    .eq("riga", riga);
+  aggiornaViste();
+}
+
+/** Scarta un'intera riga: capita coi totali e le intestazioni lette per dato. */
+export async function rifiutaRiga(documentId: string, riga: number) {
+  const supabase = await createClient();
+  await supabase
+    .from("document_fields")
+    .update({ stato: "rifiutato", confirmed_at: null })
+    .eq("document_id", documentId)
+    .eq("riga", riga);
+  aggiornaViste();
+}
+
+/**
+ * Conferma in blocco le righe che non hanno nulla da guardare.
+ *
+ * ═══ REGOLA INVIOLABILE ═══ Non tocca MAI ciò che è stato letto da una
+ * scrittura a mano, nemmeno se la confidenza è alta e i valori sono
+ * plausibili: nessun automatismo di conferma massiva può includere il
+ * manoscritto (docs/motore.md §3). Ed esclude comunque tutto ciò che
+ * porta un avviso: un blocco che conferma anche le righe segnalate
+ * vanificherebbe il senso della segnalazione.
+ *
+ * Restituisce quante righe ha confermato: serve a dirlo, non a supporlo.
+ */
+export async function confermaRigheSicure(
+  documentId: string,
+  sogliaConfidenza = 0.85,
+): Promise<number> {
+  const supabase = await createClient();
+  const { data: righe } = await supabase
+    .from("document_fields")
+    .select("riga, confidenza, avvisi, fonte_lettura, stato")
+    .eq("document_id", documentId)
+    .eq("stato", "da_confermare");
+  if (!righe || righe.length === 0) return 0;
+
+  const escluse = new Set<number>();
+  const candidate = new Set<number>();
+  for (const r of righe) {
+    if (
+      r.fonte_lettura === "manoscritto" ||
+      (r.avvisi ?? []).length > 0 ||
+      r.confidenza < sogliaConfidenza
+    ) {
+      escluse.add(r.riga);
+    } else {
+      candidate.add(r.riga);
+    }
+  }
+  // Una riga con anche UNA cella problematica non è una riga sicura.
+  const sicure = [...candidate].filter((r) => !escluse.has(r));
+  if (sicure.length === 0) return 0;
+
+  await supabase
+    .from("document_fields")
+    .update({ stato: "confermato", confirmed_at: new Date().toISOString() })
+    .eq("document_id", documentId)
+    .in("riga", sicure);
+
+  aggiornaViste();
+  return sicure.length;
+}
+
+/**
+ * Un indirizzo temporaneo per MOSTRARE il documento accanto ai dati.
+ *
+ * Dura un'ora e non un minuto come quello di apertura: la vista
+ * affiancata resta aperta finché il cliente conferma le righe, e un
+ * indirizzo che scade a metà lavoro farebbe sparire il documento proprio
+ * mentre serve.
+ */
+export async function linkVista(id: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data: documento } = await supabase
+    .from("documents")
+    .select("percorso")
+    .eq("id", id)
+    .maybeSingle();
+  if (!documento) return null;
+  const { data } = await supabase.storage
+    .from("documenti")
+    .createSignedUrl(documento.percorso, 3600);
+  return data?.signedUrl ?? null;
 }
 
 /** Un indirizzo temporaneo per aprire il file: il bucket resta privato. */

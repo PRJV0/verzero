@@ -356,16 +356,30 @@ export default async function DocumentiPage({
                             gesto su cui si regge il prodotto. */}
                         {(campiPerDocumento.get(d.id)?.length ?? 0) > 0 && (
                           <div className="mt-3 rounded-xl border border-line bg-paper/60 p-3">
-                            <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-warm">
-                              Dati letti dal documento
-                            </p>
+                            <div className="flex flex-wrap items-baseline justify-between gap-2">
+                              <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-warm">
+                                Dati letti dal documento
+                              </p>
+                              {/* La vista affiancata: il documento accanto
+                                  ai dati, riga per riga. È la strada
+                                  normale per le tabelle e i manoscritti. */}
+                              <Link
+                                href={`/dashboard/documenti/${d.id}`}
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-pine hover:underline"
+                              >
+                                Apri col documento accanto{" "}
+                                <ArrowRight size={11} aria-hidden />
+                              </Link>
+                            </div>
                             {d.lettura_nota && (
                               <p className="mt-1 text-xs leading-relaxed text-amber-ink">
                                 {d.lettura_nota}
                               </p>
                             )}
                             <ul className="mt-2 space-y-2">
-                              {(campiPerDocumento.get(d.id) ?? []).map((c) => {
+                              {(campiPerDocumento.get(d.id) ?? [])
+                                .filter((c) => c.riga === 0)
+                                .map((c) => {
                                 const livello = livelloConfidenza(c.confidenza);
                                 return (
                                   <li
@@ -514,6 +528,58 @@ export default async function DocumentiPage({
                                 );
                               })}
                             </ul>
+                            {(() => {
+                              const tabella = (campiPerDocumento.get(d.id) ?? []).filter(
+                                (c) => c.riga > 0,
+                              );
+                              if (tabella.length === 0) return null;
+                              const righe = new Set(tabella.map((c) => c.riga));
+                              const daFare = new Set(
+                                tabella
+                                  .filter((c) => c.stato === "da_confermare")
+                                  .map((c) => c.riga),
+                              );
+                              const aMano = new Set(
+                                tabella
+                                  .filter((c) => c.fonte_lettura === "manoscritto")
+                                  .map((c) => c.riga),
+                              );
+                              return (
+                                <div className="mt-2">
+                                  <p className="text-sm text-gray-warm">
+                                    <strong className="font-semibold text-ink">
+                                      {righe.size}{" "}
+                                      {righe.size === 1 ? "riga letta" : "righe lette"}
+                                    </strong>
+                                    {daFare.size > 0 && (
+                                      <>
+                                        , di cui{" "}
+                                        <strong className="font-semibold text-amber-ink">
+                                          {daFare.size} da controllare
+                                        </strong>
+                                      </>
+                                    )}
+                                    {aMano.size > 0 && (
+                                      <>
+                                        {" "}
+                                        ({aMano.size} scritte a mano)
+                                      </>
+                                    )}
+                                    .
+                                  </p>
+                                  {contesto.ruolo === "impresa" && daFare.size > 0 && (
+                                    <Link
+                                      href={`/dashboard/documenti/${d.id}`}
+                                      className="vz-press mt-2 inline-flex items-center gap-1.5 rounded-lg bg-pine px-3 py-1.5 text-xs font-semibold text-white"
+                                    >
+                                      Controllale col documento accanto
+                                      <ArrowRight size={12} aria-hidden />
+                                    </Link>
+                                  )}
+                                </div>
+                              );
+                            })()}
+
                             <p className="mt-2 border-t border-line pt-2 text-[11px] leading-relaxed text-gray-light">
                               Finché non li confermi, questi dati restano fuori
                               dai calcoli e dai documenti: li abbiamo letti noi,

@@ -7,6 +7,7 @@ import {
   Inbox,
   CalendarDays,
   FolderOpen,
+  Gauge,
   LayoutDashboard,
   Megaphone,
   Route,
@@ -30,11 +31,18 @@ const SEZIONI = [
   { href: "/dashboard/impostazioni", label: "Impostazioni", icon: Settings },
 ];
 
-/** Voce riservata: compare solo a chi ha il ruolo amministratore. */
+/** Voci riservate: compaiono solo a chi ha il ruolo amministratore. */
 const VOCE_LEAD = {
   href: "/dashboard/lead",
   label: "Lead",
   icon: Inbox,
+};
+
+/** Il cruscotto del Motore: costi, tetti, allarmi. Mai al cliente. */
+const VOCE_MOTORE = {
+  href: "/dashboard/motore",
+  label: "Motore",
+  icon: Gauge,
 };
 
 export function NavPortale({ amministratore = false }: { amministratore?: boolean }) {
@@ -44,7 +52,7 @@ export function NavPortale({ amministratore = false }: { amministratore?: boolea
   const conCliente = (href: string) =>
     cliente ? `${href}?cliente=${cliente}` : href;
 
-  const elenco = amministratore ? [...SEZIONI, VOCE_LEAD] : SEZIONI;
+  const elenco = amministratore ? [...SEZIONI, VOCE_LEAD, VOCE_MOTORE] : SEZIONI;
   const voci = elenco.map((s) => {
     const attiva =
       s.href === "/dashboard"

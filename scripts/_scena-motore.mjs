@@ -109,55 +109,80 @@ if (!moduli?.length) {
   });
 }
 
-/* — 4. La bolletta: quella che genera `collaudo-motore.mjs`. — */
-const pdf = readFileSync("/tmp/bolletta-collaudo.pdf");
-const percorso = `${org.id}/bolletta_elettrica_gennaio_2025.pdf`;
-await admin.storage
-  .from("documenti")
-  .upload(percorso, pdf, { contentType: "application/pdf", upsert: true });
+/* — 4. I documenti: quelli che genera `collaudo-motore.mjs`. — */
+const DOCUMENTI = [
+  {
+    file: "/tmp/bolletta-collaudo.pdf",
+    nome: "bolletta_elettrica_gennaio_2025.pdf",
+    tipo: "bolletta-elettrica",
+  },
+  {
+    file: "/tmp/formazione-collaudo.pdf",
+    nome: "registro_formazione_2025.pdf",
+    tipo: "formazione",
+  },
+];
 
-let { data: doc } = await admin
-  .from("documents")
-  .select("id, stato")
-  .eq("percorso", percorso)
-  .maybeSingle();
-if (!doc) {
-  const { data, error } = await admin
+const { eseguiLettura } = await import("../src/lib/motore/registra.ts");
+const idDocumenti = [];
+
+for (const d of DOCUMENTI) {
+  let contenuto;
+  try {
+    contenuto = readFileSync(d.file);
+  } catch {
+    console.log(`(salto ${d.nome}: manca ${d.file} — genera prima il collaudo)`);
+    continue;
+  }
+  const percorso = `${org.id}/${d.nome}`;
+  await admin.storage
+    .from("documenti")
+    .upload(percorso, contenuto, { contentType: "application/pdf", upsert: true });
+
+  let { data: doc } = await admin
     .from("documents")
-    .insert({
-      organization_id: org.id,
-      nome_file: "bolletta_elettrica_gennaio_2025.pdf",
+    .select("id, stato")
+    .eq("percorso", percorso)
+    .maybeSingle();
+  if (!doc) {
+    const { data, error } = await admin
+      .from("documents")
+      .insert({
+        organization_id: org.id,
+        nome_file: d.nome,
+        percorso,
+        mime: "application/pdf",
+        dimensione: contenuto.byteLength,
+        tipo: d.tipo,
+        tipo_confermato: false,
+        stato: "smistato",
+      })
+      .select("id, stato")
+      .single();
+    if (error) throw error;
+    doc = data;
+  }
+  idDocumenti.push(doc.id);
+
+  if (!process.argv.includes("--senza-lettura")) {
+    const esito = await eseguiLettura({
+      documentId: doc.id,
+      organizationId: org.id,
       percorso,
       mime: "application/pdf",
-      dimensione: pdf.byteLength,
-      tipo: "bolletta-elettrica",
-      tipo_confermato: false,
-      stato: "smistato",
-    })
-    .select("id, stato")
-    .single();
-  if (error) throw error;
-  doc = data;
-}
-
-/* — 5. La lettura — */
-if (!process.argv.includes("--senza-lettura")) {
-  const { eseguiLettura } = await import("../src/lib/motore/registra.ts");
-  const esito = await eseguiLettura({
-    documentId: doc.id,
-    organizationId: org.id,
-    percorso,
-    mime: "application/pdf",
-    tipo: "bolletta-elettrica",
-    annoRendicontazione: 2025,
-  });
-  console.log(`\nLettura: ${esito.ok ? "riuscita" : "fallita"} — ${esito.messaggio}`);
+      tipo: d.tipo,
+      annoRendicontazione: 2025,
+      forza: true,
+      sostituisci: true,
+    });
+    console.log(`${d.nome}: ${esito.ok ? "letto" : "non letto"} — ${esito.messaggio}`);
+  }
 }
 
 const { data: campi } = await admin
   .from("document_fields")
   .select("campo, valore, confidenza, stato, pagina")
-  .eq("document_id", doc.id);
+  .in("document_id", idDocumenti.length > 0 ? idDocumenti : ["00000000-0000-0000-0000-000000000000"]);
 
 console.log(`
 Scena pronta.
@@ -165,7 +190,8 @@ Scena pronta.
   Accesso : ${EMAIL}
   Password: ${PASSWORD}
   Impresa : Officina Lombardi S.r.l. (esempio) — ${org.id}
-  Campi   : ${campi?.length ?? 0} righe in document_fields
+  Campi   : ${campi?.length ?? 0} valori in document_fields
+  Conferma: http://localhost:3000/dashboard/documenti/${idDocumenti[1] ?? idDocumenti[0] ?? ""}
 
   http://localhost:3000/login  →  /dashboard/documenti  e  /dashboard/percorsi
 

@@ -16,9 +16,31 @@
 
 import {
   interpretaRisposta,
+  istruzioni,
   riepilogo,
 } from "../src/lib/motore/estrazione.ts";
-import { voceMotore, siSaLeggere } from "../src/lib/motore/famiglie.ts";
+import {
+  REGISTRO_MOTORE,
+  siSaLeggere,
+  tipiDichiarati,
+  tipiLeggibili,
+  voceMotore,
+} from "../src/lib/motore/famiglie.ts";
+import { TIPI_DOCUMENTO } from "../src/lib/documenti.ts";
+import {
+  DOLLARO,
+  MESSAGGIO_AL_CLIENTE,
+  TETTI,
+  notaAllarme,
+  verdettoSpesa,
+} from "../src/lib/motore/tetti.ts";
+import {
+  MESSAGGIO_CICLI_RAVVICINATI,
+  MESSAGGIO_RIUSO,
+  VERSIONI_RAVVICINATE,
+  decidiRigenerazione,
+  serveRileggere,
+} from "../src/lib/motore/riuso.ts";
 import {
   TETTO_MANOSCRITTO,
   canonicalizza,
@@ -67,7 +89,14 @@ const c = (valore, extra = {}) => ({
   ...extra,
 });
 
-const TESTA = new Set(["tipoRilevato", "qualita", "piuPod", "avvertenze", "campi"]);
+const TESTA = new Set([
+  "tipoRilevato",
+  "tipoEffettivo",
+  "qualita",
+  "piuPod",
+  "avvertenze",
+  "campi",
+]);
 
 /** Una risposta completa e sana, da cui partono quasi tutti i casi. */
 const bollettaSana = (sovrascrivi = {}) => {
@@ -84,7 +113,8 @@ const bollettaSana = (sovrascrivi = {}) => {
     energiaRinnovabile: c("non-dichiarato"),
   };
   const testa = {
-    tipoRilevato: "bolletta-elettrica",
+    tipoRilevato: "atteso",
+    tipoEffettivo: "",
     qualita: "leggibile",
     piuPod: false,
     avvertenze: [],
@@ -106,10 +136,17 @@ console.log("\n— il registro: tipo → famiglia → schema —\n");
 
 verifica("la bolletta elettrica si sa leggere", siSaLeggere("bolletta-elettrica"));
 verifica(
-  "un tipo senza schema non è un errore: semplicemente non si legge",
-  !siSaLeggere("organigramma") && voceMotore("organigramma") === undefined,
+  "un tipo dichiarato ma senza schema non è un errore: semplicemente non si legge",
+  !siSaLeggere("verbali") &&
+    voceMotore("verbali") !== undefined &&
+    voceMotore("verbali").schema === undefined,
+);
+verifica(
+  "un tipo che non esiste proprio non esiste",
+  voceMotore("cartolina-dalle-maldive") === undefined,
 );
 verifica("la famiglia è dichiarata", VOCE.famiglia === "fonte");
+verifica("e anche la forma", VOCE.forma === "scheda");
 verifica(
   "la versione dello schema esiste: senza, due letture non si distinguono",
   typeof VOCE.versione === "string" && VOCE.versione.length > 0,
@@ -139,8 +176,8 @@ verifica(
 );
 verifica(
   "il riepilogo conta i campi letti",
-  riepilogo(sana.campi).letti === 10 && riepilogo(sana.campi).totali === 10,
-  JSON.stringify(riepilogo(sana.campi)),
+  riepilogo(sana).letti === 10 && riepilogo(sana).totali === 10,
+  JSON.stringify(riepilogo(sana)),
 );
 
 /* ================================================================== */
@@ -319,7 +356,10 @@ for (const [nome, grezzo] of [
 console.log("\n— caso storto: documento di un altro tipo —\n");
 
 const gas = interpretaRisposta(
-  bollettaSana({ tipoRilevato: "bolletta-gas" }),
+  bollettaSana({
+    tipoRilevato: "altro-documento-dello-stesso-genere",
+    tipoEffettivo: "una bolletta del gas",
+  }),
   VOCE,
   CTX,
 );
@@ -328,6 +368,11 @@ verifica(
   "e lo si dice in italiano, dicendo cosa fare",
   gas.messaggio.includes("gas") && gas.messaggio.includes("Correggi"),
   gas.messaggio,
+);
+verifica(
+  "il tipo davvero rilevato viene riportato al cliente",
+  gas.tipoRilevato === "una bolletta del gas",
+  gas.tipoRilevato,
 );
 verifica(
   "nessun campo estratto da un documento di altro tipo: un'estrazione parziale sembra un successo",
@@ -449,7 +494,8 @@ verifica(
 
 const { avvisiDocumento } = verificaBollettaElettrica(
   normalizzaCampi(bollettaSana().campi, CAMPI_BOLLETTA_ELETTRICA, "leggibile"),
-  { annoRendicontazione: 2025, piuPod: false },
+  [],
+  { annoRendicontazione: 2025, grezzo: { piuPod: false } },
 );
 verifica("la verifica pura non inventa avvisi", avvisiDocumento.length === 0);
 
@@ -624,10 +670,10 @@ console.log("\n— i campi rifiutati non tornano nei documenti —\n");
 
 const raggruppati = raggruppaLetture(
   [
-    { document_id: "d1", campo: "consumoTotaleKwh", etichetta: "Consumo del periodo", valore: "12000", unita: "kWh", stato: "confermato" },
-    { document_id: "d1", campo: "importoEuro", etichetta: "Importo", valore: "2880", unita: "€", stato: "rifiutato" },
-    { document_id: "d1", campo: "pod", etichetta: "Codice POD", valore: "IT001E12345678", unita: null, stato: "da_confermare" },
-    { document_id: "d2", campo: "pod", etichetta: "Codice POD", valore: "IT002E87654321", unita: null, stato: "da_confermare" },
+    { document_id: "d1", riga: 0, campo: "consumoTotaleKwh", etichetta: "Consumo del periodo", valore: "12000", unita: "kWh", stato: "confermato" },
+    { document_id: "d1", riga: 0, campo: "importoEuro", etichetta: "Importo", valore: "2880", unita: "€", stato: "rifiutato" },
+    { document_id: "d1", riga: 0, campo: "pod", etichetta: "Codice POD", valore: "IT001E12345678", unita: null, stato: "da_confermare" },
+    { document_id: "d2", riga: 0, campo: "pod", etichetta: "Codice POD", valore: "IT002E87654321", unita: null, stato: "da_confermare" },
   ],
   { d1: "bolletta-elettrica", d2: null },
 );
@@ -709,6 +755,486 @@ verifica(
 verifica(
   "un modello sconosciuto non inventa un costo",
   costoMicroDollari("modello-inesistente", 5000, 700) === 0,
+);
+
+
+/* ================================================================== */
+console.log("\n— la tassonomia: famiglie, forme, dichiarato vs implementato —\n");
+
+verifica(
+  "ogni voce del registro dichiara famiglia, forma, cosa estrae e l'attesa",
+  REGISTRO_MOTORE.every(
+    (v) =>
+      ["fonte", "opera"].includes(v.famiglia) &&
+      ["scheda", "tabella"].includes(v.forma) &&
+      Array.isArray(v.estrae) &&
+      v.estrae.length > 0 &&
+      typeof v.attesa?.nota === "string",
+  ),
+);
+verifica(
+  "ogni tipo del registro esiste anche nello smistamento, e viceversa",
+  REGISTRO_MOTORE.every((v) => TIPI_DOCUMENTO.some((t) => t.chiave === v.tipo)) &&
+    TIPI_DOCUMENTO.every((t) => REGISTRO_MOTORE.some((v) => v.tipo === t.chiave)),
+);
+verifica(
+  "chi ha lo schema ha anche versione, campi e verificatore: non esistono mezze voci",
+  tipiLeggibili().every((v) => v.versione && v.campi?.length && v.verifica),
+);
+verifica(
+  "le versioni di schema sono tutte diverse: due letture devono distinguersi",
+  new Set(tipiLeggibili().map((v) => v.versione)).size === tipiLeggibili().length,
+);
+verifica(
+  "i quattro tipi del cuneo si sanno leggere",
+  ["bolletta-elettrica", "visura", "organigramma", "organico", "formazione"].every(
+    siSaLeggere,
+  ),
+);
+verifica(
+  "i tipi dichiarati e non implementati sono dichiarati per davvero",
+  tipiDichiarati().length > 0 &&
+    tipiDichiarati().every((v) => v.estrae.length > 0 && !v.schema),
+);
+verifica(
+  "esiste almeno un documento-OPERA: la famiglia non è teorica",
+  REGISTRO_MOTORE.some((v) => v.famiglia === "opera" && v.schema),
+);
+verifica(
+  "e almeno una TABELLA implementata: la forma non è teorica",
+  tipiLeggibili().some((v) => v.forma === "tabella"),
+);
+
+/* ================================================================== */
+console.log("\n— le tabelle: N righe, non un campo ripetuto —\n");
+
+const VOCE_FORMAZIONE = voceMotore("formazione");
+const cella = (colonna, valore) => ({ colonna, valore: String(valore) });
+const rigaCorso = (sovrascrivi = {}) => ({
+  celle: [
+    cella("corso", "Sicurezza generale"),
+    cella("data", "2025-03-12"),
+    cella("oreTotali", "4"),
+    cella("partecipanti", "8"),
+    cella("partecipantiDonne", "3"),
+    cella("ambito", "sicurezza"),
+  ],
+  confidenza: 0.9,
+  pagina: 1,
+  estrattoDa: "Sicurezza generale 12/03/2025 4h 8 partecipanti",
+  fonteLettura: "testo",
+  nota: "",
+  ...sovrascrivi,
+});
+const tabellaSana = (righe, extra = {}) => ({
+  tipoRilevato: "atteso",
+  tipoEffettivo: "",
+  qualita: "leggibile",
+  righe,
+  avvertenze: [],
+  ...extra,
+});
+
+const treCorsi = interpretaRisposta(
+  tabellaSana([rigaCorso(), rigaCorso(), rigaCorso()]),
+  VOCE_FORMAZIONE,
+  CTX,
+);
+verifica("una tabella con tre righe dà tre righe", treCorsi.righe?.length === 3, String(treCorsi.esito));
+verifica("e nessun campo: le due forme non si mescolano", treCorsi.campi?.length === 0);
+verifica(
+  "le righe sono numerate nell'ordine del foglio",
+  treCorsi.righe.map((r) => r.indice).join(",") === "1,2,3",
+);
+verifica(
+  "ogni riga porta la propria provenienza",
+  treCorsi.righe.every((r) => r.pagina === 1 && r.estrattoDa),
+);
+verifica(
+  "le celle tornano nell'ordine delle colonne dichiarate, non in quello d'arrivo",
+  treCorsi.righe[0].celle.map((c) => c.chiave).join(",") ===
+    VOCE_FORMAZIONE.campi.map((c) => c.chiave).join(","),
+);
+verifica(
+  "una colonna non letta è una cella vuota, non una cella assente",
+  treCorsi.righe[0].celle.length === VOCE_FORMAZIONE.campi.length &&
+    treCorsi.righe[0].celle.find((c) => c.chiave === "docente").valore === null,
+);
+
+const conRigaVuota = interpretaRisposta(
+  tabellaSana([rigaCorso(), { ...rigaCorso(), celle: [] }]),
+  VOCE_FORMAZIONE,
+  CTX,
+);
+verifica(
+  "una riga senza nessuna cella piena si scarta: è un'intestazione, non un dato",
+  conRigaVuota.righe.length === 1,
+  String(conRigaVuota.righe.length),
+);
+
+const tabellaVuota = interpretaRisposta(tabellaSana([]), VOCE_FORMAZIONE, CTX);
+verifica(
+  "una tabella senza righe è un esito «illeggibile», non un successo vuoto",
+  tabellaVuota.esito === "illeggibile",
+  tabellaVuota.esito,
+);
+
+/* — Il manoscritto, sulle righe — */
+const aMano = interpretaRisposta(
+  tabellaSana([rigaCorso({ fonteLettura: "manoscritto", confidenza: 1 })]),
+  VOCE_FORMAZIONE,
+  CTX,
+);
+verifica(
+  `una riga manoscritta non supera ${TETTO_MANOSCRITTO}, come un campo manoscritto`,
+  aMano.righe[0].confidenza <= TETTO_MANOSCRITTO,
+  String(aMano.righe[0].confidenza),
+);
+verifica(
+  "e porta il suo avviso",
+  aMano.righe[0].avvisi.some((a) => a.includes("mano")),
+);
+
+/* — I controlli di senso sulla formazione — */
+const donneImpossibili = interpretaRisposta(
+  tabellaSana([
+    rigaCorso({
+      celle: [cella("corso", "Parità"), cella("data", "2025-05-01"), cella("partecipanti", "4"), cella("partecipantiDonne", "9")],
+    }),
+  ]),
+  VOCE_FORMAZIONE,
+  CTX,
+);
+verifica(
+  "più donne che partecipanti viene segnalato",
+  donneImpossibili.righe[0].avvisi.length > 0,
+);
+const annoSbagliato = interpretaRisposta(
+  tabellaSana([
+    rigaCorso({ celle: [cella("corso", "Vecchio"), cella("data", "2019-05-01"), cella("partecipanti", "4")] }),
+  ]),
+  VOCE_FORMAZIONE,
+  CTX,
+);
+verifica(
+  "un corso di un altro anno si segnala e si dichiara fuori periodo",
+  annoSbagliato.avvisi.length > 0 && annoSbagliato.fuoriPeriodo === true,
+);
+
+/* ================================================================== */
+console.log("\n— organico: riservatezza prima di tutto —\n");
+
+const VOCE_ORGANICO = voceMotore("organico");
+const rigaOrganico = (celle, extra = {}) => ({
+  celle,
+  confidenza: 0.9,
+  pagina: 1,
+  estrattoDa: "riga",
+  fonteLettura: "testo",
+  nota: "",
+  ...extra,
+});
+
+const gruppoDiUno = interpretaRisposta(
+  tabellaSana([
+    rigaOrganico([cella("categoria", "Dirigenti"), cella("genere", "donne"), cella("numero", "1"), cella("retribuzioneMediaLorda", "82000")]),
+    rigaOrganico([cella("categoria", "Operai"), cella("genere", "uomini"), cella("numero", "24")]),
+  ]),
+  VOCE_ORGANICO,
+  CTX,
+);
+verifica(
+  "un gruppo di una persona sola viene segnalato: non è un dato aggregato",
+  gruppoDiUno.avvisi.some((a) => a.includes("una persona sola")),
+  gruppoDiUno.avvisi.join(" | "),
+);
+
+const partiIncoerenti = interpretaRisposta(
+  tabellaSana([
+    rigaOrganico([cella("categoria", "Impiegati"), cella("genere", "donne"), cella("numero", "10"), cella("partTime", "14")]),
+    rigaOrganico([cella("categoria", "Impiegati"), cella("genere", "uomini"), cella("numero", "12")]),
+  ]),
+  VOCE_ORGANICO,
+  CTX,
+);
+verifica(
+  "più part time che addetti viene segnalato",
+  partiIncoerenti.righe[0].avvisi.length > 0,
+);
+
+const retribuzioneMensile = interpretaRisposta(
+  tabellaSana([
+    rigaOrganico([cella("categoria", "Operai"), cella("genere", "uomini"), cella("numero", "10"), cella("retribuzioneMediaLorda", "1800")]),
+    rigaOrganico([cella("categoria", "Operai"), cella("genere", "donne"), cella("numero", "6")]),
+  ]),
+  VOCE_ORGANICO,
+  CTX,
+);
+verifica(
+  "una retribuzione annua da 1.800 € viene segnalata (è un importo mensile)",
+  retribuzioneMensile.righe[0].avvisi.some((a) => a.includes("mensile")),
+);
+
+const unSoloGenere = interpretaRisposta(
+  tabellaSana([
+    rigaOrganico([cella("categoria", "Operai"), cella("genere", "uomini"), cella("numero", "10")]),
+  ]),
+  VOCE_ORGANICO,
+  CTX,
+);
+verifica(
+  "dati non distinti per genere: si dice che gli indicatori di parità non si calcolano",
+  unSoloGenere.avvisi.some((a) => a.includes("genere")),
+);
+
+/* ================================================================== */
+console.log("\n— organigramma: ruoli, non persone —\n");
+
+const VOCE_ORGANIGRAMMA = voceMotore("organigramma");
+const conNome = interpretaRisposta(
+  tabellaSana([
+    rigaOrganico([cella("ruolo", "Sig. Rossi Responsabile Produzione"), cella("riportaA", "Direzione")]),
+    rigaOrganico([cella("ruolo", "Direzione")]),
+  ]),
+  VOCE_ORGANIGRAMMA,
+  CTX,
+);
+verifica(
+  "un nome di persona in un ruolo viene segnalato: nel manuale va il ruolo",
+  conNome.righe[0].avvisi.some((a) => a.includes("nome di una persona")),
+  conNome.righe[0].avvisi.join(" | "),
+);
+const ruoliDoppi = interpretaRisposta(
+  tabellaSana([
+    rigaOrganico([cella("ruolo", "RSPP"), cella("riportaA", "Direzione")]),
+    rigaOrganico([cella("ruolo", "rspp"), cella("riportaA", "Direzione")]),
+  ]),
+  VOCE_ORGANIGRAMMA,
+  CTX,
+);
+verifica(
+  "due volte lo stesso ruolo viene segnalato",
+  ruoliDoppi.avvisi.some((a) => a.includes("più di una volta")),
+);
+
+/* ================================================================== */
+console.log("\n— visura: la partita IVA si verifica, non si crede —\n");
+
+const VOCE_VISURA = voceMotore("visura");
+const visura = (sovrascrivi = {}) => {
+  const campi = {
+    ragioneSociale: c("Officina Lombardi S.r.l."),
+    partitaIva: c("00743110157"),
+    sedeLegale: c("Via delle Officine 12, Brescia"),
+    ateco: c("25.62.00"),
+  };
+  const testa = { tipoRilevato: "atteso", tipoEffettivo: "", qualita: "leggibile", avvertenze: [] };
+  for (const [k, v] of Object.entries(sovrascrivi)) {
+    if (["tipoRilevato", "tipoEffettivo", "qualita", "avvertenze"].includes(k)) testa[k] = v;
+    else campi[k] = v;
+  }
+  return { ...testa, campi: Object.entries(campi).map(([nome, v]) => ({ nome, ...v })) };
+};
+
+const visuraSana = interpretaRisposta(visura(), VOCE_VISURA, CTX);
+verifica("una visura sana si legge", visuraSana.esito === "ok", visuraSana.esito);
+verifica(
+  "una partita IVA con la cifra di controllo giusta non fa rumore",
+  visuraSana.campi.find((x) => x.chiave === "partitaIva").avvisi.length === 0,
+);
+const pivaStorta = interpretaRisposta(visura({ partitaIva: c("00743110158") }), VOCE_VISURA, CTX);
+verifica(
+  "una cifra sbagliata nella partita IVA viene colta dalla cifra di controllo",
+  pivaStorta.campi.find((x) => x.chiave === "partitaIva").avvisi.length > 0,
+);
+const pivaCorta = interpretaRisposta(visura({ partitaIva: c("12345") }), VOCE_VISURA, CTX);
+verifica(
+  "una partita IVA che non ha undici cifre viene segnalata",
+  pivaCorta.campi.find((x) => x.chiave === "partitaIva").avvisi.length > 0,
+);
+const atecoStorto = interpretaRisposta(visura({ ateco: c("venticinque") }), VOCE_VISURA, CTX);
+verifica(
+  "un ATECO che non è un ATECO viene segnalato",
+  atecoStorto.campi.find((x) => x.chiave === "ateco").avvisi.length > 0,
+);
+
+/* ================================================================== */
+console.log("\n— le istruzioni si compongono dai campi, non si scrivono a mano —\n");
+
+const testoIstruzioni = istruzioni(VOCE_FORMAZIONE, CTX);
+verifica(
+  "ogni colonna dichiarata compare nelle istruzioni",
+  VOCE_FORMAZIONE.campi.every((c) => testoIstruzioni.includes(c.chiave)),
+);
+verifica(
+  "le istruzioni di una tabella parlano di righe, non di campi",
+  testoIstruzioni.includes("TABELLA") && testoIstruzioni.includes("CONFIDENZA PER RIGA"),
+);
+verifica(
+  "quelle di una scheda parlano di campi",
+  istruzioni(VOCE, CTX).includes("CONFIDENZA PER CAMPO"),
+);
+verifica(
+  "i valori ammessi di una scelta vengono detti al modello",
+  testoIstruzioni.includes("parita-e-inclusione"),
+);
+verifica(
+  "l'anno di rendicontazione entra nelle istruzioni",
+  testoIstruzioni.includes("2025"),
+);
+
+/* ================================================================== */
+console.log("\n— i tetti di spesa: invisibili, ma reali —\n");
+
+verifica(
+  "sotto tutte le soglie si procede",
+  verdettoSpesa({ pratica: 0, organizzazione: 0, giorno: 0 }).esito === "procedi",
+);
+verifica(
+  "superata la soglia della pratica si avvisa, e si continua",
+  verdettoSpesa({ pratica: TETTI.pratica.soglia, organizzazione: 0, giorno: 0 })
+    .esito === "avvisa",
+);
+verifica(
+  "superato il tetto della pratica ci si ferma",
+  verdettoSpesa({ pratica: TETTI.pratica.tetto, organizzazione: 0, giorno: 0 })
+    .esito === "ferma",
+);
+verifica(
+  "il tetto del giorno vince su quello della pratica: dice che il problema non è del cliente",
+  verdettoSpesa({
+    pratica: TETTI.pratica.tetto,
+    organizzazione: 0,
+    giorno: TETTI.giorno.tetto,
+  }).ambito === "giorno",
+);
+verifica(
+  "ogni tetto porta la sua motivazione: senza, nessuno saprà rivederlo",
+  Object.values(TETTI).every((t) => t.perche.length > 40),
+);
+verifica(
+  "i tetti stanno sopra il costo di una pratica tipica, non al suo bordo",
+  TETTI.pratica.tetto > 5 * DOLLARO,
+);
+verifica(
+  "il messaggio al cliente non nomina né tetti né costi né energia",
+  !/tetto|limite|costo|spesa|budget|energi/i.test(MESSAGGIO_AL_CLIENTE),
+  MESSAGGIO_AL_CLIENTE,
+);
+verifica(
+  "la nota di back-office invece i numeri li dice",
+  notaAllarme(
+    verdettoSpesa({ pratica: TETTI.pratica.tetto, organizzazione: 0, giorno: 0 }),
+  ).includes("FERMATO"),
+);
+
+/* ================================================================== */
+console.log("\n— il riuso: non è un limite, ed è importante che non lo sembri —\n");
+
+const IMPRONTA = { dati: "a", documenti: "b", norme: "c", modello: "d" };
+const ORA = new Date("2026-08-24T10:00:00Z");
+const IERI = new Date("2026-08-23T10:00:00Z");
+
+const primaVolta = decidiRigenerazione({
+  adesso: IMPRONTA,
+  ultima: null,
+  ultimaIl: null,
+  versioniNellUltimaOra: 0,
+  ora: ORA,
+});
+verifica("la prima volta si genera: non c'è niente da riusare", primaVolta.azione === "rigenera");
+
+const nullaCambiato = decidiRigenerazione({
+  adesso: IMPRONTA,
+  ultima: IMPRONTA,
+  ultimaIl: IERI,
+  versioniNellUltimaOra: 0,
+  ora: ORA,
+});
+verifica("nulla è cambiato: si riusa", nullaCambiato.azione === "riusa");
+verifica(
+  "col messaggio esatto, parola per parola",
+  nullaCambiato.messaggio === MESSAGGIO_RIUSO,
+);
+verifica(
+  "che parla di costo energetico e NON di limiti, quote o budget",
+  /costo energetico/.test(MESSAGGIO_RIUSO) &&
+    !/limite|quota|budget|non puoi|hai superato/i.test(MESSAGGIO_RIUSO),
+);
+
+for (const [campo, atteso] of [
+  ["dati", "confermato dati nuovi"],
+  ["documenti", "documenti nuovi"],
+  ["norme", "cambiato edizione"],
+  ["modello", "modello del documento"],
+]) {
+  const d = decidiRigenerazione({
+    adesso: { ...IMPRONTA, [campo]: "cambiato" },
+    ultima: IMPRONTA,
+    ultimaIl: IERI,
+    versioniNellUltimaOra: 0,
+    ora: ORA,
+  });
+  verifica(
+    `se cambia «${campo}» si rigenera senza obiezioni, dicendo cosa è cambiato`,
+    d.azione === "rigenera" && d.avviso === undefined && d.cambiato.some((c) => c.includes(atteso)),
+    JSON.stringify(d),
+  );
+}
+
+const ravvicinate = decidiRigenerazione({
+  adesso: { ...IMPRONTA, dati: "cambiato" },
+  ultima: IMPRONTA,
+  ultimaIl: IERI,
+  versioniNellUltimaOra: VERSIONI_RAVVICINATE,
+  ora: ORA,
+});
+verifica(
+  "cicli ravvicinati: si rigenera lo stesso, con un invito gentile",
+  ravvicinate.azione === "rigenera" && ravvicinate.avviso === MESSAGGIO_CICLI_RAVVICINATI,
+);
+verifica(
+  "l'invito invita, non vieta",
+  /conviene/.test(MESSAGGIO_CICLI_RAVVICINATI) &&
+    !/non puoi|impedito|bloccat/i.test(MESSAGGIO_CICLI_RAVVICINATI),
+);
+
+/* — Lo stesso principio sulla lettura — */
+verifica(
+  "un documento mai letto si legge",
+  serveRileggere({
+    lettaIl: null,
+    versioneSchema: null,
+    versioneAdesso: "v1",
+    documentoAggiornatoIl: null,
+  }).serve,
+);
+verifica(
+  "un documento già letto, immutato e con lo stesso schema non si rilegge",
+  !serveRileggere({
+    lettaIl: ORA,
+    versioneSchema: "v1",
+    versioneAdesso: "v1",
+    documentoAggiornatoIl: IERI,
+  }).serve,
+);
+verifica(
+  "se cambia lo schema si rilegge",
+  serveRileggere({
+    lettaIl: ORA,
+    versioneSchema: "v1",
+    versioneAdesso: "v2",
+    documentoAggiornatoIl: IERI,
+  }).serve,
+);
+verifica(
+  "se il file è stato sostituito si rilegge",
+  serveRileggere({
+    lettaIl: IERI,
+    versioneSchema: "v1",
+    versioneAdesso: "v1",
+    documentoAggiornatoIl: ORA,
+  }).serve,
 );
 
 console.log(

@@ -478,7 +478,7 @@ export default async function PercorsiPage({
             .eq("organization_id", contesto.org.id),
           supabase
             .from("document_fields")
-            .select("document_id, campo, etichetta, valore, unita, stato")
+            .select("document_id, riga, campo, etichetta, valore, unita, stato")
             .eq("organization_id", contesto.org.id),
         ])
       : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }];

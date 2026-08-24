@@ -3,39 +3,42 @@ import { z } from "zod";
 /**
  * GLI SCHEMI DI ESTRAZIONE DEL MOTORE (docs/motore.md §2, §4).
  *
- * Ogni valore estratto viaggia dentro un involucro, non nudo. Sembra
- * pesante ed è il punto: un numero da solo non si può verificare, e un
- * numero che non si può verificare non ha titolo per entrare in un
- * documento che il cliente porta in banca. L'involucro porta:
+ * ═══ DUE FORME, NON UNA ═══
+ * La bolletta ci ha ingannati: è una SCHEDA, un insieme di campi fissi
+ * (un POD, un periodo, un totale). Ma la maggior parte dei documenti che
+ * una PMI ha in casa è una TABELLA — un registro di formazione con venti
+ * partecipanti, un registro di manutenzione con trenta interventi, i dati
+ * di organico per genere e inquadramento, un organigramma con quindici
+ * ruoli. Righe ripetute della stessa forma.
  *
- *   nome          — quale campo è (dall'elenco dichiarato del tipo);
- *   valore        — vuoto se non è leggibile CON CERTEZZA (§4.1);
- *   confidenza    — per campo, mai per documento (§4.3): in una bolletta
- *                   il POD si legge benissimo mentre le fasce stanno in
- *                   una tabella storta, e una confidenza media
- *                   nasconderebbe proprio quella che serve;
- *   pagina        — dove si va a controllare (§4.2);
- *   estrattoDa    — la stringa così com'è scritta nel documento: è la
- *                   prova che il valore è stato letto e non dedotto;
- *   fonteLettura  — testo | immagine | manoscritto. Il terzo ha un tetto
- *                   di confidenza imposto dal NOSTRO codice, non chiesto
- *                   al modello (§3, regola inviolabile);
- *   nota          — perché è vuoto, o cosa c'è di strano.
+ *   SCHEDA  → campi fissi, una volta sola      (bolletta, visura)
+ *   TABELLA → N righe della stessa forma       (formazione, organico)
+ *
+ * Trattare una tabella come scheda significherebbe inventare chiavi
+ * («partecipante1», «partecipante2») o perdere le righe oltre la prima.
+ *
+ * ═══ L'INVOLUCRO: DOVE STA LA VERIFICABILITÀ ═══
+ * Nessun valore viaggia nudo. Un numero da solo non si può verificare, e
+ * un numero che non si può verificare non ha titolo per entrare in un
+ * documento che il cliente porta in banca. Ogni valore porta con sé:
+ * confidenza, PAGINA, la stringa come appare nel documento, la fonte di
+ * lettura (testo | immagine | manoscritto) e una nota.
+ *
+ * Nelle SCHEDE l'involucro è per campo (docs/motore.md §4.3). Nelle
+ * TABELLE è **per riga**, ed è una deviazione deliberata: un registro di
+ * venti righe per sei colonne farebbe centoventi involucri, un'uscita
+ * enorme e un'interfaccia di conferma inutilizzabile. La riga è l'unità
+ * naturale — è la riga che si legge sul foglio, è la riga che il cliente
+ * conferma con un gesto. Quando UNA cella è incerta, il modello abbassa
+ * la confidenza della riga e nomina la colonna nella nota.
  *
  * ═══ PERCHÉ UN ELENCO E NON UN CAMPO PER PROPRIETÀ ═══
- * La forma naturale sarebbe `{ pod: {...}, consumo: {...} }`. L'abbiamo
- * scritta così e l'API l'ha rifiutata con un 400 preciso: uno schema di
- * structured output ammette **al massimo 16 parametri con tipo unione**,
- * e dieci campi annullabili per quattro proprietà annullabili fanno
- * quaranta. Il limite esiste per un motivo — il costo di compilazione
- * cresce in modo esponenziale — quindi non è un ostacolo da aggirare ma
- * un vincolo di cui tenere conto.
- *
- * L'elenco lo rispetta con zero unioni: nessun campo è annullabile,
- * perché «non letto» si dice con la **stringa vuota**. In cambio si
- * guadagna una cosa che serviva comunque: la forma è la stessa per ogni
- * tipo di documento-FONTE, e aggiungere un tipo significa dichiarare le
- * sue chiavi — non scrivere un altro schema annidato.
+ * La forma naturale sarebbe `{ pod: {...}, consumo: {...} }`. L'API l'ha
+ * rifiutata con un 400 preciso: uno schema di structured output ammette
+ * **al massimo 16 parametri con tipo unione**, e dieci campi annullabili
+ * per quattro proprietà annullabili fanno quaranta. L'elenco rispetta il
+ * limite con zero unioni — «non letto» si dice con la stringa vuota — e
+ * in cambio la forma è identica per ogni tipo di documento.
  */
 
 export const FONTI_LETTURA = ["testo", "immagine", "manoscritto"] as const;
@@ -44,7 +47,7 @@ export type FonteLettura = (typeof FONTI_LETTURA)[number];
 export const QUALITA = ["leggibile", "faticosa", "illeggibile"] as const;
 export type Qualita = (typeof QUALITA)[number];
 
-/** Che cosa ci si aspetta dentro un campo: guida la canonicalizzazione. */
+/** Che cosa ci si aspetta dentro un valore: guida la canonicalizzazione. */
 export type TipoValore = "testo" | "numero" | "data" | "scelta";
 
 export type EtichettaCampo = {
@@ -55,10 +58,20 @@ export type EtichettaCampo = {
   unita?: string;
   /** I campi senza i quali l'estrazione non è servita a niente. */
   essenziale?: boolean;
+  /** Per le scelte: i valori ammessi, detti al modello. */
+  valori?: string[];
 };
 
-/** L'involucro, uguale per ogni documento-FONTE. Nessuna unione dentro. */
-export function schemaFonte<T extends string>(chiavi: readonly [T, ...T[]]) {
+type Chiavi = readonly [string, ...string[]];
+
+const chiaviDi = (campi: EtichettaCampo[]): Chiavi =>
+  campi.map((c) => c.chiave) as unknown as Chiavi;
+
+/* ------------------------------------------------------------------ */
+/* Forma SCHEDA — campi fissi                                          */
+/* ------------------------------------------------------------------ */
+
+function involucro(chiavi: Chiavi) {
   return z.object({
     nome: z.enum(chiavi),
     /** Vuoto = non leggibile con certezza. Mai un valore inventato. */
@@ -82,9 +95,81 @@ export type CampoGrezzo = {
   nota: string;
 };
 
+/** Che documento è davvero: il caso più costoso è quello sbagliato (§4.5). */
+const TIPI_RILEVABILI = [
+  "atteso",
+  "altro-documento-dello-stesso-genere",
+  "altro",
+] as const;
+
+/**
+ * `extra` sono i campi propri di un tipo che non stanno nell'elenco dei
+ * valori estratti perché non sono valori: `piuPod` non è un dato della
+ * bolletta, è un'avvertenza sulla bolletta. Restano pochi e senza unioni,
+ * per non riavvicinarsi al limite dei 16 parametri.
+ */
+export function schemaScheda(campi: EtichettaCampo[], extra: z.ZodRawShape = {}) {
+  return z.object({
+    ...extra,
+    /** «atteso» = è il documento che gli abbiamo detto di aspettarsi. */
+    tipoRilevato: z.enum(TIPI_RILEVABILI),
+    /** Che cosa è, se non è quello atteso: parole sue, per il cliente. */
+    tipoEffettivo: z.string(),
+    qualita: z.enum(QUALITA),
+    campi: z.array(involucro(chiaviDi(campi))),
+    avvertenze: z.array(z.string()),
+  });
+}
+
 /* ------------------------------------------------------------------ */
-/* Bolletta elettrica                                                  */
+/* Forma TABELLA — righe ripetute                                      */
 /* ------------------------------------------------------------------ */
+
+export type RigaGrezza = {
+  celle: { colonna: string; valore: string }[];
+  confidenza: number;
+  pagina: number;
+  estrattoDa: string;
+  fonteLettura: FonteLettura;
+  nota: string;
+};
+
+export function schemaTabella(
+  colonne: EtichettaCampo[],
+  extra: z.ZodRawShape = {},
+) {
+  return z.object({
+    ...extra,
+    tipoRilevato: z.enum(TIPI_RILEVABILI),
+    tipoEffettivo: z.string(),
+    qualita: z.enum(QUALITA),
+    righe: z.array(
+      z.object({
+        celle: z.array(
+          z.object({
+            colonna: z.enum(chiaviDi(colonne)),
+            valore: z.string(),
+          }),
+        ),
+        /** Della RIGA: v. la nota in testa al file. */
+        confidenza: z.number().min(0).max(1),
+        pagina: z.number().int().min(0),
+        /** La riga come appare sul foglio: è la prova di cosa c'era. */
+        estrattoDa: z.string(),
+        fonteLettura: z.enum(FONTI_LETTURA),
+        /** Quale cella è incerta, e perché. */
+        nota: z.string(),
+      }),
+    ),
+    avvertenze: z.array(z.string()),
+  });
+}
+
+/* ================================================================== */
+/* I CAMPI, per tipo di documento                                      */
+/* ================================================================== */
+
+/* ── Bolletta elettrica — SCHEDA ─────────────────────────────────── */
 
 export const CAMPI_BOLLETTA_ELETTRICA: EtichettaCampo[] = [
   { chiave: "pod", etichetta: "Codice POD", tipo: "testo", essenziale: true },
@@ -106,33 +191,120 @@ export const CAMPI_BOLLETTA_ELETTRICA: EtichettaCampo[] = [
     chiave: "energiaRinnovabile",
     etichetta: "Energia rinnovabile dichiarata",
     tipo: "scelta",
+    valori: ["si", "no", "non-dichiarato"],
   },
 ];
 
-const CHIAVI_BOLLETTA = CAMPI_BOLLETTA_ELETTRICA.map((c) => c.chiave) as [
-  string,
-  ...string[],
+/* ── Visura camerale — SCHEDA ────────────────────────────────────── */
+
+export const CAMPI_VISURA: EtichettaCampo[] = [
+  { chiave: "ragioneSociale", etichetta: "Denominazione", tipo: "testo", essenziale: true },
+  { chiave: "partitaIva", etichetta: "Partita IVA", tipo: "testo", essenziale: true },
+  { chiave: "codiceFiscale", etichetta: "Codice fiscale", tipo: "testo" },
+  { chiave: "formaGiuridica", etichetta: "Forma giuridica", tipo: "testo" },
+  { chiave: "sedeLegale", etichetta: "Sede legale", tipo: "testo", essenziale: true },
+  { chiave: "ateco", etichetta: "Codice ATECO prevalente", tipo: "testo", essenziale: true },
+  { chiave: "atecoDescrizione", etichetta: "Attività prevalente", tipo: "testo" },
+  { chiave: "dataCostituzione", etichetta: "Data di costituzione", tipo: "data" },
+  { chiave: "reaNumero", etichetta: "Numero REA", tipo: "testo" },
+  { chiave: "capitaleSociale", etichetta: "Capitale sociale", tipo: "numero", unita: "€" },
+  { chiave: "addetti", etichetta: "Addetti dichiarati", tipo: "numero" },
+  { chiave: "pec", etichetta: "PEC", tipo: "testo" },
 ];
 
-/**
- * `tipoRilevato` è la prima cosa che il modello dichiara, e serve al caso
- * più costoso di tutti: il documento di un altro tipo (§4.5). Una
- * bolletta del gas letta con lo schema dell'elettrica produce campi vuoti
- * e una mezza verità — meglio accorgersene e dirlo.
- */
-export const SchemaBollettaElettrica = z.object({
-  tipoRilevato: z.enum([
-    "bolletta-elettrica",
-    "bolletta-gas",
-    "altra-fattura",
-    "altro",
-  ]),
-  qualita: z.enum(QUALITA),
-  campi: z.array(schemaFonte(CHIAVI_BOLLETTA)),
-  /** Più POD nello stesso documento: i totali non sono di un contatore solo. */
-  piuPod: z.boolean(),
-  /** Conguagli, letture stimate, note di credito: quello che va detto. */
-  avvertenze: z.array(z.string()),
-});
+/* ── Organigramma e deleghe — TABELLA (famiglia OPERA) ───────────── */
 
-export type BollettaElettrica = z.infer<typeof SchemaBollettaElettrica>;
+/**
+ * Si estraggono RUOLI e responsabilità, non le persone: il nome di un
+ * dipendente è un dato personale che al manuale non serve. Se il
+ * documento porta i nomi, il modello ha istruzione di lasciarli fuori —
+ * la casella `persona` esiste solo perché in una PMI il ruolo spesso è
+ * scritto come «Sig. Rossi — responsabile produzione», e serve poter
+ * dire al cliente da dove abbiamo ricavato il ruolo.
+ */
+export const COLONNE_ORGANIGRAMMA: EtichettaCampo[] = [
+  { chiave: "ruolo", etichetta: "Ruolo o funzione", tipo: "testo", essenziale: true },
+  { chiave: "responsabilita", etichetta: "Responsabilità", tipo: "testo" },
+  { chiave: "riportaA", etichetta: "Riporta a", tipo: "testo" },
+  {
+    chiave: "delega",
+    etichetta: "Delega formale",
+    tipo: "scelta",
+    valori: ["si", "no", "non-dichiarato"],
+  },
+  { chiave: "ambito", etichetta: "Ambito della delega", tipo: "testo" },
+];
+
+/* ── Dati di organico aggregati — TABELLA ────────────────────────── */
+
+/**
+ * Il cuore della UNI/PdR 125 e degli indicatori sociali VSME: organico
+ * per GENERE e INQUADRAMENTO, in forma aggregata.
+ *
+ * ═══ MAI NOMINATIVI ═══ Se il documento caricato è un libro unico o un
+ * elenco nominativo, il modello ha istruzione di aggregare e di NON
+ * riportare nomi. Una riga per combinazione categoria × genere: è la
+ * forma in cui la prassi chiede i numeri, ed è anche quella che rende
+ * impossibile risalire alla singola persona.
+ */
+export const COLONNE_ORGANICO: EtichettaCampo[] = [
+  {
+    chiave: "categoria",
+    etichetta: "Inquadramento",
+    tipo: "testo",
+    essenziale: true,
+  },
+  {
+    chiave: "genere",
+    etichetta: "Genere",
+    tipo: "scelta",
+    valori: ["donne", "uomini", "altro", "non-dichiarato"],
+    essenziale: true,
+  },
+  { chiave: "numero", etichetta: "Numero di addetti", tipo: "numero", essenziale: true },
+  { chiave: "tempoIndeterminato", etichetta: "di cui a tempo indeterminato", tipo: "numero" },
+  { chiave: "partTime", etichetta: "di cui part time", tipo: "numero" },
+  {
+    chiave: "retribuzioneMediaLorda",
+    etichetta: "Retribuzione media lorda annua",
+    tipo: "numero",
+    unita: "€",
+  },
+  { chiave: "eta", etichetta: "Fascia d'età", tipo: "testo" },
+];
+
+/* ── Registri di formazione e fogli firma — TABELLA ──────────────── */
+
+export const COLONNE_FORMAZIONE: EtichettaCampo[] = [
+  { chiave: "corso", etichetta: "Corso o argomento", tipo: "testo", essenziale: true },
+  { chiave: "data", etichetta: "Data", tipo: "data", essenziale: true },
+  { chiave: "oreTotali", etichetta: "Ore", tipo: "numero" },
+  { chiave: "partecipanti", etichetta: "Partecipanti", tipo: "numero", essenziale: true },
+  { chiave: "partecipantiDonne", etichetta: "di cui donne", tipo: "numero" },
+  { chiave: "categoria", etichetta: "Inquadramento dei partecipanti", tipo: "testo" },
+  {
+    chiave: "ambito",
+    etichetta: "Ambito",
+    tipo: "scelta",
+    valori: [
+      "sicurezza",
+      "qualita",
+      "ambiente",
+      "parita-e-inclusione",
+      "tecnico-professionale",
+      "altro",
+    ],
+  },
+  { chiave: "docente", etichetta: "Docente o ente formatore", tipo: "testo" },
+];
+
+/* ------------------------------------------------------------------ */
+/* Campi propri di un tipo, che non sono valori estratti               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Più POD nello stesso documento: non è un dato della bolletta, è
+ * un'avvertenza SULLA bolletta — i totali potrebbero riguardare più
+ * contatori insieme, e allora ogni valore va guardato due volte.
+ */
+export const EXTRA_BOLLETTA = { piuPod: z.boolean() };

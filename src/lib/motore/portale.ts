@@ -15,6 +15,8 @@ import { numeroLeggibile } from "./plausibilita";
 
 export type RigaCampo = {
   document_id: string;
+  /** Zero per le schede; da 1 in su per le righe di una tabella. */
+  riga: number;
   campo: string;
   etichetta: string;
   valore: string | null;
@@ -63,6 +65,8 @@ export function raggruppaLetture(
   tipoPerDocumento: Record<string, string | null>,
 ): DatiLetti {
   const out: DatiLetti = {};
+  /** Le righe di tabella si contano, non si elencano: v. sotto. */
+  const conteggi = new Map<string, { confermate: Set<string>; totali: Set<string> }>();
 
   for (const c of campi) {
     if (c.stato === "rifiutato" || c.valore === null) continue;
@@ -75,16 +79,44 @@ export function raggruppaLetture(
       daConfermare: 0,
       confermati: 0,
     });
-
-    gruppo.righe.push({
-      etichetta: c.etichetta,
-      valore: formattaValore(c.valore, c.unita),
-    });
-    if (c.stato === "confermato") gruppo.confermati++;
-    else gruppo.daConfermare++;
-
     const nome = tipoDocumento(tipo)?.nome;
     if (nome && !gruppo.fonti.includes(nome)) gruppo.fonti.push(nome);
+
+    if (c.riga === 0) {
+      // SCHEDA: ogni campo è una riga leggibile del foglio-bozza.
+      gruppo.righe.push({
+        etichetta: c.etichetta,
+        valore: formattaValore(c.valore, c.unita),
+      });
+      if (c.stato === "confermato") gruppo.confermati++;
+      else gruppo.daConfermare++;
+    } else {
+      // TABELLA: nella bozza NON si riversano venti righe per sei
+      // colonne. Il foglio è un'anteprima del documento in composizione,
+      // non un secondo posto dove rifare la conferma: qui basta sapere
+      // quante righe sono entrate e quante aspettano ancora.
+      const c2 = conteggi.get(tipo) ?? { confermate: new Set(), totali: new Set() };
+      const chiave = `${c.document_id}|${c.riga}`;
+      c2.totali.add(chiave);
+      if (c.stato === "confermato") c2.confermate.add(chiave);
+      conteggi.set(tipo, c2);
+    }
+  }
+
+  for (const [tipo, c] of conteggi) {
+    const gruppo = out[tipo];
+    if (!gruppo) continue;
+    const totali = c.totali.size;
+    const confermate = c.confermate.size;
+    gruppo.righe.push({
+      etichetta: tipoDocumento(tipo)?.nome ?? tipo,
+      valore:
+        confermate === totali
+          ? `${totali} ${totali === 1 ? "riga" : "righe"}`
+          : `${confermate} di ${totali} ${totali === 1 ? "riga" : "righe"} confermate`,
+    });
+    gruppo.confermati += confermate;
+    gruppo.daConfermare += totali - confermate;
   }
 
   return out;

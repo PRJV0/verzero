@@ -156,6 +156,21 @@ const ETICHETTA_MODULO: Record<string, string> = {
   "rating-economia-circolare": "Rating di circolarità",
 };
 
+/**
+ * I moduli del catalogo che producono un certo documento. È l'inverso di
+ * `ETICHETTA_MODULO`, e serve alla mappa documentale: sapere quali
+ * PERCORSI alimenta un tipo di documento significa risalire dal documento
+ * prodotto ai moduli che lo producono.
+ */
+export function moduliCheProducono(doc: string): string[] {
+  const out = Object.entries(ETICHETTA_MODULO)
+    .filter(([, etichetta]) => etichetta === doc)
+    .map(([slug]) => slug);
+  // Il bundle produce i tre documenti del percorso completo.
+  if ([DOC_CARBON, DOC_VSME, DOC_SCORE].includes(doc)) out.push("percorso-ver0");
+  return out;
+}
+
 /** Le etichette dei documenti in lavorazione, dati i moduli attivi:
  *  servono a filtrare i chip di destinazione su ciò che esiste davvero. */
 export function documentiAttivi(moduli: string[]): Set<string> {

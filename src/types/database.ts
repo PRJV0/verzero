@@ -196,6 +196,8 @@ type CampoDocumento = {
   id: string;
   document_id: string;
   organization_id: string;
+  /** Zero per le schede; da 1 in su per le righe di una tabella. */
+  riga: number;
   campo: string;
   etichetta: string;
   valore: string | null;
@@ -212,7 +214,21 @@ type CampoDocumento = {
   updated_at: string;
 };
 
-/** Log tecnico del Motore: solo back-office, nessuna policy per gli utenti. */
+/** Un tetto di spesa superato. Solo back-office: il cliente non lo vede. */
+type AllarmeMotore = {
+  id: string;
+  ambito: "pratica" | "organizzazione" | "giorno";
+  livello: "soglia" | "tetto";
+  organization_id: string | null;
+  modulo: string | null;
+  speso_micro: number;
+  tetto_micro: number;
+  nota: string | null;
+  visto_at: string | null;
+  created_at: string;
+};
+
+/** Log tecnico del Motore: back-office (service role e amministratore). */
 type Estrazione = {
   id: string;
   document_id: string | null;
@@ -285,6 +301,7 @@ export type Database = {
       documents: Row<Documento>;
       document_fields: Row<CampoDocumento>;
       extractions: Row<Estrazione>;
+      motore_allarmi: Row<AllarmeMotore>;
       events: Row<Evento>;
       waitlist: Row<Waitlist>;
     };
