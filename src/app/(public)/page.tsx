@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, FileText, UserCheck } from "lucide-react";
+import { ArrowRight, FileText, RefreshCw, UserCheck } from "lucide-react";
 
 import { Sigillo } from "@/components/brand/sigillo";
 import { NastroZero } from "@/components/nastro-zero";
@@ -305,6 +305,38 @@ export default function HomePage() {
         <OndaParticelle config={PRESET.tecnica} className="-z-10" />
         <div className="relative">
           <PrezzoPrincipio />
+        </div>
+      </section>
+
+      {/* HAI GIÀ UN MANUALE? — il richiamo al controllo gratuito.
+          Sta in home perché intercetta un pubblico che il resto della
+          pagina non tocca: chi è già servito da qualcun altro e non sta
+          cercando un percorso nuovo. Il controllo vero vive nella scheda
+          del percorso, qui c'è solo la domanda. */}
+      <section className="bg-paper px-5 py-14">
+        <div className="mx-auto flex max-w-4xl flex-col gap-5 rounded-3xl border-2 border-pine/15 bg-white p-6 sm:flex-row sm:items-center sm:p-8">
+          <span
+            aria-hidden
+            className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-moss text-pine"
+          >
+            <RefreshCw size={22} />
+          </span>
+          <div className="min-w-0">
+            <h2 className="font-display text-2xl leading-tight text-ink md:text-3xl">
+              Hai già un manuale? Potrebbe non essere più allineato.
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-gray-warm">
+              Le norme cambiano edizione: la ISO 14001 nel 2026, la ISO 9001
+              nel 2024. Controlla gratis quale edizione cita il tuo manuale —
+              nessuna registrazione, risposta immediata.
+            </p>
+          </div>
+          <Link
+            href="/servizi/aggiornamento-sistema-gestione"
+            className="vz-press inline-flex shrink-0 items-center gap-2 self-start rounded-xl bg-pine px-6 py-3.5 text-sm font-semibold text-white sm:self-auto"
+          >
+            Controlla l&apos;edizione <ArrowRight size={16} />
+          </Link>
         </div>
       </section>
 

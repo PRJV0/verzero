@@ -16,6 +16,7 @@ import {
   isUnaTantum,
   prezzoDettaglio,
   prezzoUnaTantum,
+  mantenimentoDi,
   rinnovoLabel,
   type Dimensione,
 } from "@/lib/pricing";
@@ -35,6 +36,9 @@ export function PrezzoBox({ slug }: { slug: string }) {
   // Servizi one-shot: si paga l'intervento, non il tempo. Niente canone,
   // niente ciclo di vita, niente pacchetto dell'abbonamento.
   const unaTantum = prezzoUnaTantum(slug, dim);
+  // Un intervento può lasciare un documento che invecchia: allora il
+  // mantenimento c'è, e va detto qui e non solo nel testo della scheda.
+  const mantenimento = mantenimentoDi(slug, dim);
 
   return (
     <div className="rounded-xl border-2 border-pine bg-white p-4">
@@ -98,13 +102,24 @@ export function PrezzoBox({ slug }: { slug: string }) {
             {eur(unaTantum)} €
           </p>
           <p className="text-xs text-gray-light">una tantum · IVA esclusa</p>
-          <p className="mt-3 border-t border-line/70 pt-3 text-xs leading-relaxed text-gray-warm">
-            <span className="font-semibold text-pine">
-              Nessun canone e nessun rinnovo
-            </span>
-            <br />
-            Si paga una volta sola, per l&apos;intervento.
-          </p>
+          {mantenimento === null ? (
+            <p className="mt-3 border-t border-line/70 pt-3 text-xs leading-relaxed text-gray-warm">
+              <span className="font-semibold text-pine">
+                Nessun canone e nessun rinnovo
+              </span>
+              <br />
+              Si paga una volta sola, per l&apos;intervento.
+            </p>
+          ) : (
+            <p className="mt-3 border-t border-line/70 pt-3 text-xs leading-relaxed text-gray-warm">
+              <span className="font-semibold text-pine">
+                poi {eur(mantenimento)} €/mese di mantenimento
+              </span>
+              <br />
+              Tiene il documento allineato quando la norma cambia edizione.
+              Il mantenimento è facoltativo e si disdice quando vuoi.
+            </p>
+          )}
           <Link
             href={`/acquista/${slug}?dimensione=${dim}`}
             onClick={() =>

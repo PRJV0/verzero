@@ -55,7 +55,15 @@ type Rinnovo =
  *  oppure servizio one-shot senza canone (es. supporto all'audit). */
 type Voce =
   | { mensile: number; annuale: number; rinnovo: Rinnovo }
-  | { unaTantum: number };
+  /**
+   * One-shot, con o senza mantenimento.
+   *
+   * `mantenimento` serve ai lavori che producono un documento destinato
+   * a invecchiare: l'intervento si paga una volta, ma tenere il
+   * documento allineato alla norma è un impegno che continua. Senza
+   * mantenimento (supporto all'audit) si paga e finisce lì.
+   */
+  | { unaTantum: number; mantenimento?: number };
 
 const isOneShot = (v: Voce): v is { unaTantum: number } => "unaTantum" in v;
 
@@ -113,6 +121,14 @@ const LISTINO: Record<string, Voce> = {
   "rating-economia-circolare": { mensile: 129, annuale: 1390, rinnovo: { tipo: "sconto20" } },
   // One shot, nessun canone: si paga per l'intervento, non per il tempo.
   "supporto-audit": { unaTantum: 390 },
+  /**
+   * Aggiornamento di un manuale esistente: una tantum per il lavoro di
+   * riallineamento, più il mantenimento allo stesso prezzo dei manuali
+   * che produciamo da zero (59 €/mese in fascia micro). Il documento è
+   * lo stesso e invecchia allo stesso modo: farlo pagare meno perché il
+   * manuale è nato altrove non avrebbe senso.
+   */
+  "aggiornamento-sistema-gestione": { unaTantum: 490, mantenimento: 59 },
 };
 
 /** Canoni all'euro; annuali alla decina. */
@@ -172,8 +188,22 @@ export function prezzoUnaTantum(slug: string, dim: Dimensione): number | null {
   return scala(v.unaTantum, dim);
 }
 
+/**
+ * Il mantenimento mensile di un servizio one-shot, scalato per fascia.
+ * `null` se il servizio non ne ha o se la fascia è "grande".
+ */
+export function mantenimentoDi(slug: string, dim: Dimensione): number | null {
+  const v = LISTINO[slug];
+  if (!v || !isOneShot(v) || dim === "grande") return null;
+  return v.mantenimento === undefined ? null : scala(v.mantenimento, dim);
+}
+
 /** Riga del ciclo di vita per card e riepiloghi (§12.Q). */
 export function rinnovoLabel(slug: string, dim: Dimensione): string | null {
+  const mantenimento = mantenimentoDi(slug, dim);
+  if (mantenimento !== null) {
+    return `poi ${eur(mantenimento)} €/mese per tenerlo allineato alla norma`;
+  }
   const p = prezzoDettaglio(slug, dim);
   if (!p) return null;
   return p.rinnovoTipo === "mantenimento"

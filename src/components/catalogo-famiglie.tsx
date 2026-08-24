@@ -17,6 +17,7 @@ import {
 import {
   GRANDE_IMPRESA,
   RINNOVO_LIBERO,
+  mantenimentoDi,
   prezzoDettaglio,
   prezzoUnaTantum,
 } from "@/lib/pricing";
@@ -62,10 +63,15 @@ function prezzoDaFascia(slug: string | undefined) {
   if (!slug) return null;
   const unaTantum = prezzoUnaTantum(slug, "micro");
   if (unaTantum !== null) {
-    return { importo: eur(unaTantum), unita: "€ una tantum" };
+    const mantenimento = mantenimentoDi(slug, "micro");
+    return {
+      importo: eur(unaTantum),
+      unita: "€ una tantum",
+      poi: mantenimento === null ? null : `poi ${eur(mantenimento)} €/mese`,
+    };
   }
   const p = prezzoDettaglio(slug, "micro");
-  return p ? { importo: eur(p.mensile), unita: "€/mese" } : null;
+  return p ? { importo: eur(p.mensile), unita: "€/mese", poi: null } : null;
 }
 
 function Scheda({ voce }: { voce: VoceCatalogo }) {
@@ -136,7 +142,8 @@ function Scheda({ voce }: { voce: VoceCatalogo }) {
                 <span className="text-sm text-gray-warm">{prezzo.unita}</span>
               </p>
               <p className="mt-0.5 text-[11px] text-gray-light">
-                varia per dimensione d&apos;impresa
+                {prezzo.poi ? `${prezzo.poi} · ` : ""}varia per dimensione
+                d&apos;impresa
               </p>
             </>
           ) : (
@@ -170,8 +177,12 @@ function Scheda({ voce }: { voce: VoceCatalogo }) {
     </>
   );
 
-  const classi =
-    "group flex h-full flex-col rounded-2xl border border-line bg-white p-4 shadow-soft sm:p-5";
+  // In evidenza: bordo pino e fondo salvia. Non è enfasi gratuita — è il
+  // percorso che parla a chi è già servito da qualcun altro, e in mezzo
+  // agli altri sembrerebbe uno dei tanti.
+  const classi = voce.evidenza
+    ? "group flex h-full flex-col rounded-2xl border-2 border-pine/35 bg-moss/50 p-4 shadow-soft sm:p-5"
+    : "group flex h-full flex-col rounded-2xl border border-line bg-white p-4 shadow-soft sm:p-5";
 
   return voce.slug && attivo ? (
     <Link

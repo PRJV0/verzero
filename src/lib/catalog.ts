@@ -4,6 +4,7 @@ import {
   Gauge,
   KeyRound,
   LifeBuoy,
+  RefreshCw,
   Scale,
   ShieldCheck,
   Building2,
@@ -57,6 +58,15 @@ export type Servizio = {
   featured?: boolean;
   /** Riga breve per le card di home e indice. */
   short: string;
+  /**
+   * La riga di richiamo, mostrata IN EVIDENZA sopra la descrizione.
+   *
+   * Non ce l'hanno tutti i percorsi: serve dove la scheda deve fermare
+   * qualcuno che non stava cercando quel servizio. Chi arriva su «carbon
+   * footprint» sa già che cosa vuole; chi ha un manuale in un cassetto
+   * non sta cercando niente, e va interpellato.
+   */
+  richiamo?: string;
   /**
    * A CHI SERVE, in una frase che regge da sola.
    *
@@ -774,6 +784,59 @@ export const SERVIZI: Servizio[] = [
       "Si paga una volta sola, per l'intervento: nessun canone e nessun impegno successivo",
     ],
   },
+  {
+    slug: "aggiornamento-sistema-gestione",
+    perChi:
+      "Serve alle imprese che hanno già un sistema di gestione certificato o documentato e un manuale scritto qualche anno fa: quando la norma cambia edizione, il documento resta indietro anche se il sistema funziona.",
+    name: "Aggiornamento del Sistema di Gestione",
+    taglio: "manuale esistente",
+    icon: RefreshCw,
+    short:
+      "Hai già un manuale? Potrebbe non essere più allineato. Lo confrontiamo con l'edizione in vigore e lo rigeneriamo.",
+    richiamo: "Hai già un manuale? Potrebbe non essere più allineato.",
+    cosE: "Carichi il manuale che hai. L'AI Ver0 lo confronta con l'edizione della norma oggi in vigore, ti mostra punto per punto che cosa non è più allineato e rigenera il documento aggiornato mantenendo l'impianto e i contenuti specifici della tua impresa — processi, responsabilità, moduli. Un professionista del team tecnico verifica il risultato prima della consegna.",
+    copre: [
+      "Confronto con l'edizione in vigore",
+      "Riscrittura del documento",
+      "Verifica professionale",
+    ],
+    comeFunziona: [
+      "Carichi il manuale in uso, nel formato che hai: la lingua del documento resta la tua.",
+      "L'AI Ver0 lo confronta con l'edizione della norma in vigore e segnala i punti che non corrispondono più: struttura, riferimenti, requisiti introdotti dopo la stesura.",
+      "Vedi l'elenco dei disallineamenti prima di decidere qualsiasi cosa.",
+      "Il documento viene rigenerato allineato all'edizione vigente, conservando i contenuti che descrivono la tua impresa; un professionista lo verifica e mette per iscritto i rilievi.",
+    ],
+    output: [
+      "Il manuale aggiornato all'edizione della norma in vigore, con i riferimenti corretti punto per punto",
+      "L'elenco dei disallineamenti trovati nel documento di partenza, con il riferimento alla parte di norma interessata",
+      "La verifica di un professionista del team tecnico, con i rilievi per iscritto",
+      "L'allineamento successivo compreso nel mantenimento: quando la norma cambia ancora, il documento si rivede",
+    ],
+    requisiti: [
+      "Serve il manuale esistente in un formato leggibile: senza il documento di partenza non c'è niente da confrontare",
+      "L'aggiornamento riguarda il documento, non il sistema: se le pratiche aziendali sono cambiate, vanno descritte e questo richiede il tuo contributo",
+      "Il testo ufficiale della norma è protetto da diritto d'autore: l'acquisto resta a carico del cliente",
+    ],
+    perimetro:
+      "Aggiorniamo il documento all'edizione in vigore. Non rilasciamo certificazioni e non sostituiamo l'audit: la certificazione la emette un organismo accreditato, e l'esito di un audit non dipende solo dal manuale.",
+    perimetroBreve: "Aggiorna il documento, non certifica: l'audit resta dell'organismo.",
+    documenti: [
+      "Il manuale del sistema di gestione in uso",
+      "Le procedure e la modulistica allegate, se esistono come file separati",
+      "Il certificato in corso di validità, se l'impresa è già certificata",
+      "Visura camerale (o P.IVA: la recuperiamo noi)",
+    ],
+    riferimenti: [
+      "L'edizione in vigore della norma del sistema, verificata sul catalogo UNI",
+      "UNI CEI EN ISO/IEC 17021-1:2015 per il perimetro fra preparazione e certificazione",
+    ],
+    opportunita: [
+      "Parla a chi è già certificato: il lavoro fatto negli anni resta, non si ricomincia da zero",
+      "I contenuti specifici della tua impresa — processi, responsabilità, moduli — restano nel documento: cambia l'allineamento alla norma, non la descrizione di come lavori",
+      "L'edizione vigente è verificata sul catalogo UNI, che è l'autorità sulla designazione italiana: nessuna deduzione, nessuna memoria",
+      "Il controllo dell'edizione è gratuito e immediato: sai se il tuo manuale è indietro prima di parlare con noi",
+    ],
+  },
 ];
 
 /** Percorsi certificabili: pagine su cui compare il richiamo al supporto
@@ -846,6 +909,7 @@ export const BISOGNI = [
   { key: "committente", label: "Me lo chiede un committente" },
   { key: "bando", label: "Partecipo a un bando" },
   { key: "migliorare", label: "Voglio migliorare" },
+  { key: "aggiornare", label: "Ho già un manuale da aggiornare" },
 ] as const;
 
 export type Bisogno = (typeof BISOGNI)[number]["key"];
@@ -868,6 +932,15 @@ export type VoceCatalogo = {
   etichetta?: string;
   /** Si aggiunge a un percorso, non si attiva da solo. */
   addOn?: boolean;
+  /**
+   * Trattamento distinto nella griglia.
+   *
+   * Serve al percorso che parla a chi è GIÀ servito da qualcun altro: in
+   * mezzo agli altri sembrerebbe uno dei tanti, mentre la domanda a cui
+   * risponde — «il manuale che ho è ancora buono?» — è di un'altra
+   * natura rispetto a «quale percorso attivo».
+   */
+  evidenza?: boolean;
 };
 
 export type Famiglia = {
@@ -981,6 +1054,15 @@ export const FAMIGLIE: Famiglia[] = [
         pilastro: "S",
         bisogni: ["committente"],
         etichetta: "Novità",
+      },
+      {
+        slug: "aggiornamento-sistema-gestione",
+        benefit:
+          "Hai già un manuale? Potrebbe non essere più allineato all'edizione in vigore.",
+        pilastro: "G",
+        bisogni: ["aggiornare", "committente", "bando"],
+        etichetta: "Novità",
+        evidenza: true,
       },
       {
         nome: "Ospitalità sostenibile UNI ISO 21401",

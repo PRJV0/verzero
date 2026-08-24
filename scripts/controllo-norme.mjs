@@ -23,8 +23,8 @@
  *
  * ═══ USO ═══
  *
- *   node scripts/controllo-norme.mjs             solo il registro
- *   node scripts/controllo-norme.mjs --online    richiede anche a UNI
+ *   node --import ./scripts/risolutore-ts.mjs scripts/controllo-norme.mjs
+ *   ... --online     richiede anche a UNI
  *
  * La forma `--online` rilegge lo stato dal catalogo UNI e segnala le
  * norme ritirate dopo l'ultima verifica: è quella da eseguire ogni
@@ -33,117 +33,20 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-/**
- * IL REGISTRO — verificato su store.uni.com il 24 agosto 2026.
- *
- * `url` è la pagina del catalogo UNI: è quella l'autorità sulla
- * designazione italiana, non il sito ISO e tanto meno un articolo che
- * la riassume. Le voci senza `url` non sono norme UNI (schemi privati,
- * standard di altri enti) e vanno verificate alla fonte indicata.
- */
-const REGISTRO = [
-  {
-    codice: "UNI EN ISO 9001:2015+A1:2024",
-    url: "https://store.uni.com/uni-en-iso-9001-2015-a1-2024",
-    stato: "in vigore",
-    dal: "16 ottobre 2024",
-  },
-  {
-    codice: "UNI EN ISO 14001:2026",
-    url: "https://store.uni.com/uni-en-iso-14001-2026",
-    stato: "in vigore",
-    dal: "15 aprile 2026",
-  },
-  {
-    codice: "UNI EN ISO 45001:2023+A1:2024",
-    url: "https://store.uni.com/uni-en-iso-45001-2023-a1-2024",
-    stato: "in vigore",
-  },
-  {
-    codice: "UNI EN ISO 14064-1:2019",
-    url: "https://store.uni.com/uni-en-iso-14064-1-2019",
-    stato: "in vigore",
-    dal: "11 aprile 2019",
-  },
-  {
-    codice: "UNI/PdR 125:2022",
-    url: "https://store.uni.com/uni-pdr-125-2022",
-    stato: "in vigore",
-    dal: "16 marzo 2022",
-  },
-  {
-    codice: "UNI/TS 11820:2024",
-    url: "https://store.uni.com/uni-ts-11820-2024",
-    stato: "in vigore",
-    dal: "14 novembre 2024",
-  },
-  {
-    codice: "UNI ISO 45003:2021",
-    url: "https://store.uni.com/uni-iso-45003-2021",
-    stato: "in vigore",
-    dal: "18 novembre 2021",
-  },
-  {
-    codice: "UNI ISO 30415:2021",
-    url: "https://store.uni.com/uni-iso-30415-2021",
-    stato: "in vigore",
-    dal: "29 luglio 2021",
-  },
-  {
-    codice: "UNI CEI EN ISO/IEC 17021-1:2015",
-    url: "https://store.uni.com/uni-cei-en-iso-iec-17021-1-2015",
-    stato: "in vigore",
-    dal: "6 agosto 2015",
-  },
-  {
-    // La stessa norma citata nella forma internazionale, dove il
-    // contesto è la regola sugli organismi e non il catalogo italiano.
-    codice: "ISO/IEC 17021-1:2015",
-    url: "https://store.uni.com/uni-cei-en-iso-iec-17021-1-2015",
-    stato: "in vigore",
-  },
-  {
-    codice: "SA8000:2014",
-    stato: "in vigore",
-    nota: "Schema privato di Social Accountability International, non una norma UNI: si verifica su sa-intl.org.",
-  },
-  /* ── Ritirate: citabili SOLO per dire che sono ritirate ───────────── */
-  {
-    codice: "UNI EN ISO 9001:2015",
-    url: "https://store.uni.com/uni-en-iso-9001-2015",
-    stato: "ritirata",
-    dal: "16 ottobre 2024",
-    sostituita: "UNI EN ISO 9001:2015+A1:2024",
-  },
-  {
-    codice: "UNI EN ISO 14001:2015",
-    stato: "ritirata",
-    sostituita: "UNI EN ISO 14001:2026",
-  },
-  {
-    codice: "UNI EN ISO 14001:2015+A1:2024",
-    url: "https://store.uni.com/uni-en-iso-14001-2015-a1-2024",
-    stato: "ritirata",
-    dal: "15 aprile 2026",
-    sostituita: "UNI EN ISO 14001:2026",
-  },
-  {
-    codice: "UNI ISO 45001:2018",
-    url: "https://store.uni.com/uni-iso-45001-2018",
-    stato: "ritirata",
-    dal: "28 settembre 2023",
-    sostituita: "UNI EN ISO 45001:2023+A1:2024",
-  },
-  {
-    codice: "UNI/TS 11820:2022",
-    url: "https://store.uni.com/uni-ts-11820-2022",
-    stato: "ritirata",
-    dal: "14 novembre 2024",
-    sostituita: "UNI/TS 11820:2024",
-  },
-];
+import { NORME_VERIFICATE_IL, REGISTRO_NORME } from "../src/lib/norme.ts";
 
-const VERIFICATO_IL = "24 agosto 2026";
+/*
+ * IL REGISTRO VIVE IN `src/lib/norme.ts`, non più qui: lo legge anche
+ * l'applicazione, per il controllo gratuito dell'edizione che offriamo
+ * a chi ha già un manuale. Due copie sarebbero due verità diverse alla
+ * prima norma ritirata.
+ *
+ * Da qui l'avvio con il risolutore TypeScript:
+ *   node --import ./scripts/risolutore-ts.mjs scripts/controllo-norme.mjs
+ */
+const REGISTRO = REGISTRO_NORME;
+const VERIFICATO_IL = NORME_VERIFICATE_IL.esteso;
+
 
 /** La forma di una designazione, in tutte le varianti che usiamo. */
 const FORMA =
@@ -170,8 +73,10 @@ const trovate = new Map();
 let problemi = 0;
 
 for (const f of file) {
-  // Il registro parla di sé stesso: non si controlla da solo.
-  if (f.endsWith("controllo-norme.mjs")) continue;
+  // Il registro parla di sé stesso: non si controlla da solo. Vale per
+  // lo script e per `src/lib/norme.ts`, dove le designazioni ritirate
+  // sono DATI — con la loro data di ritiro accanto — e non citazioni.
+  if (f.endsWith("controllo-norme.mjs") || f.endsWith("lib/norme.ts")) continue;
   const righe = readFileSync(f, "utf8").split("\n");
   righe.forEach((riga, i) => {
     for (const m of riga.matchAll(FORMA)) {

@@ -18,6 +18,7 @@ import { DomandeFrequenti } from "@/components/domande-frequenti";
 import { JsonLd } from "@/components/json-ld";
 import { FasciaListaAttesa } from "@/components/lista-attesa";
 import { OndaParticelle } from "@/components/onda-particelle";
+import { ControlloEdizione } from "@/components/controllo-edizione";
 import { QualitaOutput } from "@/components/qualita-output";
 import { PRESET } from "@/lib/onda";
 import { TracciaApertura } from "@/components/traccia-evento";
@@ -170,6 +171,15 @@ export default async function ServizioPage({
             </div>
           )}
 
+          {/* LA RIGA DI RICHIAMO, dove c'è: ferma chi non stava cercando
+              questo servizio. Sopra la descrizione e in evidenza, perché
+              la descrizione risponde a chi ha già deciso di leggere. */}
+          {s.richiamo && (
+            <p className="mb-4 border-l-4 border-mint pl-4 font-display text-xl leading-snug text-ink md:text-2xl">
+              {s.richiamo}
+            </p>
+          )}
+
           {/* ═══ 1. CHE COS'È, E A CHI SERVE ═══
               `perChi` viveva solo dentro «In breve»: spostando le domande
               in fondo sarebbe sparito dall'apertura, che è l'unico posto
@@ -181,6 +191,15 @@ export default async function ServizioPage({
           <p className="mt-3 text-[15px] leading-relaxed text-gray-warm">
             {s.perChi}
           </p>
+
+          {/* IL GANCIO, solo dove ha senso: chi legge questa scheda ha un
+              manuale in mano e vuole sapere se è indietro. La risposta è
+              un fatto pubblico e non chiediamo niente per darla. */}
+          {s.slug === "aggiornamento-sistema-gestione" && (
+            <div className="mt-6">
+              <ControlloEdizione />
+            </div>
+          )}
 
           {/* ═══ 2. COME LO PRODUCIAMO ═══
               Qui dentro confluisce quello che prima era sparso in cinque
