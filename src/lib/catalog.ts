@@ -38,6 +38,10 @@ import {
  *                                  dal 28 settembre 2023)
  *   UNI EN ISO 14064-1:2019        in vigore dall'11 aprile 2019
  *   UNI/PdR 125:2022               in vigore dal 16 marzo 2022
+ *   UNI/TS 11820:2024              in vigore dal 14 novembre 2024
+ *                                  (la :2022 è ritirata dalla stessa data)
+ *   UNI ISO 45003:2021             in vigore dal 18 novembre 2021
+ *   UNI ISO 30415:2021             in vigore dal 29 luglio 2021
  *
  * L'aggiornamento «A1:2024» è quello sul cambiamento climatico, che nel
  * 2024 ha toccato tutte le norme sui sistemi di gestione.
@@ -713,7 +717,7 @@ export const SERVIZI: Servizio[] = [
       "Eventuali analisi o certificazioni di prodotto già disponibili",
     ],
     riferimenti: [
-      "UNI/TS 11820:2022 (misurazione della circolarità) come riferimento metodologico",
+      "UNI/TS 11820:2024 (misurazione della circolarità) come riferimento metodologico",
       "Principi del Piano d'azione UE per l'economia circolare",
     ],
     opportunita: [

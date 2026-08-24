@@ -156,6 +156,31 @@ Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs`.
   raggiungibile dal footer e da un rimando contestuale per pagina. Un
   contenuto corretto nel posto sbagliato costa comunque: allunga la
   strada verso quello che il lettore era venuto a fare.
+- **Le designazioni di norma si verificano su UNI, sempre.** Ogni
+  designazione citata nel sito, nel catalogo (`src/lib/catalog.ts`) o nei
+  documenti generati (`src/lib/bozza.ts`) va controllata su
+  **store.uni.com** PRIMA della pubblicazione: è quella l'autorità sulla
+  designazione italiana, non il sito ISO e tanto meno un articolo che la
+  riassume. Le norme vengono ritirate e sostituite in silenzio — nel
+  2024 l'aggiornamento sul clima ha toccato tutte quelle sui sistemi di
+  gestione, e la ISO 14001 ha cambiato edizione ad aprile 2026: una
+  designazione superata su un sito che vende conformità è la peggiore
+  figura possibile, e non dà errore da nessuna parte. Il caso più grave
+  è il generatore di bozze, dove la stringa finisce dentro il documento
+  che il cliente porta all'audit.
+  Il controllo è automatico e non facoltativo:
+  `node scripts/controllo-norme.mjs` estrae ogni designazione dal codice
+  e dai documenti e la confronta con il registro verificato in testa allo
+  script; fallisce su una designazione **sconosciuta** — così una norma
+  nuova non entra in pagina senza passare da una verifica — e su una
+  **ritirata usata come valida**. Citare una designazione ritirata è
+  ammesso solo per dire che è ritirata, e il controllo lo riconosce dalla
+  parola «ritirat» sulla stessa riga.
+  **Ricontrollo periodico**: `node scripts/controllo-norme.mjs --online`
+  rilegge lo stato dal catalogo UNI e segnala le norme ritirate dopo
+  l'ultima verifica. Da eseguire ogni pochi mesi e prima di ogni
+  revisione dei contenuti normativi — non a ogni build, perché interroga
+  un sito terzo. La data dell'ultima verifica sta nel registro.
 - **Fatti con la fonte, o niente fatti.** Ogni affermazione su norme,
   obblighi o numeri di mercato pubblicata sul sito porta il riferimento
   per esteso (numero, data, articolo o paragrafo) e un link alla fonte
