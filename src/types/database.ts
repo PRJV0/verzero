@@ -174,12 +174,19 @@ type Documento = {
   impronta: string | null;
   /** Acquisito con la fotocamera: non nativo per costruzione. */
   da_fotocamera: boolean;
+  /** L'esito del primo sguardo, prima dell'estrazione. */
+  triage_esito: "procedi" | "non_pertinente" | "dati_particolari" | "illeggibile" | null;
+  /** La categoria dell'art. 9 riconosciuta: metadato, mai contenuto. */
+  triage_categoria: string | null;
+  triage_at: string | null;
   /** Quante foto sono state cucite in questo documento. */
   pagine_scattate: number | null;
   stato:
     | "smistato"
     | "da_classificare"
     | "non_pertinente"
+    /** Fermato dal triage: contiene dati particolari (art. 9 GDPR). */
+    | "dati_particolari"
     /** Accodato: oltre la dotazione di uso corretto, si legge più tardi. */
     | "in_coda"
     /** Il Motore lo sta leggendo adesso. */
@@ -245,6 +252,8 @@ type Estrazione = {
   tipo: string | null;
   versione_schema: string | null;
   modello: string;
+  /** «triage» il primo sguardo, «estrazione» la lettura vera. */
+  fase: "triage" | "estrazione";
   /** Il livello con cui si è conclusa la lettura. */
   livello: "leggero" | "intermedio" | "superiore" | null;
   /** Valorizzata solo se si è saliti: da dove, e perché. */

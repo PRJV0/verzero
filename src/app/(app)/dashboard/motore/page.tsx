@@ -92,6 +92,12 @@ export default async function MotorePage() {
   const totale = righe.reduce((t, r) => t + (r.costo_micro ?? 0), 0);
   const riuscite = righe.filter((r) => r.esito === "ok").length;
 
+  // Il triage separato dall'estrazione: è l'unico modo di rispondere alla
+  // domanda che conta su quel gradino — costa meno di quello che evita?
+  const triage = righe.filter((r) => r.fase === "triage");
+  const costoTriage = triage.reduce((t, r) => t + (r.costo_micro ?? 0), 0);
+
+
   const inizioGiorno = new Date();
   inizioGiorno.setUTCHours(0, 0, 0, 0);
   const oggi = righe
@@ -219,9 +225,9 @@ export default async function MotorePage() {
             nota: `tetto ${soldi(TETTI.giorno.tetto)}`,
           },
           {
-            etichetta: "Costo medio",
-            valore: righe.length > 0 ? soldi(totale / righe.length) : "—",
-            nota: "per lettura",
+            etichetta: "Di cui triage",
+            valore: soldi(costoTriage),
+            nota: `${triage.length} primi sguardi`,
           },
         ].map((c) => (
           <div key={c.etichetta} className="rounded-xl border border-line bg-white p-4">

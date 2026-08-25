@@ -3,11 +3,18 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { documentiAttivi } from "@/lib/bozza";
+import { tipiRichiesti } from "@/lib/documenti";
 
-import { leggiDocumento, type EsitoConUso } from "./chiamata";
+import { eseguiTriage, leggiDocumento, type EsitoConUso } from "./chiamata";
 import { voceLeggibile, type VoceLeggibile } from "./famiglie";
 import { MESSAGGI_USO, statoUso } from "./fair-use";
 import { serveRileggere } from "./riuso";
+import {
+  decidiTriage,
+  serveTriage,
+  type CategoriaParticolare,
+} from "./triage";
 import type { FonteLettura } from "./schemi";
 import {
   MESSAGGIO_AL_CLIENTE,
@@ -49,6 +56,11 @@ export type EsitoLettura = {
   chiedeSostituzione?: boolean;
   /** La lettura è stata accodata: arriverà, più tardi. */
   accodato?: boolean;
+  /**
+   * Il triage ha fermato tutto per dati particolari: il portale mostra
+   * l'azione di rimozione a un clic, e nessun dato è stato letto.
+   */
+  datiParticolari?: CategoriaParticolare;
 };
 
 export async function eseguiLettura(opzioni: {
@@ -238,6 +250,32 @@ export async function eseguiLettura(opzioni: {
     }
   }
 
+  /* — 3ter. IL TRIAGE: si guarda che cos'è, prima di leggerlo — */
+  const { data: prima } = await admin
+    .from("documents")
+    .select("triage_esito, triage_at")
+    .eq("id", documentId)
+    .maybeSingle();
+
+  if (
+    serveTriage({
+      esito: prima?.triage_esito ?? null,
+      quando: prima?.triage_at ? new Date(prima.triage_at) : null,
+      documentoAggiornatoIl: documento?.updated_at
+        ? new Date(documento.updated_at)
+        : null,
+    })
+  ) {
+    const fermato = await guarda({
+      documentId,
+      organizationId,
+      dati,
+      mime,
+      voce,
+    });
+    if (fermato) return fermato;
+  }
+
   const esito = await leggiDocumento({
     dati,
     mime,
@@ -414,6 +452,120 @@ async function spesa(organizationId: string): Promise<Record<Ambito, number>> {
     organizzazione: somma(mese.data),
     giorno: somma(giorno.data),
   };
+}
+
+/**
+ * IL PRIMO SGUARDO, e le sue conseguenze.
+ *
+ * Restituisce un esito solo quando c'è da FERMARSI: `null` significa che
+ * si può procedere con l'estrazione. Il triage che fallisce — rete,
+ * quota, risposta storta — restituisce `null` anche lui: fermare un
+ * cliente per un guasto nostro sarebbe fargli pagare due volte, e
+ * l'estrazione ha comunque le sue difese.
+ */
+async function guarda(opzioni: {
+  documentId: string;
+  organizationId: string;
+  dati: Uint8Array;
+  mime: string;
+  voce: VoceLeggibile;
+}): Promise<EsitoLettura | null> {
+  const { documentId, organizationId, dati, mime, voce } = opzioni;
+  const admin = createAdminClient();
+
+  // I tipi che servono davvero ai percorsi attivi: è la definizione di
+  // «pertinente», e viene dal catalogo, non da un elenco a parte.
+  const { data: moduli } = await admin
+    .from("module_activations")
+    .select("module")
+    .eq("organization_id", organizationId)
+    .in("stato", ["richiesto", "attivo", "in_attivazione"]);
+  const attivi = documentiAttivi((moduli ?? []).map((m) => m.module));
+  const tipiPertinenti = tipiRichiesti(attivi).map((r) => r.tipo.chiave);
+
+  const sguardo = await eseguiTriage({ dati, mime, tipiPertinenti });
+
+  await admin.from("extractions").insert({
+    document_id: documentId,
+    organization_id: organizationId,
+    fase: "triage",
+    famiglia: voce.famiglia,
+    tipo: voce.tipo,
+    versione_schema: "triage/1",
+    modello: sguardo.uso?.modello ?? "n/d",
+    esito: sguardo.ok ? "ok" : "errore",
+    livello: "leggero",
+    token_ingresso: sguardo.uso?.tokenIngresso ?? null,
+    token_uscita: sguardo.uso?.tokenUscita ?? null,
+    costo_micro: sguardo.uso?.costoMicro ?? null,
+    durata_ms: sguardo.uso?.durataMs ?? null,
+    // Del contenuto non resta niente: nel log c'è la DECISIONE, non il
+    // documento. Nessun grezzo, nessun estratto, nessun riassunto.
+    grezzo: null,
+    errore: sguardo.ok ? null : sguardo.messaggio,
+  });
+
+  if (!sguardo.ok) return null;
+
+  const decisione = decidiTriage(sguardo.triage, tipiPertinenti);
+
+  const segna = async (
+    esito: "non_pertinente" | "dati_particolari" | "illeggibile",
+    stato: "non_pertinente" | "dati_particolari" | "illeggibile",
+    messaggio: string,
+    categoria?: CategoriaParticolare,
+  ) => {
+    await admin
+      .from("documents")
+      .update({
+        stato,
+        lettura_nota: messaggio,
+        triage_esito: esito,
+        triage_categoria: categoria ?? null,
+        triage_at: new Date().toISOString(),
+      })
+      .eq("id", documentId)
+      .eq("organization_id", organizationId);
+  };
+
+  if (decisione.azione === "dati-particolari") {
+    await segna(
+      "dati_particolari",
+      "dati_particolari",
+      decisione.messaggio,
+      decisione.categoria,
+    );
+    return {
+      ok: false,
+      datiParticolari: decisione.categoria,
+      messaggio: decisione.messaggio,
+      scritti: 0,
+      preservati: 0,
+    };
+  }
+
+  if (decisione.azione === "non-pertinente") {
+    await segna("non_pertinente", "non_pertinente", decisione.messaggio);
+    return { ok: false, messaggio: decisione.messaggio, scritti: 0, preservati: 0 };
+  }
+
+  if (decisione.azione === "illeggibile") {
+    await segna("illeggibile", "illeggibile", decisione.messaggio);
+    return { ok: false, messaggio: decisione.messaggio, scritti: 0, preservati: 0 };
+  }
+
+  // Si procede: si registra che il triage è passato, così non si ripete.
+  await admin
+    .from("documents")
+    .update({
+      triage_esito: "procedi",
+      triage_categoria: null,
+      triage_at: new Date().toISOString(),
+    })
+    .eq("id", documentId)
+    .eq("organization_id", organizationId);
+
+  return null;
 }
 
 /**

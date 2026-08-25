@@ -133,6 +133,72 @@ export default function PrivacyPage() {
         </DaValidare>
       </SezioneLegale>
 
+      {/* ══ MINIMIZZAZIONE ══
+          Sta subito dopo «quali dati trattiamo» perché è il suo
+          complemento: la parte che dice che cosa NON trattiamo. È anche
+          l'unica sezione che descrive un comportamento del prodotto —
+          il triage — e non una dichiarazione di intenti. */}
+      <SezioneLegale
+        id="minimizzazione"
+        titolo="Quello che non trattiamo, e cosa succede se ci arriva"
+      >
+        <p>
+          I documenti che ci porti servono a comporre gli elaborati dei tuoi
+          percorsi: bollette, visure, registri, dati di organico in forma
+          aggregata. Non ci serve altro, e quello che non ci serve non lo
+          trattiamo — non per prudenza, ma perché trattare un dato senza che
+          serva non ha una ragione per esistere.
+        </p>
+        <p>
+          <strong>
+            Non trattiamo dati particolari ai sensi dell&apos;art. 9 GDPR
+          </strong>{" "}
+          — dati sulla salute, giudiziari, biometrici, e più in generale i
+          dati che quell&apos;articolo protegge — né documenti
+          d&apos;identità. Non ce ne serve nessuno per nessuno dei percorsi a
+          catalogo.
+        </p>
+        <p>
+          Può succedere che uno arrivi lo stesso: un certificato medico in
+          mezzo ai registri di formazione, una visita di idoneità dentro una
+          cartella. Per questo <strong>ogni documento passa da un primo
+          sguardo prima di essere letto</strong>. Se quel primo sguardo
+          riconosce dati particolari, la lavorazione si ferma lì:
+        </p>
+        <ul>
+          <li>il documento non viene letto e nessun dato ne viene estratto;</li>
+          <li>
+            del contenuto non conserviamo nulla oltre il file che hai caricato
+            tu, che resta nel tuo archivio finché non lo togli;
+          </li>
+          <li>
+            nei nostri registri tecnici resta che ci siamo fermati e la
+            categoria riconosciuta — una decisione, non un dato del documento;
+          </li>
+          <li>
+            te lo diciamo in chiaro nell&apos;archivio, con il bottone per
+            rimuoverlo subito.
+          </li>
+        </ul>
+        <p>
+          Lo stesso primo sguardo ferma anche i documenti che semplicemente non
+          servono ai percorsi che hai attivo: restano archiviati, ma non
+          vengono letti. Meno dati trattati, e meno spesa: le due cose qui
+          coincidono.
+        </p>
+        <DaValidare>
+          la formulazione dell&apos;impegno a non trattare dati particolari e
+          la sua coerenza con il contratto: va deciso se dichiararlo come
+          divieto contrattuale d&apos;uso (il cliente si impegna a non
+          caricarli) oltre che come nostro comportamento tecnico, e come
+          qualificare il periodo in cui il file resta nell&apos;archivio del
+          cliente prima della rimozione. Va valutato anche se il
+          riconoscimento automatico della categoria — che avviene su un
+          documento che potrebbe contenere dati dell&apos;art. 9 — richieda
+          una sua base e una menzione nella DPIA.
+        </DaValidare>
+      </SezioneLegale>
+
       <SezioneLegale id="finalita" titolo="Perché li trattiamo, e con quale base giuridica">
         <TabellaLegale
           colonne={["Finalità", "Base giuridica", "Nota"]}

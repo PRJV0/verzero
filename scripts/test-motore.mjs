@@ -60,6 +60,14 @@ import { CAMPI_BOLLETTA_ELETTRICA } from "../src/lib/motore/schemi.ts";
 import { formattaValore, raggruppaLetture, livelloConfidenza } from "../src/lib/motore/portale.ts";
 import { naturaPdf, testoDelPdf } from "../src/lib/motore/pdf.ts";
 import {
+  CATEGORIE_PARTICOLARI,
+  NOME_CATEGORIA,
+  decidiTriage,
+  istruzioniTriage,
+  messaggioDatiParticolari,
+  serveTriage,
+} from "../src/lib/motore/triage.ts";
+import {
   CAPACITA_DI_LIVELLO,
   MODELLO_DI_LIVELLO,
   livelloIniziale,
@@ -1492,6 +1500,209 @@ verifica(
   "ma esiste un tetto assoluto: un'uscita più lunga è un difetto, non un registro",
   tettoToken("tabella", 100, 20) <= 16_000,
   String(tettoToken("tabella", 100, 20)),
+);
+
+
+/* ================================================================== */
+console.log("\n— il triage: si guarda che cos'è, prima di leggerlo —\n");
+
+const PERTINENTI = ["bolletta-elettrica", "organico", "formazione"];
+const sguardo = (s) => ({
+  tipoProbabile: "bolletta-elettrica",
+  datiParticolari: false,
+  categoria: "nessuna",
+  leggibile: true,
+  ...s,
+});
+
+/* — 1. Documento pertinente — */
+const pertinente = decidiTriage(sguardo(), PERTINENTI);
+verifica(
+  "un documento pertinente e leggibile passa: si procede all'estrazione",
+  pertinente.azione === "procedi",
+  pertinente.azione,
+);
+
+/* — 2. Documento estraneo ma innocuo — */
+const estraneo = decidiTriage(sguardo({ tipoProbabile: "altro" }), PERTINENTI);
+verifica(
+  "un documento estraneo si ferma prima di estrarre",
+  estraneo.azione === "non-pertinente",
+  estraneo.azione,
+);
+verifica(
+  "e il messaggio dice che NON l'abbiamo letto",
+  /senza leggerlo/i.test(estraneo.messaggio),
+  estraneo.messaggio,
+);
+verifica(
+  "e che resta in archivio, non che è stato rifiutato",
+  /lasciarlo|archiviato/i.test(estraneo.messaggio) &&
+    !/rifiut|respint|errore/i.test(estraneo.messaggio),
+);
+const noto = decidiTriage(sguardo({ tipoProbabile: "rifiuti" }), PERTINENTI);
+verifica(
+  "un tipo che conosciamo ma che non serve a questi percorsi si ferma lo stesso",
+  noto.azione === "non-pertinente",
+);
+verifica(
+  "e lo si chiama col suo nome, non «un documento»",
+  noto.messaggio.includes("registro dei rifiuti"),
+  noto.messaggio,
+);
+
+/* — 3. Documento con dati sanitari — */
+const sanitario = decidiTriage(
+  sguardo({ datiParticolari: true, categoria: "salute" }),
+  PERTINENTI,
+);
+verifica(
+  "un documento con dati sanitari si ferma",
+  sanitario.azione === "dati-particolari",
+  sanitario.azione,
+);
+verifica(
+  "e il messaggio dice le tre cose: cosa abbiamo visto, che non lo trattiamo, cosa fare",
+  /salute/.test(sanitario.messaggio) &&
+    /non ci servono/.test(sanitario.messaggio) &&
+    /[Rr]imuovilo/.test(sanitario.messaggio),
+  sanitario.messaggio,
+);
+verifica(
+  "e dice esplicitamente che non l'abbiamo letto né conservato",
+  /non l'abbiamo letto/i.test(sanitario.messaggio) &&
+    /non ne conserviamo il contenuto/i.test(sanitario.messaggio),
+);
+verifica(
+  "senza dare del distratto a nessuno e senza alludere a conseguenze",
+  !/errore|sbagli|attenzione|violazione|sanzione|non dovevi/i.test(
+    sanitario.messaggio,
+  ),
+);
+
+/* — La pertinenza NON salva un documento con dati particolari — */
+const sanitarioPertinente = decidiTriage(
+  sguardo({
+    tipoProbabile: "organico",
+    datiParticolari: true,
+    categoria: "salute",
+  }),
+  PERTINENTI,
+);
+verifica(
+  "un documento PERTINENTE con dati sanitari si ferma lo stesso: la pertinenza non conta",
+  sanitarioPertinente.azione === "dati-particolari",
+  sanitarioPertinente.azione,
+);
+
+/* — E nemmeno l'illeggibilità lo fa saltare — */
+const sanitarioIlleggibile = decidiTriage(
+  sguardo({ datiParticolari: true, categoria: "identita", leggibile: false }),
+  PERTINENTI,
+);
+verifica(
+  "un documento d'identità illeggibile si ferma per l'art. 9, non per la qualità",
+  sanitarioIlleggibile.azione === "dati-particolari",
+  sanitarioIlleggibile.azione,
+);
+verifica(
+  "l'ordine dei controlli è questo: bastava mettere l'art. 9 in fondo per poterlo saltare",
+  decidiTriage(
+    sguardo({
+      tipoProbabile: "altro",
+      datiParticolari: true,
+      categoria: "giudiziari",
+      leggibile: false,
+    }),
+    PERTINENTI,
+  ).azione === "dati-particolari",
+);
+
+/* — Un modello che si contraddice: nel dubbio ci si ferma — */
+const contraddittorio = decidiTriage(
+  sguardo({ datiParticolari: false, categoria: "salute" }),
+  PERTINENTI,
+);
+verifica(
+  "«no» più una categoria è una contraddizione: si ferma",
+  contraddittorio.azione === "dati-particolari",
+);
+const soloBandiera = decidiTriage(
+  sguardo({ datiParticolari: true, categoria: "nessuna" }),
+  PERTINENTI,
+);
+verifica(
+  "e «sì» senza categoria pure, con la categoria generica",
+  soloBandiera.azione === "dati-particolari" &&
+    soloBandiera.categoria === "altro-art9",
+);
+
+/* — 4. Documento illeggibile — */
+const illeggibileTriage = decidiTriage(sguardo({ leggibile: false }), PERTINENTI);
+verifica(
+  "un documento illeggibile si ferma qui, senza spendere l'estrazione",
+  illeggibileTriage.azione === "illeggibile",
+);
+verifica(
+  "col rimedio, non solo col problema",
+  /rifalla|originale/i.test(illeggibileTriage.messaggio),
+);
+
+/* — Ogni categoria ha un nome dicibile — */
+verifica(
+  "ogni categoria dell'art. 9 ha un nome per il cliente, senza gergo",
+  CATEGORIE_PARTICOLARI.filter((c) => c !== "nessuna").every(
+    (c) => NOME_CATEGORIA[c] && NOME_CATEGORIA[c].length > 3,
+  ),
+);
+verifica(
+  "e il messaggio funziona per tutte",
+  CATEGORIE_PARTICOLARI.filter((c) => c !== "nessuna").every((c) =>
+    messaggioDatiParticolari(c).includes(NOME_CATEGORIA[c]),
+  ),
+);
+
+/* — Quando il triage si ripete, e quando no — */
+verifica(
+  "un documento mai guardato si guarda",
+  serveTriage({ esito: null, quando: null, documentoAggiornatoIl: null }),
+);
+verifica(
+  "uno già guardato e immutato non si riguarda: sarebbe la stessa risposta a pagamento",
+  !serveTriage({
+    esito: "procedi",
+    quando: new Date("2026-08-25T10:00:00Z"),
+    documentoAggiornatoIl: new Date("2026-08-25T09:00:00Z"),
+  }),
+);
+verifica(
+  "ma se il file è stato sostituito si riguarda",
+  serveTriage({
+    esito: "procedi",
+    quando: new Date("2026-08-25T09:00:00Z"),
+    documentoAggiornatoIl: new Date("2026-08-25T10:00:00Z"),
+  }),
+);
+
+/* — Le istruzioni non chiedono contenuto — */
+const testoTriage = istruzioniTriage(PERTINENTI);
+verifica(
+  "le istruzioni vietano esplicitamente di riportare contenuto",
+  /NON estrarre dati/.test(testoTriage) &&
+    /NON riassumere/.test(testoTriage) &&
+    /NON riportare frasi/.test(testoTriage),
+);
+verifica(
+  "e dicono di sbagliare per eccesso di prudenza sull'art. 9",
+  /Nel dubbio, DÌ DI SÌ/.test(testoTriage),
+);
+verifica(
+  "mettendo in guardia dal falso positivo più probabile: l'organico non è un dato sanitario",
+  /NON è un dato particolare/.test(testoTriage),
+);
+verifica(
+  "e l'elenco dei tipi è quello del registro, non una copia",
+  REGISTRO_MOTORE.every((v) => testoTriage.includes(v.tipo)),
 );
 
 console.log(

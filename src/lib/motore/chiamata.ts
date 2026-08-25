@@ -29,6 +29,7 @@ import {
   type Uso,
 } from "./estrazione";
 import { naturaPdf, testoDelPdf, type NaturaPdf } from "./pdf";
+import { SchemaTriage, istruzioniTriage, type Triage } from "./triage";
 
 /**
  * LA CHIAMATA — l'unica parte che tocca la rete.
@@ -327,4 +328,100 @@ function traduciErrore(errore: unknown): EsitoEstrazione {
     messaggio:
       "Non siamo riusciti a leggere il documento. Riprova: se succede ancora, scrivici e ce ne occupiamo noi.",
   };
+}
+
+/* ================================================================== */
+/* IL TRIAGE — il primo sguardo, col modello più leggero               */
+/* ================================================================== */
+
+export type EsitoTriage =
+  | { ok: true; triage: Triage; uso: Uso }
+  | { ok: false; messaggio: string; uso?: Uso };
+
+/**
+ * Il primo sguardo: che documento è, e contiene dati che non dobbiamo
+ * trattare.
+ *
+ * ═══ IL PIÙ ECONOMICO POSSIBILE ═══
+ * Modello leggero, istruzioni corte, quattro campi in uscita e nessun
+ * ragionamento: è un gradino che si paga su OGNI documento, compresi
+ * quelli buoni, e ogni token in più qui si moltiplica per tutto
+ * l'archivio di tutti i clienti. In cambio evita l'estrazione intera su
+ * ciò che non andava letto — e su quei documenti il conto è in attivo
+ * prima ancora di contare la spesa risparmiata.
+ *
+ * Se la chiamata fallisce non si blocca il cliente: si va avanti con
+ * l'estrazione, che ha comunque le sue difese. Fermare tutto per un
+ * errore di rete sarebbe far pagare a lui un guasto nostro.
+ */
+export async function eseguiTriage(opzioni: {
+  dati: Uint8Array;
+  mime: string;
+  tipiPertinenti: string[];
+}): Promise<EsitoTriage> {
+  const { dati, mime, tipiPertinenti } = opzioni;
+  const config = extractionConfig();
+
+  if (dati.byteLength > MAX_BYTE_VERSO_API) {
+    return { ok: false, messaggio: "Il file è troppo grande per essere guardato." };
+  }
+
+  const pdf = mime === "application/pdf";
+  if (!pdf && !IMMAGINI_AMMESSE.includes(mime as (typeof IMMAGINI_AMMESSE)[number])) {
+    return { ok: false, messaggio: "Formato non leggibile." };
+  }
+
+  const base64 = Buffer.from(dati).toString("base64");
+  const contenuto = [
+    pdf
+      ? {
+          type: "document" as const,
+          source: {
+            type: "base64" as const,
+            media_type: "application/pdf" as const,
+            data: base64,
+          },
+        }
+      : {
+          type: "image" as const,
+          source: {
+            type: "base64" as const,
+            media_type: mime as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+            data: base64,
+          },
+        },
+    { type: "text" as const, text: istruzioniTriage(tipiPertinenti) },
+  ];
+
+  const modello = config.modelloForzato ?? MODELLO_DI_LIVELLO.leggero;
+  const cliente = new Anthropic({ apiKey: serverEnv().anthropicApiKey });
+  const inizio = Date.now();
+
+  try {
+    const risposta = await cliente.messages.parse({
+      model: modello,
+      // L'uscita è di quattro campi: mille token sono già larghi.
+      max_tokens: 1000,
+      output_config: { format: zodOutputFormat(SchemaTriage) },
+      messages: [{ role: "user", content: contenuto }],
+    });
+
+    const uso: Uso = {
+      modello,
+      tokenIngresso: risposta.usage.input_tokens,
+      tokenUscita: risposta.usage.output_tokens,
+      costoMicro: costoMicroDollari(
+        modello,
+        risposta.usage.input_tokens,
+        risposta.usage.output_tokens,
+      ),
+      durataMs: Date.now() - inizio,
+    };
+
+    const letto = SchemaTriage.safeParse(risposta.parsed_output);
+    if (!letto.success) return { ok: false, messaggio: "Sguardo non riuscito.", uso };
+    return { ok: true, triage: letto.data, uso };
+  } catch {
+    return { ok: false, messaggio: "Sguardo non riuscito." };
+  }
 }

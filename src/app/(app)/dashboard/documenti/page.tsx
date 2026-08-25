@@ -9,6 +9,8 @@ import {
   FileText,
   Image as ImageIcon,
   Inbox,
+  ShieldAlert,
+  Trash2,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
@@ -351,12 +353,14 @@ export default async function DocumentiPage({
                           </ul>
                         )}
 
-                        {/* Non pertinente: si dice, con garbo. */}
+                        {/* Non pertinente: si dice, con garbo. Se è stato il
+                            TRIAGE a fermarlo, il messaggio è il suo — dice
+                            anche che non l'abbiamo letto, che è la parte che
+                            conta. */}
                         {d.stato === "non_pertinente" && (
                           <p className="mt-2 text-xs leading-relaxed text-gray-warm">
-                            Non serve ai percorsi che hai attivi: lo teniamo
-                            nell&apos;archivio, e se un giorno attiverai un
-                            percorso che lo usa lo troveremo già qui.
+                            {d.lettura_nota ??
+                              "Non serve ai percorsi che hai attivi: lo teniamo nell'archivio, e se un giorno attiverai un percorso che lo usa lo troveremo già qui."}
                           </p>
                         )}
 
@@ -375,6 +379,42 @@ export default async function DocumentiPage({
                             Lo stiamo leggendo adesso: fra poco compaiono i
                             dati, da controllare.
                           </p>
+                        )}
+
+                        {/* ═══ DATI PARTICOLARI (art. 9 GDPR) ═══
+                            Non è un avviso fra gli altri: il documento non
+                            è stato letto, non ne conserviamo il contenuto,
+                            e l'unica azione sensata — toglierlo — sta lì
+                            accanto, a un clic. Un messaggio che dicesse
+                            «rimuovilo» costringendo poi a cercare il
+                            bottone sarebbe un invito a rimandare. */}
+                        {d.stato === "dati_particolari" && (
+                          <div className="mt-2 rounded-xl border-2 border-amber-ink/30 bg-amber-soft p-3">
+                            <p className="flex items-start gap-2 text-xs font-semibold text-amber-ink">
+                              <ShieldAlert size={14} aria-hidden className="mt-0.5 shrink-0" />
+                              Non l&apos;abbiamo letto, e non lo leggeremo
+                            </p>
+                            <p className="mt-1 text-xs leading-relaxed text-amber-ink">
+                              {d.lettura_nota}
+                            </p>
+                            {contesto.ruolo === "impresa" && (
+                              <form
+                                action={async () => {
+                                  "use server";
+                                  await eliminaDocumento(d.id);
+                                }}
+                                className="mt-2"
+                              >
+                                <button
+                                  type="submit"
+                                  className="vz-press inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-amber-ink px-3 text-xs font-semibold text-white"
+                                >
+                                  <Trash2 size={13} aria-hidden />
+                                  Rimuovi dall&apos;archivio
+                                </button>
+                              </form>
+                            )}
+                          </div>
                         )}
 
                         {d.stato === "illeggibile" && (

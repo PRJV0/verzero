@@ -367,6 +367,80 @@ Il modello dichiara la qualità percepita come **campo del risultato**
 
 ---
 
+## 3bis. Il TRIAGE — si guarda che cos'è, prima di leggerlo
+
+I clienti caricheranno documenti sbagliati. Non per distrazione: «porta
+quello che hai già» è un invito, e chi lo accoglie porta anche quello che
+non serve. Senza un primo sguardo, ogni documento inatteso costa una
+lettura intera per scoprire che non andava letto — e, peggio, **viene
+letto prima che qualcuno decida se andava letto**.
+
+Il triage è una chiamata separata e minuscola: modello leggero,
+istruzioni corte, quattro campi in uscita. Restituisce che documento
+sembra, se contiene dati particolari, e se si legge. **Non estrae nulla**,
+e le istruzioni glielo vietano esplicitamente — nemmeno un riassunto,
+nemmeno una riga d'esempio — perché ciò che il modello scrive finisce nel
+nostro log.
+
+### Tre esiti che fermano, e uno che prosegue
+
+| Esito | Che cosa succede | Che cosa legge il cliente |
+|---|---|---|
+| **dati particolari** | ci si ferma SEMPRE, la pertinenza non conta | «non l'abbiamo letto, rimuovilo» + rimozione a un clic |
+| **non pertinente** | si archivia, non si estrae | «non serve ai percorsi che hai attivo, l'abbiamo archiviato senza leggerlo» |
+| **illeggibile** | ci si ferma prima di spendere l'estrazione | il rimedio: rifai la foto, o manda il PDF originale |
+| procedi | si va all'estrazione | niente: è il caso normale |
+
+### L'ordine dei controlli non è casuale
+
+I dati particolari si guardano **per primi**, prima della leggibilità e
+prima della pertinenza. Un certificato medico pertinente resta un
+certificato medico; uno illeggibile pure. Metterlo in fondo significherebbe
+che basta un documento storto per saltarlo.
+
+E basta **uno dei due segnali**: un modello che dice «no» e poi nomina una
+categoria si sta contraddicendo, e nel dubbio ci si ferma. Alle istruzioni
+si chiede esplicitamente di sbagliare per eccesso — un documento fermato
+per sbaglio costa al cliente un clic, uno con dati sanitari che passa è un
+problema che non si ripara.
+
+### Del contenuto non resta niente
+
+Nel database ci sono l'esito e la **categoria**: metadati sulla decisione,
+non pezzi del documento. Nel log tecnico la riga di triage ha `grezzo`
+nullo per costruzione. Il file resta dove il cliente l'ha messo — nel suo
+archivio — finché non lo toglie, ed è per questo che la rimozione sta
+accanto al messaggio e non due schermate più in là.
+
+### Quanto costa, e quando conviene davvero
+
+Misurato: **$0,0032 a documento** (3.000 token in ingresso, ~35 in uscita,
+modello leggero). Il conto onesto:
+
+| Estrazione evitata | Il triage si ripaga se si ferma più del… |
+|---|---|
+| nativo, livello leggero ($0,0078) | **41%** dei documenti |
+| tabella, livello intermedio ($0,051) | **6%** |
+| scansione, livello superiore ($0,068) | **5%** |
+
+Quindi: sui documenti **cari** — tabelle, scansioni, manoscritti — il
+triage si paga da solo appena qualche documento su venti va fermato, che
+è più che plausibile. Sui documenti **a buon mercato** aggiunge circa un
+terzo del costo, e non si ripaga quasi mai.
+
+**Va detto così**: il triage non è principalmente un risparmio, è una
+misura di minimizzazione che sui documenti costosi si ripaga anche da
+sola. Chiamarlo «ottimizzazione dei costi» sarebbe vero solo per metà, e
+la metà falsa è quella che poi si usa per giustificare di toglierlo.
+
+Si salta solo quando lo stesso documento è già passato di qui e non è
+cambiato. **Non** si salta perché il cliente ha dichiarato il tipo: una
+dichiarazione dice che cosa il cliente *crede* di aver caricato, e un
+certificato medico finito per sbaglio fra i registri porta il nome del
+file sbagliato quanto il resto.
+
+---
+
 ## 4. (d) Affidabilità del dato — le sei regole inviolabili
 
 Stanno prima di ogni ottimizzazione. Se una funzionalità le contraddice, si
