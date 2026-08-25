@@ -112,6 +112,35 @@ export default async function MotorePage() {
     perCliente.set(k, v);
   }
 
+  /* — Per MODELLO: è il confronto che decide la taratura dei livelli — */
+  const perModello = new Map<
+    string,
+    { letture: number; costo: number; errori: number; escalation: number }
+  >();
+  for (const r of righe) {
+    const k = r.modello ?? "—";
+    const v = perModello.get(k) ?? { letture: 0, costo: 0, errori: 0, escalation: 0 };
+    v.letture++;
+    v.costo += r.costo_micro ?? 0;
+    if (r.esito !== "ok") v.errori++;
+    if (r.escalato_da) v.escalation++;
+    perModello.set(k, v);
+  }
+  const salite = righe.filter((r) => r.escalato_da).length;
+
+  /* — L'andamento: sette giorni, per vedere se una taratura ha giovato — */
+  const giorno = (iso: string) => iso.slice(0, 10);
+  const perGiorno = new Map<string, { letture: number; costo: number }>();
+  for (const r of righe) {
+    const k = giorno(r.created_at);
+    const v = perGiorno.get(k) ?? { letture: 0, costo: 0 };
+    v.letture++;
+    v.costo += r.costo_micro ?? 0;
+    perGiorno.set(k, v);
+  }
+  const andamento = [...perGiorno.entries()].sort().slice(-7);
+  const massimo = Math.max(1, ...andamento.map(([, v]) => v.costo));
+
   /* — Per tipo di documento: dove si sbaglia, e quanto costa — */
   const perTipo = new Map<
     string,
@@ -345,6 +374,87 @@ export default async function MotorePage() {
           </table>
         </div>
       </section>
+
+      {/* Per modello: la taratura dei livelli si decide qui. */}
+      <section className="mt-8">
+        <TestataSezione
+          icona={Coins}
+          titolo="Per modello"
+          sotto={`Quale livello sta leggendo cosa, e quanto costa. ${salite} letture su ${righe.length} hanno dovuto salire di livello: se questa quota cresce, il livello di partenza è tarato troppo in basso.`}
+        />
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[30rem] text-sm">
+            <thead>
+              <tr className="border-b border-line text-left text-[11px] uppercase tracking-wide text-gray-light">
+                <th className="py-2 font-semibold">Modello</th>
+                <th className="py-2 text-right font-semibold">Letture</th>
+                <th className="py-2 text-right font-semibold">Errori</th>
+                <th className="py-2 text-right font-semibold">Salite</th>
+                <th className="py-2 text-right font-semibold">Costo medio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[...perModello.entries()]
+                .sort((a, b) => b[1].letture - a[1].letture)
+                .map(([modello, v]) => (
+                  <tr key={modello} className="border-b border-line/60">
+                    <td className="py-2 pr-3 text-ink">{modello}</td>
+                    <td className="py-2 text-right tabular-nums text-gray-warm">
+                      {v.letture}
+                    </td>
+                    <td className="py-2 text-right tabular-nums text-gray-warm">
+                      {v.errori > 0 ? (
+                        <span className="text-amber-ink">{v.errori}</span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="py-2 text-right tabular-nums text-gray-warm">
+                      {v.escalation > 0 ? v.escalation : "—"}
+                    </td>
+                    <td className="py-2 text-right font-semibold tabular-nums text-ink">
+                      {soldi(v.costo / Math.max(1, v.letture))}
+                    </td>
+                  </tr>
+                ))}
+              {perModello.size === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-3 text-gray-warm">
+                    Nessuna lettura registrata.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* L'andamento: una taratura si giudica dal prima e dopo. */}
+      {andamento.length > 1 && (
+        <section className="mt-8">
+          <TestataSezione
+            icona={Gauge}
+            titolo="Andamento della spesa"
+            sotto="Gli ultimi giorni con letture. Serve a rispondere alla sola domanda che conta dopo una taratura: è servita?"
+          />
+          <ul className="mt-3 space-y-1.5">
+            {andamento.map(([g, v]) => (
+              <li key={g} className="flex items-center gap-3 text-xs">
+                <span className="w-20 shrink-0 tabular-nums text-gray-light">{g}</span>
+                <span className="h-2 flex-1 overflow-hidden rounded-full bg-line">
+                  <span
+                    className="block h-full rounded-full bg-mint"
+                    style={{ width: `${(v.costo / massimo) * 100}%` }}
+                  />
+                </span>
+                <span className="w-32 shrink-0 text-right tabular-nums text-gray-warm">
+                  {soldi(v.costo)} · {v.letture} letture
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* La tassonomia: cosa sappiamo leggere, e cosa no. */}
       <section className="mt-8">

@@ -682,20 +682,95 @@ cassetto», e che alimenta il mantenimento del percorso di aggiornamento.
 
 ## 9. Le scelte sul modello e sulla chiamata
 
-### Modello predefinito: `claude-opus-5`
+### Un modello per compito, non un modello per tutto
 
-Non è una scelta di comodo. Estrarre dati da documenti amministrativi
-italiani — tabelle, fasce orarie, conguagli, prestampati con correzioni a
-mano, scansioni storte — è il tipo di compito in cui la differenza fra
-modelli non è stilistica: è il numero di campi che tornano giusti sui **casi
-difficili**, che sono esattamente quelli in cui un errore passa inosservato.
-Il caso facile lo legge chiunque.
+Il confronto adesso esiste, quindi la regola cambia: non più «il modello
+più capace finché non misuriamo», ma **il livello che il compito richiede,
+misurato**. Tre livelli (`src/lib/motore/livelli.ts`):
 
-`ANTHROPIC_EXTRACTION_MODEL` permette di cambiarlo senza deploy, ma
-**abbassare il modello per risparmiare non è una decisione tecnica**: è una
-decisione del fondatore, da prendere dopo aver confrontato gli esiti sugli
-stessi documenti col log tecnico alla mano. Finché quel confronto non
-esiste, il default resta il modello più capace.
+| Livello | Modello | Quando |
+|---|---|---|
+| leggero | `claude-haiku-4-5` | documento NATIVO, forma scheda, schema corto: è trascrizione |
+| intermedio | `claude-sonnet-5` | il caso normale: tabelle, scansioni, schemi larghi |
+| superiore | `claude-opus-5` | manoscritto, famiglia OPERA, analisi degli scostamenti |
+
+La scelta è **dichiarativa**: legge famiglia, forma e attesa di qualità
+dalla voce del registro, e non contiene nessuna conoscenza di dominio.
+
+**L'escalation è ciò che rende sicura la scelta.** Se la prima lettura
+torna senza campi essenziali, con confidenza media sotto 0,75 o con meno
+della metà dei valori attesi, si rilegge con il livello sopra — e il costo
+registrato comprende **entrambi** i tentativi, altrimenti l'escalation
+sembrerebbe gratis. Un esito «altro tipo» o «illeggibile» non si rilegge:
+fallirebbe uguale e costerebbe due volte.
+
+**Vincolo tecnico dichiarato**: Haiku 4.5 rifiuta sia
+`output_config.effort` sia `thinking: {type:"adaptive"}` (400,
+`invalid_request_error`, verificato il 25 agosto 2026). Le capacità di
+ciascun livello sono dichiarate in `CAPACITA_DI_LIVELLO`: scoprirle a
+runtime significa un 400 e una lettura persa.
+
+### I numeri, misurati
+
+`scripts/confronto-livelli.mjs` legge lo stesso documento coi tre livelli
+e confronta accuratezza, confidenza, costo e durata.
+
+| Documento | leggero | intermedio | superiore |
+|---|---|---|---|
+| Bolletta nativa (scheda, 9 campi) | **9/9 · $0,0078** | 9/9 · $0,0300 | 9/9 · $0,0499 |
+| Registro formazione (tabella, 6 righe) | **4/4 · $0,0103** | 4/4 · $0,0511 | 4/4 · $0,0677 |
+
+Sui documenti **nativi e puliti** il livello leggero prende tutto a un
+sesto del costo. È la ragione per cui esiste, ed è anche il limite della
+misura: **non dice nulla** su scansioni storte e manoscritto, che infatti
+non gli vengono mandati.
+
+**Perché le tabelle restano all'intermedio anche se la misura direbbe di
+no.** Un modello meno capace, su una tabella, può restituire *meno righe*
+con confidenza alta — e le righe mancanti non fanno scattare nessuna delle
+tre regole di escalation, perché non sappiamo quante avrebbero dovuto
+essere. Un campo sbagliato si vede; una riga che non c'è, no. Finché non
+esiste un modo di accorgersene, il risparmio non vale il rischio.
+
+### Mandare il testo invece del documento: misurato, e scartato
+
+L'ipotesi era che inviare il testo estratto in locale — niente pagine da
+rendere — costasse molto meno. Misurato:
+
+| | blocco documento | solo testo | risparmio |
+|---|---|---|---|
+| Bolletta, leggero | $0,0078 | $0,0069 | 11% |
+| Registro, leggero | $0,0103 | $0,0088 | 15% |
+
+**Non vale.** Un decimo del costo contro la perdita della struttura — le
+colonne di una tabella che diventano una sequenza di numeri senza
+etichette — su documenti veri che non sono puliti come questi. Il costo
+d'ingresso di una lettura è dominato dalle ISTRUZIONI, non dalle pagine:
+è lì che si guadagnerebbe, non nel formato del documento.
+
+`testoDelPdf()` resta come **strumento di misura** (`--testo`), non come
+corsia: se un domani i numeri cambiassero — documenti molto più lunghi,
+istruzioni molto più corte — la decisione si rivede sugli stessi numeri.
+
+### Selezione delle pagine: rimandata, con la soglia
+
+Su documenti lunghi converrebbe mandare solo le pagine pertinenti. Non è
+implementato, e la ragione è misurata: su un documento di poche pagine il
+costo d'ingresso è quasi tutto istruzioni, quindi non c'è niente da
+guadagnare. Il conto cambia sopra le **dieci pagine circa**, ed è lì che
+questa ottimizzazione va ripresa — insieme alla difficoltà vera, che è
+ritagliare le pagine di un PDF senza riscriverlo e senza perdere in
+silenzio quello che si taglia.
+
+### Nessun lavoro ripetuto
+
+Oltre al riuso «nulla è cambiato» (§7bis), c'è quello sul **contenuto**:
+ogni file caricato porta l'impronta SHA-256 dei suoi byte
+(`documents.impronta`). Se lo stesso contenuto è già stato letto per la
+**stessa organizzazione** con lo **stesso schema**, i valori si copiano
+senza nessuna chiamata — e nascono `da_confermare` come tutti gli altri:
+si risparmia la lettura, non il gesto del cliente. Il confronto non
+attraversa mai il confine fra due clienti, nemmeno a parità di contenuto.
 
 ### Struttura della risposta
 

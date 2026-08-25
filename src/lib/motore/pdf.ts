@@ -121,3 +121,79 @@ function lunghezzaTestoMostrato(contenuto: string): number {
   }
   return n;
 }
+
+/* ------------------------------------------------------------------ */
+/* Il testo, quando serve misurare se conviene mandarlo                */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Il testo di un PDF nativo, estratto in locale.
+ *
+ * ═══ PERCHÉ ESISTE, E PERCHÉ NON È LA STRADA PRINCIPALE ═══
+ * Mandare il testo invece del documento costa molto meno: niente pagine
+ * da rendere. Ma un estrattore fatto in casa perde la STRUTTURA — le
+ * colonne di una tabella diventano una sequenza di numeri senza
+ * etichette — ed è esattamente il difetto dell'OCR, ottenuto in proprio
+ * (docs/motore.md §3).
+ *
+ * Questa funzione esiste per MISURARE quella perdita invece di
+ * supporla: `scripts/confronto-livelli.mjs --testo` legge lo stesso
+ * documento nei due modi e confronta accuratezza e costo. Se un giorno i
+ * numeri dicessero che sui documenti a campi fissi il testo basta,
+ * diventerebbe una corsia in più — decisa sui numeri, non sull'intuito.
+ *
+ * Non ricostruisce le colonne e non ci prova: gli operatori di
+ * posizionamento (`Td`, `TD`, `Tm`, `T*`) diventano ritorni a capo, il
+ * resto è concatenato. È volutamente grezzo, perché il suo scopo è
+ * mostrare quanto si perde.
+ */
+export function testoDelPdf(dati: Uint8Array): string {
+  const grezzo = Buffer.from(dati).toString("latin1");
+  const pezzi: string[] = [];
+  const marcatore = /stream\r?\n?/g;
+  let m: RegExpExecArray | null;
+
+  while ((m = marcatore.exec(grezzo)) !== null) {
+    const inizio = m.index + m[0].length;
+    const fine = grezzo.indexOf("endstream", inizio);
+    if (fine < 0) break;
+    marcatore.lastIndex = fine;
+
+    const pezzo = Buffer.from(dati.slice(inizio, fine));
+    if (pezzo.length === 0 || pezzo.length > 8 * 1024 * 1024) continue;
+    const contenuto = decomprimi(pezzo);
+    if (!contenuto || !/\b(BT|Tj|TJ)\b/.test(contenuto)) continue;
+
+    // Un passaggio solo sul flusso, in ordine: le stringhe mostrate
+    // diventano testo, gli spostamenti di riga diventano capo.
+    for (const t of contenuto.matchAll(
+      /\(((?:\\.|[^\\()])*)\)\s*Tj|\[([\s\S]*?)\]\s*TJ|\b(T\*|Td|TD|Tm)\b/g,
+    )) {
+      if (t[1] !== undefined) {
+        pezzi.push(sciogli(t[1]));
+      } else if (t[2] !== undefined) {
+        for (const s of t[2].matchAll(/\(((?:\\.|[^\\()])*)\)/g)) {
+          pezzi.push(sciogli(s[1]));
+        }
+      } else {
+        pezzi.push("\n");
+      }
+    }
+  }
+
+  return pezzi
+    .join("")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/** Le sequenze di escape del PDF, sciolte. */
+function sciogli(s: string): string {
+  return s
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\n")
+    .replace(/\\t/g, "\t")
+    .replace(/\\([()\\])/g, "$1")
+    .replace(/\\(\d{1,3})/g, (_, o) => String.fromCharCode(parseInt(o, 8)));
+}

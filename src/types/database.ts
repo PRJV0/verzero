@@ -170,6 +170,8 @@ type Documento = {
   tipo: string | null;
   /** Vero quando è stato il cliente a dirlo, non una regola sul nome. */
   tipo_confermato: boolean;
+  /** SHA-256 del contenuto: riconosce lo stesso file caricato due volte. */
+  impronta: string | null;
   stato:
     | "smistato"
     | "da_classificare"
@@ -239,6 +241,11 @@ type Estrazione = {
   tipo: string | null;
   versione_schema: string | null;
   modello: string;
+  /** Il livello con cui si è conclusa la lettura. */
+  livello: "leggero" | "intermedio" | "superiore" | null;
+  /** Valorizzata solo se si è saliti: da dove, e perché. */
+  escalato_da: string | null;
+  escalato_perche: string | null;
   esito: "ok" | "altro_tipo" | "illeggibile" | "non_valido" | "errore";
   qualita: string | null;
   pdf_nativo: boolean | null;

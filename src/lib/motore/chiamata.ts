@@ -11,6 +11,14 @@ import {
   costoMicroDollari,
   extractionConfig,
 } from "./costi";
+import {
+  CAPACITA_DI_LIVELLO,
+  MODELLO_DI_LIVELLO,
+  livelloIniziale,
+  manoscrittoAtteso,
+  serveEscalation,
+  type Livello,
+} from "./livelli";
 import type { VoceLeggibile } from "./famiglie";
 import {
   interpretaRisposta,
@@ -19,7 +27,7 @@ import {
   type EsitoEstrazione,
   type Uso,
 } from "./estrazione";
-import { naturaPdf, type NaturaPdf } from "./pdf";
+import { naturaPdf, testoDelPdf, type NaturaPdf } from "./pdf";
 
 /**
  * LA CHIAMATA — l'unica parte che tocca la rete.
@@ -37,13 +45,25 @@ import { naturaPdf, type NaturaPdf } from "./pdf";
 /** I formati immagine che l'API accetta. HEIC non è fra questi. */
 const IMMAGINI_AMMESSE = ["image/jpeg", "image/png", "image/gif", "image/webp"] as const;
 
-export type EsitoConUso = EsitoEstrazione & { uso?: Uso; natura?: NaturaPdf };
+export type EsitoConUso = EsitoEstrazione & {
+  uso?: Uso;
+  natura?: NaturaPdf;
+  /** Con quale livello si è letto, e se si è dovuto salire. */
+  livello?: Livello;
+  escalation?: { da: Livello; a: Livello; motivo: string };
+};
 
 export async function leggiDocumento(opzioni: {
   dati: Uint8Array;
   mime: string;
   voce: VoceLeggibile;
   annoRendicontazione: number;
+  /** Solo per il confronto fra livelli: impone il livello e spegne
+   *  l'escalation, così i numeri misurano un modello solo. */
+  livelloForzato?: Livello;
+  /** Solo per il confronto: manda il TESTO estratto in locale invece del
+   *  documento, per misurare quanto si perde (pdf.ts). */
+  soloTesto?: boolean;
 }): Promise<EsitoConUso> {
   const { dati, mime, voce, annoRendicontazione } = opzioni;
   const config = extractionConfig();
@@ -83,7 +103,33 @@ export async function leggiDocumento(opzioni: {
   const ctx: ContestoLettura = { annoRendicontazione, nativo: natura.nativo };
   const base64 = Buffer.from(dati).toString("base64");
 
-  const contenuto = pdf
+  // ═══ QUALE MODELLO ═══ (livelli.ts). La variabile d'ambiente, se
+  // valorizzata, vince su tutto: serve a bloccare un modello per un
+  // confronto o per un incidente, e in quel caso l'escalation si spegne
+  // — sarebbe una scelta che scavalca una scelta.
+  const forzato =
+    (opzioni.livelloForzato ? MODELLO_DI_LIVELLO[opzioni.livelloForzato] : null) ??
+    extractionConfig().modelloForzato;
+  const partenza: Livello =
+    opzioni.livelloForzato ??
+    livelloIniziale(voce, {
+    nativo: natura.nativo,
+      manoscrittoAtteso: manoscrittoAtteso(voce),
+    });
+
+  const contenuto = pdf && opzioni.soloTesto
+    ? ([
+        {
+          type: "document" as const,
+          source: {
+            type: "text" as const,
+            media_type: "text/plain" as const,
+            data: testoDelPdf(dati),
+          },
+        },
+        { type: "text" as const, text: istruzioni(voce, ctx) },
+      ])
+    : pdf
     ? ([
         {
           type: "document" as const,
@@ -108,30 +154,39 @@ export async function leggiDocumento(opzioni: {
       ]);
 
   const cliente = new Anthropic({ apiKey: serverEnv().anthropicApiKey });
-  const inizio = Date.now();
 
-  try {
+  /**
+   * Una lettura con un livello. Il costo si somma su tutti i tentativi:
+   * se si è saliti, la pratica ha pagato anche quello leggero, e il log
+   * deve dirlo — altrimenti l'escalation sembrerebbe gratis.
+   */
+  const leggiCon = async (livello: Livello) => {
+    const modello = forzato ?? MODELLO_DI_LIVELLO[livello];
+    const inizio = Date.now();
+    const puo = CAPACITA_DI_LIVELLO[livello];
     const risposta = await cliente.messages.parse({
-      model: config.model,
+      model: modello,
       max_tokens: config.maxTokens,
-      // Il ragionamento resta attivo: su una bolletta con conguagli,
-      // letture stimate e più POD nello stesso documento la risposta
-      // giusta richiede di ragionare, non di trascrivere. L'intensità la
-      // governa l'effort (docs/motore.md §9).
-      thinking: { type: "adaptive" },
+      // Dove il modello lo regge, il ragionamento resta attivo: su una
+      // bolletta con conguagli, letture stimate e più POD nello stesso
+      // documento la risposta giusta richiede di ragionare, non di
+      // trascrivere. Al livello leggero chiediamo l'opposto — trascrivere
+      // ciò che è scritto — e quel modello non accetta né ragionamento
+      // adattivo né effort (livelli.ts).
+      ...(puo.ragionamentoAdattivo ? { thinking: { type: "adaptive" as const } } : {}),
       output_config: {
-        effort: voce.effort ?? "medium",
+        ...(puo.effort ? { effort: voce.effort ?? "medium" } : {}),
         format: zodOutputFormat(voce.schema),
       },
       messages: [{ role: "user", content: contenuto }],
     });
 
     const uso: Uso = {
-      modello: config.model,
+      modello,
       tokenIngresso: risposta.usage.input_tokens,
       tokenUscita: risposta.usage.output_tokens,
       costoMicro: costoMicroDollari(
-        config.model,
+        modello,
         risposta.usage.input_tokens,
         risposta.usage.output_tokens,
       ),
@@ -141,11 +196,76 @@ export async function leggiDocumento(opzioni: {
     // Si valida COMUNQUE il risultato con lo schema, anche se è stato
     // generato con vincolo di formato: il vincolo riduce gli errori di
     // forma, non li elimina, e non dice niente sulla plausibilità.
-    const esito = interpretaRisposta(risposta.parsed_output, voce, ctx);
-    return { ...esito, uso, natura };
+    return { esito: interpretaRisposta(risposta.parsed_output, voce, ctx), uso };
+  };
+
+  try {
+    let livello = partenza;
+    let { esito, uso } = await leggiCon(livello);
+
+    /* — L'escalation: costo pieno solo quando serve — */
+    if (!forzato) {
+      const salita = serveEscalation(livello, misura(esito, voce), esito.esito === "ok");
+      if (salita.serve) {
+        const secondo = await leggiCon(salita.verso);
+        const sommato: Uso = {
+          modello: secondo.uso.modello,
+          tokenIngresso: uso.tokenIngresso + secondo.uso.tokenIngresso,
+          tokenUscita: uso.tokenUscita + secondo.uso.tokenUscita,
+          // Il tentativo buttato via si paga: il log lo dice, altrimenti
+          // l'escalation sembrerebbe gratis e nessuno la taratura.
+          costoMicro: uso.costoMicro + secondo.uso.costoMicro,
+          durataMs: uso.durataMs + secondo.uso.durataMs,
+        };
+        return {
+          ...secondo.esito,
+          uso: sommato,
+          natura,
+          livello: salita.verso,
+          escalation: { da: livello, a: salita.verso, motivo: salita.motivo },
+        };
+      }
+    }
+
+    return { ...esito, uso, natura, livello };
   } catch (errore) {
-    return { ...traduciErrore(errore), natura };
+    return { ...traduciErrore(errore), natura, livello: partenza };
   }
+}
+
+/** Quanto è tornato da una lettura: è su questo che si decide se salire. */
+function misura(esito: EsitoEstrazione, voce: VoceLeggibile) {
+  if (esito.esito !== "ok") {
+    return { letti: 0, attesi: 0, essenzialiMancanti: 0, confidenzaMedia: 0, conAvvisi: 0 };
+  }
+  const unita =
+    esito.forma === "scheda"
+      ? esito.campi.filter((c) => c.valore !== null)
+      : esito.righe;
+  const essenziali = voce.campi.filter((c) => c.essenziale);
+  const essenzialiMancanti =
+    esito.forma === "scheda"
+      ? essenziali.filter(
+          (e) => esito.campi.find((c) => c.chiave === e.chiave)?.valore == null,
+        ).length
+      : // In una tabella «essenziale» vale per riga: una riga senza le sue
+        // colonne essenziali è una riga che non serve.
+        esito.righe.filter((r) =>
+          essenziali.some(
+            (e) => r.celle.find((c) => c.chiave === e.chiave)?.valore == null,
+          ),
+        ).length;
+
+  return {
+    letti: unita.length,
+    attesi: esito.forma === "scheda" ? voce.campi.length : esito.righe.length,
+    essenzialiMancanti,
+    confidenzaMedia:
+      unita.length === 0
+        ? 0
+        : unita.reduce((t, u) => t + u.confidenza, 0) / unita.length,
+    conAvvisi: unita.filter((u) => u.avvisi.length > 0).length,
+  };
 }
 
 /**

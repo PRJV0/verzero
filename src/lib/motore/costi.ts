@@ -45,6 +45,13 @@ export const PREZZI_PER_MILIONE: Record<string, { ingresso: number; uscita: numb
 };
 
 export type ExtractionConfig = {
+  /**
+   * Un modello imposto da fuori. Normalmente VUOTO: la scelta la fa
+   * `livelli.ts` per compito. Serve a bloccare tutto su un modello solo
+   * per un confronto o per un incidente — e in quel caso l'escalation si
+   * spegne, perché sarebbe una scelta che ne scavalca un'altra.
+   */
+  modelloForzato: string | null;
   model: string;
   maxTokens: number;
   /** I candidati da confrontare sui documenti veri, col log alla mano. */
@@ -58,6 +65,7 @@ export function extractionConfig(): ExtractionConfig {
   const maxToken = Number(process.env.ANTHROPIC_EXTRACTION_MAX_TOKENS);
 
   return {
+    modelloForzato: scelto && scelto.length > 0 ? scelto : null,
     model: scelto && scelto.length > 0 ? scelto : MODELLO_PREDEFINITO,
     maxTokens:
       Number.isFinite(maxToken) && maxToken >= 1000 ? maxToken : MAX_TOKEN_PREDEFINITO,

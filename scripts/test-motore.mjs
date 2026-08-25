@@ -58,7 +58,14 @@ import {
 } from "../src/lib/motore/plausibilita.ts";
 import { CAMPI_BOLLETTA_ELETTRICA } from "../src/lib/motore/schemi.ts";
 import { formattaValore, raggruppaLetture, livelloConfidenza } from "../src/lib/motore/portale.ts";
-import { naturaPdf } from "../src/lib/motore/pdf.ts";
+import { naturaPdf, testoDelPdf } from "../src/lib/motore/pdf.ts";
+import {
+  CAPACITA_DI_LIVELLO,
+  MODELLO_DI_LIVELLO,
+  livelloIniziale,
+  manoscrittoAtteso,
+  serveEscalation,
+} from "../src/lib/motore/livelli.ts";
 import {
   bozzaConDocumenti,
   completamentoBozza,
@@ -1337,6 +1344,116 @@ verifica(
 verifica(
   "e cresce in modo lineare coi percorsi: nessuna sorpresa nel modello",
   Math.abs(casoPeggiore(4).costoMicro - peggiore.costoMicro * 4) < 10,
+);
+
+
+/* ================================================================== */
+console.log("\n— quale modello per quale compito —\n");
+
+const VOCE_VISURA_L = voceMotore("visura");
+const VOCE_ORGANIGRAMMA_L = voceMotore("organigramma");
+const VOCE_FORMAZIONE_L = voceMotore("formazione");
+
+verifica(
+  "un documento nativo a campi fissi parte dal livello leggero",
+  livelloIniziale(VOCE, { nativo: true, manoscrittoAtteso: false }) === "leggero",
+);
+verifica(
+  "una scansione parte dall'intermedio: la posizione sulla pagina è metà dell'informazione",
+  livelloIniziale(VOCE, { nativo: false, manoscrittoAtteso: false }) === "intermedio",
+);
+verifica(
+  "una tabella parte dall'intermedio anche se nativa",
+  livelloIniziale(VOCE_FORMAZIONE_L, { nativo: true, manoscrittoAtteso: false }) ===
+    "intermedio",
+);
+verifica(
+  "un documento-OPERA parte dal superiore: è analisi, non trascrizione",
+  livelloIniziale(VOCE_ORGANIGRAMMA_L, { nativo: true, manoscrittoAtteso: false }) ===
+    "superiore",
+);
+verifica(
+  "un tipo dichiarato spesso manoscritto parte dal superiore, sempre",
+  livelloIniziale(VOCE, { nativo: true, manoscrittoAtteso: true }) === "superiore",
+);
+verifica(
+  "l'attesa dichiarata dice quali tipi sono manoscritti: la formazione sì, la visura no",
+  manoscrittoAtteso(VOCE_FORMAZIONE_L) && !manoscrittoAtteso(VOCE_VISURA_L),
+);
+verifica(
+  "il livello leggero non chiede né ragionamento adattivo né effort: quel modello li rifiuta",
+  !CAPACITA_DI_LIVELLO.leggero.ragionamentoAdattivo &&
+    !CAPACITA_DI_LIVELLO.leggero.effort,
+);
+verifica(
+  "gli altri due li accettano entrambi",
+  CAPACITA_DI_LIVELLO.intermedio.effort && CAPACITA_DI_LIVELLO.superiore.ragionamentoAdattivo,
+);
+
+/* — L'escalation — */
+const buona = { letti: 9, attesi: 10, essenzialiMancanti: 0, confidenzaMedia: 0.95, conAvvisi: 0 };
+verifica(
+  "una lettura buona non sale di livello: si paga il pieno solo quando serve",
+  serveEscalation("leggero", buona, true).serve === false,
+);
+verifica(
+  "un campo essenziale mancante fa salire",
+  serveEscalation("leggero", { ...buona, essenzialiMancanti: 1 }, true).serve === true,
+);
+verifica(
+  "una confidenza sotto soglia fa salire",
+  serveEscalation("leggero", { ...buona, confidenzaMedia: 0.5 }, true).serve === true,
+);
+verifica(
+  "meno della metà dei valori attesi fa salire",
+  serveEscalation("leggero", { ...buona, letti: 3, attesi: 10 }, true).serve === true,
+);
+verifica(
+  "si sale di UN livello per volta, e si dice perché",
+  serveEscalation("leggero", { ...buona, essenzialiMancanti: 2 }, true).verso ===
+    "intermedio" &&
+    serveEscalation("leggero", { ...buona, essenzialiMancanti: 2 }, true).motivo.includes(
+      "essenziali",
+    ),
+);
+verifica(
+  "dal livello superiore non si sale: non c'è dove",
+  serveEscalation("superiore", { ...buona, essenzialiMancanti: 3 }, true).serve === false,
+);
+verifica(
+  "un documento di altro tipo o illeggibile NON si rilegge: fallirebbe uguale",
+  serveEscalation("leggero", { ...buona, essenzialiMancanti: 3 }, false).serve === false,
+);
+verifica(
+  "ogni livello ha il suo modello, tutti diversi",
+  new Set(Object.values(MODELLO_DI_LIVELLO)).size === 3,
+);
+
+/* ================================================================== */
+console.log("\n— il testo estratto in locale, per misurare quanto si perde —\n");
+
+const pdfProva = (testo) => {
+  const flusso = `BT /F1 12 Tf 72 720 Td (${testo}) Tj ET`;
+  const corpo = [
+    "%PDF-1.4",
+    "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj",
+    "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj",
+    "3 0 obj << /Type /Page /Parent 2 0 R /Contents 4 0 R >> endobj",
+    `4 0 obj << /Length ${flusso.length} >>\nstream\n${flusso}\nendstream endobj`,
+    "trailer << /Root 1 0 R >>",
+    "%%EOF",
+  ].join("\n");
+  return new TextEncoder().encode(corpo);
+};
+
+verifica(
+  "il testo di un PDF nativo si estrae",
+  testoDelPdf(pdfProva("Codice POD: IT001E98765432")).includes("IT001E98765432"),
+  testoDelPdf(pdfProva("Codice POD: IT001E98765432")),
+);
+verifica(
+  "un file che non è un PDF non fa esplodere l'estrazione: restituisce vuoto",
+  testoDelPdf(new TextEncoder().encode("non sono un pdf")) === "",
 );
 
 console.log(

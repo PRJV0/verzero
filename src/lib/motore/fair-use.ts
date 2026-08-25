@@ -150,9 +150,15 @@ export function etichettaContatore(stato: StatoUso): string {
  * I costi unitari sono MISURATI (docs/motore.md §7), non stimati.
  */
 export const COSTO_UNITARIO_MICRO = {
-  /** Lettura di un documento, misurata: scheda $0,051, tabella $0,068. */
-  documento: 68_000,
-  /** Generazione di un elaborato, ancora stimata. */
+  /**
+   * Lettura di un documento, MISURATA dopo la taratura dei livelli:
+   * $0,008 su un nativo col livello leggero, $0,05 su una tabella con
+   * l'intermedio. Qui sta il valore PRUDENTE — il più caro dei due —
+   * perché un caso peggiore calcolato sul caso migliore non è un caso
+   * peggiore.
+   */
+  documento: 51_000,
+  /** Generazione di un elaborato: ancora stimata, non misurata. */
   generazione: 480_000,
 };
 

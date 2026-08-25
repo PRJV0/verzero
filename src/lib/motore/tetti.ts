@@ -43,7 +43,7 @@ export type Tetto = {
  * pratica tipica da venticinque documenti sta attorno a $3.
  *
  * Contrattuale: i limiti di uso corretto (`fair-use.ts`) fermano un
- * percorso a 300 documenti e 24 generazioni l'anno, cioè **$31,92**.
+ * percorso a 300 documenti e 40 generazioni l'anno, cioè **$34,50**.
  *
  * ═══ IL RAPPORTO FRA I DUE, CHE È LA COSA IMPORTANTE ═══
  * Un tetto tecnico più basso del caso peggiore contrattuale fermerebbe
@@ -63,14 +63,14 @@ export const TETTI: Record<Ambito, Tetto> = {
     soglia: 3 * DOLLARO,
     tetto: 60 * DOLLARO,
     perche:
-      "Una pratica tipica costa circa $3. L'allarme scatta lì per accorgersi subito di ciò che è insolito. Il blocco sta a $60, sopra il caso peggiore contrattuale di $39,60: sotto quella cifra un cliente sta usando ciò che ha comprato, e fermarlo sarebbe rompere una promessa.",
+      "Una pratica tipica costa circa $3. L'allarme scatta lì per accorgersi subito di ciò che è insolito. Il blocco sta a $60, sopra il caso peggiore contrattuale di $34,50: sotto quella cifra un cliente sta usando ciò che ha comprato, e fermarlo sarebbe rompere una promessa.",
   },
   organizzazione: {
     ambito: "organizzazione",
     soglia: 30 * DOLLARO,
     tetto: 250 * DOLLARO,
     perche:
-      "Un cliente con quattro percorsi ha un caso peggiore contrattuale di circa $158 all'anno, che potrebbe concentrare in un mese solo. Il blocco a $250 lascia il doppio di margine: oltre, non è più un cliente esigente.",
+      "Un cliente con quattro percorsi ha un caso peggiore contrattuale di circa $138 all'anno, che potrebbe concentrare in un mese solo. Il blocco a $250 lascia il doppio di margine: oltre, non è più un cliente esigente.",
   },
   giorno: {
     ambito: "giorno",

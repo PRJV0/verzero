@@ -1,5 +1,7 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
+
 import { createAdminClient } from "@/lib/supabase/admin";
 
 import { leggiDocumento, type EsitoConUso } from "./chiamata";
@@ -212,8 +214,32 @@ export async function eseguiLettura(opzioni: {
     };
   }
 
+  const dati = new Uint8Array(await scaricato.data.arrayBuffer());
+
+  /* — 3bis. Lo stesso file, già letto? (riuso del CONTENUTO) — */
+  // Non il nome, non il percorso: l'impronta dei byte. Due copie dello
+  // stesso PDF caricate con nomi diversi sono lo stesso lavoro, e
+  // rifarlo è spendere due volte per lo stesso risultato. Il confronto
+  // non attraversa MAI il confine fra due organizzazioni.
+  const impronta = createHash("sha256").update(dati).digest("hex");
+  await admin.from("documents").update({ impronta }).eq("id", documentId);
+
+  if (!opzioni.forza) {
+    const copiato = await copiaDaGemello(documentId, organizationId, impronta, voce.versione);
+    if (copiato) {
+      await concludi(documentId, organizationId, "letto", copiato.nota, true);
+      return {
+        ok: true,
+        riusato: true,
+        messaggio: copiato.messaggio,
+        scritti: copiato.scritti,
+        preservati: 0,
+      };
+    }
+  }
+
   const esito = await leggiDocumento({
-    dati: new Uint8Array(await scaricato.data.arrayBuffer()),
+    dati,
     mime,
     voce,
     annoRendicontazione: opzioni.annoRendicontazione,
@@ -456,6 +482,85 @@ export async function drenaCoda(organizationId: string): Promise<EsitoLettura | 
   });
 }
 
+/**
+ * Cerca un documento GEMELLO — stesso contenuto, stessa organizzazione,
+ * già letto con lo stesso schema — e ne copia i valori.
+ *
+ * I valori copiati nascono `da_confermare` come tutti gli altri: il
+ * fatto che il cliente abbia già confermato il gemello non vale per
+ * questo, perché sono due documenti distinti nel suo archivio e potrebbe
+ * volerli trattare in modo diverso. Si risparmia la lettura, non la
+ * conferma.
+ */
+async function copiaDaGemello(
+  documentId: string,
+  organizationId: string,
+  impronta: string,
+  versioneSchema: string,
+): Promise<{ scritti: number; messaggio: string; nota: string | null } | null> {
+  const admin = createAdminClient();
+
+  const { data: gemelli } = await admin
+    .from("documents")
+    .select("id, nome_file, lettura_nota")
+    .eq("organization_id", organizationId)
+    .eq("impronta", impronta)
+    .eq("stato", "letto")
+    .neq("id", documentId)
+    .limit(5);
+  if (!gemelli || gemelli.length === 0) return null;
+
+  // Solo un gemello letto con LO STESSO SCHEMA: con uno schema diverso i
+  // campi non corrisponderebbero, e copiarli sarebbe peggio che rileggere.
+  for (const g of gemelli) {
+    const { data: lettura } = await admin
+      .from("extractions")
+      .select("versione_schema")
+      .eq("document_id", g.id)
+      .eq("esito", "ok")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (lettura?.versione_schema !== versioneSchema) continue;
+
+    const { data: campi } = await admin
+      .from("document_fields")
+      .select("*")
+      .eq("document_id", g.id);
+    if (!campi || campi.length === 0) continue;
+
+    const righe = campi.map((c) => ({
+      document_id: documentId,
+      organization_id: organizationId,
+      riga: c.riga,
+      campo: c.campo,
+      etichetta: c.etichetta,
+      valore: c.valore,
+      unita: c.unita,
+      confidenza: c.confidenza,
+      pagina: c.pagina,
+      estratto_da: c.estratto_da,
+      fonte_lettura: c.fonte_lettura,
+      nota: c.nota,
+      avvisi: c.avvisi,
+      // Sempre da confermare: si risparmia la lettura, non il gesto.
+      stato: "da_confermare" as const,
+      confirmed_at: null,
+    }));
+    const { error } = await admin
+      .from("document_fields")
+      .upsert(righe, { onConflict: "document_id,riga,campo" });
+    if (error) continue;
+
+    return {
+      scritti: righe.length,
+      nota: g.lettura_nota,
+      messaggio: `Questo file è identico a «${g.nome_file}», che avevamo già letto: ti riportiamo qui gli stessi dati, da confermare. Ogni elaborazione ha un costo energetico e non ha senso spenderlo due volte per lo stesso risultato.`,
+    };
+  }
+  return null;
+}
+
 async function concludi(
   documentId: string,
   organizationId: string,
@@ -499,6 +604,9 @@ async function registraLog(opzioni: {
     token_uscita: esito.uso?.tokenUscita ?? null,
     costo_micro: esito.uso?.costoMicro ?? null,
     durata_ms: esito.uso?.durataMs ?? null,
+    livello: esito.livello ?? null,
+    escalato_da: esito.escalation?.da ?? null,
+    escalato_perche: esito.escalation?.motivo ?? null,
     avvisi: esito.esito === "ok" ? [...esito.avvisi, ...esito.avvertenze] : null,
     errore:
       esito.esito === "ok" ? null : "messaggio" in esito ? esito.messaggio : null,
