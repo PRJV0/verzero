@@ -172,6 +172,10 @@ type Documento = {
   tipo_confermato: boolean;
   /** SHA-256 del contenuto: riconosce lo stesso file caricato due volte. */
   impronta: string | null;
+  /** Acquisito con la fotocamera: non nativo per costruzione. */
+  da_fotocamera: boolean;
+  /** Quante foto sono state cucite in questo documento. */
+  pagine_scattate: number | null;
   stato:
     | "smistato"
     | "da_classificare"

@@ -44,6 +44,10 @@ export async function registraDocumento(dati: {
   nomeFile: string;
   mime: string;
   dimensione: number;
+  /** Acquisito con la fotocamera dal portale, non caricato da file. */
+  daFotocamera?: boolean;
+  /** Quante foto sono state cucite in questo documento. */
+  pagineScattate?: number;
 }): Promise<EsitoRegistrazione> {
   const supabase = await createClient();
   const {
@@ -98,6 +102,8 @@ export async function registraDocumento(dati: {
       tipo: tipo?.chiave ?? null,
       tipo_confermato: false,
       stato,
+      da_fotocamera: dati.daFotocamera === true,
+      pagine_scattate: dati.daFotocamera ? (dati.pagineScattate ?? 1) : null,
     })
     .select("id")
     .single();

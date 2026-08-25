@@ -83,6 +83,19 @@ function contaCaratteriDiTesto(dati: Uint8Array, grezzo: string): number {
     if (fine < 0) break;
     marcatore.lastIndex = fine;
 
+    // ═══ IL DIZIONARIO PRIMA DEL FLUSSO DICE CHE COS'È ═══
+    // Un'immagine non contiene testo, e leggerla come se ne contenesse è
+    // il modo in cui una scansione si travestiva da PDF nativo: i byte
+    // di un JPEG contengono per caso le sequenze «BT» e «Tj», e il
+    // conteggio ci trovava centomila caratteri inesistenti. Un documento
+    // fotografato veniva così mandato al livello leggero, con l'attesa
+    // di confidenza sbagliata. Trovato collaudando l'acquisizione da
+    // fotocamera, ma valeva per OGNI scansione.
+    const dizionario = grezzo.slice(Math.max(0, m.index - 400), m.index);
+    if (/\/Subtype\s*\/Image|DCTDecode|JPXDecode|CCITTFaxDecode|JBIG2Decode/.test(dizionario)) {
+      continue;
+    }
+
     const pezzo = Buffer.from(dati.slice(inizio, fine));
     if (pezzo.length === 0 || pezzo.length > 8 * 1024 * 1024) continue;
 
@@ -105,9 +118,26 @@ function decomprimi(pezzo: Buffer): string | null {
       /* si passa al tentativo successivo */
     }
   }
-  // Alcuni PDF non comprimono affatto i flussi di contenuto.
+  // Alcuni PDF non comprimono affatto i flussi di contenuto. Ma un
+  // flusso che non si decomprime è quasi sempre binario, e il binario
+  // non è testo: si accetta solo se è fatto in prevalenza di caratteri
+  // stampabili, altrimenti bastava un «BT» capitato per caso dentro
+  // un'immagine per farlo passare per contenuto.
   const testo = pezzo.toString("latin1");
-  return /\b(BT|Tj|TJ)\b/.test(testo) ? testo : null;
+  if (!/\b(BT|Tj|TJ)\b/.test(testo)) return null;
+  return prevalentementeStampabile(testo) ? testo : null;
+}
+
+/** Almeno nove caratteri su dieci leggibili: sotto, sono byte. */
+function prevalentementeStampabile(testo: string): boolean {
+  const quanti = Math.min(testo.length, 4000);
+  if (quanti === 0) return false;
+  let stampabili = 0;
+  for (let i = 0; i < quanti; i++) {
+    const c = testo.charCodeAt(i);
+    if (c === 9 || c === 10 || c === 13 || (c >= 32 && c <= 126)) stampabili++;
+  }
+  return stampabili / quanti >= 0.9;
 }
 
 /** I caratteri davvero mostrati: stringhe letterali `(…)` ed esadecimali. */

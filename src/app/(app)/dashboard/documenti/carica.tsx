@@ -13,6 +13,11 @@ import {
   validaFile,
 } from "@/lib/documenti";
 
+import { Fotocamera } from "@/components/scatto/fotocamera";
+import { MAX_BYTE } from "@/lib/documenti";
+import { nomeDelloScatto, pdfDaScatti } from "@/lib/scatto/pdf";
+import type { Pagina } from "@/lib/scatto/immagine";
+
 import { registraDocumento } from "./azioni";
 
 type Esito = {
@@ -128,6 +133,100 @@ export function CaricaDocumenti({
     router.refresh();
   }
 
+  /**
+   * LE PAGINE FOTOGRAFATE DIVENTANO UN DOCUMENTO SOLO.
+   *
+   * Si cuciono qui, nel browser, e da qui in poi il percorso è quello di
+   * sempre: stesso bucket, stessa registrazione, stesso riconoscimento.
+   * L'unica differenza è il segno `da_fotocamera`, che il portale mostra
+   * nel fascicolo — e che il Motore non ha bisogno di leggere, perché un
+   * PDF di sole immagini non ha strato di testo e il rilevamento locale
+   * lo riconosce come scansione da sé.
+   */
+  async function caricaScatti(pagine: Pagina[]) {
+    if (pagine.length === 0) return;
+    setInCorso(true);
+    const nome = nomeDelloScatto(tipoAtteso ?? null, pagine.length);
+    setEsiti([{ nome, stato: "in-corso" }]);
+
+    const aggiorna = (e: Partial<Esito>) =>
+      setEsiti((precedenti) => precedenti.map((p) => ({ ...p, ...e })));
+
+    try {
+      const pdf = pdfDaScatti(
+        pagine.map((p) => ({
+          jpeg: p.jpeg,
+          larghezza: p.larghezza,
+          altezza: p.altezza,
+        })),
+      );
+
+      if (pdf.byteLength > MAX_BYTE) {
+        aggiorna({
+          stato: "errore",
+          messaggio: `Le ${pagine.length} pagine insieme pesano ${pesoLeggibile(pdf.byteLength)}, oltre il limite di 20 MB. Dividile in due documenti: i dati confluiscono nello stesso posto.`,
+        });
+        setInCorso(false);
+        return;
+      }
+
+      const supabase = createClient();
+      const percorso = `${organizationId}/${Date.now()}-${nomeSicuro(nome)}`;
+      const { error: erroreCaricamento } = await supabase.storage
+        .from("documenti")
+        .upload(percorso, new Blob([pdf as BlobPart], { type: "application/pdf" }), {
+          contentType: "application/pdf",
+          upsert: false,
+        });
+      if (erroreCaricamento) {
+        aggiorna({
+          stato: "errore",
+          messaggio: "Non siamo riusciti a caricare le foto. Riprova tra un momento.",
+        });
+        setInCorso(false);
+        return;
+      }
+
+      const esito = await registraDocumento({
+        percorso,
+        nomeFile: nome,
+        mime: "application/pdf",
+        dimensione: pdf.byteLength,
+        daFotocamera: true,
+        pagineScattate: pagine.length,
+      });
+
+      if (!esito.ok) {
+        await supabase.storage.from("documenti").remove([percorso]);
+        aggiorna({ stato: "errore", messaggio: esito.errore });
+        setInCorso(false);
+        return;
+      }
+
+      const tipo = tipoDocumento(esito.tipo);
+      aggiorna({
+        stato: "fatto",
+        messaggio:
+          `${pagine.length === 1 ? "Una pagina" : `${pagine.length} pagine`} in un documento solo. ` +
+          (esito.stato === "da_classificare"
+            ? "Diccelo tu qui sotto che documento è."
+            : `Riconosciuto come ${tipo?.nome.toLowerCase()}.`),
+        destinazioni:
+          esito.stato === "smistato"
+            ? (tipo?.destinazioni.map((d) => `${d.doc} → ${d.sezione}`) ?? [])
+            : [],
+      });
+    } catch {
+      aggiorna({
+        stato: "errore",
+        messaggio: "Non siamo riusciti a mettere insieme le pagine. Riprova.",
+      });
+    }
+
+    setInCorso(false);
+    router.refresh();
+  }
+
   const zona = compatto
     ? "rounded-lg border border-dashed px-3 py-3 text-center"
     : "rounded-2xl border-2 border-dashed px-6 py-10 text-center";
@@ -162,22 +261,28 @@ export function CaricaDocumenti({
         />
 
         {compatto ? (
-          <button
-            type="button"
-            onClick={() => input.current?.click()}
-            disabled={inCorso}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-pine hover:underline disabled:opacity-60"
-          >
-            {inCorso ? (
-              <Loader2 size={13} className="animate-spin" />
-            ) : (
-              <Upload size={13} />
-            )}
-            {inCorso ? "Caricamento…" : "Carica qui"}
-            {tipoAtteso && !inCorso && (
-              <span className="font-normal text-gray-light">· {tipoAtteso}</span>
-            )}
-          </button>
+          // Dentro il fascicolo le due strade restano entrambe, in
+          // piccolo: chi sta guardando «cosa manca a questo percorso» ha
+          // spesso il foglio in mano proprio in quel momento.
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+            <button
+              type="button"
+              onClick={() => input.current?.click()}
+              disabled={inCorso}
+              className="inline-flex min-h-9 items-center gap-2 text-xs font-semibold text-pine hover:underline disabled:opacity-60"
+            >
+              {inCorso ? (
+                <Loader2 size={13} className="animate-spin" />
+              ) : (
+                <Upload size={13} />
+              )}
+              {inCorso ? "Caricamento…" : "Carica qui"}
+              {tipoAtteso && !inCorso && (
+                <span className="font-normal text-gray-light">· {tipoAtteso}</span>
+              )}
+            </button>
+            <Fotocamera onPronto={caricaScatti} inCorso={inCorso} compatto />
+          </div>
         ) : (
           <>
             <span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white text-pine">
@@ -190,20 +295,26 @@ export function CaricaDocumenti({
               Puoi caricarne quanti vuoi in una volta sola. Li riconosciamo noi
               e ti diciamo subito in quale documento finiscono.
             </p>
-            <button
-              type="button"
-              onClick={() => input.current?.click()}
-              disabled={inCorso}
-              className="vz-press mt-4 inline-flex items-center gap-2 rounded-lg bg-pine px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              {inCorso ? (
-                <>
-                  <Loader2 size={15} className="animate-spin" /> Caricamento…
-                </>
-              ) : (
-                "Scegli dal dispositivo"
-              )}
-            </button>
+            {/* Due strade affiancate, pari dignità: il file per chi è al
+                computer, la fotocamera per chi ha il foglio in mano. Sul
+                telefono la seconda apre direttamente la fotocamera. */}
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => input.current?.click()}
+                disabled={inCorso}
+                className="vz-press inline-flex min-h-11 items-center gap-2 rounded-xl bg-pine px-5 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {inCorso ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" /> Caricamento…
+                  </>
+                ) : (
+                  "Scegli dal dispositivo"
+                )}
+              </button>
+              <Fotocamera onPronto={caricaScatti} inCorso={inCorso} />
+            </div>
             <p className="mt-2.5 text-xs text-gray-light">
               {ESTENSIONI_AMMESSE} · fino a {pesoLeggibile(20 * 1024 * 1024)} per
               file

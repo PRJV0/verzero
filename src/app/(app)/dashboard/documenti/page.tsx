@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   Archive,
+  Camera,
   CircleHelp,
   ClipboardList,
   FileText,
@@ -294,7 +295,9 @@ export default async function DocumentiPage({
                         aria-hidden
                         className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-paper text-pine"
                       >
-                        {immagine ? (
+                        {d.da_fotocamera ? (
+                          <Camera size={18} />
+                        ) : immagine ? (
                           <ImageIcon size={18} />
                         ) : (
                           <FileText size={18} />
@@ -306,8 +309,20 @@ export default async function DocumentiPage({
                           {d.nome_file}
                         </p>
                         <p className="mt-0.5 text-xs text-gray-light">
-                          {pesoLeggibile(d.dimensione)} · caricato il{" "}
-                          {DATA(d.created_at)}
+                          {pesoLeggibile(d.dimensione)} ·{" "}
+                          {d.da_fotocamera ? (
+                            // Si dice, e non è un dettaglio estetico: spiega
+                            // da solo perché una riga può essere segnata da
+                            // controllare, senza aprire il file.
+                            <span className="text-gray-warm">
+                              fotografato il {DATA(d.created_at)}
+                              {d.pagine_scattate && d.pagine_scattate > 1
+                                ? ` · ${d.pagine_scattate} pagine`
+                                : ""}
+                            </span>
+                          ) : (
+                            <>caricato il {DATA(d.created_at)}</>
+                          )}
                           {tipo && (
                             <>
                               {" · "}

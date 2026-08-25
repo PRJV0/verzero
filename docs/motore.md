@@ -313,6 +313,48 @@ accanto al campo. Se un cliente porta solo registri manoscritti, il tempo
 che risparmia è meno di quanto una vetrina entusiasta lascerebbe intendere:
 la vetrina non deve lasciarlo intendere.
 
+### Acquisizione da fotocamera
+
+Il caso più comune non è «una foto»: è un registro su più fogli
+fotografato tenendo il telefono con una mano. Perciò le pagine si
+accumulano con le miniature davanti agli occhi, si riordinano, si rifanno
+una per una — e alla conferma diventano **un documento solo**, un PDF
+multipagina cucito nel browser (`src/lib/scatto/pdf.ts`). Quattro righe in
+archivio da classificare quattro volte, per una cosa sola, sarebbero
+quattro volte lo stesso lavoro.
+
+Prima dell'invio ogni pagina viene **misurata**
+(`src/lib/scatto/qualita.ts`): dove sta il foglio nel fotogramma
+(ritaglio), quanto è storto (raddrizzamento), quanto è nitido, quanta
+luce c'è, quanti pixel restano al documento. Le soglie non sono
+estetiche: **1.240 pixel** di larghezza sono i 150 punti per pollice
+sotto i quali un carattere da 10 punti si impasta; la nitidezza minima è
+tarata misurando un documento sfocato a gradini (2.618 → 395 → 120 → 66).
+
+Due regole, entrambe importanti:
+
+- **Nel dubbio non si ritaglia.** Un ritaglio sbagliato taglia via un
+  pezzo di documento senza dirlo; un ritaglio mancato costa qualche pixel
+  di margine.
+- **Gli avvisi invitano, non bloccano.** Chi ha in mano l'unica copia di
+  un registro sbiadito del 2019 deve poterlo mandare lo stesso, e sarà il
+  Motore a dire che cosa è riuscito a leggere. Un blocco qui sarebbe una
+  porta chiusa in faccia a un caso vero.
+
+Il JPEG **non si ricomprime**: entra nel PDF così com'è (`/DCTDecode`), e
+questo è ciò che rende vera la misura fatta prima — una seconda
+compressione l'avrebbe resa bugiarda.
+
+**Un difetto trovato collaudandola, che valeva per ogni scansione.** Un
+PDF di sole fotografie veniva riconosciuto come *nativo*: i byte di un
+JPEG contengono per caso le sequenze `BT` e `Tj`, e il rilevatore ci
+trovava centomila caratteri di testo inesistenti. Conseguenza: un
+documento fotografato finiva al livello leggero, con l'attesa di
+confidenza di un documento nato digitale. Ora il dizionario che precede
+ogni flusso viene letto — `/Subtype /Image`, `DCTDecode` e simili si
+saltano — e un flusso che non si decomprime vale come testo solo se è
+fatto in prevalenza di caratteri stampabili.
+
 ### Qualità della scansione
 
 Il modello dichiara la qualità percepita come **campo del risultato**
