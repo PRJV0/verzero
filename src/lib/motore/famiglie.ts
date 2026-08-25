@@ -2,7 +2,6 @@ import type { z } from "zod";
 
 import {
   verificaBollettaElettrica,
-  verificaFormazione,
   verificaOrganico,
   verificaOrganigramma,
   verificaVisura,
@@ -96,6 +95,16 @@ export type VoceMotore = {
   campi?: EtichettaCampo[];
   /** Le istruzioni specifiche del tipo, oltre alle regole generali. */
   istruzioni?: string[];
+  /**
+   * Un verificatore PROPRIO, solo per i controlli che i vincoli
+   * dichiarati non sanno esprimere: la cifra di controllo di una partita
+   * IVA, la somma delle fasce che deve dare il totale, un nome di persona
+   * finito dentro un ruolo. Tutto il resto — minimi, massimi, formati,
+   * «non supera un'altra colonna», «dentro l'anno» — si dichiara nei
+   * campi e lo applica `verificaGenerica`, che gira SEMPRE.
+   *
+   * Un ambito nuovo, di norma, non ne ha bisogno.
+   */
   verifica?: Verificatore;
   /**
    * FONTE è lettura e si accontenta di «medium»; OPERA è confronto
@@ -323,7 +332,9 @@ export const REGISTRO_MOTORE: VoceMotore[] = [
     schema: schemaTabella(COLONNE_FORMAZIONE),
     versione: "formazione/1",
     campi: COLONNE_FORMAZIONE,
-    verifica: verificaFormazione,
+    // Nessun verificatore proprio: i suoi controlli — le donne non
+    // superano i partecipanti, le ore stanno in un intervallo, la data
+    // cade nell'anno — sono tutti VINCOLI DICHIARATI sulle colonne.
     effort: "high",
     istruzioni: [
       "Una riga per CORSO o sessione formativa. Se il documento è un foglio firma di una sola sessione, la tabella ha una riga sola e `partecipanti` è il numero di firme leggibili.",
@@ -494,11 +505,10 @@ export type VoceLeggibile = VoceMotore & {
   schema: z.ZodTypeAny;
   versione: string;
   campi: EtichettaCampo[];
-  verifica: Verificatore;
 };
 
 function leggibile(v: VoceMotore | undefined): v is VoceLeggibile {
-  return Boolean(v?.schema && v?.versione && v?.campi && v?.verifica);
+  return Boolean(v?.schema && v?.versione && v?.campi);
 }
 
 const PER_TIPO = new Map(REGISTRO_MOTORE.map((v) => [v.tipo, v]));

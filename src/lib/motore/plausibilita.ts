@@ -54,11 +54,7 @@ export const PENALITA_QUALITA_FATICOSA = 0.2;
 /* Limiti e forme                                                      */
 /* ------------------------------------------------------------------ */
 
-/** `IT` + tre cifre del distributore + `E` + otto caratteri. */
-const FORMA_POD = /^IT\d{3}E[0-9A-Z]{8}$/;
 
-const KWH_ASSURDO = 50_000_000;
-const EURO_ASSURDO = 5_000_000;
 /** Prezzo per kWh oltre il quale il rapporto importo/consumo non regge. */
 const EURO_PER_KWH_MAX = 3;
 const EURO_PER_KWH_MIN = 0.03;
@@ -330,6 +326,8 @@ export type ContestoVerifica = {
   annoRendicontazione: number;
   /** Il resto della risposta, per i controlli che ne hanno bisogno. */
   grezzo: Record<string, unknown>;
+  /** I campi dichiarati dal tipo, coi loro vincoli. */
+  campi?: EtichettaCampo[];
 };
 
 /**
@@ -375,15 +373,6 @@ export const verificaBollettaElettrica: Verificatore = (campi, _righe, ctx) => {
   const avvisiDocumento: string[] = [];
 
   /* — POD — */
-  const pod = campi.find((c) => c.chiave === "pod")?.valore;
-  if (pod && !FORMA_POD.test(pod.replace(/\s+/g, "").toUpperCase())) {
-    segna(
-      campi,
-      "pod",
-      `«${pod}» non ha la forma di un codice POD (IT, tre cifre, E, otto caratteri): controllalo.`,
-    );
-  }
-
   /* — Periodo — */
   const inizio = dataValida(campi.find((c) => c.chiave === "periodoInizio")?.valore ?? null);
   const fine = dataValida(campi.find((c) => c.chiave === "periodoFine")?.valore ?? null);
@@ -430,26 +419,6 @@ export const verificaBollettaElettrica: Verificatore = (campi, _righe, ctx) => {
   const f2 = numeroDi(campi, "consumoF2Kwh");
   const f3 = numeroDi(campi, "consumoF3Kwh");
 
-  for (const chiave of [
-    "consumoTotaleKwh",
-    "consumoF1Kwh",
-    "consumoF2Kwh",
-    "consumoF3Kwh",
-  ]) {
-    const n = numeroDi(campi, chiave);
-    if (n === null) continue;
-    if (n < 0) {
-      segna(campi, chiave, "Un consumo negativo non è un consumo: controllalo.", 0.5);
-    } else if (n > KWH_ASSURDO) {
-      segna(
-        campi,
-        chiave,
-        `${numeroLeggibile(n)} kWh è fuori scala per un'impresa: probabilmente è stato letto male.`,
-        0.5,
-      );
-    }
-  }
-
   // La somma delle fasce deve dare il totale. Se non torna, il numero
   // sbagliato può essere qualunque dei quattro: si segnalano tutti,
   // perché indicare il colpevole sbagliato è peggio che non indicarlo.
@@ -477,8 +446,6 @@ export const verificaBollettaElettrica: Verificatore = (campi, _righe, ctx) => {
         "Importo negativo: se è una nota di credito, il consumo va verificato a parte.",
         0.3,
       );
-    } else if (importo > EURO_ASSURDO) {
-      segna(campi, "importoEuro", "Importo fuori scala: controllalo.", 0.5);
     } else if (totale !== null && totale > 0) {
       const perKwh = importo / totale;
       if (perKwh > EURO_PER_KWH_MAX || perKwh < EURO_PER_KWH_MIN) {
@@ -507,7 +474,6 @@ export const verificaBollettaElettrica: Verificatore = (campi, _righe, ctx) => {
 /* ------------------------------------------------------------------ */
 
 const FORMA_PIVA = /^\d{11}$/;
-const FORMA_ATECO = /^\d{2}(\.\d{1,2}){0,2}$/;
 
 /** La partita IVA italiana ha una cifra di controllo: si verifica. */
 function partitaIvaValida(piva: string): boolean {
@@ -545,11 +511,6 @@ export const verificaVisura: Verificatore = (campi, _righe, ctx) => {
     }
   }
 
-  const ateco = campi.find((c) => c.chiave === "ateco")?.valore;
-  if (ateco && !FORMA_ATECO.test(ateco.trim())) {
-    segna(campi, "ateco", `«${ateco}» non ha la forma di un codice ATECO.`);
-  }
-
   const costituzione = dataValida(
     campi.find((c) => c.chiave === "dataCostituzione")?.valore ?? null,
   );
@@ -557,14 +518,6 @@ export const verificaVisura: Verificatore = (campi, _righe, ctx) => {
     const anno = costituzione.getUTCFullYear();
     if (anno < 1850 || anno > ctx.annoRendicontazione + 1) {
       segna(campi, "dataCostituzione", "La data di costituzione non è plausibile.");
-    }
-  }
-
-  const addetti = campi.find((c) => c.chiave === "addetti")?.valore;
-  if (addetti !== null && addetti !== undefined && addetti !== "") {
-    const n = Number(addetti);
-    if (Number.isFinite(n) && (n < 0 || n > 500_000)) {
-      segna(campi, "addetti", "Il numero di addetti non è plausibile.");
     }
   }
 
@@ -640,8 +593,8 @@ export const verificaOrganico: Verificatore = (_campi, righe) => {
       segnalaRiga(r, "Manca il numero di addetti: senza, la riga non conta.", 0.4);
       continue;
     }
-    if (n < 0 || !Number.isInteger(n)) {
-      segnalaRiga(r, "Il numero di addetti non è un intero positivo.", 0.4);
+    if (!Number.isInteger(n)) {
+      segnalaRiga(r, "Il numero di addetti non è un intero.", 0.4);
     }
     totale += Math.max(0, n);
 
@@ -649,18 +602,6 @@ export const verificaOrganico: Verificatore = (_campi, righe) => {
     // aggregato: chiunque in azienda sa chi è l'unica donna dirigente, e
     // la sua retribuzione smette di essere un numero statistico.
     if (n === 1) gruppiDiUno++;
-
-    for (const chiave of ["tempoIndeterminato", "partTime"]) {
-      const parte = num(r, chiave);
-      if (parte !== null && parte > n) {
-        const etichetta =
-          r.celle.find((c) => c.chiave === chiave)?.etichetta ?? chiave;
-        segnalaRiga(
-          r,
-          `«${etichetta}» (${numeroLeggibile(parte)}) supera il numero di addetti (${numeroLeggibile(n)}).`,
-        );
-      }
-    }
 
     const retribuzione = num(r, "retribuzioneMediaLorda");
     if (
@@ -694,40 +635,116 @@ export const verificaOrganico: Verificatore = (_campi, righe) => {
 };
 
 /* ------------------------------------------------------------------ */
-/* Registri di formazione                                              */
+/* Il verificatore GENERICO — quello che non conosce i domini          */
 /* ------------------------------------------------------------------ */
 
-export const verificaFormazione: Verificatore = (_campi, righe, ctx) => {
+/**
+ * I VINCOLI DICHIARATI, applicati da solo.
+ *
+ * ═══ PERCHÉ ESISTE ═══
+ * Finché ogni tipo di documento doveva portarsi il proprio verificatore
+ * scritto a mano, aggiungere un ambito significava scrivere codice — e
+ * l'architettura prometteva il contrario. Questo verificatore legge i
+ * vincoli DICHIARATI nei campi (`min`, `max`, `formato`, `nonSupera`,
+ * `dentroLAnno`) e li fa rispettare senza sapere se sta guardando una
+ * bolletta, un registro di formazione o la mappatura dei reati
+ * presupposto di un Modello 231.
+ *
+ * È il verificatore PREDEFINITO: un tipo ne dichiara uno proprio solo
+ * quando ha controlli che i vincoli non esprimono — la cifra di
+ * controllo di una partita IVA, la somma delle fasce che deve dare il
+ * totale, un nome di persona finito dentro un ruolo. Quelli restano
+ * codice perché sono ragionamenti, non limiti.
+ */
+export const verificaGenerica: Verificatore = (campi, righe, ctx) => {
   const avvisiDocumento: string[] = [];
   let fuori = 0;
+  let conData = 0;
 
-  for (const r of righe) {
-    const partecipanti = num(r, "partecipanti");
-    const donne = num(r, "partecipantiDonne");
-    const ore = num(r, "oreTotali");
-
-    if (partecipanti !== null && partecipanti <= 0) {
-      segnalaRiga(r, "Un corso senza partecipanti non è un corso: controlla la riga.");
+  /* — Le schede: un vincolo per campo — */
+  for (const c of campi) {
+    if (c.valore === null) continue;
+    const esito = controllaVincoli(c.chiave, c.valore, campi, ctx);
+    // Un vincolo violato è un segnale forte — un valore fuori scala è
+    // quasi sempre una lettura sbagliata — e taglia più di un'incoerenza.
+    for (const a of esito.avvisi) segna(campi, c.chiave, a, 0.45);
+    if (esito.fuoriAnno !== null) {
+      conData++;
+      if (esito.fuoriAnno) fuori++;
     }
-    if (donne !== null && partecipanti !== null && donne > partecipanti) {
-      segnalaRiga(
-        r,
-        `Le partecipanti donne (${numeroLeggibile(donne)}) superano i partecipanti totali (${numeroLeggibile(partecipanti)}).`,
-      );
-    }
-    if (ore !== null && (ore <= 0 || ore > 500)) {
-      segnalaRiga(r, "Il monte ore non è plausibile per una singola sessione.");
-    }
-
-    const data = dataValida(testo(r, "data"));
-    if (data && data.getUTCFullYear() !== ctx.annoRendicontazione) fuori++;
   }
 
-  if (fuori > 0) {
+  /* — Le tabelle: gli stessi vincoli, riga per riga — */
+  for (const r of righe) {
+    for (const cella of r.celle) {
+      if (cella.valore === null) continue;
+      const esito = controllaVincoli(cella.chiave, cella.valore, r.celle, ctx);
+      for (const a of esito.avvisi) segnalaRiga(r, a, 0.45);
+      if (esito.fuoriAnno !== null) {
+        conData++;
+        if (esito.fuoriAnno) fuori++;
+      }
+    }
+  }
+
+  if (fuori > 0 && conData > 0) {
     avvisiDocumento.push(
-      `${fuori === 1 ? "Una riga si riferisce" : `${fuori} righe si riferiscono`} a un anno diverso da ${ctx.annoRendicontazione}: restano in archivio ma non entrano negli indicatori di quell'anno.`,
+      `${fuori === 1 ? "Un valore si riferisce" : `${fuori} valori si riferiscono`} a un anno diverso da ${ctx.annoRendicontazione}: restano in archivio ma non entrano nei documenti di quell'anno.`,
     );
   }
 
-  return { avvisiDocumento, fuoriPeriodo: fuori > 0 && fuori === righe.length };
+  return { avvisiDocumento, fuoriPeriodo: conData > 0 && fuori === conData };
 };
+
+/** I vincoli dichiarati sul singolo valore. Nessuna conoscenza di dominio. */
+function controllaVincoli(
+  chiave: string,
+  valore: string,
+  vicini: { chiave: string; valore: string | null; etichetta: string }[],
+  ctx: ContestoVerifica,
+): { avvisi: string[]; fuoriAnno: boolean | null } {
+  const regola = ctx.campi?.find((c) => c.chiave === chiave);
+  if (!regola) return { avvisi: [], fuoriAnno: null };
+
+  const avvisi: string[] = [];
+  let fuoriAnno: boolean | null = null;
+
+  if (regola.formato && !new RegExp(regola.formato).test(valore.trim())) {
+    avvisi.push(
+      regola.formatoNota ??
+        `«${valore}» non ha la forma attesa per ${regola.etichetta.toLowerCase()}.`,
+    );
+  }
+
+  if (regola.tipo === "numero") {
+    const n = Number(valore);
+    if (Number.isFinite(n)) {
+      if (regola.min !== undefined && n < regola.min) {
+        avvisi.push(
+          `${regola.etichetta}: ${numeroLeggibile(n)} è sotto il minimo plausibile (${numeroLeggibile(regola.min)}).`,
+        );
+      }
+      if (regola.max !== undefined && n > regola.max) {
+        avvisi.push(
+          `${regola.etichetta}: ${numeroLeggibile(n)} è sopra il massimo plausibile (${numeroLeggibile(regola.max)}).`,
+        );
+      }
+      if (regola.nonSupera) {
+        const altro = vicini.find((v) => v.chiave === regola.nonSupera);
+        const m = altro?.valore === null || altro?.valore === undefined ? null : Number(altro.valore);
+        if (m !== null && Number.isFinite(m) && n > m) {
+          avvisi.push(
+            `${regola.etichetta} (${numeroLeggibile(n)}) supera ${altro?.etichetta.toLowerCase()} (${numeroLeggibile(m)}).`,
+          );
+        }
+      }
+    }
+  }
+
+  if (regola.tipo === "data" && regola.dentroLAnno) {
+    const d = dataValida(valore);
+    if (d) fuoriAnno = d.getUTCFullYear() !== ctx.annoRendicontazione;
+  }
+
+  return { avvisi, fuoriAnno };
+}

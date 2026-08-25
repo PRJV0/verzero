@@ -12,7 +12,7 @@ import {
   tipoDocumento,
 } from "@/lib/documenti";
 import { siSaLeggere } from "@/lib/motore/famiglie";
-import { eseguiLettura } from "@/lib/motore/registra";
+import { drenaCoda, eseguiLettura } from "@/lib/motore/registra";
 import { annoRendicontazioneDefault } from "@/lib/periodo";
 
 /**
@@ -314,6 +314,33 @@ export async function correggiCampo(id: string, valore: string) {
     })
     .eq("id", id);
   aggiornaViste();
+}
+
+/**
+ * Svuota la coda a bassa priorità, un documento per chiamata.
+ *
+ * La chiama il portale quando qualcuno guarda l'archivio e c'è qualcosa
+ * in attesa: è la definizione operativa di «bassa priorità» — si lavora
+ * quando c'è spazio, non appena si può. Chi sta dentro la dotazione non
+ * passa mai di qui.
+ */
+export async function drenaCodaAzione(): Promise<{ fatto: boolean }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { fatto: false };
+
+  const { data: profilo } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!profilo?.organization_id) return { fatto: false };
+
+  const esito = await drenaCoda(profilo.organization_id);
+  if (esito) aggiornaViste();
+  return { fatto: esito !== null };
 }
 
 /* ------------------------------------------------------------------ */

@@ -749,6 +749,75 @@ strutturale. Si abbassa l'effort, non si disattiva il ragionamento.
 
 ---
 
+## 12. Come si aggiunge un AMBITO
+
+Il Motore serve oggi la sostenibilità e i sistemi di gestione. Dovrà servire
+il Modello 231, la privacy e il GDPR, la sicurezza informatica, e ambiti che
+oggi non sappiamo nominare. **Aggiungerne uno è configurazione, non codice**,
+e questa sezione dice esattamente cosa serve.
+
+### I cinque elenchi
+
+| Cosa | Dove | Che cos'è |
+|---|---|---|
+| L'ambito | `src/lib/ambiti.ts` | nome, descrizione, e i quattro elenchi qui sotto |
+| I tipi di documento | `src/lib/motore/famiglie.ts` | famiglia, forma, cosa si estrae, attesa di qualità |
+| I campi e i loro **vincoli** | `src/lib/motore/schemi.ts` | etichette, tipi, `min`/`max`/`formato`/`nonSupera`/`dentroLAnno` |
+| Le norme | `src/lib/norme.ts` | designazione, stato, data — anche non UNI (il decreto sta su Normattiva) |
+| I modelli di elaborato | `src/lib/elaborati.ts` | sezioni, obbligatorietà, documenti richiesti |
+
+Più una riga in `MODELLO_PER_PERCORSO` che lega lo slug del catalogo al
+modello, e — se l'ambito si vende — la voce in `src/lib/catalog.ts`.
+
+### Che cosa NON serve toccare
+
+La pipeline. Nessuna riga di riconoscimento, estrazione, validazione,
+plausibilità, composizione della bozza o controllo di conformità sa che
+esistano gli ambiti: ricevono uno schema e un modello e li applicano.
+
+Non è una promessa: è una **prova eseguibile**.
+`scripts/test-ambiti.mjs` dichiara al proprio interno — senza toccare
+`src/` — i tipi di documento, i vincoli, le norme e il modello di
+elaborato del **Modello 231**, e poi ci fa girare sopra la pipeline vera.
+Trentadue controlli: l'estrazione di una tabella mai vista, i vincoli
+dichiarati che segnalano un articolo del decreto malformato, il tetto del
+manoscritto che vale anche lì, la bozza che si compone, il controllo di
+conformità che blocca la consegna se manca l'Organismo di Vigilanza.
+
+Se un domani quella prova richiedesse di modificare la pipeline, sarebbe
+l'architettura a essere sbagliata — non la prova.
+
+### Il caso di scuola: il Modello 231
+
+Che cosa servirebbe davvero, in concreto:
+
+- **tipi di documento**: mappatura delle attività a rischio reato
+  (FONTE/tabella), atto di nomina dell'Organismo di Vigilanza
+  (FONTE/scheda), verbali dell'OdV (OPERA/tabella) — più tre che esistono
+  già e si riusano: procedure, politiche, organigramma, formazione;
+- **norme**: `D.Lgs. 231/2001`, che non è una UNI — il registro lo regge
+  già, come regge SA8000, ma la verifica si fa su Normattiva e la regola
+  di CLAUDE.md va estesa di conseguenza;
+- **elaborato**: il Modello di Organizzazione, Gestione e Controllo, con
+  sette sezioni di cui sei obbligatorie — parte generale, mappatura,
+  protocolli, Organismo di Vigilanza, sistema disciplinare, formazione;
+- **vincoli**: la forma dell'articolo del decreto, il numero di componenti
+  dell'OdV, la durata dell'incarico. Tutti dichiarati, nessuno in codice.
+
+**Zero righe di pipeline.** Un verificatore proprio servirebbe solo per un
+controllo che i vincoli non sanno esprimere — e il 231 non ne ha.
+
+### Una regola, per quando arriverà
+
+Un ambito nuovo porta con sé un dominio che non conosciamo. La tentazione
+sarà di risolvere il primo caso storto con un `if` dentro la pipeline: è
+esattamente il momento in cui l'architettura si perde. Se un caso storto
+non si esprime con un vincolo dichiarato, la risposta giusta è **un
+vincolo nuovo nel vocabolario** (che serve a tutti gli ambiti), non un
+ramo condizionale (che serve a uno solo).
+
+---
+
 ## 11. Ordine di implementazione
 
 1. ~~**Bolletta elettrica**~~ — fatta: schema, rilevamento

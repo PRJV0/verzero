@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 import { leggiDocumento, type EsitoConUso } from "./chiamata";
 import { voceLeggibile, type VoceLeggibile } from "./famiglie";
+import { MESSAGGI_USO, statoUso } from "./fair-use";
 import { serveRileggere } from "./riuso";
 import type { FonteLettura } from "./schemi";
 import {
@@ -44,6 +45,8 @@ export type EsitoLettura = {
   riusato?: boolean;
   /** Vero quando servirebbe il consenso a sostituire righe confermate. */
   chiedeSostituzione?: boolean;
+  /** La lettura è stata accodata: arriverà, più tardi. */
+  accodato?: boolean;
 };
 
 export async function eseguiLettura(opzioni: {
@@ -57,6 +60,8 @@ export async function eseguiLettura(opzioni: {
   forza?: boolean;
   /** Il cliente ha accettato di sostituire le righe già confermate. */
   sostituisci?: boolean;
+  /** La chiamata viene dalla coda: i limiti sono già stati guardati. */
+  daCoda?: boolean;
 }): Promise<EsitoLettura> {
   const { documentId, organizationId, percorso, mime, tipo } = opzioni;
   const admin = createAdminClient();
@@ -101,6 +106,36 @@ export async function eseguiLettura(opzioni: {
         ok: true,
         riusato: true,
         messaggio: rilettura.messaggio ?? "",
+        scritti: 0,
+        preservati: 0,
+      };
+    }
+  }
+
+  /* — 0bis. L'uso corretto: i gradini contrattuali (fair-use.ts) — */
+  // Prima dei tetti tecnici, perché è la regola che il cliente CONOSCE:
+  // sta scritta nelle condizioni di servizio, si conta in documenti e
+  // non in valuta, e non blocca mai in silenzio.
+  if (!opzioni.daCoda) {
+    const uso = await usoCorrente(organizationId);
+    if (uso.livello === "contatto") {
+      // Non è un blocco: è un invito a parlare. Il documento resta in
+      // coda, e quello che è già in corso continua.
+      await concludi(documentId, organizationId, "in_coda", MESSAGGI_USO.contatto);
+      return {
+        ok: true,
+        accodato: true,
+        messaggio: MESSAGGI_USO.contatto ?? "",
+        scritti: 0,
+        preservati: 0,
+      };
+    }
+    if (uso.livello === "differita") {
+      await concludi(documentId, organizationId, "in_coda", MESSAGGI_USO.differita);
+      return {
+        ok: true,
+        accodato: true,
+        messaggio: MESSAGGI_USO.differita ?? "",
         scritti: 0,
         preservati: 0,
       };
@@ -355,10 +390,76 @@ async function spesa(organizationId: string): Promise<Record<Ambito, number>> {
   };
 }
 
+/**
+ * Quanto ha elaborato un'organizzazione, e a che gradino la mette.
+ *
+ * I documenti si contano UNA VOLTA ciascuno, non una per lettura: una
+ * rilettura non consuma dotazione, perché il cliente non ha portato un
+ * documento nuovo. Le generazioni si conteranno quando la generazione
+ * esisterà — oggi sono zero, e dirlo è più onesto che stimarle.
+ */
+export async function usoCorrente(organizationId: string) {
+  const admin = createAdminClient();
+  const [{ count: documenti }, { data: moduli }] = await Promise.all([
+    admin
+      .from("documents")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .in("stato", ["letto", "illeggibile"]),
+    admin
+      .from("module_activations")
+      .select("module")
+      .eq("organization_id", organizationId)
+      .in("stato", ["richiesto", "attivo", "in_attivazione"]),
+  ]);
+
+  return statoUso(
+    { documenti: documenti ?? 0, generazioni: 0 },
+    (moduli ?? []).length,
+  );
+}
+
+/**
+ * Svuota la coda di un'organizzazione, un documento alla volta.
+ *
+ * «Bassa priorità» qui è letterale: si legge un documento per chiamata,
+ * il più vecchio, e solo quando qualcuno sta guardando. Chi è dentro la
+ * dotazione non passa mai di qui e non aspetta nessuno.
+ */
+export async function drenaCoda(organizationId: string): Promise<EsitoLettura | null> {
+  const admin = createAdminClient();
+  const { data: documento } = await admin
+    .from("documents")
+    .select("id, percorso, mime, tipo")
+    .eq("organization_id", organizationId)
+    .eq("stato", "in_coda")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (!documento) return null;
+
+  const { data: org } = await admin
+    .from("organizations")
+    .select("anno_rendicontazione")
+    .eq("id", organizationId)
+    .maybeSingle();
+
+  return eseguiLettura({
+    documentId: documento.id,
+    organizationId,
+    percorso: documento.percorso,
+    mime: documento.mime,
+    tipo: documento.tipo ?? "",
+    annoRendicontazione: org?.anno_rendicontazione ?? new Date().getFullYear() - 1,
+    daCoda: true,
+    forza: true,
+  });
+}
+
 async function concludi(
   documentId: string,
   organizationId: string,
-  stato: "smistato" | "letto" | "illeggibile" | "da_classificare",
+  stato: "smistato" | "letto" | "illeggibile" | "da_classificare" | "in_coda",
   nota: string | null,
   timbra = false,
 ) {

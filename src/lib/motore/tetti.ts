@@ -37,36 +37,47 @@ export type Tetto = {
 };
 
 /**
- * I tetti, tarati sui numeri misurati (docs/motore.md §7): una lettura di
- * bolletta costa circa $0,05, una pratica tipica da venticinque documenti
- * più la generazione sta attorno a $1,75.
+ * I tetti, tarati su due numeri misurati e su uno contrattuale.
  *
- * Il criterio non è «quanto siamo disposti a spendere» ma «da che punto
- * in poi è quasi certamente un difetto». Un cliente con archivio grosso
- * deve poter lavorare: per questo i tetti stanno a un multiplo largo
- * della pratica tipica, non al suo bordo.
+ * Misurati (docs/motore.md §7): una lettura costa $0,05–$0,07, una
+ * pratica tipica da venticinque documenti sta attorno a $3.
+ *
+ * Contrattuale: i limiti di uso corretto (`fair-use.ts`) fermano un
+ * percorso a 300 documenti e 24 generazioni l'anno, cioè **$31,92**.
+ *
+ * ═══ IL RAPPORTO FRA I DUE, CHE È LA COSA IMPORTANTE ═══
+ * Un tetto tecnico più basso del caso peggiore contrattuale fermerebbe
+ * un cliente che sta usando esattamente ciò che ha comprato — e lo
+ * fermerebbe in silenzio, con un messaggio d'attesa. Sarebbe il modo
+ * peggiore di rompere una promessa. Quindi i tetti tecnici stanno SOPRA
+ * il limite contrattuale, con margine: a quel punto non sono più una
+ * misura di consumo — sono un rilevatore di anomalie, che è tutto ciò
+ * che devono essere. Chi consuma tanto lo ferma il contratto, con una
+ * telefonata; chi ha un difetto lo ferma il tetto, con un allarme.
  */
 export const TETTI: Record<Ambito, Tetto> = {
   pratica: {
     ambito: "pratica",
-    soglia: 5 * DOLLARO,
-    tetto: 15 * DOLLARO,
+    // Allarme basso di proposito: a $3 siamo appena sopra la pratica
+    // tipica, e le anomalie si vedono prima che diventino costose.
+    soglia: 3 * DOLLARO,
+    tetto: 60 * DOLLARO,
     perche:
-      "Una pratica tipica costa circa $1,75. A $5 c'è qualcosa di insolito da guardare; a $15 — quasi dieci volte la norma — è quasi certamente un ciclo che si ripete o un documento che non andava letto.",
+      "Una pratica tipica costa circa $3. L'allarme scatta lì per accorgersi subito di ciò che è insolito. Il blocco sta a $60, sopra il caso peggiore contrattuale di $39,60: sotto quella cifra un cliente sta usando ciò che ha comprato, e fermarlo sarebbe rompere una promessa.",
   },
   organizzazione: {
     ambito: "organizzazione",
-    soglia: 20 * DOLLARO,
-    tetto: 60 * DOLLARO,
+    soglia: 30 * DOLLARO,
+    tetto: 250 * DOLLARO,
     perche:
-      "Un cliente con quattro percorsi attivi e un archivio ricco può arrivare a $7 nel mese. A $20 vale la pena guardare cosa sta caricando; a $60 ci si ferma e lo si chiama, invece di lasciar correre.",
+      "Un cliente con quattro percorsi ha un caso peggiore contrattuale di circa $158 all'anno, che potrebbe concentrare in un mese solo. Il blocco a $250 lascia il doppio di margine: oltre, non è più un cliente esigente.",
   },
   giorno: {
     ambito: "giorno",
-    soglia: 50 * DOLLARO,
-    tetto: 150 * DOLLARO,
+    soglia: 60 * DOLLARO,
+    tetto: 400 * DOLLARO,
     perche:
-      "È la rete di sicurezza sull'intero servizio: protegge da un difetto che colpisce tutti insieme, non da un cliente esigente. Il valore va rialzato quando i clienti crescono — è l'unico tetto che dipende dal numero di clienti e non dal loro comportamento.",
+      "È la rete di sicurezza sull'intero servizio: protegge da un difetto che colpisce tutti insieme, non da un cliente esigente. Va rialzato quando i clienti crescono — è l'unico tetto che dipende dal loro numero e non dal loro comportamento.",
   },
 };
 

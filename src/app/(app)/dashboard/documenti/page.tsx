@@ -13,6 +13,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { documentiAttivi } from "@/lib/bozza";
 import { siSaLeggere } from "@/lib/motore/famiglie";
+import { etichettaContatore, statoUso } from "@/lib/motore/fair-use";
 import { formattaValore, livelloConfidenza } from "@/lib/motore/portale";
 import {
   TIPI_DOCUMENTO,
@@ -31,6 +32,7 @@ import {
   TestataSezione,
 } from "../_ui";
 import { CaricaDocumenti } from "./carica";
+import { CodaInLavorazione } from "./coda";
 import { BottoneLettura } from "./lettura";
 import {
   confermaCampo,
@@ -103,6 +105,22 @@ export default async function DocumentiPage({
     archivio.filter((d) => d.tipo).map((d) => d.tipo as string),
   );
   const daClassificare = archivio.filter((d) => d.stato === "da_classificare");
+  const inCoda = archivio.filter((d) => d.stato === "in_coda");
+
+  // Il contatore dell'uso corretto: discreto, in documenti e mai in
+  // valuta. Un cliente non deve sapere quanto ci costa leggere i suoi
+  // documenti; può benissimo sapere quanti ne ha elaborati.
+  const uso = statoUso(
+    {
+      documenti: archivio.filter((d) =>
+        ["letto", "illeggibile"].includes(d.stato),
+      ).length,
+      generazioni: 0,
+    },
+    (moduli ?? []).filter((m) =>
+      ["richiesto", "attivo", "in_attivazione"].includes(m.stato),
+    ).length,
+  );
 
   // I campi letti, per documento. Restano accanto al loro documento e non
   // in un pannello a parte: è lì che il cliente può confrontarli con
@@ -227,6 +245,11 @@ export default async function DocumentiPage({
           titolo="Il tuo archivio"
           sotto="Tutto quello che hai portato, con la strada che ha preso."
         />
+
+        {/* La coda si svuota da sola mentre si guarda: nessun blocco. */}
+        {contesto.ruolo === "impresa" && inCoda.length > 0 && (
+          <CodaInLavorazione quanti={inCoda.length} />
+        )}
 
         {archivio.length === 0 ? (
           <div className="mt-3 flex items-start gap-3 rounded-2xl border border-dashed border-pine/30 bg-moss/40 p-5">
@@ -663,6 +686,12 @@ export default async function DocumentiPage({
           Europea. Li riconosciamo dal nome e, dove sappiamo farlo, ne
           leggiamo il contenuto: ogni dato letto porta la pagina da cui
           viene e aspetta la tua conferma prima di contare.
+          {uso.usato.documenti > 0 && (
+            <>
+              {" "}
+              Finora hai {etichettaContatore(uso)}.
+            </>
+          )}
         </span>
         <Link
           href="/privacy"

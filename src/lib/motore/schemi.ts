@@ -60,6 +60,25 @@ export type EtichettaCampo = {
   essenziale?: boolean;
   /** Per le scelte: i valori ammessi, detti al modello. */
   valori?: string[];
+
+  /* ── I VINCOLI, dichiarati e non scritti in codice ─────────────── */
+  /**
+   * Il controllo di plausibilità generico li applica da solo
+   * (`verificaGenerica`). È la ragione per cui un ambito nuovo — Modello
+   * 231, privacy, sicurezza informatica — non ha bisogno di scrivere un
+   * verificatore: dichiara i suoi limiti qui e la pipeline li fa
+   * rispettare senza sapere di che dominio si tratti.
+   */
+  min?: number;
+  max?: number;
+  /** Espressione regolare che il valore deve rispettare. */
+  formato?: string;
+  /** Come dirlo al cliente quando il formato non torna. */
+  formatoNota?: string;
+  /** Questo valore non può superare quello di un'altra colonna. */
+  nonSupera?: string;
+  /** La data non può cadere fuori dall'anno di rendicontazione. */
+  dentroLAnno?: boolean;
 };
 
 type Chiavi = readonly [string, ...string[]];
@@ -172,7 +191,15 @@ export function schemaTabella(
 /* ── Bolletta elettrica — SCHEDA ─────────────────────────────────── */
 
 export const CAMPI_BOLLETTA_ELETTRICA: EtichettaCampo[] = [
-  { chiave: "pod", etichetta: "Codice POD", tipo: "testo", essenziale: true },
+  {
+    chiave: "pod",
+    etichetta: "Codice POD",
+    tipo: "testo",
+    essenziale: true,
+    formato: "^IT\\d{3}E[0-9A-Z]{8}$",
+    formatoNota:
+      "Il codice POD non ha la forma attesa (IT, tre cifre, E, otto caratteri): controllalo.",
+  },
   { chiave: "fornitore", etichetta: "Fornitore", tipo: "testo" },
   { chiave: "periodoInizio", etichetta: "Periodo dal", tipo: "data", essenziale: true },
   { chiave: "periodoFine", etichetta: "Periodo al", tipo: "data", essenziale: true },
@@ -182,11 +209,13 @@ export const CAMPI_BOLLETTA_ELETTRICA: EtichettaCampo[] = [
     tipo: "numero",
     unita: "kWh",
     essenziale: true,
+    min: 0,
+    max: 50_000_000,
   },
-  { chiave: "consumoF1Kwh", etichetta: "di cui fascia F1", tipo: "numero", unita: "kWh" },
-  { chiave: "consumoF2Kwh", etichetta: "di cui fascia F2", tipo: "numero", unita: "kWh" },
-  { chiave: "consumoF3Kwh", etichetta: "di cui fascia F3", tipo: "numero", unita: "kWh" },
-  { chiave: "importoEuro", etichetta: "Importo della bolletta", tipo: "numero", unita: "€" },
+  { chiave: "consumoF1Kwh", etichetta: "di cui fascia F1", tipo: "numero", unita: "kWh", min: 0, max: 50_000_000 },
+  { chiave: "consumoF2Kwh", etichetta: "di cui fascia F2", tipo: "numero", unita: "kWh", min: 0, max: 50_000_000 },
+  { chiave: "consumoF3Kwh", etichetta: "di cui fascia F3", tipo: "numero", unita: "kWh", min: 0, max: 50_000_000 },
+  { chiave: "importoEuro", etichetta: "Importo della bolletta", tipo: "numero", unita: "€", max: 5_000_000 },
   {
     chiave: "energiaRinnovabile",
     etichetta: "Energia rinnovabile dichiarata",
@@ -203,12 +232,19 @@ export const CAMPI_VISURA: EtichettaCampo[] = [
   { chiave: "codiceFiscale", etichetta: "Codice fiscale", tipo: "testo" },
   { chiave: "formaGiuridica", etichetta: "Forma giuridica", tipo: "testo" },
   { chiave: "sedeLegale", etichetta: "Sede legale", tipo: "testo", essenziale: true },
-  { chiave: "ateco", etichetta: "Codice ATECO prevalente", tipo: "testo", essenziale: true },
+  {
+    chiave: "ateco",
+    etichetta: "Codice ATECO prevalente",
+    tipo: "testo",
+    essenziale: true,
+    formato: "^\\d{2}(\\.\\d{1,2}){0,2}$",
+    formatoNota: "Non ha la forma di un codice ATECO (per esempio 25.62.00).",
+  },
+  { chiave: "addetti", etichetta: "Addetti dichiarati", tipo: "numero", min: 0, max: 500_000 },
   { chiave: "atecoDescrizione", etichetta: "Attività prevalente", tipo: "testo" },
   { chiave: "dataCostituzione", etichetta: "Data di costituzione", tipo: "data" },
   { chiave: "reaNumero", etichetta: "Numero REA", tipo: "testo" },
-  { chiave: "capitaleSociale", etichetta: "Capitale sociale", tipo: "numero", unita: "€" },
-  { chiave: "addetti", etichetta: "Addetti dichiarati", tipo: "numero" },
+  { chiave: "capitaleSociale", etichetta: "Capitale sociale", tipo: "numero", unita: "€", min: 0 },
   { chiave: "pec", etichetta: "PEC", tipo: "testo" },
 ];
 
@@ -261,9 +297,15 @@ export const COLONNE_ORGANICO: EtichettaCampo[] = [
     valori: ["donne", "uomini", "altro", "non-dichiarato"],
     essenziale: true,
   },
-  { chiave: "numero", etichetta: "Numero di addetti", tipo: "numero", essenziale: true },
-  { chiave: "tempoIndeterminato", etichetta: "di cui a tempo indeterminato", tipo: "numero" },
-  { chiave: "partTime", etichetta: "di cui part time", tipo: "numero" },
+  { chiave: "numero", etichetta: "Numero di addetti", tipo: "numero", essenziale: true, min: 0 },
+  {
+    chiave: "tempoIndeterminato",
+    etichetta: "di cui a tempo indeterminato",
+    tipo: "numero",
+    min: 0,
+    nonSupera: "numero",
+  },
+  { chiave: "partTime", etichetta: "di cui part time", tipo: "numero", min: 0, nonSupera: "numero" },
   {
     chiave: "retribuzioneMediaLorda",
     etichetta: "Retribuzione media lorda annua",
@@ -277,10 +319,22 @@ export const COLONNE_ORGANICO: EtichettaCampo[] = [
 
 export const COLONNE_FORMAZIONE: EtichettaCampo[] = [
   { chiave: "corso", etichetta: "Corso o argomento", tipo: "testo", essenziale: true },
-  { chiave: "data", etichetta: "Data", tipo: "data", essenziale: true },
-  { chiave: "oreTotali", etichetta: "Ore", tipo: "numero" },
-  { chiave: "partecipanti", etichetta: "Partecipanti", tipo: "numero", essenziale: true },
-  { chiave: "partecipantiDonne", etichetta: "di cui donne", tipo: "numero" },
+  { chiave: "data", etichetta: "Data", tipo: "data", essenziale: true, dentroLAnno: true },
+  { chiave: "oreTotali", etichetta: "Ore", tipo: "numero", min: 0.5, max: 500 },
+  {
+    chiave: "partecipanti",
+    etichetta: "Partecipanti",
+    tipo: "numero",
+    essenziale: true,
+    min: 1,
+  },
+  {
+    chiave: "partecipantiDonne",
+    etichetta: "di cui donne",
+    tipo: "numero",
+    min: 0,
+    nonSupera: "partecipanti",
+  },
   { chiave: "categoria", etichetta: "Inquadramento dei partecipanti", tipo: "testo" },
   {
     chiave: "ambito",

@@ -174,6 +174,8 @@ type Documento = {
     | "smistato"
     | "da_classificare"
     | "non_pertinente"
+    /** Accodato: oltre la dotazione di uso corretto, si legge più tardi. */
+    | "in_coda"
     /** Il Motore lo sta leggendo adesso. */
     | "in_lettura"
     /** Letto: i campi stanno in `document_fields`. */

@@ -35,6 +35,14 @@ import {
   verdettoSpesa,
 } from "../src/lib/motore/tetti.ts";
 import {
+  FAIR_USE,
+  MESSAGGI_USO,
+  USO_TIPICO,
+  casoPeggiore,
+  etichettaContatore,
+  statoUso,
+} from "../src/lib/motore/fair-use.ts";
+import {
   MESSAGGIO_CICLI_RAVVICINATI,
   MESSAGGIO_RIUSO,
   VERSIONI_RAVVICINATE,
@@ -259,8 +267,9 @@ const negativo = interpretaRisposta(
   CTX,
 );
 verifica(
-  "un consumo negativo viene segnalato",
-  campoDi(negativo, "consumoTotaleKwh").avvisi.some((a) => a.includes("negativo")),
+  "un consumo negativo viene segnalato dal vincolo dichiarato",
+  campoDi(negativo, "consumoTotaleKwh").avvisi.some((a) => a.includes("minimo")),
+  campoDi(negativo, "consumoTotaleKwh").avvisi.join(" | "),
 );
 
 const podStorto = interpretaRisposta(bollettaSana({ pod: c("12345") }), VOCE, CTX);
@@ -778,8 +787,13 @@ verifica(
     TIPI_DOCUMENTO.every((t) => REGISTRO_MOTORE.some((v) => v.tipo === t.chiave)),
 );
 verifica(
-  "chi ha lo schema ha anche versione, campi e verificatore: non esistono mezze voci",
-  tipiLeggibili().every((v) => v.versione && v.campi?.length && v.verifica),
+  "chi ha lo schema ha anche versione e campi: non esistono mezze voci",
+  tipiLeggibili().every((v) => v.versione && v.campi?.length),
+);
+verifica(
+  "un verificatore PROPRIO è facoltativo: i vincoli dichiarati bastano",
+  tipiLeggibili().some((v) => !v.verifica),
+  tipiLeggibili().filter((v) => !v.verifica).map((v) => v.tipo).join(", "),
 );
 verifica(
   "le versioni di schema sono tutte diverse: due letture devono distinguersi",
@@ -1113,8 +1127,17 @@ verifica(
   Object.values(TETTI).every((t) => t.perche.length > 40),
 );
 verifica(
-  "i tetti stanno sopra il costo di una pratica tipica, non al suo bordo",
-  TETTI.pratica.tetto > 5 * DOLLARO,
+  "il tetto tecnico di una pratica sta SOPRA il caso peggiore contrattuale",
+  TETTI.pratica.tetto > casoPeggiore(1).costoMicro,
+  `$${(TETTI.pratica.tetto / DOLLARO).toFixed(0)} contro $${(casoPeggiore(1).costoMicro / DOLLARO).toFixed(2)}`,
+);
+verifica(
+  "e quello dell'organizzazione sopra il caso peggiore di quattro percorsi",
+  TETTI.organizzazione.tetto > casoPeggiore(4).costoMicro,
+);
+verifica(
+  "l'allarme di pratica sta appena sopra l'uso tipico: le anomalie si vedono presto",
+  TETTI.pratica.soglia <= 3 * DOLLARO,
 );
 verifica(
   "il messaggio al cliente non nomina né tetti né costi né energia",
@@ -1235,6 +1258,85 @@ verifica(
     versioneAdesso: "v1",
     documentoAggiornatoIl: ORA,
   }).serve,
+);
+
+
+/* ================================================================== */
+console.log("\n— i limiti di uso corretto: in documenti, non in dollari —\n");
+
+verifica(
+  "la dotazione è un multiplo largo dell'uso reale misurato",
+  FAIR_USE.documenti.inclusi >= USO_TIPICO.documenti * 5 &&
+    FAIR_USE.generazioni.inclusi >= USO_TIPICO.generazioni * 3,
+);
+verifica(
+  "l'uso tipico non sfiora la dotazione: nemmeno un quinto",
+  statoUso({ documenti: USO_TIPICO.documenti, generazioni: USO_TIPICO.generazioni }, 1)
+    .quota < 0.2,
+);
+verifica(
+  "sotto la dotazione tutto è normale e non si dice niente",
+  statoUso({ documenti: 100, generazioni: 5 }, 1).livello === "normale" &&
+    MESSAGGI_USO.normale === null,
+);
+verifica(
+  "oltre la dotazione si passa in differita, non ci si ferma",
+  statoUso({ documenti: FAIR_USE.documenti.inclusi + 1, generazioni: 0 }, 1)
+    .livello === "differita",
+);
+verifica(
+  "molto oltre si chiede di parlarne",
+  statoUso({ documenti: FAIR_USE.documenti.differita + 1, generazioni: 0 }, 1)
+    .livello === "contatto",
+);
+verifica(
+  "anche le generazioni fanno scattare il gradino, e si sa quale",
+  statoUso({ documenti: 0, generazioni: FAIR_USE.generazioni.inclusi + 1 }, 1)
+    .causa === "generazioni",
+);
+verifica(
+  "la dotazione si moltiplica per i percorsi attivi",
+  statoUso({ documenti: FAIR_USE.documenti.inclusi + 1, generazioni: 0 }, 3)
+    .livello === "normale",
+);
+verifica(
+  "chi non ha ancora percorsi ha comunque una dotazione: nessun muro al primo documento",
+  statoUso({ documenti: 5, generazioni: 0 }, 0).livello === "normale",
+);
+verifica(
+  "nessun messaggio al cliente parla di costi, limiti superati o colpe",
+  Object.values(MESSAGGI_USO)
+    .filter(Boolean)
+    .every((m) => !/\$|costo|budget|superat|eccedut|non puoi|troppo/i.test(m)),
+  Object.values(MESSAGGI_USO).filter(Boolean).join(" | "),
+);
+verifica(
+  "il messaggio della differita dice che arrivano TUTTE",
+  /arrivano tutte/i.test(MESSAGGI_USO.differita),
+);
+verifica(
+  "quello del contatto dice che il lavoro in corso continua",
+  /continua/i.test(MESSAGGI_USO.contatto),
+);
+verifica(
+  "il contatore si legge in documenti",
+  /documenti elaborati/.test(
+    etichettaContatore(statoUso({ documenti: 38, generazioni: 0 }, 1)),
+  ),
+  etichettaContatore(statoUso({ documenti: 38, generazioni: 0 }, 1)),
+);
+
+/* — Il caso peggiore, che è il numero del piano economico — */
+const peggiore = casoPeggiore(1);
+verifica(
+  "il caso peggiore per percorso è certo e calcolabile",
+  peggiore.documenti === FAIR_USE.documenti.differita &&
+    peggiore.costoMicro > 0,
+  `$${(peggiore.costoMicro / DOLLARO).toFixed(2)}`,
+);
+verifica(
+  "e cresce in modo lineare coi percorsi: nessuna sorpresa nel modello",
+  Math.abs(casoPeggiore(4).costoMicro - peggiore.costoMicro * 4) < 10,
 );
 
 console.log(

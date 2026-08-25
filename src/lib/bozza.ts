@@ -1,5 +1,11 @@
 import { getServizio } from "@/lib/catalog";
 import {
+  MODELLO_PER_PERCORSO,
+  modelloElaborato,
+  type ModelloElaborato,
+} from "@/lib/elaborati";
+import {
+  annoElaborazione,
   annoRendicontazioneDefault,
   dodiciMesiDi,
   intestazioneDocumento,
@@ -130,31 +136,55 @@ function statoDati(
 /* Etichette dei documenti (per i chip «→ contribuisce a…», §12.F)     */
 /* ------------------------------------------------------------------ */
 
-export const DOC_CARBON = "Carbon Footprint";
-export const DOC_VSME = "Bilancio VSME";
-/** Prepariamo il dossier: il punteggio lo assegna sempre l'ente terzo. */
-export const DOC_SCORE = "Profilo ESG per questionari e rating";
-/** Strumento INCLUSO nel canone, non un documento acquistato (§12.C):
- *  resta come etichetta per la fascia «incluso nel tuo abbonamento», ma
- *  non compare fra i deliverable né nel conteggio «Documento X di Y». */
-export const DOC_KIT = "Kit di comunicazione";
-export const DOC_PARITA = "Sistema parità di genere";
+/**
+ * Le etichette vivono coi modelli (`src/lib/elaborati.ts`), che sono la
+ * fonte della struttura dei documenti. Qui si ri-esportano perché mezzo
+ * portale le importa da `bozza`: due definizioni sarebbero due verità.
+ *
+ * DOC_KIT è uno strumento INCLUSO nel canone, non un documento
+ * acquistato (§12.C): resta come etichetta per la fascia «incluso nel
+ * tuo abbonamento», ma non compare fra i deliverable né nel conteggio
+ * «Documento X di Y».
+ */
+export {
+  DOC_CARBON,
+  DOC_VSME,
+  DOC_SCORE,
+  DOC_KIT,
+  DOC_PARITA,
+} from "@/lib/elaborati";
+import {
+  DOC_CARBON,
+  DOC_VSME,
+  DOC_SCORE,
+  DOC_PARITA,
+} from "@/lib/elaborati";
 
-/** Etichetta del documento prodotto da ciascun modulo del catalogo. */
-const ETICHETTA_MODULO: Record<string, string> = {
-  "carbon-footprint-scope-1-2": DOC_CARBON,
-  "carbon-footprint-scope-1-2-3": DOC_CARBON,
-  "bilancio-sostenibilita-vsme-base": DOC_VSME,
-  "bilancio-sostenibilita-vsme-avanzato": DOC_VSME,
-  "manuale-sistema-gestione-iso-9001": "Manuale ISO 9001",
-  "manuale-sistema-gestione-iso-14001": "Manuale ISO 14001",
-  "manuale-sistema-gestione-iso-45001": "Manuale ISO 45001",
-  "parita-di-genere-pdr-125": DOC_PARITA,
+/**
+ * Che documenti produce un percorso.
+ *
+ * Per i percorsi che hanno un MODELLO la risposta viene dal modello: è
+ * la stessa fonte che genera la bozza, quindi le due cose non possono
+ * divergere. Restano scritti a mano solo i percorsi che un modello non ce
+ * l'hanno ancora — e sono elencati qui proprio perché si veda quali sono.
+ */
+const ETICHETTA_SENZA_MODELLO: Record<string, string> = {
   "iso-45003": "Fascicolo ISO 45003",
   "iso-30415": "Fascicolo ISO 30415",
   sa8000: "Fascicolo SA8000",
   "rating-economia-circolare": "Rating di circolarità",
 };
+
+function documentiDelPercorso(slug: string): string[] {
+  const voci = MODELLO_PER_PERCORSO[slug];
+  if (voci && voci.length > 0) {
+    return voci
+      .map((v) => modelloElaborato(v.modello)?.documento)
+      .filter((d): d is string => Boolean(d));
+  }
+  const uno = ETICHETTA_SENZA_MODELLO[slug];
+  return uno ? [uno] : [];
+}
 
 /**
  * I moduli del catalogo che producono un certo documento. È l'inverso di
@@ -163,25 +193,18 @@ const ETICHETTA_MODULO: Record<string, string> = {
  * prodotto ai moduli che lo producono.
  */
 export function moduliCheProducono(doc: string): string[] {
-  const out = Object.entries(ETICHETTA_MODULO)
-    .filter(([, etichetta]) => etichetta === doc)
-    .map(([slug]) => slug);
-  // Il bundle produce i tre documenti del percorso completo.
-  if ([DOC_CARBON, DOC_VSME, DOC_SCORE].includes(doc)) out.push("percorso-ver0");
-  return out;
+  const slug = [
+    ...Object.keys(MODELLO_PER_PERCORSO),
+    ...Object.keys(ETICHETTA_SENZA_MODELLO),
+  ];
+  return [...new Set(slug)].filter((s) => documentiDelPercorso(s).includes(doc));
 }
 
 /** Le etichette dei documenti in lavorazione, dati i moduli attivi:
  *  servono a filtrare i chip di destinazione su ciò che esiste davvero. */
 export function documentiAttivi(moduli: string[]): Set<string> {
   const out = new Set<string>();
-  for (const m of moduli) {
-    if (m === "percorso-ver0") {
-      [DOC_CARBON, DOC_VSME, DOC_SCORE].forEach((d) => out.add(d));
-    } else if (ETICHETTA_MODULO[m]) {
-      out.add(ETICHETTA_MODULO[m]);
-    }
-  }
+  for (const m of moduli) for (const d of documentiDelPercorso(m)) out.add(d);
   return out;
 }
 
@@ -376,322 +399,95 @@ function sezionePoliticaParita(campi: CampiNoti): SezioneBozza {
   };
 }
 
-function bozzaCarbon(org: DatiOrg, conScope3: boolean, campi: CampiNoti = {}): Bozza {
-  const anno = annoDi(org);
-  return {
-    intestazione: `Bozza · ${intestazioneDocumento("Inventario GHG", anno)}`,
-    sezioni: [
-      sezioneAnagrafica(org, campi),
-      sezionePerimetro(campi, anno),
-      {
-        titolo: "Metodologia e fattori di emissione",
-        stato: "impostata",
-        fonte: "GHG Protocol · fattori ISPRA/DEFRA",
-        spiega:
-          "Il metodo e i coefficienti ufficiali che trasformano i consumi in emissioni.",
-      },
-      {
-        titolo: "Scope 1 — emissioni dirette",
-        stato: "in-attesa",
-        attende: `i registri o le fatture dei carburanti del ${anno}`,
-        attendeTipi: ["carburanti", "bolletta-gas"],
-        spiega:
-          "Scope 1 = ciò che bruci tu: caldaie, mezzi aziendali, impianti.",
-      },
-      {
-        titolo: "Scope 2 — energia acquistata (location e market based)",
-        stato: "in-attesa",
-        attende: `le bollette elettriche di ${dodiciMesiDi(anno)}`,
-        attendeTipi: ["bolletta-elettrica"],
-        spiega: "Scope 2 = le emissioni dell'energia elettrica che compri.",
-      },
-      ...(conScope3
-        ? [
-            {
-              titolo: "Scope 3 — emissioni indirette di filiera",
-              stato: "in-attesa" as const,
-              attende: "categorie di spesa dalla contabilità fornitori",
-              spiega:
-                "Scope 3 = la tua filiera: fornitori, trasporti, beni acquistati.",
-            },
-          ]
-        : []),
-      {
-        titolo: "Risultati, intensità emissiva e dichiarazioni",
-        stato: "in-attesa",
-        attende: "il calcolo sui dati confermati",
-        spiega:
-          "Il totale delle emissioni e il rapporto coi numeri del bilancio.",
-      },
-    ],
-    daFornire: [
-      {
-        documento: `Bollette di energia elettrica di ${dodiciMesiDi(anno)}, per ogni contatore`,
-        tipo: "bolletta-elettrica",
-        perche: "documentano il consumo elettrico per lo Scope 2",
-        destinazioni: [DOC_CARBON, DOC_VSME],
-      },
-      {
-        documento: `Bollette del gas o altri combustibili di ${dodiciMesiDi(anno)}`,
-        tipo: "bolletta-gas",
-        perche: "servono alle emissioni dirette da riscaldamento (Scope 1)",
-        destinazioni: [DOC_CARBON, DOC_VSME],
-      },
-      {
-        documento: `Registri o fatture dei carburanti di ${dodiciMesiDi(anno)}`,
-        tipo: "carburanti",
-        perche: "coprono i mezzi aziendali e d'opera nello Scope 1",
-        destinazioni: [DOC_CARBON],
-      },
-      ...(conScope3
-        ? [
-            {
-              documento: "Categorie di spesa dalla contabilità fornitori",
-              perche: "stimano le emissioni di filiera dello Scope 3",
-              destinazioni: [DOC_CARBON],
-            },
-          ]
-        : []),
-    ],
-  };
-}
+/* ================================================================== */
+/* LA COMPOSIZIONE — un solo costruttore, guidato dal MODELLO           */
+/* ================================================================== */
 
-function bozzaVsme(org: DatiOrg, avanzato: boolean, campi: CampiNoti = {}): Bozza {
-  const anno = annoDi(org);
-  return {
-    intestazione: `Bozza · ${intestazioneDocumento("Bilancio di Sostenibilità (VSME)", anno)}`,
-    sezioni: [
-      sezioneAnagrafica(org, campi),
-      {
-        titolo: "Struttura del bilancio secondo lo standard EFRAG",
-        stato: "impostata",
-        fonte: `Standard VSME, modulo base${avanzato ? " + completo" : ""}`,
-        spiega:
-          "VSME = il formato europeo standard del bilancio di sostenibilità: una risposta unica alle richieste di banche e clienti.",
-      },
-      sezioneProfiloImpresa(campi),
-      {
-        titolo: "Indicatori ambientali",
-        stato: "in-attesa",
-        attende: "i dati del Carbon Footprint o le bollette",
-        attendeTipi: ["bolletta-elettrica"],
-        spiega: "Energia, emissioni e rifiuti: i numeri ambientali dell'anno.",
-      },
-      {
-        titolo: "Indicatori sociali e di governance",
-        stato: "in-attesa",
-        attende: "i dati di organico aggregati",
-        attendeTipi: ["organico"],
-        spiega:
-          "Le persone e il governo dell'impresa: organico, formazione, organi sociali.",
-      },
-      ...(avanzato
-        ? [
-            {
-              titolo: "Politiche, azioni e obiettivi (modulo completo)",
-              stato: "in-attesa" as const,
-              attende: "le politiche formalizzate dell'impresa",
-              spiega:
-                "Cosa hai deciso di fare, cosa stai facendo e con quale obiettivo.",
-            },
-          ]
-        : []),
-      {
-        titolo: "Narrativa e prospetto finale",
-        stato: "in-attesa",
-        attende: "gli indicatori confermati",
-        spiega: "Il racconto in prosa che accompagna i numeri.",
-      },
-    ],
-    daFornire: [
-      {
-        documento: `Dati di organico aggregati al 31 dicembre ${anno}`,
-        tipo: "organico",
-        perche: "compilano gli indicatori sociali dello standard",
-        destinazioni: [DOC_VSME, DOC_PARITA],
-      },
-      {
-        documento: "Composizione degli organi sociali",
-        tipo: "organigramma",
-        perche: "serve agli indicatori di governance",
-        destinazioni: [DOC_VSME],
-      },
-      {
-        documento: "Dati ambientali (o Carbon Footprint attivo)",
-        perche: "alimentano la sezione ambientale del bilancio",
-        destinazioni: [DOC_VSME],
-      },
-      ...(avanzato
-        ? [
-            {
-              documento: "Politiche e obiettivi formalizzati",
-        tipo: "politiche",
-              perche: "entrano nel modulo completo per i finanziatori",
-              destinazioni: [DOC_VSME],
-            },
-          ]
-        : []),
-    ],
-  };
-}
-
-/** Miglioramento score (componente del Percorso Ver0): si compone dai
- *  dati degli altri due documenti — l'esempio vivo di «zero documenti». */
 /**
- * PROFILO ESG PER QUESTIONARI E RATING DI TERZE PARTI (SPEC §12.C).
+ * I BINDING: le sezioni che si compilano coi dati, non col testo.
  *
- * Ver0 NON è un'agenzia di rating e non emette punteggi propri. Quello
- * che facciamo è preparare il dossier: componiamo le risposte dai dati
- * già raccolti, segnaliamo dove mancano evidenze e mettiamo tutto in
- * ordine per il momento in cui l'ente terzo — EcoVadis, Synesgy,
- * Open-es, CDP, la banca — farà le sue domande. Il punteggio lo assegna
- * sempre e solo l'ente terzo, e in queste sezioni non c'è nulla che
- * possa far pensare il contrario.
+ * Il modello (`src/lib/elaborati.ts`) dichiara `binding: "anagrafica"`;
+ * qui c'è che cosa significa. La separazione è il punto: il modello è
+ * dato e non sa leggere una scheda impresa, il binding è codice e non sa
+ * in quale elaborato finirà. Un ambito nuovo che usa solo sezioni
+ * letterali non aggiunge nemmeno una riga qui.
  */
-function bozzaScore(org: DatiOrg, campi: CampiNoti = {}): Bozza {
+const BINDING: Record<
+  string,
+  (org: DatiOrg, campi: CampiNoti, anno: number) => SezioneBozza
+> = {
+  anagrafica: (org, campi) => sezioneAnagrafica(org, campi),
+  perimetro: (_org, campi, anno) => sezionePerimetro(campi, anno),
+  profilo: (_org, campi) => sezioneProfiloImpresa(campi),
+  contesto: (_org, campi) => sezioneContesto(campi),
+  politicaParita: (_org, campi) => sezionePoliticaParita(campi),
+};
+
+/** Scioglie i segnaposto del modello: un modello non conosce l'anno. */
+function testo(valore: string, anno: number): string {
+  return valore
+    .replace(/\{anno\}/g, String(anno))
+    .replace(/\{dodiciMesi\}/g, dodiciMesiDi(anno));
+}
+
+/**
+ * Compone la bozza da un MODELLO. È l'unico costruttore che esista, e
+ * non sa che cosa siano un Carbon Footprint o un Modello 231: legge
+ * sezioni, opzioni e segnaposto.
+ */
+export function bozzaDaModello(
+  modello: ModelloElaborato,
+  org: DatiOrg,
+  campi: CampiNoti = {},
+  opzioni: string[] = [],
+): Bozza {
   const anno = annoDi(org);
+  const attive = new Set(opzioni);
+  const vale = (soloSe?: string) => !soloSe || attive.has(soloSe);
+
+  const sezioni = modello.sezioni.filter((s) => vale(s.soloSe)).map((s): SezioneBozza => {
+    if (s.binding) {
+      const costruisci = BINDING[s.binding];
+      // Un binding dichiarato e inesistente è un difetto nostro, non del
+      // cliente: la sezione resta visibile e in attesa invece di sparire
+      // dal documento senza che nessuno se ne accorga.
+      if (costruisci) return costruisci(org, campi, anno);
+      return { titolo: s.titolo, stato: "in-attesa", spiega: s.spiega };
+    }
+    return {
+      titolo: s.titolo,
+      stato: s.stato ?? "in-attesa",
+      ...(s.spiega ? { spiega: s.spiega } : {}),
+      ...(s.fonte ? { fonte: s.fonte } : {}),
+      ...(s.attende ? { attende: testo(s.attende, anno) } : {}),
+      ...(s.attendeTipi ? { attendeTipi: s.attendeTipi } : {}),
+    };
+  });
+
   return {
-    intestazione: `Bozza · ${intestazioneDocumento("Profilo ESG per questionari e rating", anno)}`,
-    sezioni: [
-      sezioneAnagrafica(org, campi),
-      {
-        titolo: "Questionari mappati sui tuoi dati",
-        stato: "impostata",
-        fonte: "EcoVadis · Synesgy · Open-es · CDP · questionari bancari",
-        spiega:
-          "Le domande che questi enti fanno, già accostate ai dati che abbiamo: così rispondi una volta e vale per tutti.",
-      },
-      {
-        titolo: "Risposte sulla parte ambientale",
-        stato: "in-attesa",
-        attende: "i dati del Carbon Footprint",
-        spiega:
-          "Emissioni ed energia, riprese dal tuo inventario: niente da ricalcolare.",
-      },
-      {
-        titolo: "Risposte sulla parte sociale e di governance",
-        stato: "in-attesa",
-        attende: "gli indicatori del Bilancio VSME",
-        spiega:
-          "Persone, organi sociali e politiche, ripresi dal bilancio: nessuna doppia domanda.",
-      },
-      {
-        titolo: "Lacune da colmare prima di rispondere",
-        stato: "in-attesa",
-        attende: "le risposte confermate",
-        spiega:
-          "Dove il dossier è ancora scoperto e cosa serve per chiuderlo, in ordine di importanza.",
-      },
-      {
-        titolo: "Dossier pronto da allegare",
-        stato: "in-attesa",
-        attende: "le sezioni precedenti confermate",
-        spiega:
-          "Il fascicolo da caricare sul portale dell'ente o da mandare alla banca. Il punteggio lo assegnano loro.",
-      },
-    ],
-    daFornire: [],
-    zeroDocumenti:
-      "Zero documenti da fornire: questo dossier si compone dai dati del Carbon Footprint e del Bilancio VSME che stai già facendo.",
+    intestazione: modello.conAnno
+      ? `Bozza · ${intestazioneDocumento(modello.intestazione, anno)}`
+      : `Bozza · ${modello.intestazione} · elaborato nel ${annoElaborazione()}`,
+    sezioni,
+    daFornire: modello.daFornire
+      .filter((v) => vale(v.soloSe))
+      .map((v) => ({
+        documento: testo(v.documento, anno),
+        ...(v.tipo ? { tipo: v.tipo } : {}),
+        perche: v.perche,
+        ...(v.destinazioni ? { destinazioni: v.destinazioni } : {}),
+      })),
+    ...(modello.zeroDocumenti ? { zeroDocumenti: modello.zeroDocumenti } : {}),
   };
 }
 
-function bozzaManualeIso(org: DatiOrg, norma: string, ambito: string, campi: CampiNoti = {}): Bozza {
-  return {
-    intestazione: `Bozza · Manuale del Sistema di Gestione ${ambito} · elaborato nel ${new Date().getFullYear()}`,
-    sezioni: [
-      sezioneAnagrafica(org, campi),
-      {
-        titolo: "Struttura HLS del manuale e politica",
-        stato: "impostata",
-        fonte: norma,
-        spiega:
-          "HLS = la struttura standard dei capitoli, uguale per tutte le norme ISO.",
-      },
-      sezioneContesto(campi),
-      {
-        titolo: "Processi, procedure e modulistica operativa",
-        stato: "in-attesa",
-        attende: "la mappa dei processi (anche in bozza)",
-        attendeTipi: ["organigramma", "politiche"],
-        spiega: "Come lavori davvero, messo per iscritto in modo controllabile.",
-      },
-      {
-        titolo: "Piano di audit interni e riesame della direzione",
-        stato: "impostata",
-        fonte: norma,
-        spiega:
-          "Il calendario dei controlli interni che la norma chiede ogni anno.",
-      },
-    ],
-    daFornire: [
-      {
-        documento: "Organigramma aggiornato",
-        tipo: "organigramma",
-        perche: "definisce ruoli e responsabilità richiesti dalla norma",
-      },
-      {
-        documento: "Mappa dei processi (anche in bozza)",
-        perche: "è l'ossatura su cui costruiamo le procedure",
-      },
-      {
-        documento: "Procedure esistenti, se ci sono",
-        tipo: "politiche",
-        perche: "si riusano: nessun lavoro fatto due volte",
-      },
-    ],
-  };
-}
-
-function bozzaPdr125(org: DatiOrg, campi: CampiNoti = {}): Bozza {
-  const anno = annoDi(org);
-  return {
-    intestazione: `Bozza · ${intestazioneDocumento("Sistema di Gestione della Parità", anno)}`,
-    sezioni: [
-      sezioneAnagrafica(org, campi),
-      {
-        titolo: "Le sei aree di KPI della prassi",
-        stato: "impostata",
-        fonte: "UNI/PdR 125:2022",
-        spiega:
-          "KPI = gli indicatori numerici: la prassi ne prevede sei aree, dalla cultura alla genitorialità.",
-      },
-      {
-        titolo: "KPI quantitativi per area",
-        stato: "in-attesa",
-        attende: "i dati di organico aggregati",
-        attendeTipi: ["organico"],
-        spiega: "I numeri veri della tua impresa dentro ciascuna area.",
-      },
-      sezionePoliticaParita(campi),
-      {
-        titolo: "Fascicolo per l'audit dell'organismo",
-        stato: "in-attesa",
-        attende: "le sezioni precedenti confermate",
-        spiega:
-          "Audit = la visita di controllo dell'ente che rilascia la certificazione.",
-      },
-    ],
-    daFornire: [
-      {
-        documento: "Dati di organico aggregati per genere e inquadramento",
-        tipo: "organico",
-        perche: "alimentano i KPI delle sei aree (mai dati nominativi)",
-        destinazioni: [DOC_PARITA, DOC_VSME],
-      },
-      {
-        documento: "Politiche HR formalizzate",
-        tipo: "politiche",
-        perche: "entrano nel sistema di gestione della parità",
-        destinazioni: [DOC_PARITA],
-      },
-    ],
-  };
-}
-
-/** Fallback onesto per i percorsi senza bozza dedicata: struttura dal
- *  catalogo (gli output del servizio come sezioni). */
-function bozzaGenerica(org: DatiOrg, slug: string, campi: CampiNoti = {}): Bozza {
+/**
+ * Il ripiego onesto per un percorso senza modello: la struttura viene dal
+ * catalogo (gli output del servizio come sezioni). Non è un errore — è
+ * un percorso che vendiamo e che non ha ancora il suo modello — e si
+ * vede, perché le sezioni restano in attesa invece di fingersi impostate.
+ */
+function bozzaDaCatalogo(org: DatiOrg, slug: string, campi: CampiNoti): Bozza {
   const s = getServizio(slug);
   const output = s?.output ?? [];
   return {
@@ -714,40 +510,22 @@ function bozzaGenerica(org: DatiOrg, slug: string, campi: CampiNoti = {}): Bozza
   };
 }
 
-/** La bozza del singolo documento, con la precompilazione onesta di oggi. */
+/** La bozza del singolo documento di un percorso. */
 export function bozzaPercorso(
   slug: string,
   org: DatiOrg,
   campi: CampiNoti = {},
 ): Bozza {
-  switch (slug) {
-    case "carbon-footprint-scope-1-2":
-      return bozzaCarbon(org, false, campi);
-    case "carbon-footprint-scope-1-2-3":
-      return bozzaCarbon(org, true, campi);
-    case "bilancio-sostenibilita-vsme-base":
-      return bozzaVsme(org, false, campi);
-    case "bilancio-sostenibilita-vsme-avanzato":
-      return bozzaVsme(org, true, campi);
-    case "manuale-sistema-gestione-iso-9001":
-      return bozzaManualeIso(org, "UNI EN ISO 9001:2015+A1:2024", "ISO 9001", campi);
-    case "manuale-sistema-gestione-iso-14001":
-      return bozzaManualeIso(org, "UNI EN ISO 14001:2026", "ISO 14001", campi);
-    case "manuale-sistema-gestione-iso-45001":
-      return bozzaManualeIso(org, "UNI EN ISO 45001:2023+A1:2024", "ISO 45001", campi);
-    case "parita-di-genere-pdr-125":
-      return bozzaPdr125(org, campi);
-    case "percorso-ver0":
-      // Il bundle non ha una bozza unica: si presenta sempre scomposto
-      // (§12.F). Chi chiede la bozza del bundle riceve il primo componente.
-      return bozzaCarbon(org, false, campi);
-    default:
-      return bozzaGenerica(org, slug, campi);
-  }
+  const voci = MODELLO_PER_PERCORSO[slug];
+  const prima = voci?.[0];
+  const modello = prima ? modelloElaborato(prima.modello) : undefined;
+  return modello
+    ? bozzaDaModello(modello, org, campi, prima?.opzioni)
+    : bozzaDaCatalogo(org, slug, campi);
 }
 
 /* ------------------------------------------------------------------ */
-/* Bundle scomposto (§12.F)                                            */
+/* I documenti di un percorso (bundle scomposto, §12.F)                */
 /* ------------------------------------------------------------------ */
 
 export type ComponentePercorso = {
@@ -761,50 +539,51 @@ export type ComponentePercorso = {
 };
 
 /**
- * I documenti di un percorso attivo. Per i moduli singoli è uno solo;
- * per il Percorso Ver0 sono i quattro componenti del bundle, ciascuno
- * con la propria bozza (e quindi il proprio anello e fascicolo).
+ * I documenti di un percorso attivo. Per i moduli singoli è uno solo; per
+ * il Percorso Ver0 sono i componenti del bundle, ciascuno con la propria
+ * bozza (e quindi il proprio anello e fascicolo).
+ *
+ * L'elenco viene dal DATO (`MODELLO_PER_PERCORSO`): aggiungere un
+ * percorso, o cambiare i documenti che comprende, è una riga di
+ * configurazione.
  */
 export function componentiPercorso(
   slug: string,
   org: DatiOrg,
   campi: CampiNoti = {},
 ): ComponentePercorso[] {
-  if (slug === "percorso-ver0") {
+  const voci = MODELLO_PER_PERCORSO[slug];
+  const s = getServizio(slug);
+
+  if (!voci || voci.length === 0) {
     return [
       {
-        key: "carbon",
-        nome: "Carbon Footprint di Organizzazione",
-        taglio: "Scope 1 e 2",
-        doc: DOC_CARBON,
-        bozza: bozzaCarbon(org, false, campi),
-      },
-      {
-        key: "vsme",
-        nome: "Bilancio di Sostenibilità (VSME)",
-        taglio: "Base",
-        doc: DOC_VSME,
-        bozza: bozzaVsme(org, false, campi),
-      },
-      {
-        key: "score",
-        nome: "Profilo ESG per questionari e rating di terze parti",
-        taglio: "EcoVadis, Synesgy, Open-es, CDP, questionari bancari",
-        doc: DOC_SCORE,
-        bozza: bozzaScore(org, campi),
+        key: slug,
+        nome: s?.name ?? slug,
+        taglio: s?.taglio,
+        doc: ETICHETTA_SENZA_MODELLO[slug],
+        bozza: bozzaDaCatalogo(org, slug, campi),
       },
     ];
   }
-  const s = getServizio(slug);
-  return [
-    {
-      key: slug,
-      nome: s?.name ?? slug,
-      taglio: s?.taglio,
-      doc: ETICHETTA_MODULO[slug],
-      bozza: bozzaPercorso(slug, org, campi),
-    },
-  ];
+
+  return voci.flatMap((v) => {
+    const modello = modelloElaborato(v.modello);
+    if (!modello) return [];
+    const bundle = voci.length > 1;
+    return [
+      {
+        key: modello.chiave,
+        // Nel bundle ogni componente porta il proprio nome per esteso;
+        // da solo, il nome del percorso — che è quello che il cliente ha
+        // comprato e che si aspetta di rileggere.
+        nome: bundle ? modello.intestazione : (s?.name ?? modello.intestazione),
+        taglio: bundle ? undefined : s?.taglio,
+        doc: modello.documento,
+        bozza: bozzaDaModello(modello, org, campi, v.opzioni),
+      },
+    ];
+  });
 }
 
 /**

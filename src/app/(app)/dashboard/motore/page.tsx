@@ -3,6 +3,7 @@ import { AlertTriangle, Coins, Gauge, ScrollText } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { REGISTRO_MOTORE, tipiDichiarati, tipiLeggibili } from "@/lib/motore/famiglie";
+import { FAIR_USE, statoUso } from "@/lib/motore/fair-use";
 import { DOLLARO, TETTI } from "@/lib/motore/tetti";
 
 import { IntestazioneSezione, TestataSezione } from "../_ui";
@@ -59,6 +60,29 @@ export default async function MotorePage() {
         .limit(50),
       supabase.from("organizations").select("id, ragione_sociale"),
     ]);
+
+  // L'uso corretto per cliente: è il numero che il CLIENTE vede (in
+  // documenti), messo accanto a quello che vede solo il back-office (in
+  // valuta). Le due colonne servono a domande diverse: la prima dice se
+  // sta per scattare un gradino contrattuale, la seconda se c'è
+  // un'anomalia tecnica.
+  const [{ data: documentiLetti }, { data: attivazioni }] = await Promise.all([
+    supabase
+      .from("documents")
+      .select("organization_id")
+      .in("stato", ["letto", "illeggibile"]),
+    supabase
+      .from("module_activations")
+      .select("organization_id")
+      .in("stato", ["richiesto", "attivo", "in_attivazione"]),
+  ]);
+  const conta = (righe: { organization_id: string }[] | null) => {
+    const m = new Map<string, number>();
+    for (const r of righe ?? []) m.set(r.organization_id, (m.get(r.organization_id) ?? 0) + 1);
+    return m;
+  };
+  const lettiPerOrg = conta(documentiLetti);
+  const percorsiPerOrg = conta(attivazioni);
 
   const righe = estrazioni ?? [];
   const nomeOrg = new Map(
@@ -188,7 +212,7 @@ export default async function MotorePage() {
         <TestataSezione
           icona={Coins}
           titolo="Costo per cliente"
-          sotto="Una pratica è il lavoro di un anno per un cliente: finché ogni cliente ha un anno di rendicontazione solo, questa colonna È il costo per pratica."
+          sotto={`Una pratica è il lavoro di un anno per un cliente. «Uso corretto» è quello che vede il cliente, in documenti (${FAIR_USE.documenti.inclusi} per percorso); «speso» è quello che vediamo solo noi.`}
         />
         {perCliente.size === 0 ? (
           <p className="mt-3 text-sm text-gray-warm">Nessuna lettura registrata.</p>
@@ -200,6 +224,7 @@ export default async function MotorePage() {
                   <th className="py-2 font-semibold">Cliente</th>
                   <th className="py-2 text-right font-semibold">Letture</th>
                   <th className="py-2 text-right font-semibold">Errori</th>
+                  <th className="py-2 text-right font-semibold">Uso corretto</th>
                   <th className="py-2 text-right font-semibold">Speso</th>
                   <th className="py-2 text-right font-semibold">Sul tetto</th>
                 </tr>
@@ -223,6 +248,34 @@ export default async function MotorePage() {
                           ) : (
                             "—"
                           )}
+                        </td>
+                        <td className="py-2 text-right tabular-nums">
+                          {(() => {
+                            const u = statoUso(
+                              { documenti: lettiPerOrg.get(id) ?? 0, generazioni: 0 },
+                              percorsiPerOrg.get(id) ?? 0,
+                            );
+                            return (
+                              <span
+                                className={
+                                  u.livello === "contatto"
+                                    ? "font-semibold text-amber-ink"
+                                    : u.livello === "differita"
+                                      ? "text-amber-ink"
+                                      : "text-gray-warm"
+                                }
+                                title={
+                                  u.livello === "normale"
+                                    ? "Dentro la dotazione"
+                                    : u.livello === "differita"
+                                      ? "In coda a bassa priorità"
+                                      : "Da contattare per concordare la prosecuzione"
+                                }
+                              >
+                                {u.usato.documenti}/{u.dotazione.documenti}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="py-2 text-right font-semibold tabular-nums text-ink">
                           {soldi(v.costo)}

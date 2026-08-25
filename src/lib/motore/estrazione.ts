@@ -2,6 +2,7 @@ import type { Forma, VoceLeggibile } from "./famiglie";
 import {
   normalizzaCampi,
   normalizzaRighe,
+  verificaGenerica,
   type CampoEstratto,
   type RigaEstratta,
 } from "./plausibilita";
@@ -211,10 +212,23 @@ export function interpretaRisposta(
         )
       : [];
 
-  const { avvisiDocumento, fuoriPeriodo } = voce.verifica(campi, righe, {
+  // I VINCOLI DICHIARATI girano sempre e per primi: valgono su ogni tipo
+  // di documento di ogni ambito, presente e futuro. Il verificatore
+  // proprio del tipo — se ce l'ha — aggiunge solo i ragionamenti che un
+  // vincolo non sa esprimere.
+  const contesto = {
     annoRendicontazione: ctx.annoRendicontazione,
     grezzo: dati,
-  });
+    campi: voce.campi,
+  };
+  const generico = verificaGenerica(campi, righe, contesto);
+  const proprio = voce.verifica?.(campi, righe, contesto);
+
+  const avvisiDocumento = [
+    ...generico.avvisiDocumento,
+    ...(proprio?.avvisiDocumento ?? []),
+  ];
+  const fuoriPeriodo = generico.fuoriPeriodo || (proprio?.fuoriPeriodo ?? false);
 
   const avvertenze = (
     Array.isArray(dati.avvertenze) ? (dati.avvertenze as unknown[]) : []
