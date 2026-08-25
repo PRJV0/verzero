@@ -282,8 +282,10 @@ function MappaCatalogo({
   );
 }
 
-export function CatalogoFamiglie() {
-  const [bisogno, setBisogno] = useState<Bisogno | null>(null);
+export function CatalogoFamiglie({ iniziale }: { iniziale?: Bisogno | null }) {
+  // Il bisogno può arrivare dall'URL: è la strada che percorre chi
+  // clicca «vedi tutti i percorsi per questa situazione» dall'orientatore.
+  const [bisogno, setBisogno] = useState<Bisogno | null>(iniziale ?? null);
   const sezioni = useRef(new Map<string, HTMLElement>());
 
   /** Dalla mappa alla famiglia: si toglie il filtro e poi si scorre. */

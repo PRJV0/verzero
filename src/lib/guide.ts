@@ -56,6 +56,13 @@ export type Guida = {
   /** URL parlante: la domanda, non il nome della norma. */
   slug: string;
   /**
+   * Come la cerca chi non conosce il nome della norma: sigle, modi di
+   * dire, sinonimi. Stanno qui, con la guida, per la stessa ragione per
+   * cui le chiavi dei percorsi stanno nel catalogo — una guida e le
+   * parole con cui la si cerca sono la stessa cosa.
+   */
+  chiavi?: string[];
+  /**
    * IL TITOLO È LA DOMANDA, formulata come la farebbe un'impresa —
    * «perché la banca mi chiede…», non «gli obblighi ESG per il credito».
    * Vale per la ricerca e vale doppio per un assistente, che cerca la

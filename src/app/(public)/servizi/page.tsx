@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CatalogoFamiglie } from "@/components/catalogo-famiglie";
+import { BISOGNI, type Bisogno } from "@/lib/catalog";
+import { orienta } from "@/lib/orientatore";
 import { JsonLd } from "@/components/json-ld";
 import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
@@ -34,7 +36,27 @@ export const metadata: Metadata = metadataPagina({
  * non come guida alla scelta, e facevano comparire lo stesso servizio in
  * due famiglie diverse.
  */
-export default function ServiziPage() {
+/**
+ * Il catalogo risponde anche a `?q=` e `?bisogno=`.
+ *
+ * `?q=` è la strada di chi arriva dall'orientatore SENZA JavaScript: il
+ * modulo in home è una GET verso questa pagina, e qui la frase si
+ * interpreta con la stessa identica funzione (`orienta`). Non è un
+ * ripiego degradato — è la stessa risposta servita da un'altra pagina,
+ * ed è la ragione per cui la logica sta in una libreria e non dentro un
+ * componente client.
+ */
+export default async function ServiziPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; bisogno?: string }>;
+}) {
+  const { q, bisogno } = await searchParams;
+  const trovato = q ? orienta(q) : null;
+  const situazione = BISOGNI.some((b) => b.key === bisogno)
+    ? (bisogno as Bisogno)
+    : (trovato?.situazioni[0] ?? null);
+
   return (
     <main className="mx-auto max-w-4xl px-5 py-16">
       <JsonLd
@@ -64,8 +86,63 @@ export default function ServiziPage() {
         — le norme dietro le richieste di banche, committenti e bandi.
       </p>
 
+      {/* Chi arriva dall'orientatore senza JavaScript trova qui la sua
+          risposta, con le stesse parole e nello stesso ordine. */}
+      {trovato && (
+        <section
+          aria-label="Risultati della ricerca"
+          className="mt-6 rounded-2xl border-2 border-pine/20 bg-paper p-5"
+        >
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-pine">
+            Hai cercato
+          </p>
+          <p className="mt-0.5 text-[15px] font-bold text-ink">«{q}»</p>
+
+          {trovato.risultati.length > 0 ? (
+            <ul className="mt-3 space-y-2">
+              {trovato.risultati.map((r) => (
+                <li key={r.id}>
+                  <Link
+                    href={r.href}
+                    className="vz-interattivo block rounded-xl border border-line bg-white p-4 hover:border-pine"
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                      <span className="text-[15px] font-bold leading-snug text-ink">
+                        {r.nome}
+                      </span>
+                      {r.inArrivo ? (
+                        <span className="shrink-0 rounded-full bg-paper px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-warm">
+                          In arrivo
+                        </span>
+                      ) : r.prezzo ? (
+                        <span className="shrink-0 text-xs font-semibold text-pine">
+                          {r.prezzo}
+                        </span>
+                      ) : null}
+                    </div>
+                    <span className="mt-1 block text-sm leading-relaxed text-gray-warm">
+                      {r.perche}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-sm leading-relaxed text-gray-warm">
+              Su questo non abbiamo un percorso, e preferiamo dirtelo invece di
+              proporti qualcosa che non risponde.{" "}
+              <Link href="/contatti" className="font-semibold text-pine hover:underline">
+                Scrivici due righe
+              </Link>{" "}
+              e ti diciamo se possiamo esserti utili — e se non possiamo, anche
+              quello. Sotto trovi comunque tutto il catalogo.
+            </p>
+          )}
+        </section>
+      )}
+
       <div className="mt-4">
-        <CatalogoFamiglie />
+        <CatalogoFamiglie iniziale={situazione} />
       </div>
 
       <p className="mt-6 text-center text-xs leading-relaxed text-gray-light">

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, FileText, RefreshCw, UserCheck } from "lucide-react";
+import { ArrowRight, FileText, UserCheck } from "lucide-react";
 
 import { Sigillo } from "@/components/brand/sigillo";
 import { NastroZero } from "@/components/nastro-zero";
@@ -48,14 +48,6 @@ function ZeroWatermark({
   );
 }
 
-function DottedRing({ className = "" }: { className?: string }) {
-  return (
-    <span
-      aria-hidden
-      className={`pointer-events-none absolute rounded-full border-2 border-dotted ${className}`}
-    />
-  );
-}
 
 /** Parola-Zero: accento ricorrente del Registro A (corsivo menta). */
 function ZeroWord({
@@ -308,56 +300,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* HAI GIÀ UN MANUALE? — il richiamo al controllo gratuito.
-          Sta in home perché intercetta un pubblico che il resto della
-          pagina non tocca: chi è già servito da qualcun altro e non sta
-          cercando un percorso nuovo. Il controllo vero vive nella scheda
-          del percorso, qui c'è solo la domanda. */}
-      <section className="bg-paper px-5 py-14">
-        <div className="mx-auto flex max-w-4xl flex-col gap-5 rounded-3xl border-2 border-pine/15 bg-white p-6 sm:flex-row sm:items-center sm:p-8">
-          <span
-            aria-hidden
-            className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-moss text-pine"
-          >
-            <RefreshCw size={22} />
-          </span>
-          <div className="min-w-0">
-            <h2 className="font-display text-2xl leading-tight text-ink md:text-3xl">
-              Hai già un manuale? Potrebbe non essere più allineato.
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-gray-warm">
-              Le norme cambiano edizione: la ISO 14001 nel 2026, la ISO 9001
-              nel 2024. Controlla gratis quale edizione cita il tuo manuale —
-              nessuna registrazione, risposta immediata.
-            </p>
-          </div>
-          <Link
-            href="/servizi/aggiornamento-sistema-gestione"
-            className="vz-press inline-flex shrink-0 items-center gap-2 self-start rounded-xl bg-pine px-6 py-3.5 text-sm font-semibold text-white sm:self-auto"
-          >
-            Controlla l&apos;edizione <ArrowRight size={16} />
-          </Link>
-        </div>
-      </section>
-
-      {/* SOLO STANDARD UFFICIALI — una riga di principio (§12.P). */}
-      <section className="border-y-2 border-line bg-white px-5 py-12">
-        <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-display text-3xl text-ink md:text-4xl">
-            Solo standard ufficiali.
-          </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm text-gray-warm">
-            {SOLO_STANDARD_UFFICIALI}
-          </p>
-          <Link
-            href="/come-funziona"
-            className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-pine hover:underline"
-          >
-            Le norme, citate una per una <ArrowRight size={15} />
-          </Link>
-        </div>
-      </section>
-
       {/* SIGILLO — registro scuro istituzionale (§11.X). */}
       <section id="sigillo" className="relative isolate overflow-hidden bg-pine-deep px-5 py-16 md:py-24">
         <OndaParticelle config={PRESET.tenueScura} className="-z-10" />
@@ -371,39 +313,19 @@ export default function HomePage() {
               Criteri pubblici, dati verificati, QR di controllo. Millesimato:
               ogni anno va riconquistato.
             </p>
+            {/* «Solo standard ufficiali» era una sezione a sé, bianca, fra
+                il prezzo e il Sigillo. È la stessa promessa che fa il
+                Sigillo — un attestato vale se dietro c'è una norma vera —
+                e ripeterla due volte a due schermate di distanza la
+                indeboliva invece di rafforzarla. Qui è dove serve. */}
+            <p className="mt-4 max-w-lg text-sm text-moss/80">
+              {SOLO_STANDARD_UFFICIALI}
+            </p>
             <div className="mt-7">
               <CtaGrande href="/sigillo" tone="white">
                 Scopri il Sigillo
               </CtaGrande>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* MANIFESTO DELLO ZERO — chiusa su pino scuro, foto in filigrana. */}
-      <section className="relative overflow-hidden bg-pine-dark px-5 py-16 md:py-24 text-center">
-        <PhotoDuotone
-          src="/photos/impresa.jpg"
-          className="absolute inset-0 opacity-20"
-        />
-        <div aria-hidden className="absolute inset-0 bg-pine-dark/60" />
-        <ZeroWatermark
-          tone="light"
-          className="left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[30rem]"
-        />
-        <DottedRing className="left-1/2 top-14 h-40 w-40 -translate-x-1/2 border-mint/25" />
-        <div className="relative mx-auto max-w-3xl">
-          {/* I sei Zeri sono già elencati sopra, uno per uno: rifarne
-              quattro qui era ripetere, non rilanciare. Resta la riga che
-              li tiene insieme, che è l'unica cosa nuova. */}
-          <p className="font-display text-4xl leading-snug text-white md:text-6xl">
-            Lo <ZeroWord tone="dark">Zero</ZeroWord>, da noi, non è il niente
-            — è il traguardo.
-          </p>
-          <div className="mt-10 flex justify-center">
-            <CtaGrande href="/servizi/percorso-ver0" tone="white">
-              Attiva il Percorso Ver0
-            </CtaGrande>
           </div>
         </div>
       </section>

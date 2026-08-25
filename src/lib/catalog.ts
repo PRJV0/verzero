@@ -905,11 +905,34 @@ export const PILASTRO_LABEL: Record<Pilastro, string> = {
  * scrive — non un'etichetta messa lì per riempire il filtro.
  */
 export const BISOGNI = [
-  { key: "banca", label: "Me lo chiede la banca" },
-  { key: "committente", label: "Me lo chiede un committente" },
-  { key: "bando", label: "Partecipo a un bando" },
-  { key: "migliorare", label: "Voglio migliorare" },
-  { key: "aggiornare", label: "Ho già un manuale da aggiornare" },
+  {
+    key: "banca",
+    label: "Me lo chiede la banca",
+    // Come si dice la stessa situazione in lingua corrente. Serve
+    // all'orientatore per riconoscerla in una frase, e sta qui perché la
+    // situazione è una sola: due elenchi divergerebbero.
+    chiavi: ["banca", "istituto di credito", "finanziamento", "mutuo", "fido", "credito", "questionario esg"],
+  },
+  {
+    key: "committente",
+    label: "Me lo chiede un committente",
+    chiavi: ["committente", "cliente mi chiede", "capofiliera", "fornitore qualificato", "albo fornitori", "capitolato"],
+  },
+  {
+    key: "bando",
+    label: "Partecipo a un bando",
+    chiavi: ["bando", "gara", "appalto", "punteggio", "premiante", "contributo", "incentivo"],
+  },
+  {
+    key: "migliorare",
+    label: "Voglio migliorare",
+    chiavi: ["migliorare", "iniziare", "primo passo", "piu sostenibile", "più sostenibile"],
+  },
+  {
+    key: "aggiornare",
+    label: "Ho già un manuale da aggiornare",
+    chiavi: ["aggiornare", "gia un manuale", "già un manuale", "manuale vecchio", "revisione", "certificato scaduto"],
+  },
 ] as const;
 
 export type Bisogno = (typeof BISOGNI)[number]["key"];
@@ -923,6 +946,18 @@ export type VoceCatalogo = {
   benefit: string;
   pilastro: Pilastro;
   bisogni: Bisogno[];
+  /**
+   * COME LO CHIAMA CHI LO CERCA, quando non lo chiama col suo nome.
+   *
+   * Sinonimi, sigle e modi di dire: «gender gap» per la parità, «CO2»
+   * per il carbon, «125» per la prassi. Stanno QUI e non in un file
+   * dell'orientatore perché servono anche al catalogo e al selettore —
+   * un secondo elenco altrove diverge alla prima voce aggiunta.
+   *
+   * Non ci vanno le parole già presenti nel nome o nel beneficio: quelle
+   * si trovano da sole.
+   */
+  chiavi?: string[];
   /**
    * Etichetta FATTUALE (§12.M). Ammesse solo diciture verificabili:
    * "Novità", "Spesso richiesto insieme a X" (se vero nel catalogo),
@@ -976,6 +1011,7 @@ export const FAMIGLIE: Famiglia[] = [
           "La misura ufficiale delle tue emissioni dirette e dell'energia acquistata.",
         pilastro: "E",
         bisogni: ["banca", "committente", "migliorare"],
+        chiavi: ["co2", "anidride carbonica", "emissioni", "emette", "emettiamo", "quanto emette", "quanto emetto", "impronta di carbonio", "carbon", "scope 1", "scope 2", "ghg", "gas serra"],
       },
       {
         slug: "carbon-footprint-scope-1-2-3",
@@ -983,12 +1019,14 @@ export const FAMIGLIE: Famiglia[] = [
           "L'inventario completo, filiera compresa: quello che chiedono i capofiliera.",
         pilastro: "E",
         bisogni: ["committente", "migliorare"],
+        chiavi: ["co2 di filiera", "scope 3", "emissioni dei fornitori", "catena di fornitura"],
       },
       {
         slug: "bilancio-sostenibilita-vsme-base",
         benefit: "Un solo report nel formato europeo, al posto di dieci questionari.",
         pilastro: "G",
         bisogni: ["banca", "committente"],
+        chiavi: ["bilancio di sostenibilita", "report esg", "rendicontazione", "vsme", "efrag", "bilancio sociale"],
       },
       {
         slug: "bilancio-sostenibilita-vsme-avanzato",
@@ -996,6 +1034,7 @@ export const FAMIGLIE: Famiglia[] = [
           "Il modulo completo: politiche, azioni e obiettivi, per partner e finanziatori esigenti.",
         pilastro: "G",
         bisogni: ["banca", "committente"],
+        chiavi: ["bilancio esg completo", "vsme modulo completo", "politiche e obiettivi"],
         etichetta: "Novità",
       },
       {
@@ -1003,6 +1042,7 @@ export const FAMIGLIE: Famiglia[] = [
         benefit: "Quanto sei circolare, in un punteggio chiaro e migliorabile.",
         pilastro: "E",
         bisogni: ["committente", "migliorare"],
+        chiavi: ["circolarita", "economia circolare", "riciclo", "rifiuti", "scarti"],
       },
       {
         nome: "Monitoraggio energetico",
@@ -1025,12 +1065,14 @@ export const FAMIGLIE: Famiglia[] = [
         benefit: "Il sistema qualità documentato, pronto per l'audit dell'ente terzo.",
         pilastro: "G",
         bisogni: ["bando", "committente"],
+        chiavi: ["qualita", "9001", "sistema qualita", "certificazione di qualita"],
       },
       {
         slug: "manuale-sistema-gestione-iso-14001",
         benefit: "Il sistema ambientale, con l'analisi precompilata dai tuoi dati.",
         pilastro: "E",
         bisogni: ["bando", "committente"],
+        chiavi: ["ambiente", "14001", "sistema ambientale", "certificazione ambientale"],
       },
       {
         slug: "manuale-sistema-gestione-iso-45001",
@@ -1038,6 +1080,7 @@ export const FAMIGLIE: Famiglia[] = [
           "Il sistema sicurezza integrato con il tuo DVR, che resta del datore di lavoro.",
         pilastro: "S",
         bisogni: ["bando", "committente"],
+        chiavi: ["sicurezza sul lavoro", "45001", "salute e sicurezza", "infortuni", "rspp"],
         etichetta: "Novità",
       },
       {
@@ -1045,6 +1088,7 @@ export const FAMIGLIE: Famiglia[] = [
         benefit: "KPI e fascicolo pronti per l'audit; esonero contributivo di legge.",
         pilastro: "S",
         bisogni: ["bando", "migliorare"],
+        chiavi: ["gender gap", "parita uomo donna", "donne", "certificazione della parita", "pdr 125", "125"],
         etichetta: "Premiante nei bandi",
       },
       {
@@ -1053,6 +1097,7 @@ export const FAMIGLIE: Famiglia[] = [
           "Lo schema internazionale di responsabilità sociale, con accompagnamento all'audit.",
         pilastro: "S",
         bisogni: ["committente"],
+        chiavi: ["responsabilita sociale", "8000", "diritti dei lavoratori", "etica del lavoro"],
         etichetta: "Novità",
       },
       {
@@ -1061,6 +1106,7 @@ export const FAMIGLIE: Famiglia[] = [
           "Hai già un manuale? Potrebbe non essere più allineato all'edizione in vigore.",
         pilastro: "G",
         bisogni: ["aggiornare", "committente", "bando"],
+        chiavi: ["manuale vecchio", "aggiornare il manuale", "edizione ritirata", "norma cambiata"],
         etichetta: "Novità",
         evidenza: true,
       },
@@ -1082,6 +1128,7 @@ export const FAMIGLIE: Famiglia[] = [
           "Rischi psicosociali e benessere organizzativo: aderenza documentata.",
         pilastro: "S",
         bisogni: ["migliorare"],
+        chiavi: ["stress lavoro correlato", "45003", "benessere psicologico", "salute mentale"],
         etichetta: "Spesso richiesto insieme a ISO 45001",
         addOn: true,
       },
@@ -1090,6 +1137,7 @@ export const FAMIGLIE: Famiglia[] = [
         benefit: "Diversità e inclusione: aderenza documentata alla linea guida.",
         pilastro: "S",
         bisogni: ["migliorare"],
+        chiavi: ["diversita e inclusione", "30415", "inclusione"],
         etichetta: "Spesso richiesto insieme a UNI/PdR 125",
         addOn: true,
       },
@@ -1129,6 +1177,7 @@ export const FAMIGLIE: Famiglia[] = [
           "Rilievi ricevuti dall'organismo? Adeguiamo i documenti, anche se non li abbiamo fatti noi.",
         pilastro: "G",
         bisogni: ["committente", "bando"],
+        chiavi: ["audit", "verifica ispettiva", "visita dell ente", "organismo di certificazione"],
       },
     ],
   },

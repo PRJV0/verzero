@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+
+import { Orientatore } from "@/components/orientatore";
 import { ArrowRight } from "lucide-react";
 
 import { OndaParticelle } from "@/components/onda-particelle";
@@ -154,21 +156,32 @@ export function HeroHome() {
           bastano i documenti che hai già.
         </p>
 
+        {/* L'ORIENTATORE, subito sotto il claim.
+            Prende il posto del bottone «Calcola il prezzo»: portava al
+            catalogo, e la barra ci porta pure — ma sapendo già che cosa
+            stai cercando. Un campo di ricerca che chiede «che cosa ti
+            serve?» è anche una domanda più onesta di un invito a
+            calcolare un prezzo prima di aver scelto qualcosa. */}
         <div
           data-onda-maschera
-          className="vz-entra mt-10 flex flex-wrap justify-center gap-3"
+          className="vz-entra mt-10"
           style={{ "--vz-i": 4 } as React.CSSProperties}
+        >
+          <Orientatore />
+        </div>
+
+        <div
+          data-onda-maschera
+          className="vz-entra mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm"
+          style={{ "--vz-i": 5 } as React.CSSProperties}
         >
           <Link
             href="/servizi"
-            className="vz-press inline-flex items-center gap-2 rounded-xl bg-white px-7 py-4 text-base font-semibold text-pine-deep"
+            className="font-semibold text-mint-bright hover:underline"
           >
-            Calcola il prezzo <ArrowRight size={18} />
+            Oppure sfoglia tutto il catalogo
           </Link>
-          <Link
-            href="/come-funziona"
-            className="vz-press inline-flex items-center gap-2 rounded-xl border-2 border-mint-bright px-7 py-4 text-base font-semibold text-mint-bright"
-          >
+          <Link href="/come-funziona" className="text-moss hover:text-white">
             Guarda come funziona
           </Link>
         </div>

@@ -62,6 +62,17 @@ export const EVENTI = {
    * visita, e sommarle vorrebbe dire credere di avere traffico.
    */
   CRAWLER_AI: "crawler_ai",
+  /**
+   * Una ricerca nell'orientatore in home. `dettagli.termini` porta le
+   * parole normalizzate (mai la frase intera: potrebbe contenere di
+   * tutto), `dettagli.risultati` quanti ne sono usciti e
+   * `dettagli.via` se ha risposto la corrispondenza deterministica o il
+   * modello. Serve a due domande: che cosa cerca la gente, e dove il
+   * catalogo non risponde.
+   */
+  ORIENTATORE_RICERCA: "orientatore_ricerca",
+  /** Un risultato dell'orientatore aperto: `dettagli.id` dice quale. */
+  ORIENTATORE_CLICK: "orientatore_click",
 } as const;
 
 export type NomeEvento = (typeof EVENTI)[keyof typeof EVENTI];
