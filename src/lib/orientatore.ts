@@ -1,12 +1,16 @@
 import {
+  AMBITI,
   BISOGNI,
   FAMIGLIE,
+  MOMENTI,
   getServizio,
+  type Ambito,
   type Bisogno,
+  type Momento,
   type VoceCatalogo,
 } from "@/lib/catalog";
 import { GUIDE } from "@/lib/guide";
-import { FAMIGLIE_NORMA } from "@/lib/norme";
+import { FAMIGLIE_NORMA, NORME, type ChiaveNorma } from "@/lib/norme";
 import { prezzoDa } from "@/lib/pricing";
 
 /**
@@ -49,6 +53,11 @@ export type Risultato = {
   prezzo?: string;
   /** I percorsi non ancora attivi si dichiarano sempre come tali. */
   inArrivo?: boolean;
+  /**
+   * Il momento del ciclo a cui risponde. Assente su guide e pagine, che
+   * non stanno in nessun punto di un ciclo.
+   */
+  momento?: Momento;
   /** Quanto forte è la corrispondenza: serve all'ordinamento e alla soglia. */
   punteggio: number;
 };
@@ -178,8 +187,32 @@ function punteggia(
   return punti;
 }
 
-/** Quanto vale, in punti, riconoscere la SITUAZIONE invece della cosa. */
-const PUNTI_SITUAZIONE = 2;
+/* ------------------------------------------------------------------ */
+/* I punti della CORRELAZIONE                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Tre bonus, e tutti e tre bastano DA SOLI a superare la soglia.
+ *
+ * ═══ È UN CAMBIO DI REGOLA, non una taratura ═══
+ * Prima la situazione valeva 2 punti e solo su chi ne aveva già altri:
+ * l'idea era che «partecipo a un bando» non nomina niente, e proporre
+ * tutto ciò che è premiante nei bandi sarebbe un elenco, non un
+ * orientamento. L'idea era giusta a metà. La metà sbagliata è che chi
+ * scriveva esattamente quella frase non riceveva un elenco: riceveva
+ * «su questo non abbiamo un percorso», che è falso — i percorsi per i
+ * bandi ci sono, e il selettore per situazione li mostra da sempre.
+ *
+ * Dire il falso è peggio che dire troppo. Ora una norma, un ambito o una
+ * situazione riconosciuti APRONO i percorsi che li dichiarano, anche se
+ * quei percorsi non contengono nessuna delle parole scritte. Che non
+ * diventi un elenco lo garantiscono altre due cose: il tetto di quattro
+ * risultati e il giro per momento, che al posto di quattro varianti
+ * dello stesso servizio mostra quattro risposte a domande diverse.
+ */
+const PUNTI_NORMA = 5;
+const PUNTI_AMBITO = 5;
+const PUNTI_SITUAZIONE = 5;
 
 /**
  * Sotto questo punteggio non si propone.
@@ -207,6 +240,10 @@ type Candidato = {
   chiavi: string[];
   testo: string;
   bisogni: string[];
+  /** Dichiarati dalla voce di catalogo, mai dedotti qui. */
+  norme: string[];
+  ambiti: string[];
+  momento?: Momento;
 };
 
 /** Tutti i percorsi del catalogo, attivi e in arrivo. */
@@ -235,6 +272,9 @@ function candidatiPercorsi(): Candidato[] {
         ],
         testo: [voce.benefit, servizio?.short ?? "", famiglia.titolo].join(" "),
         bisogni: voce.bisogni,
+        norme: voce.norme ?? [],
+        ambiti: voce.ambiti,
+        momento: voce.momento,
       });
     }
   }
@@ -259,6 +299,12 @@ function candidatiGuide(): Candidato[] {
     chiavi: g.chiavi ?? [],
     testo: [g.domanda, g.descrizione, g.chi, g.comporta, ...g.percorsi].join(" "),
     bisogni: [],
+    // Una guida non sta in un punto del ciclo e non «tocca» una norma
+    // nel senso in cui la tocca un percorso: la racconta. Dichiararla
+    // qui la farebbe comparire fra i correlati di ogni ricerca per
+    // norma, spingendo fuori il percorso che quella norma la produce.
+    norme: [],
+    ambiti: [],
   }));
 }
 
@@ -286,6 +332,15 @@ function candidatiStrumenti(): Candidato[] {
       ],
       testo: "controllo gratuito edizione manuale norma in vigore ritirata",
       bisogni: ["aggiornare"],
+      // NIENTE `norme`, ed è una scelta. Il controllo risponde davvero
+      // su tutte e cinque, ma è l'àncora dentro la pagina
+      // dell'aggiornamento: dichiararle qui farebbe comparire, per ogni
+      // ricerca «9001», due voci che portano allo stesso posto. Chi
+      // nomina il manuale lo trova comunque — «ho un manuale ISO 9001
+      // del 2019» lo mette in cima, e sono le sue parole a farlo.
+      norme: [],
+      ambiti: [],
+      momento: "aggiornamento",
     },
     {
       tipo: "pagina",
@@ -297,6 +352,8 @@ function candidatiStrumenti(): Candidato[] {
       chiavi: ["metodo", "come lavorate", "processo", "tempi", "che cosa devo fare"],
       testo: "come funziona metodo processo passi",
       bisogni: [],
+      norme: [],
+      ambiti: [],
     },
     {
       tipo: "pagina",
@@ -308,6 +365,8 @@ function candidatiStrumenti(): Candidato[] {
       chiavi: ["targa", "badge", "logo", "attestato", "vetrina", "sigillo"],
       testo: "sigillo targa verificabile pagina pubblica",
       bisogni: [],
+      norme: [],
+      ambiti: [],
     },
     {
       tipo: "pagina",
@@ -319,6 +378,8 @@ function candidatiStrumenti(): Candidato[] {
       chiavi: ["privacy", "gdpr", "dati", "riservatezza", "sicuro"],
       testo: "sicurezza riservatezza dati gdpr protezione",
       bisogni: [],
+      norme: [],
+      ambiti: [],
     },
   ];
 }
@@ -340,6 +401,33 @@ export function situazioniRiconosciute(query: string): Bisogno[] {
   ).map((b) => b.key);
 }
 
+/**
+ * Le norme nominate nella frase.
+ *
+ * A PAROLE INTERE, con le stesse regole del resto: «9001» dentro «ISO
+ * 9001» sì, «9001» dentro «19001» no. Le chiavi ambigue non stanno nel
+ * registro (v. `Norma.chiavi`), quindi qui non serve nessuna eccezione.
+ */
+export function normeRiconosciute(query: string): ChiaveNorma[] {
+  return NORME.filter((n) => n.chiavi.some((c) => contieneFrase(query, c))).map(
+    (n) => n.chiave,
+  );
+}
+
+/**
+ * Gli ambiti nominati nella frase.
+ *
+ * Si guardano SOLO se non è stata nominata nessuna norma: chi scrive
+ * «45001» ha detto una cosa precisa, e allargare all'ambito gli
+ * porterebbe la 45003 che non ha chiesto. Chi scrive «sicurezza sul
+ * lavoro» non ha una norma in mente, e lì allargare è la risposta.
+ */
+export function ambitiRiconosciuti(query: string): Ambito[] {
+  return AMBITI.filter((a) => a.chiavi.some((c) => contieneFrase(query, c))).map(
+    (a) => a.key,
+  );
+}
+
 export type EsitoOrientatore = {
   risultati: Risultato[];
   /** Le situazioni riconosciute: la stessa lingua del selettore. */
@@ -349,6 +437,116 @@ export type EsitoOrientatore = {
 };
 
 export const MAX_RISULTATI = 4;
+
+/**
+ * UN RISULTATO PER MOMENTO, prima di un secondo qualunque.
+ *
+ * ═══ PERCHÉ NON BASTA ORDINARE PER PUNTEGGIO ═══
+ * Su «9001» il punteggio, da solo, metterebbe in cima il manuale e poi
+ * le sue varianti. Ma le tre risposte utili non sono tre varianti: sono
+ * il manuale se parti da zero, l'aggiornamento se ce l'hai già, il
+ * supporto se hai preso dei rilievi. Un tetto di quattro riempito per
+ * punteggio le seppellirebbe tutte tranne la prima.
+ *
+ * Il giro serve a questo: finché c'è posto, ogni momento ne piazza uno
+ * prima che un momento qualsiasi ne piazzi due. Il prezzo è che un
+ * secondo risultato forte può cedere il posto al primo di un momento
+ * più debole — accettabile, perché sotto la soglia non passa comunque
+ * niente, e perché rispondere a tre domande diverse vale più che
+ * rispondere due volte alla stessa.
+ */
+function unoPerMomento<T extends { momento?: Momento }>(
+  ordinati: T[],
+  massimo: number,
+): T[] {
+  // I gruppi in ordine di punteggio del loro migliore, non nell'ordine
+  // fisso dei momenti: il primo posto resta di chi ha corrisposto meglio.
+  const gruppi = new Map<string, T[]>();
+  for (const x of ordinati) {
+    const chiave = x.momento ?? "";
+    const lista = gruppi.get(chiave);
+    if (lista) lista.push(x);
+    else gruppi.set(chiave, [x]);
+  }
+
+  const out: T[] = [];
+  for (let giro = 0; out.length < massimo; giro++) {
+    let aggiunto = false;
+    for (const lista of gruppi.values()) {
+      const voce = lista[giro];
+      if (!voce) continue;
+      out.push(voce);
+      aggiunto = true;
+      if (out.length >= massimo) break;
+    }
+    if (!aggiunto) break;
+  }
+  return out;
+}
+
+/**
+ * LO STESSO SERVIZIO UNA VOLTA SOLA.
+ *
+ * Non basta che gli identificativi siano diversi: il controllo gratuito
+ * dell'edizione è un'àncora dentro la pagina dell'aggiornamento, quindi
+ * mostrarli entrambi è mandare due volte allo stesso posto con due nomi
+ * — e a chi legge sembrano due offerte. Il confronto è sulla pagina,
+ * senza l'àncora; sopravvive il punteggio migliore, che è quello che ha
+ * corrisposto meglio alle parole scritte.
+ */
+function unaPaginaUnaVolta<T extends { c: { href: string } }>(
+  ordinati: T[],
+): T[] {
+  const viste = new Set<string>();
+  const out: T[] = [];
+  for (const x of ordinati) {
+    const pagina = x.c.href.split("#")[0]!;
+    if (viste.has(pagina)) continue;
+    viste.add(pagina);
+    out.push(x);
+  }
+  return out;
+}
+
+/**
+ * I risultati raggruppati per momento del ciclo, nell'ordine del ciclo.
+ *
+ * Le intestazioni compaiono solo quando DISTINGUONO: servono a dire che
+ * questi tre percorsi rispondono a tre momenti diversi. Se il momento è
+ * uno solo — due tagli dello stesso Carbon Footprint più una guida —
+ * scrivere «se parti da zero» sopra l'unico gruppo non separa niente e
+ * mette un'etichetta di ciclo su una cosa che non è un ciclo.
+ *
+ * Le guide e le pagine, che un momento non ce l'hanno, chiudono sempre
+ * la fila e non contano per questa decisione.
+ */
+export type GruppoRisultati = {
+  momento: Momento | null;
+  etichetta: string | null;
+  risultati: Risultato[];
+};
+
+export function raggruppaPerMomento(risultati: Risultato[]): GruppoRisultati[] {
+  const conMomento = MOMENTI.map((m) => ({
+    momento: m.key as Momento | null,
+    etichetta: m.label as string | null,
+    risultati: risultati.filter((r) => r.momento === m.key),
+  })).filter((g) => g.risultati.length > 0);
+
+  const senza = risultati.filter((r) => !r.momento);
+  // Un momento solo: l'intestazione non distingue niente, si toglie.
+  const intestati =
+    conMomento.length > 1
+      ? conMomento
+      : conMomento.map((g) => ({ ...g, etichetta: null }));
+
+  return [
+    ...intestati,
+    ...(senza.length > 0
+      ? [{ momento: null, etichetta: null, risultati: senza }]
+      : []),
+  ];
+}
 
 /**
  * La corrispondenza deterministica. Istantanea, a costo zero, ripetibile
@@ -362,17 +560,19 @@ export function orienta(query: string): EsitoOrientatore {
   }
 
   const situazioni = situazioniRiconosciute(query);
+  const norme = normeRiconosciute(query);
+  // L'ambito allarga solo dove non c'è una norma: v. `ambitiRiconosciuti`.
+  const ambiti = norme.length > 0 ? [] : ambitiRiconosciuti(query);
 
   const punteggiati = candidati()
     .map((c) => {
       let punti = punteggia(query, c);
-      // La situazione riconosciuta aiuta, ma non basta da sola: chi
-      // scrive «partecipo a un bando» non ha detto di che cosa ha
-      // bisogno, e proporgli tutto ciò che è premiante nei bandi
-      // sarebbe un elenco, non un orientamento.
-      if (punti > 0 && situazioni.some((s) => c.bisogni.includes(s))) {
-        punti += PUNTI_SITUAZIONE;
-      }
+      // I tre bonus della correlazione. Bastano da soli: è così che
+      // «9001» apre anche l'aggiornamento e il supporto all'audit, che
+      // di quella cifra non hanno traccia nel nome.
+      if (norme.some((n) => c.norme.includes(n))) punti += PUNTI_NORMA;
+      if (ambiti.some((a) => c.ambiti.includes(a))) punti += PUNTI_AMBITO;
+      if (situazioni.some((s) => c.bisogni.includes(s))) punti += PUNTI_SITUAZIONE;
       return { c, punti };
     })
     .filter((x) => x.punti >= SOGLIA)
@@ -382,21 +582,32 @@ export function orienta(query: string): EsitoOrientatore {
       return Number(a.c.inArrivo ?? false) - Number(b.c.inArrivo ?? false);
     });
 
-  // Se la frase dice SOLO la situazione («me lo chiede la banca»), non
-  // c'è una cosa da nominare: si rimanda al selettore, che è fatto
-  // apposta, invece di indovinare.
-  const risultati = punteggiati.slice(0, MAX_RISULTATI).map(
-    ({ c, punti }): Risultato => ({
-      tipo: c.tipo,
-      id: c.id,
-      nome: c.nome,
-      perche: c.perche,
-      href: c.href,
-      ...(c.prezzo ? { prezzo: c.prezzo } : {}),
-      ...(c.inArrivo ? { inArrivo: true } : {}),
-      punteggio: punti,
-    }),
-  );
+  const risultati = unoPerMomento(
+    unaPaginaUnaVolta(punteggiati).map(({ c, punti }) => ({
+      c,
+      punti,
+      momento: c.momento,
+    })),
+    MAX_RISULTATI,
+  )
+    // Il giro per momento sceglie QUALI passano; l'ordine resta quello
+    // della pertinenza. Il raggruppamento in pagina li rimette poi in
+    // ordine di ciclo, ma chi legge la lista piatta — il catalogo senza
+    // JavaScript, il registro — vede prima la corrispondenza migliore.
+    .sort((a, b) => b.punti - a.punti)
+    .map(
+      ({ c, punti }): Risultato => ({
+        tipo: c.tipo,
+        id: c.id,
+        nome: c.nome,
+        perche: c.perche,
+        href: c.href,
+        ...(c.prezzo ? { prezzo: c.prezzo } : {}),
+        ...(c.inArrivo ? { inArrivo: true } : {}),
+        ...(c.momento ? { momento: c.momento } : {}),
+        punteggio: punti,
+      }),
+    );
 
   return {
     risultati,
@@ -431,23 +642,20 @@ export function risultatoDaId(id: string): Risultato | null {
     href: c.href,
     ...(c.prezzo ? { prezzo: c.prezzo } : {}),
     ...(c.inArrivo ? { inArrivo: true } : {}),
+    ...(c.momento ? { momento: c.momento } : {}),
     punteggio: 0,
   };
 }
 
 /* ------------------------------------------------------------------ */
-/* Gli esempi in home                                                  */
+/* Le scelte rapide in home                                            */
 /* ------------------------------------------------------------------ */
 
-/**
- * Gli esempi cliccabili sotto il campo. Sono frasi vere di clienti veri,
- * e ognuna deve dare un risultato: un esempio che non trova nulla è la
- * prima cosa che fa perdere fiducia in uno strumento come questo.
- * `scripts/test-orientatore.mjs` lo verifica.
- */
-export const ESEMPI = [
-  "mi serve la parità di genere per un bando",
-  "la banca mi chiede il bilancio di sostenibilità",
-  "ho un manuale ISO 9001 del 2019",
-  "quanto emette la mia azienda",
-];
+/** Vivono in un file senza import, per non pesare sulla home: v. lì. */
+export { SCELTE_RAPIDE } from "@/lib/scelte-rapide";
+
+/** L'etichetta di una situazione, con le parole del selettore.
+ *  Sta qui perché il componente in home non importi il catalogo. */
+export function etichettaBisogno(chiave: Bisogno | undefined): string | null {
+  return BISOGNI.find((b) => b.key === chiave)?.label ?? null;
+}

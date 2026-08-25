@@ -213,7 +213,17 @@ Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs`.
   cifre altrui, non si esprimono giudizi — diretti o impliciti — sul
   lavoro dei consulenti. Si parla solo delle nostre caratteristiche.
 - **Catalogo**: fonte unica in `src/lib/catalog.ts`; aggiungere un servizio lì
-  lo propaga a vetrina, pagina di dettaglio, funnel e sitemap.
+  lo propaga a vetrina, pagina di dettaglio, funnel e sitemap. Ogni voce
+  dichiara anche il **momento** del ciclo a cui risponde (partenza,
+  aggiornamento, verifica, mantenimento), le **norme** che tocca (chiavi
+  di `NORME` in `src/lib/norme.ts`) e gli **ambiti**. Non è
+  decorazione: è ciò che collega fra loro i percorsi che parlano della
+  stessa cosa — chi cerca «9001» deve trovare il manuale, il suo
+  aggiornamento e il supporto all'audit, non solo quello che ha la
+  cifra nel titolo. `momento` e `ambiti` sono obbligatori proprio
+  perché un percorso che non li dichiara sparirebbe in silenzio dai
+  risultati correlati invece di dare errore; il controllo è in
+  `scripts/test-orientatore.mjs`.
 - **DNS della posta**: l'SPF della radice è quello dell'hosting e **non va
   toccato**. Resend spedisce con Return-Path su `send.verzero.it` e allinea
   DMARC via DKIM (`d=verzero.it`): aggiungere Resend all'SPF della radice non

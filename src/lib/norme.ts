@@ -249,6 +249,82 @@ export const FAMIGLIE_NORMA: FamigliaNorma[] = [
 ];
 
 /* ------------------------------------------------------------------ */
+/* Le norme come CHIAVE DI COLLEGAMENTO                                */
+/* ------------------------------------------------------------------ */
+
+/**
+ * LE NORME CHE IL CATALOGO TOCCA — elenco chiuso.
+ *
+ * ═══ PERCHÉ NON BASTA `FAMIGLIE_NORMA` ═══
+ * Quello è il registro delle EDIZIONI: serve a dire se un manuale cita
+ * una designazione ritirata, quindi contiene solo le norme di cui
+ * sorvegliamo l'edizione — cinque. Qui servono tutte quelle che un
+ * percorso può toccare, comprese SA8000, ISO 45003 o VSME, di cui non
+ * controlliamo l'edizione ma che qualcuno cerca per nome.
+ *
+ * Le due liste non divergono per caso: `scripts/test-orientatore.mjs`
+ * verifica che ogni `FamigliaNorma.id` esista anche qui, con la stessa
+ * etichetta.
+ *
+ * ═══ A CHE COSA SERVE ═══
+ * A collegare fra loro i percorsi che parlano della STESSA norma. Chi
+ * scrive «9001» non sta cercando un documento: sta cercando la risposta
+ * al punto del ciclo in cui si trova — parto da zero, ce l'ho già e
+ * forse è vecchio, ho preso dei rilievi. Senza una chiave condivisa
+ * quelle tre risposte restano tre schede che non si conoscono.
+ */
+export type Norma = {
+  chiave: string;
+  /** La designazione breve, senza edizione: come la si nomina parlando. */
+  etichetta: string;
+  /**
+   * Come la scrive chi la cerca.
+   *
+   * SOLO forme che identificano la norma DA SOLE. Il numero nudo di
+   * UNI/PdR 125 e di SA8000 non è qui apposta: «125» e «8000» compaiono
+   * in frasi che non parlano di norme («ho 125 dipendenti»), e da una
+   * chiave riconosciuta qui dipende l'apertura di tre risultati
+   * correlati — sbagliarla non costa un risultato debole, ne costa tre.
+   * Chi cerca «125» trova comunque la parità: quella è una chiave della
+   * voce di catalogo, e vale per la corrispondenza diretta.
+   */
+  chiavi: readonly string[];
+};
+
+export const NORME = [
+  { chiave: "iso-9001", etichetta: "ISO 9001", chiavi: ["9001"] },
+  { chiave: "iso-14001", etichetta: "ISO 14001", chiavi: ["14001"] },
+  { chiave: "iso-45001", etichetta: "ISO 45001", chiavi: ["45001"] },
+  { chiave: "iso-45003", etichetta: "ISO 45003", chiavi: ["45003"] },
+  { chiave: "iso-30415", etichetta: "ISO 30415", chiavi: ["30415"] },
+  {
+    chiave: "pdr-125",
+    etichetta: "UNI/PdR 125",
+    chiavi: ["pdr 125", "pdr125", "prassi 125", "uni pdr 125"],
+  },
+  { chiave: "sa8000", etichetta: "SA8000", chiavi: ["sa8000", "sa 8000"] },
+  { chiave: "ts-11820", etichetta: "UNI/TS 11820", chiavi: ["11820"] },
+  {
+    chiave: "iso-14064",
+    etichetta: "ISO 14064-1",
+    chiavi: ["14064", "ghg protocol"],
+  },
+  { chiave: "vsme", etichetta: "VSME", chiavi: ["vsme", "efrag"] },
+  { chiave: "iso-21401", etichetta: "ISO 21401", chiavi: ["21401"] },
+  { chiave: "iso-20121", etichetta: "ISO 20121", chiavi: ["20121"] },
+  { chiave: "iso-26000", etichetta: "ISO 26000", chiavi: ["26000"] },
+  { chiave: "iso-20400", etichetta: "ISO 20400", chiavi: ["20400"] },
+] as const satisfies readonly Norma[];
+
+/** L'identificativo di una norma, come unione chiusa: una chiave
+ *  sbagliata in una voce di catalogo non compila. */
+export type ChiaveNorma = (typeof NORME)[number]["chiave"];
+
+export function norma(chiave: ChiaveNorma): Norma | undefined {
+  return NORME.find((n) => n.chiave === chiave);
+}
+
+/* ------------------------------------------------------------------ */
 /* L'esito del controllo                                               */
 /* ------------------------------------------------------------------ */
 

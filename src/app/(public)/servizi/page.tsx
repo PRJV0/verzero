@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { CatalogoFamiglie } from "@/components/catalogo-famiglie";
 import { BISOGNI, type Bisogno } from "@/lib/catalog";
-import { orienta } from "@/lib/orientatore";
+import { orienta, raggruppaPerMomento } from "@/lib/orientatore";
 import { JsonLd } from "@/components/json-ld";
 import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
@@ -99,8 +99,18 @@ export default async function ServiziPage({
           <p className="mt-0.5 text-[15px] font-bold text-ink">«{q}»</p>
 
           {trovato.risultati.length > 0 ? (
-            <ul className="mt-3 space-y-2">
-              {trovato.risultati.map((r) => (
+            raggruppaPerMomento(trovato.risultati).map((gruppo) => (
+            <div key={gruppo.momento ?? "altro"} className="mt-3">
+              {/* La stessa riga che l'orientatore mostra in home: chi
+                  arriva qui senza JavaScript legge la stessa risposta,
+                  raggruppata allo stesso modo. */}
+              {gruppo.etichetta && (
+                <p className="mb-1.5 text-[13px] font-semibold text-pine">
+                  {gruppo.etichetta}
+                </p>
+              )}
+            <ul className="space-y-2">
+              {gruppo.risultati.map((r) => (
                 <li key={r.id}>
                   <Link
                     href={r.href}
@@ -127,6 +137,8 @@ export default async function ServiziPage({
                 </li>
               ))}
             </ul>
+            </div>
+            ))
           ) : (
             <p className="mt-2 text-sm leading-relaxed text-gray-warm">
               Su questo non abbiamo un percorso, e preferiamo dirtelo invece di

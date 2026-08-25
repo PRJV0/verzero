@@ -138,20 +138,22 @@ export function HeroHome() {
           </span>
         </h1>
 
-        {/* IL SOTTOTITOLO È LA PROMESSA, non una didascalia: sta a una
-            scala intermedia leggibile, in moss pieno e non attenuato, con
-            interlinea generosa e la misura di riga tenuta corta
-            (`max-w-[24ch]`, poi 30) — una riga lunga in display si legge
-            male anche quando è grande. */}
+        {/* UNA RIGA SOLA fra il claim e la barra, ed era il doppio.
+            Diceva anche «La crescita della tua azienda, in abbonamento»:
+            vero, e già scritto tre volte più sotto, nel listino e nel
+            menu. Qui rubava due righe allo spazio in cui una persona
+            deve capire che quello è un campo dove si scrive.
+            Che cosa NON si può togliere: la definizione di «zero
+            effort». La formula non si dichiara mai da sola (SPEC §12.O),
+            perché senza «bastano i documenti che hai già» è una promessa
+            senza contenuto. */}
         <p
           data-onda-maschera
-          className="vz-entra mx-auto mt-8 max-w-[24ch] font-display text-[1.3rem] leading-[1.45] text-moss sm:max-w-[30ch] sm:text-[1.55rem] md:text-[1.8rem]"
+          className="vz-entra mx-auto mt-8 max-w-[26ch] font-display text-[1.3rem] leading-[1.45] text-moss sm:max-w-[34ch] sm:text-[1.55rem] md:text-[1.75rem]"
           style={{ "--vz-i": 3 } as React.CSSProperties}
         >
-          La crescita della tua azienda, in abbonamento.{" "}
           <span className="whitespace-nowrap">
-            Zero{" "}
-            <em className="font-semibold italic text-mint-bright">effort</em>:
+            Zero <em className="font-semibold italic text-mint-bright">effort</em>:
           </span>{" "}
           bastano i documenti che hai già.
         </p>
@@ -164,25 +166,28 @@ export function HeroHome() {
             calcolare un prezzo prima di aver scelto qualcosa. */}
         <div
           data-onda-maschera
-          className="vz-entra mt-10"
+          className="vz-entra mt-9"
           style={{ "--vz-i": 4 } as React.CSSProperties}
         >
           <Orientatore />
         </div>
 
+        {/* UN SOLO RIMANDO, e non è quello di prima.
+            «Guarda come funziona» è uscito: sta nel menu, e non risponde
+            alla domanda che la barra ha appena fatto. Il catalogo invece
+            resta, perché è l'unica strada per chi non sa che cosa
+            scrivere e non si riconosce in nessuna delle scelte rapide —
+            i chip portano a quattro risultati, non a tutto. */}
         <div
           data-onda-maschera
-          className="vz-entra mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm"
+          className="vz-entra mt-6 text-sm"
           style={{ "--vz-i": 5 } as React.CSSProperties}
         >
           <Link
             href="/servizi"
-            className="font-semibold text-mint-bright hover:underline"
+            className="text-moss hover:text-white hover:underline"
           >
             Oppure sfoglia tutto il catalogo
-          </Link>
-          <Link href="/come-funziona" className="text-moss hover:text-white">
-            Guarda come funziona
           </Link>
         </div>
       </div>

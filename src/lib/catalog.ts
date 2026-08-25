@@ -12,6 +12,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import type { ChiaveNorma } from "@/lib/norme";
+
 /**
  * Catalogo dei servizi pubblici — unica fonte per home, indice /servizi e
  * pagine di dettaglio /servizi/[slug].
@@ -933,9 +935,125 @@ export const BISOGNI = [
     label: "Ho già un manuale da aggiornare",
     chiavi: ["aggiornare", "gia un manuale", "già un manuale", "manuale vecchio", "revisione", "certificato scaduto"],
   },
+  {
+    // Una situazione con una scadenza dentro, ed è la sola per cui
+    // qualcuno cerca di fretta. Prima non c'era e «ho un audit fra due
+    // mesi» trovava il solo supporto all'audit: giusto, ma monco —
+    // se l'audit è fra due mesi, sapere che il manuale cita un'edizione
+    // ritirata serve adesso, non dopo il rilievo.
+    key: "audit",
+    label: "Ho un audit in arrivo",
+    chiavi: ["audit", "verifica ispettiva", "rilievi", "non conformita", "non conformità", "organismo di certificazione", "visita dell ente"],
+  },
 ] as const;
 
 export type Bisogno = (typeof BISOGNI)[number]["key"];
+
+/**
+ * IL MOMENTO DEL CICLO a cui un percorso risponde.
+ *
+ * ═══ PERCHÉ È UN CAMPO E NON UNA REGOLA ═══
+ * Chi cerca «9001» non cerca un documento: cerca la risposta al punto in
+ * cui si trova. Parte da zero, oppure ce l'ha già e teme che sia
+ * vecchio, oppure ha preso dei rilievi e ha una scadenza. Sono tre
+ * bisogni diversi a cui il catalogo ha tre risposte diverse — e prima
+ * che questo campo esistesse ne mostrava una sola, quella che nominava
+ * la norma nel titolo.
+ *
+ * Il momento sta sulla VOCE, non in una tabella dell'orientatore: un
+ * percorso nuovo lo dichiara nascendo, e nessuno deve ricordarsi di
+ * aggiungerlo altrove. È il motivo per cui il campo è obbligatorio.
+ *
+ * L'etichetta è la riga che il lettore vede sopra il gruppo, e va scritta
+ * come si direbbe a voce: «se parti da zero», non «fase iniziale».
+ */
+export const MOMENTI = [
+  { key: "partenza", label: "Se parti da zero" },
+  {
+    key: "aggiornamento",
+    label: "Se ce l'hai già e potrebbe non essere allineato",
+  },
+  { key: "verifica", label: "Se hai ricevuto rilievi da un organismo" },
+  { key: "mantenimento", label: "Per tenerlo vivo nel tempo" },
+] as const;
+
+export type Momento = (typeof MOMENTI)[number]["key"];
+
+export const MOMENTO_LABEL = Object.fromEntries(
+  MOMENTI.map((m) => [m.key, m.label]),
+) as Record<Momento, string>;
+
+/**
+ * L'AMBITO: di che cosa parla un percorso, sotto il nome della norma.
+ *
+ * Più fine del pilastro E/S/G — «ambiente» e «emissioni» stanno
+ * entrambi in E ma non rispondono alla stessa domanda — e serve a
+ * collegare percorsi che non condividono nessuna norma: chi cerca
+ * «salute e sicurezza sul lavoro» non ha nominato la 45001, ma è quella
+ * (e la 45003) che sta cercando.
+ *
+ * Le `chiavi` sono ELENCO CHIUSO e vanno scelte strette. «sicurezza»
+ * nuda non c'è: su questo sito significa anche la sicurezza dei dati,
+ * che ha una pagina sua e non c'entra nulla con gli infortuni.
+ */
+export const AMBITI = [
+  {
+    key: "qualita",
+    label: "qualità",
+    chiavi: ["qualita", "sistema qualita", "gestione della qualita"],
+  },
+  { key: "ambiente", label: "ambiente", chiavi: ["ambiente", "ambientale"] },
+  {
+    key: "sicurezza",
+    label: "salute e sicurezza sul lavoro",
+    chiavi: [
+      "sicurezza sul lavoro",
+      "salute e sicurezza",
+      "sicurezza dei lavoratori",
+      "infortuni",
+    ],
+  },
+  {
+    key: "sociale",
+    label: "persone e responsabilità sociale",
+    chiavi: [
+      "responsabilita sociale",
+      "diritti dei lavoratori",
+      "etica del lavoro",
+    ],
+  },
+  {
+    key: "emissioni",
+    label: "emissioni e clima",
+    chiavi: ["emissioni", "co2", "gas serra", "impronta di carbonio", "carbon footprint"],
+  },
+  {
+    key: "circolarita",
+    label: "economia circolare",
+    chiavi: ["economia circolare", "circolarita", "rifiuti", "scarti"],
+  },
+  {
+    key: "rendicontazione",
+    label: "rendicontazione di sostenibilità",
+    chiavi: [
+      "bilancio di sostenibilita",
+      "report esg",
+      "rendicontazione",
+      "questionario esg",
+    ],
+  },
+  {
+    key: "energia",
+    label: "energia",
+    chiavi: ["energia", "consumi energetici", "bolletta della luce"],
+  },
+] as const;
+
+export type Ambito = (typeof AMBITI)[number]["key"];
+
+export const AMBITO_LABEL = Object.fromEntries(
+  AMBITI.map((a) => [a.key, a.label]),
+) as Record<Ambito, string>;
 
 export type VoceCatalogo = {
   /** Servizio attivo: punta a /servizi/[slug]. Assente = ancora in arrivo. */
@@ -946,6 +1064,26 @@ export type VoceCatalogo = {
   benefit: string;
   pilastro: Pilastro;
   bisogni: Bisogno[];
+  /**
+   * A quale momento del ciclo risponde. OBBLIGATORIO: un percorso che
+   * non lo dichiara non si può raggruppare, e sparirebbe in silenzio
+   * dai risultati correlati invece di dare errore.
+   */
+  momento: Momento;
+  /**
+   * Le norme che il percorso tocca, per chiave.
+   *
+   * Non è la stessa cosa dei `riferimenti` del servizio, che sono le
+   * designazioni PER ESTESO da citare in pagina: qui servono chiavi
+   * confrontabili fra voci diverse. L'aggiornamento e il supporto
+   * all'audit ne dichiarano molte perché lavorano davvero su tutte —
+   * ed è così che «9001» apre anche loro.
+   *
+   * Assente dove non c'è una norma: un check-up energetico non ne ha.
+   */
+  norme?: ChiaveNorma[];
+  /** Di che cosa parla, per collegare percorsi senza norma in comune. */
+  ambiti: Ambito[];
   /**
    * COME LO CHIAMA CHI LO CERCA, quando non lo chiama col suo nome.
    *
@@ -1011,6 +1149,9 @@ export const FAMIGLIE: Famiglia[] = [
           "La misura ufficiale delle tue emissioni dirette e dell'energia acquistata.",
         pilastro: "E",
         bisogni: ["banca", "committente", "migliorare"],
+        momento: "partenza",
+        norme: ["iso-14064"],
+        ambiti: ["emissioni"],
         chiavi: ["co2", "anidride carbonica", "emissioni", "emette", "emettiamo", "quanto emette", "quanto emetto", "impronta di carbonio", "carbon", "scope 1", "scope 2", "ghg", "gas serra"],
       },
       {
@@ -1019,6 +1160,9 @@ export const FAMIGLIE: Famiglia[] = [
           "L'inventario completo, filiera compresa: quello che chiedono i capofiliera.",
         pilastro: "E",
         bisogni: ["committente", "migliorare"],
+        momento: "partenza",
+        norme: ["iso-14064"],
+        ambiti: ["emissioni"],
         chiavi: ["co2 di filiera", "scope 3", "emissioni dei fornitori", "catena di fornitura"],
       },
       {
@@ -1026,6 +1170,9 @@ export const FAMIGLIE: Famiglia[] = [
         benefit: "Un solo report nel formato europeo, al posto di dieci questionari.",
         pilastro: "G",
         bisogni: ["banca", "committente"],
+        momento: "partenza",
+        norme: ["vsme"],
+        ambiti: ["rendicontazione"],
         chiavi: ["bilancio di sostenibilita", "report esg", "rendicontazione", "vsme", "efrag", "bilancio sociale"],
       },
       {
@@ -1034,6 +1181,9 @@ export const FAMIGLIE: Famiglia[] = [
           "Il modulo completo: politiche, azioni e obiettivi, per partner e finanziatori esigenti.",
         pilastro: "G",
         bisogni: ["banca", "committente"],
+        momento: "partenza",
+        norme: ["vsme"],
+        ambiti: ["rendicontazione"],
         chiavi: ["bilancio esg completo", "vsme modulo completo", "politiche e obiettivi"],
         etichetta: "Novità",
       },
@@ -1042,6 +1192,9 @@ export const FAMIGLIE: Famiglia[] = [
         benefit: "Quanto sei circolare, in un punteggio chiaro e migliorabile.",
         pilastro: "E",
         bisogni: ["committente", "migliorare"],
+        momento: "partenza",
+        norme: ["ts-11820"],
+        ambiti: ["circolarita"],
         chiavi: ["circolarita", "economia circolare", "riciclo", "rifiuti", "scarti"],
       },
       {
@@ -1049,6 +1202,8 @@ export const FAMIGLIE: Famiglia[] = [
         benefit: "Consumi sotto controllo mese per mese, con soglie e confronti.",
         pilastro: "E",
         bisogni: ["migliorare"],
+        momento: "mantenimento",
+        ambiti: ["energia"],
       },
     ],
   },
@@ -1065,6 +1220,9 @@ export const FAMIGLIE: Famiglia[] = [
         benefit: "Il sistema qualità documentato, pronto per l'audit dell'ente terzo.",
         pilastro: "G",
         bisogni: ["bando", "committente"],
+        momento: "partenza",
+        norme: ["iso-9001"],
+        ambiti: ["qualita"],
         chiavi: ["qualita", "9001", "sistema qualita", "certificazione di qualita"],
       },
       {
@@ -1072,6 +1230,9 @@ export const FAMIGLIE: Famiglia[] = [
         benefit: "Il sistema ambientale, con l'analisi precompilata dai tuoi dati.",
         pilastro: "E",
         bisogni: ["bando", "committente"],
+        momento: "partenza",
+        norme: ["iso-14001"],
+        ambiti: ["ambiente"],
         chiavi: ["ambiente", "14001", "sistema ambientale", "certificazione ambientale"],
       },
       {
@@ -1080,6 +1241,9 @@ export const FAMIGLIE: Famiglia[] = [
           "Il sistema sicurezza integrato con il tuo DVR, che resta del datore di lavoro.",
         pilastro: "S",
         bisogni: ["bando", "committente"],
+        momento: "partenza",
+        norme: ["iso-45001"],
+        ambiti: ["sicurezza"],
         chiavi: ["sicurezza sul lavoro", "45001", "salute e sicurezza", "infortuni", "rspp"],
         etichetta: "Novità",
       },
@@ -1088,6 +1252,9 @@ export const FAMIGLIE: Famiglia[] = [
         benefit: "KPI e fascicolo pronti per l'audit; esonero contributivo di legge.",
         pilastro: "S",
         bisogni: ["bando", "migliorare"],
+        momento: "partenza",
+        norme: ["pdr-125"],
+        ambiti: ["sociale"],
         chiavi: ["gender gap", "parita uomo donna", "donne", "certificazione della parita", "pdr 125", "125"],
         etichetta: "Premiante nei bandi",
       },
@@ -1097,7 +1264,13 @@ export const FAMIGLIE: Famiglia[] = [
           "Lo schema internazionale di responsabilità sociale, con accompagnamento all'audit.",
         pilastro: "S",
         bisogni: ["committente"],
-        chiavi: ["responsabilita sociale", "8000", "diritti dei lavoratori", "etica del lavoro"],
+        momento: "partenza",
+        norme: ["sa8000"],
+        ambiti: ["sociale"],
+        // «sa8000» attaccato è come si scrive davvero, e senza questa
+        // chiave la ricerca più ovvia su questo percorso non trovava
+        // niente: «8000» da solo non combacia con la parola «sa8000».
+        chiavi: ["responsabilita sociale", "sa8000", "sa 8000", "8000", "diritti dei lavoratori", "etica del lavoro"],
         etichetta: "Novità",
       },
       {
@@ -1105,7 +1278,12 @@ export const FAMIGLIE: Famiglia[] = [
         benefit:
           "Hai già un manuale? Potrebbe non essere più allineato all'edizione in vigore.",
         pilastro: "G",
-        bisogni: ["aggiornare", "committente", "bando"],
+        bisogni: ["aggiornare", "audit", "committente", "bando"],
+        momento: "aggiornamento",
+        // Le stesse cinque norme su cui un organismo fa audit
+        // (SERVIZI_CERTIFICABILI): è il percorso che le riprende tutte.
+        norme: ["iso-9001", "iso-14001", "iso-45001", "pdr-125", "sa8000"],
+        ambiti: ["qualita", "ambiente", "sicurezza", "sociale"],
         chiavi: ["manuale vecchio", "aggiornare il manuale", "edizione ritirata", "norma cambiata"],
         etichetta: "Novità",
         evidenza: true,
@@ -1115,12 +1293,18 @@ export const FAMIGLIE: Famiglia[] = [
         benefit: "Il sistema di gestione per le strutture ricettive.",
         pilastro: "E",
         bisogni: ["committente", "migliorare"],
+        momento: "partenza",
+        norme: ["iso-21401"],
+        ambiti: ["ambiente"],
       },
       {
         nome: "Eventi sostenibili ISO 20121",
         benefit: "Il sistema di gestione per eventi, fiere e hospitality.",
         pilastro: "E",
         bisogni: ["committente", "bando"],
+        momento: "partenza",
+        norme: ["iso-20121"],
+        ambiti: ["ambiente"],
       },
       {
         slug: "iso-45003",
@@ -1128,6 +1312,9 @@ export const FAMIGLIE: Famiglia[] = [
           "Rischi psicosociali e benessere organizzativo: aderenza documentata.",
         pilastro: "S",
         bisogni: ["migliorare"],
+        momento: "partenza",
+        norme: ["iso-45003"],
+        ambiti: ["sicurezza"],
         chiavi: ["stress lavoro correlato", "45003", "benessere psicologico", "salute mentale"],
         etichetta: "Spesso richiesto insieme a ISO 45001",
         addOn: true,
@@ -1137,6 +1324,9 @@ export const FAMIGLIE: Famiglia[] = [
         benefit: "Diversità e inclusione: aderenza documentata alla linea guida.",
         pilastro: "S",
         bisogni: ["migliorare"],
+        momento: "partenza",
+        norme: ["iso-30415"],
+        ambiti: ["sociale"],
         chiavi: ["diversita e inclusione", "30415", "inclusione"],
         etichetta: "Spesso richiesto insieme a UNI/PdR 125",
         addOn: true,
@@ -1146,6 +1336,9 @@ export const FAMIGLIE: Famiglia[] = [
         benefit: "Allineamento alle norme guida, spendibile verso le filiere.",
         pilastro: "G",
         bisogni: ["committente"],
+        momento: "partenza",
+        norme: ["iso-26000", "iso-20400"],
+        ambiti: ["sociale"],
         addOn: true,
       },
     ],
@@ -1164,19 +1357,26 @@ export const FAMIGLIE: Famiglia[] = [
           "Risposte pronte e coerenti per banche e capofiliera. Il punteggio lo assegna sempre l'ente terzo.",
         pilastro: "G",
         bisogni: ["banca", "committente"],
+        momento: "partenza",
+        ambiti: ["rendicontazione"],
       },
       {
         nome: "Check-up energetico",
         benefit: "Scopri se paghi troppo l'energia, dalle bollette che hai già.",
         pilastro: "E",
         bisogni: ["migliorare"],
+        momento: "partenza",
+        ambiti: ["energia"],
       },
       {
         slug: "supporto-audit",
         benefit:
           "Rilievi ricevuti dall'organismo? Adeguiamo i documenti, anche se non li abbiamo fatti noi.",
         pilastro: "G",
-        bisogni: ["committente", "bando"],
+        bisogni: ["audit", "committente", "bando"],
+        momento: "verifica",
+        norme: ["iso-9001", "iso-14001", "iso-45001", "pdr-125", "sa8000"],
+        ambiti: ["qualita", "ambiente", "sicurezza", "sociale"],
         chiavi: ["audit", "verifica ispettiva", "visita dell ente", "organismo di certificazione"],
       },
     ],
