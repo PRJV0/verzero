@@ -9,13 +9,16 @@ import { OndaParticelle } from "@/components/onda-particelle";
 import { QualitaOutput } from "@/components/qualita-output";
 import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
 import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
-import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
+import { SITO, jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
 export const metadata: Metadata = metadataPagina({
   title: "Come funziona: l'AI Ver0, i documenti, la validazione",
   description:
     "Il metodo fase per fase: cosa legge la nostra AI proprietaria, come resta tracciata ogni fonte, chi valida prima della consegna, com'è fatto il documento.",
   path: "/come-funziona",
+  // Pagina istituzionale: qui il soggetto è Verzero, quindi
+  // l'anteprima social porta il marchio e non una fotografia.
+  image: SITO.ogMarchio,
 });
 
 /**

@@ -73,6 +73,17 @@ export const SITO = {
   },
   /** Immagine di condivisione predefinita (foto già ottimizzata). */
   ogImage: "/photos/sito1.jpg",
+  /**
+   * LA CARD DI MARCA, per le anteprime social in cui il soggetto è
+   * Verzero e non un percorso: home e pagine istituzionali. È il lockup
+   * esteso su fondo pino, generata da `scripts/esporta-marchio.mjs`
+   * insieme a tutti gli altri file del marchio — quindi non può
+   * raccontare un marchio diverso da quello in pagina.
+   *
+   * Le schede dei percorsi tengono la fotografia: chi condivide un
+   * percorso condivide quello, non il logo di chi lo fa.
+   */
+  ogMarchio: "/social/anteprima-marca.png",
   email: "info@verzero.it",
 } as const;
 

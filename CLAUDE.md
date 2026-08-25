@@ -236,6 +236,24 @@ Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs`.
 - **«Zero effort»**: non si dichiara mai da solo, sempre con la definizione.
   VIETATE le quantificazioni di tempo o impegno del cliente («un'ora del tuo
   tempo» e simili): ogni numero promesso è un ostaggio (SPEC §12.O).
+- **Il marchio si compone, non si ridisegna.** Un solo componente
+  (`src/components/brand/marchio.tsx`) con due varianti: SEMPLICE (il
+  logotipo da solo — intestazione, portale) ed ESTESA (logotipo senza lo
+  zero finale, payoff in maiuscolo spaziato della stessa larghezza, e un
+  solo zero grande che chiude le due righe — footer, materiali
+  scaricabili, anteprima social). Le proporzioni stanno in
+  `src/lib/marchio.ts` e sono MISURATE, non disegnate: chi ne cambia una
+  fa fallire `scripts/test-marchio.mjs`. Regole che il codice fa
+  rispettare da sé: tratto dello zero identico a quello del logotipo (non
+  si scala con l'ellisse), area di rispetto pari alla larghezza dello
+  zero, e sotto `LOCKUP.minimaPx` la variante estesa ripiega da sola su
+  quella semplice — un payoff illeggibile non è un marchio più piccolo.
+  I file in `public/brand/marchio-esteso*.svg` NON si toccano a mano: si
+  rigenerano con `scripts/esporta-marchio.mjs`, e
+  `--controlla` fallisce se sono rimasti indietro rispetto al codice.
+  **Un secondo lockup dentro la pagina è quasi sempre di troppo**: il
+  footer lo porta su ogni pagina, quindi in fondo a una pagina
+  istituzionale se ne vedrebbero due nella stessa schermata.
 - **Payoff di marca**: `Azienda a norma in tempo Zero`, fonte unica in
   `SITO.payoff` (`src/lib/seo.ts`). Una forma sola, mai riscritta:
   accompagna il logotipo nel footer, chiude il titolo del sito

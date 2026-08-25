@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { Marchio } from "@/components/brand/marchio";
 import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/server";
@@ -77,9 +78,14 @@ export default async function PortaleLayout({
           <Link
             href="/"
             aria-label="Ver0 — vai al sito"
-            className="font-display text-xl text-white transition-opacity hover:opacity-80"
+            className="text-white transition-opacity hover:opacity-80"
           >
-            Ver<span className="text-mint-bright">0</span>
+            {/* Il marchio, non una sua trascrizione. Qui c'era «Ver» più
+                uno zero di tastiera in menta: una terza resa del segno,
+                che al primo ritocco del logotipo sarebbe rimasta
+                indietro. Ora è lo stesso componente dell'intestazione
+                pubblica. */}
+            <Marchio className="text-lg" />
           </Link>
           <div className="min-w-0 text-center">
             <p className="truncate font-display text-base leading-tight text-white sm:text-lg">

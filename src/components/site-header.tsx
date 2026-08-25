@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Logo } from "@/components/brand/logo";
+import { Marchio } from "@/components/brand/marchio";
 import { MenuUtente } from "@/components/menu-utente";
 import { MobileMenu } from "@/components/mobile-menu";
 import type { SessionePubblica } from "@/lib/sessione-pubblica";
@@ -37,7 +37,7 @@ export function SiteHeader({ sessione }: { sessione: SessionePubblica }) {
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-line bg-white px-5 py-3">
       <Link href="/" aria-label="Verzero — torna alla home">
-        <Logo className="text-pine" />
+        <Marchio className="text-pine text-xl" />
       </Link>
       <nav
         aria-label="Navigazione principale"

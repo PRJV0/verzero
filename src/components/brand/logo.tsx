@@ -19,8 +19,15 @@
  * funziona su fondo chiaro e su fondo scuro senza varianti.
  */
 
-/** Lo zero canonico E1: ellisse monolinea, mai una O di sistema. */
-function ZeroE1() {
+/**
+ * Lo zero canonico E1: ellisse monolinea, mai una O di sistema.
+ *
+ * Esportato perché il lockup esteso (`marchio.tsx`) lo RIUSA invece di
+ * ridisegnarlo: due ellissi scritte in due file diventano due ellissi
+ * diverse alla prima correzione, e il segno del marchio è proprio
+ * questo.
+ */
+export function ZeroE1() {
   return (
     <svg
       viewBox="0 0 30 40"
@@ -40,38 +47,22 @@ function ZeroE1() {
   );
 }
 
-export function Logo({ className = "" }: { className?: string }) {
-  return (
-    <span
-      // NESSUN COLORE QUI: si eredita da chi lo usa (`currentColor`,
-      // come dichiara il commento in testa al file). Prima era fissato a
-      // `text-pine` e su fondo scuro il marchio spariva — verde su verde
-      // — perché una classe passata dall'esterno non vince su una scritta
-      // dentro il componente: hanno la stessa specificità, e decide
-      // l'ordine nel foglio di stile, che non si controlla da qui.
-      className={`inline-flex items-center gap-[0.04em] font-display text-xl font-semibold leading-none ${className}`}
-    >
-      Verzer
-      <ZeroE1 />
-      {/* Lo zero è l'ellisse: agli screen reader va dato come testo,
-          altrimenti il marchio si legge «Verzer». */}
-      <span className="sr-only">o</span>
-    </span>
-  );
+/**
+ * Il nome PRIVATO dello zero finale.
+ *
+ * Da solo non è il marchio e non va usato da solo: esiste perché la
+ * riga 1 del lockup esteso è il logotipo senza la sua ultima lettera,
+ * che lì diventa lo zero grande a destra.
+ */
+export function NomeSenzaZero() {
+  return <>Verzer</>;
 }
 
 /**
- * Il monogramma: spazi stretti, favicon, marchiature di servizio. Stessa
- * costruzione, nome corto.
+ * ═══ QUI NON C'È PIÙ UN COMPONENTE «LOGO» ═══
+ * C'era, e lo usavano intestazione e footer. Ora il marchio si compone
+ * in un posto solo (`src/components/brand/marchio.tsx`), che di questo
+ * file usa i due pezzi qui sopra: il nome e lo zero. Tenere anche un
+ * `Logo` avrebbe voluto dire due strade per disegnare la stessa cosa —
+ * ed è esattamente da lì che nascono le versioni che divergono.
  */
-export function Monogramma({ className = "" }: { className?: string }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-[0.06em] font-display text-xl font-semibold leading-none ${className}`}
-    >
-      Ver
-      <ZeroE1 />
-      <span className="sr-only">0</span>
-    </span>
-  );
-}

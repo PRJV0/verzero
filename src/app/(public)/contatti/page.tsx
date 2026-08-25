@@ -5,7 +5,7 @@ import { ArrowRight, BookMarked, Clock, ShieldCheck } from "lucide-react";
 import { JsonLd } from "@/components/json-ld";
 import { PROMESSA_RISPOSTA } from "@/lib/contatti";
 import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
-import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
+import { SITO, jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
 import { ModuloContatto } from "./modulo-contatto";
 
@@ -14,6 +14,9 @@ export const metadata: Metadata = metadataPagina({
   description:
     "Scrivi a Ver0 per informazioni, per un servizio o per una partnership: il modulo arriva a una persona e la risposta arriva entro un giorno lavorativo.",
   path: "/contatti",
+  // Pagina istituzionale: qui il soggetto è Verzero, quindi
+  // l'anteprima social porta il marchio e non una fotografia.
+  image: SITO.ogMarchio,
 });
 
 /**

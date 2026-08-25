@@ -116,7 +116,14 @@ export const metadata: Metadata = {
     description:
       "Sostenibilità, sistemi di gestione e consulenza con l'AI Ver0: documenti conformi in giorni, verificati da professionisti, con prezzi pubblici.",
     url: "/",
-    images: [{ url: SITO.ogImage, width: 1200, height: 630, alt: SITO.nome }],
+    images: [
+      {
+        url: SITO.ogMarchio,
+        width: 1200,
+        height: 630,
+        alt: `${SITO.nome} — ${SITO.payoff}`,
+      },
+    ],
   },
 };
 

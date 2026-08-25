@@ -49,9 +49,18 @@ export const metadata: Metadata = {
     locale: "it_IT",
     siteName: SITO.nome,
     url: "/",
-    images: [{ url: SITO.ogImage, width: 1200, height: 630, alt: SITO.nome }],
+    // La predefinita del SITO è la card di marca: qui il soggetto è
+    // Verzero. Le pagine che parlano d'altro dichiarano la loro.
+    images: [
+      {
+        url: SITO.ogMarchio,
+        width: 1200,
+        height: 630,
+        alt: `${SITO.nome} — ${SITO.payoff}`,
+      },
+    ],
   },
-  twitter: { card: "summary_large_image", images: [SITO.ogImage] },
+  twitter: { card: "summary_large_image", images: [SITO.ogMarchio] },
   /**
    * Verifica della proprietà del dominio per i motori di ricerca. I
    * codici arrivano da variabili d'ambiente: sono pubblici (finiscono in

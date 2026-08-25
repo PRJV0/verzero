@@ -25,13 +25,16 @@ import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { PhotoDuotone } from "@/components/photo-duotone";
 import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
-import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
+import { SITO, jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
 export const metadata: Metadata = metadataPagina({
   title: "Chi siamo: siamo partiti da zero, letteralmente",
   description:
     "Abbiamo ricostruito la consulenza: un'AI proprietaria che lavora sui documenti d'impresa, professionisti che verificano, standard ufficiali e prezzi leggibili prima di attivare.",
   path: "/chi-siamo",
+  // Pagina istituzionale: qui il soggetto è Verzero, quindi
+  // l'anteprima social porta il marchio e non una fotografia.
+  image: SITO.ogMarchio,
 });
 
 /**
@@ -428,6 +431,7 @@ export default function ChiSiamoPage() {
             Ci chiamiamo Ver0 per un principio solo, lo Zero, che torna in ogni
             promessa. Lo Zero, da noi, non è il niente — è il traguardo.
           </p>
+
         </div>
       </section>
     </main>

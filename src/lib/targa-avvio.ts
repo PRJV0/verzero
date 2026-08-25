@@ -2,6 +2,9 @@ import "server-only";
 
 import QRCode from "qrcode";
 
+import { LOCKUP } from "@/lib/marchio";
+import { marchioEstesoGruppo } from "@/lib/marchio-svg";
+
 /**
  * LA TARGA DI AVVIO (SPEC §12.F) — il file SVG scaricabile.
  *
@@ -21,6 +24,17 @@ const PINE_DARK = "#0A3D2A";
 const INK = "#1A241D";
 const GRAY = "#5A6B5F";
 const PAPER = "#FBFAF7";
+
+/**
+ * Corpo del logotipo nel lockup della targa.
+ *
+ * È la misura minima del lockup (`LOCKUP.minimaPx`), non una più
+ * piccola: a 34 unità il payoff scendeva a sei, cioè sotto la soglia
+ * che il componente in pagina si rifiuta di attraversare. Una regola
+ * che vale sullo schermo e non su un file che si stampa non è una
+ * regola.
+ */
+const MARCHIO_CORPO = LOCKUP.minimaPx;
 
 const esc = (s: string) =>
   s
@@ -108,6 +122,16 @@ export function targaAvvioSvg({
     </text>
     <text x="170" y="548" fill="${PINE}" font-family="Inter, -apple-system, sans-serif"
       font-size="15" font-weight="600">${esc(urlBreve)}</text>
+  </g>
+
+  <!-- CHI LA EMETTE: il lockup esteso sotto il sigillo, nella colonna
+       di sinistra. Il sigillo dice che cos'è la targa, il marchio dice
+       chi risponde — e stanno bene incolonnati. A destra non ci stava
+       senza finire addosso all'indirizzo di verifica.
+       I margini sono l'AREA DI RISPETTO del marchio, presa da lì e non
+       scelta a occhio. -->
+  <g transform="translate(${(235 - (MARCHIO_CORPO * LOCKUP.larghezza) / 2).toFixed(1)},${(612 - 34 - MARCHIO_CORPO * LOCKUP.altezza).toFixed(1)}) scale(${(MARCHIO_CORPO / 100).toFixed(4)})">
+    ${marchioEstesoGruppo({ colore: PINE })}
   </g>
 </svg>
 `;
