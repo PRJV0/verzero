@@ -109,6 +109,15 @@ export function SiteFooter({ sessione }: { sessione: SessionePubblica }) {
           >
             <Logo className="text-2xl" />
           </Link>
+          {/* IL PAYOFF sotto il logotipo. È l'unico posto del sito in cui
+              sta attaccato al marchio, ed è quello giusto: il footer c'è
+              su ogni pagina, comprese le istituzionali, quindi il payoff
+              accompagna il logotipo dappertutto senza doverlo ripetere
+              pagina per pagina. In carattere display come il logotipo:
+              è la seconda riga del marchio, non una didascalia. */}
+          <p className="mt-2.5 font-display text-[15px] text-mint-bright">
+            {SITO.payoff}
+          </p>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-moss/75">
             La piattaforma italiana che qualifica le imprese su sostenibilità
             e sistemi di gestione: documenti costruiti sui dati che hai già,

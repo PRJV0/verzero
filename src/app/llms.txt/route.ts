@@ -36,6 +36,10 @@ export function GET() {
   const righe: string[] = [
     `# ${SITO.nome}`,
     "",
+    // Il payoff subito sotto il nome: è parte dell'identità dell'entità
+    // quanto il nome e la descrizione, ed è mostrato in pagina (footer).
+    `*${SITO.payoff}*`,
+    "",
     `> ${SITO.descrizione}`,
     "",
     SITO.contesto,

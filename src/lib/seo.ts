@@ -32,6 +32,25 @@ export const SITO = {
   /** Il monogramma, per gli usi di spazio ridotto. */
   monogramma: "Ver0",
   /**
+   * IL PAYOFF — una forma sola, mai riscritta.
+   *
+   * Accompagna il logotipo dove c'è spazio (footer, pagine
+   * istituzionali), chiude il titolo del sito, è lo `slogan` dei dati
+   * strutturati e firma le email transazionali. Un payoff che cambia
+   * parole da un posto all'altro non è un payoff: sono tre frasi che si
+   * somigliano, e nessuna diventa la cosa che la gente ripete.
+   *
+   * ═══ CHE COSA VUOL DIRE «IN TEMPO ZERO», E COSA NO ═══
+   * È lo Zero del sistema di marca (`src/lib/zeri.ts`): lo zero è il
+   * tempo che ci mette il CLIENTE — «bastano i documenti che hai già in
+   * azienda» — non il tempo di lavorazione. Non è e non diventerà un
+   * termine di consegna: la regola contro le quantificazioni di tempo
+   * (SPEC §12.O) resta in vigore, e nessun testo può appoggiarsi al
+   * payoff per promettere una data. Chi scrive «pronto in tempo Zero»
+   * accanto a un percorso sta scrivendo un'altra cosa.
+   */
+  payoff: "Azienda a norma in tempo Zero",
+  /**
    * LA DESCRIZIONE DELL'ENTITÀ — una sola, ovunque si descriva l'azienda.
    *
    * Non è la meta description di una pagina: quelle descrivono PAGINE e
@@ -167,6 +186,11 @@ export function jsonLdOrganization() {
     // Il monogramma resta come nome alternativo: chi cerca «Ver0» deve
     // comunque trovare noi.
     alternateName: SITO.monogramma,
+    // Il payoff, nella stessa forma che si legge in pagina: `slogan` è
+    // il campo che schema.org prevede per questo, e dichiararlo diverso
+    // da come compare nel footer sarebbe markup che descrive una cosa
+    // non mostrata.
+    slogan: SITO.payoff,
     url: SITO.url,
     logo: {
       "@type": "ImageObject",

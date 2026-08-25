@@ -3,6 +3,7 @@ import "server-only";
 import { bloccoAvvioHtml, bloccoAvvioTesto } from "@/lib/avvio";
 import { NOTIFICHE_INTERNE, inviaEmail } from "@/lib/email";
 import { publicEnv } from "@/lib/env";
+import { SITO } from "@/lib/seo";
 
 /**
  * NOTIFICHE INTERNE SUI LEAD.
@@ -26,6 +27,31 @@ const A = NOTIFICHE_INTERNE;
 function linkBackOffice(sezione: string): string {
   return `${publicEnv.siteUrl}/dashboard/lead?vista=${sezione}`;
 }
+
+/**
+ * LA FIRMA delle email al cliente: monogramma e payoff, sempre gli
+ * stessi due elementi e sempre in quest'ordine.
+ *
+ * Il monogramma e non il nome per esteso perché il mittente si presenta
+ * già come «Ver0» (`RESEND_FROM`): firmare «Verzero» sotto un'email
+ * spedita da «Ver0» sarebbe una seconda identità nella stessa finestra.
+ *
+ * Sta in una funzione e non copiato in fondo a ogni messaggio: due
+ * firme scritte a mano diventano due firme diverse alla prima revisione
+ * del payoff, ed è esattamente ciò che un payoff non può permettersi.
+ * Le NOTIFICHE INTERNE non la portano: sono per noi, e una firma di
+ * marca su un'email che arriva a noi stessi è rumore.
+ */
+const FIRMA_TESTO = [
+  `— ${SITO.monogramma}`,
+  SITO.payoff,
+  publicEnv.siteUrl,
+].join("\n");
+
+const FIRMA_HTML = [
+  `<p style="margin-top:24px">— <a href="${publicEnv.siteUrl}" style="color:#0E5238;text-decoration:none"><strong>${SITO.monogramma}</strong></a>`,
+  `<br><span style="color:#0E5238">${SITO.payoff}</span></p>`,
+].join("");
 
 /** Nuovo messaggio dal modulo contatti. */
 export async function notificaContatto(dati: {
@@ -134,7 +160,7 @@ export async function confermaRichiestaAlCliente(dati: {
       `  Prezzo:     ${dati.prezzo}`,
       "",
       bloccoAvvioTesto(publicEnv.siteUrl),
-      "— Ver0",
+      FIRMA_TESTO,
     ].join("\n"),
     html: [
       `<p>Grazie: la richiesta di <strong>${dati.ragioneSociale}</strong> è registrata.</p>`,
@@ -146,7 +172,7 @@ export async function confermaRichiestaAlCliente(dati: {
       `<li>Prezzo: ${dati.prezzo}</li>`,
       "</ul>",
       bloccoAvvioHtml(publicEnv.siteUrl),
-      "<p>— Ver0</p>",
+      FIRMA_HTML,
     ].join("\n"),
   });
 }
@@ -179,8 +205,7 @@ export async function confermaWaitlist(dati: {
       "Niente newsletter, niente promozioni: da noi ricevi solo questa",
       "email e quella con cui apriamo il tuo turno.",
       "",
-      "— Ver0",
-      publicEnv.siteUrl,
+      FIRMA_TESTO,
     ].join("\n"),
     html: [
       `<p>${saluto}<br>il tuo contatto è in lista.</p>`,
@@ -190,7 +215,7 @@ export async function confermaWaitlist(dati: {
       '<p style="background:#F6F1E4;border-left:4px solid #0E5238;padding:12px 16px">',
       "Niente newsletter, niente promozioni: da noi ricevi solo questa email",
       "e quella con cui apriamo il tuo turno.</p>",
-      `<p>— <a href="${publicEnv.siteUrl}" style="color:#0E5238">Ver0</a></p>`,
+      FIRMA_HTML,
     ].join("\n"),
   });
 }

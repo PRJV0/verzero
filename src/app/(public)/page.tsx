@@ -104,7 +104,7 @@ const BATTUTE = [
 ];
 
 export const metadata: Metadata = {
-  title: { absolute: "Verzero — la piattaforma che qualifica la tua impresa" },
+  title: { absolute: `${SITO.nome} — ${SITO.payoff}` },
   description:
     "Sostenibilità, sistemi di gestione e consulenza con l'AI Ver0: documenti conformi in giorni, verificati da professionisti, con prezzi pubblici.",
   alternates: { canonical: "/" },
@@ -112,7 +112,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "it_IT",
     siteName: SITO.nome,
-    title: "Verzero — la piattaforma che qualifica la tua impresa",
+    title: `${SITO.nome} — ${SITO.payoff}`,
     description:
       "Sostenibilità, sistemi di gestione e consulenza con l'AI Ver0: documenti conformi in giorni, verificati da professionisti, con prezzi pubblici.",
     url: "/",

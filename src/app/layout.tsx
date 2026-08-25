@@ -31,7 +31,10 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   metadataBase: new URL(publicEnv.siteUrl),
   title: {
-    default: "Verzero — la piattaforma che qualifica la tua impresa",
+    // Il titolo del SITO è marchio più payoff, composto dalla fonte
+    // unica: scriverlo a mano qui vorrebbe dire tenerlo allineato a
+    // memoria a ogni revisione del payoff.
+    default: `${SITO.nome} — ${SITO.payoff}`,
     template: `%s — ${SITO.nome}`,
   },
   description:

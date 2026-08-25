@@ -14,6 +14,10 @@
  *  3. RISPOSTE AUTOCONCLUSIVE — che ogni risposta regga fuori dalla sua
  *     pagina, e che nessuna si porti dietro le mappature operative che
  *     abbiamo deciso di non pubblicare.
+ *  4. UNA SOLA ENTITÀ — che nome, descrizione e PAYOFF siano identici
+ *     in pagina, nei dati strutturati e in llms.txt. Un payoff riscritto
+ *     in tre varianti non è un payoff: sono tre frasi che si somigliano,
+ *     e un modello che le legge non ne impara nessuna.
  *
  *   node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs
  */
@@ -30,9 +34,25 @@ import { SERVIZI, titoloServizio } from "../src/lib/catalog.ts";
 import { faqServizio } from "../src/lib/faq-servizio.ts";
 import { PAGINE_PUBBLICHE } from "../src/lib/pagine-pubbliche.ts";
 import { GET as llms } from "../src/app/llms.txt/route.ts";
+import { SITO, jsonLdOrganization } from "../src/lib/seo.ts";
+
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 
 let passate = 0;
 const fallite = [];
+
+/** Ogni sorgente del progetto, come coppie [percorso, contenuto]. */
+function leggiSorgenti(radice) {
+  const out = [];
+  for (const voce of readdirSync(radice)) {
+    const percorso = join(radice, voce);
+    if (statSync(percorso).isDirectory()) out.push(...leggiSorgenti(percorso));
+    else if (/\.(ts|tsx|css)$/.test(voce))
+      out.push([percorso, readFileSync(percorso, "utf8")]);
+  }
+  return out;
+}
 function prova(nome, condizione, dettaglio = "") {
   if (condizione) passate++;
   else fallite.push(`${nome}${dettaglio ? " — " + dettaglio : ""}`);
@@ -219,6 +239,64 @@ for (const s of SERVIZI) {
   for (const documento of s.documenti) {
     prova(`llms.txt non contiene la checklist di ${s.slug}`, !testo.includes(documento));
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* 5. Il payoff: una forma sola, ovunque                               */
+/* ------------------------------------------------------------------ */
+
+const PAYOFF = "Azienda a norma in tempo Zero";
+
+prova(
+  "il payoff è quello deciso, carattere per carattere",
+  SITO.payoff === PAYOFF,
+  SITO.payoff,
+);
+prova(
+  "«Zero» porta la maiuscola: è la parola del sistema, non un numero",
+  SITO.payoff.includes("Zero") && !SITO.payoff.includes("zero"),
+);
+prova(
+  "i dati strutturati lo dichiarano come slogan",
+  jsonLdOrganization().slogan === SITO.payoff,
+  String(jsonLdOrganization().slogan),
+);
+prova("llms.txt lo porta sotto il nome", testo.includes(SITO.payoff));
+prova(
+  "il titolo del sito è marchio più payoff",
+  `${SITO.nome} — ${SITO.payoff}` === "Verzero — Azienda a norma in tempo Zero",
+);
+prova(
+  "e sta dentro i 60 caratteri che un motore mostra",
+  `${SITO.nome} — ${SITO.payoff}`.length <= 60,
+  `${`${SITO.nome} — ${SITO.payoff}`.length} caratteri`,
+);
+
+/**
+ * NESSUNA VARIANTE SCRITTA A MANO.
+ *
+ * Il modo in cui un payoff muore è che qualcuno lo riscriva «a norma in
+ * tempo zero» in minuscolo, o «impresa a norma in tempo Zero», in una
+ * pagina sola. Qui si cercano nel codice le forme vicine e si accetta
+ * solo quella esatta o il riferimento alla fonte.
+ */
+const sorgenti = leggiSorgenti("src");
+const VARIANTI_VIETATE = [
+  "azienda a norma in tempo zero",
+  "impresa a norma in tempo zero",
+  "aziende a norma in tempo zero",
+  "a norma in tempo 0",
+];
+for (const variante of VARIANTI_VIETATE) {
+  const colpiti = sorgenti.filter(([, contenuto]) =>
+    contenuto.toLowerCase().includes(variante),
+  );
+  prova(
+    `nessuna variante «${variante}» scritta a mano`,
+    // La forma esatta esiste in un posto solo: la costante in seo.ts.
+    colpiti.every(([file]) => file.endsWith("src/lib/seo.ts")),
+    colpiti.map(([f]) => f).join(", "),
+  );
 }
 
 /* ------------------------------------------------------------------ */

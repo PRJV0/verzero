@@ -30,8 +30,17 @@
  * il modo più rapido di far smettere di provare.
  *
  * ═══ L'ORDINE, E LA QUINTA ═══
- * L'ordine non è alfabetico né per importanza: è quello in cui i chip
- * vanno a capo bene, corto e lungo alternati.
+ * L'ordine non è alfabetico né per importanza: prima le due situazioni,
+ * poi le tre cose — ed è anche l'ordine in cui i chip vanno a capo bene
+ * su DUE misure insieme, misurate in pagina e non stimate:
+ *
+ *   largo (576 px)  163 + 159 + 168 | 83 + 129   → tre più due
+ *   stretto (335 px) 146 + 143 | 74 + 116        → due più due
+ *
+ * Il ritorno a capo è avido, quindi l'unica leva è l'ordine: con la più
+ * lunga in coda la prima riga se ne prendeva quattro e la quinta
+ * restava da sola, che è la cosa che fa sembrare storto un blocco
+ * altrimenti a posto.
  *
  * Su schermo stretto se ne mostrano QUATTRO. Cinque etichette in
  * italiano su 375 pixel occupano tre righe, e tre righe di suggerimenti
@@ -48,8 +57,8 @@ export type SceltaRapida = {
 
 export const SCELTE_RAPIDE: SceltaRapida[] = [
   { testo: "Me lo chiede la banca" },
-  { testo: "ISO 9001" },
-  { testo: "Carbon footprint" },
   { testo: "Partecipo a un bando" },
   { testo: "Bilancio di sostenibilità", soloLargo: true },
+  { testo: "ISO 9001" },
+  { testo: "Carbon footprint" },
 ];

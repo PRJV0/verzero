@@ -138,24 +138,29 @@ export function HeroHome() {
           </span>
         </h1>
 
-        {/* UNA RIGA SOLA fra il claim e la barra, ed era il doppio.
-            Diceva anche «La crescita della tua azienda, in abbonamento»:
-            vero, e già scritto tre volte più sotto, nel listino e nel
-            menu. Qui rubava due righe allo spazio in cui una persona
-            deve capire che quello è un campo dove si scrive.
-            Che cosa NON si può togliere: la definizione di «zero
-            effort». La formula non si dichiara mai da sola (SPEC §12.O),
-            perché senza «bastano i documenti che hai già» è una promessa
-            senza contenuto. */}
+        {/* UNA RIGA SOLA fra il claim e la barra, e dice che cosa si
+            riceve. Il claim dichiara CHI siamo («i tuoi consulenti»), la
+            riga dichiara COSA arriva: due lavori diversi, nessuna
+            ripetizione fra i due.
+
+            «Zero» porta il peso e il colore del sistema dello Zero —
+            semibold in menta viva, esattamente come l'accento del nastro
+            (`src/lib/zeri.ts`, `NastroZero`), non in corsivo: il corsivo
+            qui era di «effort», che era la coda e non l'accento.
+
+            «in tempo Zero» resta unito: spezzato a capo, «Zero» da solo
+            su una riga diventa un numero e non più la parola della
+            marca. */}
         <p
           data-onda-maschera
           className="vz-entra mx-auto mt-8 max-w-[26ch] font-display text-[1.3rem] leading-[1.45] text-moss sm:max-w-[34ch] sm:text-[1.55rem] md:text-[1.75rem]"
           style={{ "--vz-i": 3 } as React.CSSProperties}
         >
+          Documenti a norma,{" "}
           <span className="whitespace-nowrap">
-            Zero <em className="font-semibold italic text-mint-bright">effort</em>:
-          </span>{" "}
-          bastano i documenti che hai già.
+            in tempo{" "}
+            <span className="font-semibold text-mint-bright">Zero</span>.
+          </span>
         </p>
 
         {/* L'ORIENTATORE, subito sotto il claim.

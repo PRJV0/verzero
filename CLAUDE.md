@@ -236,3 +236,19 @@ Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs`.
 - **«Zero effort»**: non si dichiara mai da solo, sempre con la definizione.
   VIETATE le quantificazioni di tempo o impegno del cliente («un'ora del tuo
   tempo» e simili): ogni numero promesso è un ostaggio (SPEC §12.O).
+- **Payoff di marca**: `Azienda a norma in tempo Zero`, fonte unica in
+  `SITO.payoff` (`src/lib/seo.ts`). Una forma sola, mai riscritta:
+  accompagna il logotipo nel footer, chiude il titolo del sito
+  (`Verzero — Azienda a norma in tempo Zero`), è lo `slogan` di
+  `Organization` e firma le email al cliente. Chi lo scrive a mano
+  invece di leggerlo dalla costante fa fallire `scripts/test-aeo.mjs`,
+  che cerca le varianti vicine in tutto `src/`.
+  **Che cosa significa «in tempo Zero»**: è lo Zero del sistema di
+  marca — il tempo che ci mette il CLIENTE, «bastano i documenti che
+  hai già» — e NON un termine di consegna. La regola contro le
+  quantificazioni di tempo resta in vigore anche per il payoff: nessun
+  testo può appoggiarsi a quelle tre parole per promettere una data.
+  Nel sottotitolo dell'hero «Zero» porta il peso e il colore
+  dell'accento del sistema (semibold in menta viva, come `NastroZero`),
+  e «in tempo Zero» non va mai spezzato a capo: «Zero» da solo su una
+  riga torna a essere un numero.
