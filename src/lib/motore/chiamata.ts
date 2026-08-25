@@ -10,6 +10,7 @@ import {
   MAX_PAGINE,
   costoMicroDollari,
   extractionConfig,
+  tettoToken,
 } from "./costi";
 import {
   CAPACITA_DI_LIVELLO,
@@ -166,7 +167,13 @@ export async function leggiDocumento(opzioni: {
     const puo = CAPACITA_DI_LIVELLO[livello];
     const risposta = await cliente.messages.parse({
       model: modello,
-      max_tokens: config.maxTokens,
+      // Calcolato sulla forma e sulle pagine, non fisso: un registro
+      // lungo produce molto più di una bolletta, e un tetto stretto lo
+      // tronca a metà senza dirlo (costi.ts).
+      max_tokens: Math.max(
+        config.maxTokens,
+        tettoToken(voce.forma, natura.pagine, voce.campi.length),
+      ),
       // Dove il modello lo regge, il ragionamento resta attivo: su una
       // bolletta con conguagli, letture stimate e più POD nello stesso
       // documento la risposta giusta richiede di ragionare, non di
@@ -192,6 +199,23 @@ export async function leggiDocumento(opzioni: {
       ),
       durataMs: Date.now() - inizio,
     };
+
+    // ═══ TRONCATURA ═══ La risposta si è fermata perché ha finito lo
+    // spazio, non perché aveva finito di dire. Lo schema la rifiuterebbe
+    // come «non valida» — un difetto nostro, si legge — mentre la verità
+    // è un'altra e va detta: il documento contiene più righe di quante
+    // ne riusciamo a leggere in una volta. Un modello più capace non
+    // aiuta, quindi qui l'escalation non deve nemmeno provarci.
+    if (risposta.stop_reason === "max_tokens") {
+      return {
+        esito: {
+          esito: "errore" as const,
+          messaggio:
+            "Questo documento contiene più righe di quante riusciamo a leggerne in una volta sola. Dividilo in due file — per esempio per semestre — e caricali separatamente: i dati confluiscono nello stesso posto.",
+        },
+        uso,
+      };
+    }
 
     // Si valida COMUNQUE il risultato con lo schema, anche se è stato
     // generato con vincolo di formato: il vincolo riduce gli errori di

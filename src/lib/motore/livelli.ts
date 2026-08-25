@@ -92,7 +92,14 @@ export function livelloIniziale(
 
   // Il manoscritto è il caso in cui un modello meno capace non sbaglia di
   // poco: sbaglia una cifra, che è un ordine di grandezza.
-  if (ctx.manoscrittoAtteso) return "superiore";
+  //
+  // Ma l'attesa del tipo dice che quel documento ARRIVA spesso a mano,
+  // non che QUESTO lo sia: un registro di formazione esportato dal
+  // gestionale è un PDF con lo strato di testo, e in uno strato di testo
+  // una grafia non ci può stare. Guardare solo l'attesa mandava al
+  // modello di punta un documento nato digitale — misurato: $0,185
+  // contro $0,11 sullo stesso registro di ventiquattro righe.
+  if (ctx.manoscrittoAtteso && !ctx.nativo) return "superiore";
 
   // Un documento non nativo va interpretato: la posizione sulla pagina è
   // metà dell'informazione.

@@ -710,6 +710,35 @@ fallirebbe uguale e costerebbe due volte.
 ciascun livello sono dichiarate in `CAPACITA_DI_LIVELLO`: scoprirle a
 runtime significa un 400 e una lettura persa.
 
+**L'attesa del tipo dice come ARRIVA di solito, non com'è QUESTO.** Un
+registro di formazione è dichiarato prevalentemente manoscritto, ma
+quello esportato da un gestionale è un PDF con lo strato di testo — e in
+uno strato di testo una grafia non ci può stare. Perciò il livello
+superiore scatta su `manoscritto atteso **e** non nativo`: guardare solo
+l'attesa mandava al modello di punta un documento nato digitale.
+Misurato sullo stesso registro di ventiquattro righe: **$0,185 → $0,133**,
+stesso risultato.
+
+### Il tetto di token si calcola, non si fissa
+
+Una bolletta produce dieci campi e sta in duemila token; un registro di
+**venti righe ne produce seimila** — misurato, 305 token a riga su sette
+colonne. Con il tetto fisso a quattromila la risposta si troncava a metà:
+lo schema la rifiutava come «non valida», il cliente leggeva «riprova», e
+riprovare falliva identico. Un vicolo cieco silenzioso, proprio sul caso
+che conta di più — il registro compilato a mano.
+
+Ora il tetto si calcola da forma, pagine e colonne (`tettoToken`), e
+concederlo largo non costa nulla: si pagano i token generati, non quelli
+concessi. E se la risposta si ferma comunque (`stop_reason: "max_tokens"`)
+non si finge un errore di schema: si dice al cliente che il documento
+contiene più righe di quante se ne leggano in una volta, e di dividerlo —
+un modello più capace non aiuterebbe, quindi lì l'escalation non prova
+nemmeno.
+
+Collaudato end-to-end su ventiquattro righe: lette tutte, 7.881 token in
+uscita, $0,133.
+
 ### I numeri, misurati
 
 `scripts/confronto-livelli.mjs` legge lo stesso documento coi tre livelli

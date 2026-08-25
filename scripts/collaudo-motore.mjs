@@ -63,6 +63,54 @@ const RIGHE_FORMAZIONE = [
 
 const ATTESI_FORMAZIONE = { righe: 6, primoCorso: "Sicurezza generale" };
 
+/**
+ * Un registro LUNGO: ventiquattro righe.
+ *
+ * È il caso che con un tetto di token fisso si troncava a metà senza
+ * dirlo — la risposta si fermava, lo schema la rifiutava, e il cliente
+ * leggeva «riprova». Serve a provare che il tetto calcolato regge, e a
+ * misurare quanto costa davvero un registro come quelli veri.
+ */
+const CORSI_LUNGHI = [
+  ["Sicurezza generale", "12/01/2025", 4, 8, 3, "sicurezza"],
+  ["Antincendio rischio medio", "23/01/2025", 8, 12, 4, "sicurezza"],
+  ["Primo soccorso", "06/02/2025", 12, 6, 2, "sicurezza"],
+  ["Aggiornamento ISO 9001", "20/02/2025", 6, 5, 2, "qualita"],
+  ["Gestione rifiuti", "05/03/2025", 4, 7, 1, "ambiente"],
+  ["Uso dei DPI", "19/03/2025", 2, 22, 9, "sicurezza"],
+  ["Carrelli elevatori", "02/04/2025", 12, 4, 0, "sicurezza"],
+  ["Lavori in quota", "16/04/2025", 8, 6, 1, "sicurezza"],
+  ["Parita di genere e inclusione", "07/05/2025", 3, 24, 11, "parita"],
+  ["Privacy e trattamento dati", "21/05/2025", 4, 18, 8, "altro"],
+  ["Preposti - aggiornamento", "04/06/2025", 6, 3, 1, "sicurezza"],
+  ["Rischio chimico", "18/06/2025", 4, 9, 2, "sicurezza"],
+  ["Efficienza energetica", "02/07/2025", 4, 11, 4, "ambiente"],
+  ["Audit interni", "16/07/2025", 8, 4, 2, "qualita"],
+  ["Movimentazione carichi", "03/09/2025", 4, 14, 5, "sicurezza"],
+  ["Emergenze e evacuazione", "17/09/2025", 3, 26, 12, "sicurezza"],
+  ["Saldatura - qualifica", "01/10/2025", 16, 3, 0, "tecnico"],
+  ["Metrologia e tarature", "15/10/2025", 6, 5, 2, "qualita"],
+  ["Rumore e vibrazioni", "05/11/2025", 4, 10, 3, "sicurezza"],
+  ["Economia circolare", "19/11/2025", 4, 8, 4, "ambiente"],
+  ["RSPP - aggiornamento", "03/12/2025", 20, 1, 0, "sicurezza"],
+  ["Codice etico e 231", "10/12/2025", 3, 21, 9, "altro"],
+  ["Stress lavoro correlato", "17/12/2025", 4, 16, 7, "sicurezza"],
+  ["Riesame di direzione", "22/12/2025", 2, 5, 2, "qualita"],
+];
+
+const RIGHE_LUNGHE = [
+  ["REGISTRO DELLA FORMAZIONE - ANNO 2025", 14],
+  ["Officina Lombardi S.r.l. (impresa di esempio)", 10],
+  ["", 10],
+  ["Corso                          Data        Ore  Part.  Donne  Ambito", 9],
+  ...CORSI_LUNGHI.map(([c, d, o, p, w, a]) => [
+    `${c.padEnd(30).slice(0, 30)} ${d}  ${String(o).padStart(3)}  ${String(p).padStart(4)}  ${String(w).padStart(5)}   ${a}`,
+    9,
+  ]),
+  ["", 9],
+  ["Docente: Studio Formazione Padana - Documento di esempio.", 8],
+];
+
 const RIGHE = [
   ["ENERGIA PADANA S.p.A.", 16],
   ["Fattura per la fornitura di energia elettrica", 11],
@@ -146,13 +194,20 @@ const tipoScelto =
   process.argv.find((a) => a.startsWith("--tipo="))?.slice(7) ?? "bolletta-elettrica";
 const percorso = process.argv.find((a) => !a.startsWith("--") && a !== process.argv[0] && a !== process.argv[1]);
 const vero = Boolean(percorso);
+const lungo = process.argv.includes("--lungo");
 const tabella = tipoScelto === "formazione";
 const dati = vero
   ? new Uint8Array(readFileSync(percorso))
-  : new Uint8Array(costruisciPdf(tabella ? RIGHE_FORMAZIONE : RIGHE));
+  : new Uint8Array(
+      costruisciPdf(tabella ? (lungo ? RIGHE_LUNGHE : RIGHE_FORMAZIONE) : RIGHE),
+    );
 
 if (!vero) {
-  const nome = tabella ? "/tmp/formazione-collaudo.pdf" : "/tmp/bolletta-collaudo.pdf";
+  const nome = tabella
+    ? lungo
+      ? "/tmp/formazione-lunga-collaudo.pdf"
+      : "/tmp/formazione-collaudo.pdf"
+    : "/tmp/bolletta-collaudo.pdf";
   writeFileSync(nome, dati);
   console.log(`Documento di collaudo scritto in ${nome}`);
 }
@@ -164,7 +219,7 @@ console.log(`
 Documento : ${vero ? basename(percorso) : "bolletta generata (impresa di esempio)"}
 Dimensione: ${(dati.byteLength / 1024).toFixed(1)} kB
 Natura    : ${natura.nativo ? "PDF nativo" : "scansione o immagine"} · ${natura.pagine} pagina/e · ${natura.caratteriTesto} caratteri di testo
-Modello   : ${config.model} · max ${config.maxTokens} token
+Modello   : scelto dal Motore in base al compito (livelli.ts)
 `);
 
 console.log("Chiamata all'API in corso…\n");
@@ -180,7 +235,7 @@ const esito = await leggiDocumento({
 if (esito.uso) {
   const u = esito.uso;
   console.log(
-    `Token: ${u.tokenIngresso} in / ${u.tokenUscita} out · ${(u.durataMs / 1000).toFixed(1)} s · costo ${costoLeggibile(u.costoMicro)}\n`,
+    `Modello: ${u.modello}${esito.livello ? ` (livello ${esito.livello})` : ""}${esito.escalation ? ` — salito da ${esito.escalation.da}: ${esito.escalation.motivo}` : ""}\nToken: ${u.tokenIngresso} in / ${u.tokenUscita} out · ${(u.durataMs / 1000).toFixed(1)} s · costo ${costoLeggibile(u.costoMicro)}\n`,
   );
 }
 
@@ -207,9 +262,10 @@ if (esito.forma === "tabella") {
 
   if (!vero) {
     console.log("\n— confronto con i valori attesi —\n");
+    const atteseRighe = lungo ? CORSI_LUNGHI.length : ATTESI_FORMAZIONE.righe;
     verifica(
-      `${ATTESI_FORMAZIONE.righe} righe`,
-      esito.righe.length === ATTESI_FORMAZIONE.righe,
+      `${atteseRighe} righe`,
+      esito.righe.length === atteseRighe,
       `lette ${esito.righe.length}`,
     );
     const primo = esito.righe[0]?.celle.find((c) => c.chiave === "corso")?.valore;

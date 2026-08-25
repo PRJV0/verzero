@@ -25,8 +25,44 @@
 
 const MODELLO_PREDEFINITO = "claude-opus-5";
 
-/** Il tetto di token in uscita. Il ragionamento adattivo ci sta dentro. */
+/** Il tetto di token in uscita per una SCHEDA: pochi campi, fissi. */
 const MAX_TOKEN_PREDEFINITO = 4000;
+
+/** Oltre questo non si va comunque: un'uscita più lunga è un difetto. */
+const MAX_TOKEN_ASSOLUTO = 16_000;
+
+/** Quanto costa una cella, in token di uscita. Misurato: 1.833 token per
+ *  sei righe da sette colonne, cioè ~44 a cella. Arrotondato in alto. */
+const TOKEN_PER_CELLA = 50;
+
+/** Quante righe ci stanno, al massimo, in una pagina fitta di registro. */
+const RIGHE_PER_PAGINA = 30;
+
+/**
+ * IL TETTO DI TOKEN, calcolato invece che fissato.
+ *
+ * ═══ PERCHÉ NON BASTA UN NUMERO ═══
+ * Una bolletta produce dieci campi e sta in duemila token. Un registro di
+ * manutenzione di venti righe ne produce SEIMILA — misurato, non
+ * supposto: 305 token a riga su sette colonne. Con un tetto fisso a
+ * quattromila la risposta si tronca a metà, lo schema non la accetta, il
+ * cliente legge «riprova» e riprovare fallisce identico. Un vicolo cieco
+ * silenzioso, proprio sul caso — il registro compilato a mano — che
+ * conta di più.
+ *
+ * Il tetto non costa nulla se non lo si usa: si pagano i token generati,
+ * non quelli concessi. Quindi si concede largo e si controlla l'esito.
+ */
+export function tettoToken(
+  forma: "scheda" | "tabella",
+  pagine: number,
+  colonne: number,
+): number {
+  if (forma === "scheda") return MAX_TOKEN_PREDEFINITO;
+  const stimato =
+    2000 + Math.max(1, pagine) * RIGHE_PER_PAGINA * colonne * TOKEN_PER_CELLA;
+  return Math.min(MAX_TOKEN_ASSOLUTO, Math.max(MAX_TOKEN_PREDEFINITO, stimato));
+}
 
 /** I nostri limiti verso l'API, più bassi dei suoi (32 MB, 600 pagine). */
 export const MAX_BYTE_VERSO_API = 30 * 1024 * 1024;

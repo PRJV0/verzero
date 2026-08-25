@@ -71,7 +71,11 @@ import {
   completamentoBozza,
   segmentiBozza,
 } from "../src/lib/bozza.ts";
-import { costoMicroDollari, extractionConfig } from "../src/lib/motore/costi.ts";
+import {
+  costoMicroDollari,
+  extractionConfig,
+  tettoToken,
+} from "../src/lib/motore/costi.ts";
 
 let superati = 0;
 let falliti = 0;
@@ -1373,8 +1377,13 @@ verifica(
     "superiore",
 );
 verifica(
-  "un tipo dichiarato spesso manoscritto parte dal superiore, sempre",
-  livelloIniziale(VOCE, { nativo: true, manoscrittoAtteso: true }) === "superiore",
+  "un tipo spesso manoscritto, arrivato SCANSIONATO, parte dal superiore",
+  livelloIniziale(VOCE, { nativo: false, manoscrittoAtteso: true }) === "superiore",
+);
+verifica(
+  "lo stesso tipo arrivato NATIVO no: in uno strato di testo una grafia non ci sta",
+  livelloIniziale(VOCE_FORMAZIONE_L, { nativo: true, manoscrittoAtteso: true }) ===
+    "intermedio",
 );
 verifica(
   "l'attesa dichiarata dice quali tipi sono manoscritti: la formazione sì, la visura no",
@@ -1454,6 +1463,35 @@ verifica(
 verifica(
   "un file che non è un PDF non fa esplodere l'estrazione: restituisce vuoto",
   testoDelPdf(new TextEncoder().encode("non sono un pdf")) === "",
+);
+
+
+/* ================================================================== */
+console.log("\n— il tetto di token si calcola, non si fissa —\n");
+
+verifica(
+  "una scheda si accontenta del tetto di base",
+  tettoToken("scheda", 1, 10) === 4000,
+  String(tettoToken("scheda", 1, 10)),
+);
+verifica(
+  "una tabella di una pagina ha molto più spazio di una scheda",
+  tettoToken("tabella", 1, 8) > 4000,
+  String(tettoToken("tabella", 1, 8)),
+);
+verifica(
+  "venti righe da sette colonne ci stanno: sono ~6.100 token misurati",
+  tettoToken("tabella", 1, 7) >= 6100,
+  String(tettoToken("tabella", 1, 7)),
+);
+verifica(
+  "più pagine, più spazio",
+  tettoToken("tabella", 3, 7) >= tettoToken("tabella", 1, 7),
+);
+verifica(
+  "ma esiste un tetto assoluto: un'uscita più lunga è un difetto, non un registro",
+  tettoToken("tabella", 100, 20) <= 16_000,
+  String(tettoToken("tabella", 100, 20)),
 );
 
 console.log(
