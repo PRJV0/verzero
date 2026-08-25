@@ -54,10 +54,11 @@ export function Orientatore() {
         });
         const dati: Esito = await r.json();
         setEsito(dati);
-        traccia(EVENTI.ORIENTATORE_RICERCA, {
-          risultati: dati.risultati.length,
-          via: dati.via,
-        });
+        // La ricerca la registra il SERVER, che sta già rispondendo e
+        // conosce anche i termini. Registrarla anche da qui scriveva due
+        // righe per ogni ricerca — una col dettaglio e una senza — e
+        // avrebbe fatto contare il doppio. Dal browser resta solo il
+        // click sul risultato, che il server non può vedere.
       } catch {
         // Se la rete cade, il modulo resta un modulo: il tasto invio
         // porta comunque al catalogo, che sa rispondere da solo.
