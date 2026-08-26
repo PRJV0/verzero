@@ -19,6 +19,7 @@ const { marchioEstesoSvg, logotipoSvg, cardSocialeSvg } = await import(
   "../src/lib/marchio-svg.ts"
 );
 const { SITO } = await import("../src/lib/seo.ts");
+const { MARCHIO_TARGA_CORPO } = await import("../src/lib/targa-avvio.ts");
 
 let superati = 0;
 let falliti = 0;
@@ -133,6 +134,11 @@ verifica(
 verifica(
   "e la semplice resta semplice a qualunque misura",
   variantePer("semplice", 400) === "semplice",
+);
+verifica(
+  "il marchio della targa scaricabile sta sopra la soglia, non SULLA soglia",
+  MARCHIO_TARGA_CORPO >= LOCKUP.minimaPx,
+  `${MARCHIO_TARGA_CORPO} contro ${LOCKUP.minimaPx}`,
 );
 
 /* ================================================================== */

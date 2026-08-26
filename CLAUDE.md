@@ -254,13 +254,16 @@ Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs`.
   **Un secondo lockup dentro la pagina è quasi sempre di troppo**: il
   footer lo porta su ogni pagina, quindi in fondo a una pagina
   istituzionale se ne vedrebbero due nella stessa schermata.
-- **Payoff di marca**: `Azienda a norma in tempo Zero`, fonte unica in
+- **Payoff di marca**: `A norma in tempo zero`, fonte unica in
   `SITO.payoff` (`src/lib/seo.ts`). Una forma sola, mai riscritta:
   accompagna il logotipo nel footer, chiude il titolo del sito
-  (`Verzero — Azienda a norma in tempo Zero`), è lo `slogan` di
+  (`Verzero — A norma in tempo zero`), è lo `slogan` di
   `Organization` e firma le email al cliente. Chi lo scrive a mano
   invece di leggerlo dalla costante fa fallire `scripts/test-aeo.mjs`,
-  che cerca le varianti vicine in tutto `src/`.
+  che cerca le varianti vicine in tutto `src/` — compresa la forma
+  ritirata di prima e le versioni con la punteggiatura che il payoff non
+  ha. Niente virgole dentro, niente punto in fondo, e `zero` minuscolo:
+  lì è l'aggettivo di «tempo», non il nome della cosa.
   **Che cosa significa «in tempo Zero»**: è lo Zero del sistema di
   marca — il tempo che ci mette il CLIENTE, «bastano i documenti che
   hai già» — e NON un termine di consegna. La regola contro le

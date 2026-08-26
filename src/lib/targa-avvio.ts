@@ -28,13 +28,17 @@ const PAPER = "#FBFAF7";
 /**
  * Corpo del logotipo nel lockup della targa.
  *
- * È la misura minima del lockup (`LOCKUP.minimaPx`), non una più
- * piccola: a 34 unità il payoff scendeva a sei, cioè sotto la soglia
- * che il componente in pagina si rifiuta di attraversare. Una regola
- * che vale sullo schermo e non su un file che si stampa non è una
- * regola.
+ * Scelto per QUESTA impaginazione, e non agganciato a
+ * `LOCKUP.minimaPx`: lo era, e quando il payoff si è allungato la
+ * soglia minima è scesa da 56 a 38 — trascinandosi dietro il marchio
+ * della targa, che si è rimpicciolito di un terzo senza che nessuno lo
+ * avesse chiesto. Una soglia dice quanto in piccolo si PUÒ andare, non
+ * quanto grande deve stare una cosa.
+ *
+ * Deve restare sopra la soglia, e `scripts/test-marchio.mjs` lo
+ * controlla.
  */
-const MARCHIO_CORPO = LOCKUP.minimaPx;
+export const MARCHIO_TARGA_CORPO = 56;
 
 const esc = (s: string) =>
   s
@@ -130,7 +134,7 @@ export function targaAvvioSvg({
        senza finire addosso all'indirizzo di verifica.
        I margini sono l'AREA DI RISPETTO del marchio, presa da lì e non
        scelta a occhio. -->
-  <g transform="translate(${(235 - (MARCHIO_CORPO * LOCKUP.larghezza) / 2).toFixed(1)},${(612 - 34 - MARCHIO_CORPO * LOCKUP.altezza).toFixed(1)}) scale(${(MARCHIO_CORPO / 100).toFixed(4)})">
+  <g transform="translate(${(235 - (MARCHIO_TARGA_CORPO * LOCKUP.larghezza) / 2).toFixed(1)},${(612 - 34 - MARCHIO_TARGA_CORPO * LOCKUP.altezza).toFixed(1)}) scale(${(MARCHIO_TARGA_CORPO / 100).toFixed(4)})">
     ${marchioEstesoGruppo({ colore: PINE })}
   </g>
 </svg>

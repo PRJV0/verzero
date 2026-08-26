@@ -74,19 +74,39 @@ const LARGHEZZA_NOME = 3.1772;
  */
 export const PAYOFF_LOCKUP = {
   /** Quello che si legge sulla riga 2. */
-  riga: "AZIENDA A NORMA IN TEMPO",
+  riga: "A NORMA IN TEMPO",
   /** Il payoff per esteso, dalla fonte unica dell'identità. */
   get completo() {
     return SITO.payoff;
   },
-  /** Corpo della riga 2, in em del logotipo. */
-  scala: 0.18,
+  /**
+   * Corpo della riga 2, in em del logotipo.
+   *
+   * ═══ NON È UN NUMERO SCELTO: È QUELLO CHE RESTA ═══
+   * Le due righe devono avere la stessa larghezza, e la riga 2 è passata
+   * da ventiquattro caratteri a sedici. Con la crenatura ferma restava
+   * una riga corta di un terzo; allargando solo la crenatura, a corpo
+   * invariato, servivano trenta centesimi di em fra una lettera e
+   * l'altra — cioè sedici lettere sparse, non un payoff.
+   *
+   * Quindi cresce il corpo, e la crenatura resta ESATTAMENTE quella di
+   * prima (0,1348 em, il 13,5% del corpo): il payoff spazia come
+   * spaziava, e tutto il lavoro lo fa la scala. È la variabile giusta da
+   * muovere perché è l'unica che non cambia il carattere della riga.
+   *
+   *   larghezza naturale di «A NORMA IN TEMPO»   9,90702 em del payoff
+   *   più quindici intervalli di crenatura      +2,022
+   *   per il corpo                              ×0,2663 = 3,1772 em
+   *
+   * che è la larghezza di «Verzer». Misurata, non arrotondata.
+   */
+  scala: 0.2663,
   peso: 500,
   /**
-   * La crenatura che porta la riga 2 alla larghezza esatta della riga 1,
-   * in em del PAYOFF. Ventitré intervalli e non ventiquattro: l'ultimo,
-   * quello dopo la «O» finale, il componente lo riprende con un rientro
-   * negativo, altrimenti l'inchiostro finirebbe prima del bordo.
+   * La crenatura, in em del PAYOFF. Quindici intervalli e non sedici:
+   * l'ultimo, quello dopo la «O» finale, la scatola lo riprende con la
+   * larghezza dichiarata, altrimenti l'inchiostro finirebbe prima del
+   * bordo.
    */
   tracking: 0.1348,
   /**
@@ -100,6 +120,12 @@ export const PAYOFF_LOCKUP = {
     return this.tracking * this.scala;
   },
 } as const;
+
+/**
+ * Sotto questa misura il payoff non è più una riga da leggere. È
+ * l'unico numero scelto della soglia: tutto il resto è una divisione.
+ */
+const PAYOFF_MINIMO_PX = 10;
 
 /* ------------------------------------------------------------------ */
 /* La composizione                                                     */
@@ -203,13 +229,16 @@ export const LOCKUP = {
   /**
    * SOTTO QUESTA MISURA si usa la variante semplice.
    *
-   * Il payoff sta a 0,18 em del logotipo: a 56 px il logotipo lo porta a
-   * ~10 px, che con quella crenatura è ancora una riga che si legge.
-   * Sotto, diventa un grigio con dentro delle forme — e un payoff che
-   * non si legge non è un marchio più piccolo, è sporcizia intorno al
-   * marchio. Il componente non lo mostra: cambia variante da solo.
+   * Non è una taratura: è una divisione. L'unico numero scelto è
+   * `PAYOFF_MINIMO_PX` — sotto i dieci pixel una riga maiuscola spaziata
+   * smette di essere una riga e diventa un grigio con dentro delle
+   * forme, e un payoff che non si legge non è un marchio più piccolo, è
+   * sporcizia intorno al marchio. La soglia del lockup è quel numero
+   * diviso il corpo del payoff, e si aggiusta da sola: col payoff
+   * cresciuto da 0,18 a 0,2663 em la soglia è scesa da 56 px a 38,
+   * perché a 38 px il payoff è già ai dieci che servono.
    */
-  minimaPx: 56,
+  minimaPx: Math.ceil(PAYOFF_MINIMO_PX / PAYOFF_LOCKUP.scala),
 } as const;
 
 /**

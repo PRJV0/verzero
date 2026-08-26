@@ -245,7 +245,7 @@ for (const s of SERVIZI) {
 /* 5. Il payoff: una forma sola, ovunque                               */
 /* ------------------------------------------------------------------ */
 
-const PAYOFF = "Azienda a norma in tempo Zero";
+const PAYOFF = "A norma in tempo zero";
 
 prova(
   "il payoff è quello deciso, carattere per carattere",
@@ -253,8 +253,14 @@ prova(
   SITO.payoff,
 );
 prova(
-  "«Zero» porta la maiuscola: è la parola del sistema, non un numero",
-  SITO.payoff.includes("Zero") && !SITO.payoff.includes("zero"),
+  "nessuna punteggiatura dentro il payoff, e nessun punto in fondo",
+  !/[.,;:!?]/.test(SITO.payoff),
+  SITO.payoff,
+);
+prova(
+  "«zero» minuscolo: nel payoff è l'aggettivo di «tempo», non il nome della cosa",
+  SITO.payoff.endsWith("zero"),
+  SITO.payoff,
 );
 prova(
   "i dati strutturati lo dichiarano come slogan",
@@ -264,7 +270,7 @@ prova(
 prova("llms.txt lo porta sotto il nome", testo.includes(SITO.payoff));
 prova(
   "il titolo del sito è marchio più payoff",
-  `${SITO.nome} — ${SITO.payoff}` === "Verzero — Azienda a norma in tempo Zero",
+  `${SITO.nome} — ${SITO.payoff}` === "Verzero — A norma in tempo zero",
 );
 prova(
   "e sta dentro i 60 caratteri che un motore mostra",
@@ -282,10 +288,16 @@ prova(
  */
 const sorgenti = leggiSorgenti("src");
 const VARIANTI_VIETATE = [
+  // La forma precedente, ritirata: era «Azienda a norma in tempo Zero».
+  // Sta per prima perché è quella che può tornare per inerzia, copiata
+  // da un file vecchio o da una vecchia presentazione.
   "azienda a norma in tempo zero",
   "impresa a norma in tempo zero",
   "aziende a norma in tempo zero",
   "a norma in tempo 0",
+  // Con la punteggiatura che il payoff non ha.
+  "a norma, in tempo zero",
+  "a norma in tempo zero.",
 ];
 for (const variante of VARIANTI_VIETATE) {
   const colpiti = sorgenti.filter(([, contenuto]) =>
@@ -294,6 +306,8 @@ for (const variante of VARIANTI_VIETATE) {
   prova(
     `nessuna variante «${variante}» scritta a mano`,
     // La forma esatta esiste in un posto solo: la costante in seo.ts.
+    // I commenti che NOMINANO la variante ritirata per dire che è
+    // ritirata sono ammessi: è così che si spiega perché non tornarci.
     colpiti.every(([file]) => file.endsWith("src/lib/seo.ts")),
     colpiti.map(([f]) => f).join(", "),
   );

@@ -46,10 +46,17 @@ export const SITO = {
    * azienda» — non il tempo di lavorazione. Non è e non diventerà un
    * termine di consegna: la regola contro le quantificazioni di tempo
    * (SPEC §12.O) resta in vigore, e nessun testo può appoggiarsi al
-   * payoff per promettere una data. Chi scrive «pronto in tempo Zero»
+   * payoff per promettere una data. Chi scrive «pronto in tempo zero»
    * accanto a un percorso sta scrivendo un'altra cosa.
+   *
+   * ═══ «zero» MINUSCOLO, E NON È UNA SVISTA ═══
+   * Nel payoff lo zero è minuscolo: la frase non ha soggetto e non ha
+   * punteggiatura interna, e una maiuscola in mezzo la spezzerebbe in
+   * due. Il maiuscolo resta dove lo Zero è il NOME della cosa — «Zero
+   * effort», «Lo Zero di Ver0», il sottotitolo dell'hero. Qui è
+   * l'aggettivo di «tempo», e si scrive come si scrive.
    */
-  payoff: "Azienda a norma in tempo Zero",
+  payoff: "A norma in tempo zero",
   /**
    * LA DESCRIZIONE DELL'ENTITÀ — una sola, ovunque si descriva l'azienda.
    *

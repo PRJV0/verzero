@@ -19,8 +19,8 @@ import { LOCKUP, PAYOFF_LOCKUP, variantePer } from "@/lib/marchio";
  * Tre elementi in proporzioni fisse (`src/lib/marchio.ts`):
  *
  *   riga 1   «Verzer» — il logotipo PRIVATO dello zero finale
- *   riga 2   «AZIENDA A NORMA IN TEMPO» in Inter maiuscolo spaziato,
- *            della STESSA larghezza esatta della riga 1
+ *   riga 2   il payoff in Inter maiuscolo spaziato, della STESSA
+ *            larghezza esatta della riga 1
  *   a destra UN SOLO zero canonico, alto dall'altezza delle maiuscole
  *            della riga 1 fino alla linea di base del payoff
  *
@@ -30,9 +30,10 @@ import { LOCKUP, PAYOFF_LOCKUP, variantePer } from "@/lib/marchio";
  * «in tempo» e non con «in tempo Zero»: la parola c'è già, disegnata.
  *
  * ═══ PERCHÉ LE DUE RIGHE FINISCONO ALLINEATE ═══
- * Non per fortuna e non a occhio. La riga 2 ha una crenatura calcolata
- * (`PAYOFF_LOCKUP.tracking`) per portare «AZIENDA A NORMA IN TEMPO»
- * esattamente alla larghezza di «Verzer», e `text-align-last: justify`
+ * Non per fortuna e non a occhio. Il corpo della riga 2
+ * (`PAYOFF_LOCKUP.scala`) è calcolato per portarla esattamente alla
+ * larghezza di «Verzer» con la crenatura ferma, e
+ * `text-align-last: justify`
  * assorbe negli spazi fra le parole il residuo che resta quando il
  * carattere non è ancora arrivato o rende in modo un filo diverso. Senza
  * quel giustificato una differenza di mezzo pixel si vedrebbe: le due
