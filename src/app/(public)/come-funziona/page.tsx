@@ -3,12 +3,13 @@ import Link from "next/link";
 import { ArrowRight, BookMarked, UserCheck } from "lucide-react";
 
 import { DocumentoEsito } from "@/components/documento-esito";
-import { GuidaPassi } from "@/components/guida-passi";
+import { GuidaPassi, type VetrinaGuida } from "@/components/guida-passi";
 import { JsonLd } from "@/components/json-ld";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { OndaParticelle } from "@/components/onda-particelle";
 import { QualitaOutput } from "@/components/qualita-output";
-import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
+import { SOLO_STANDARD_UFFICIALI, getServizio } from "@/lib/catalog";
+import { prezzoDa } from "@/lib/pricing";
 import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
 import { SITO, jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
@@ -75,6 +76,47 @@ const FASI = [
  * Ritmo chiaro/scuro/chiaro come in home, e nelle sezioni scure il
  * fascio luminoso — la stessa implementazione, calibrata.
  */
+/**
+ * QUELLO CHE SI VEDE DENTRO I MOCKUP della guida.
+ *
+ * Nomi dal catalogo, prezzi dal listino: si costruisce QUI, sul server,
+ * e si passa al componente. Due ragioni, e valgono entrambe. La prima è
+ * la regola: nessun prezzo scritto a mano nelle pagine, e un prezzo
+ * dentro un mockup è comunque un prezzo scritto in una pagina. La
+ * seconda è il peso: la guida è un componente client, e importarci il
+ * catalogo vorrebbe dire spedirlo intero a chi apre questa pagina.
+ */
+function vetrinaGuida(): VetrinaGuida {
+  const scelti = [
+    "bilancio-sostenibilita-vsme-base",
+    "carbon-footprint-scope-1-2",
+    "percorso-ver0",
+  ];
+  const risultati = scelti.map((slug) => {
+    const s = getServizio(slug);
+    return {
+      nome: s?.name ?? "",
+      taglio: s?.taglio ?? "",
+      prezzo: prezzoDa(slug) ?? "",
+      // La riga di beneficio è quella del catalogo, parola per parola:
+      // due formulazioni della stessa cosa sono due promesse diverse.
+      riga: s?.short ?? "",
+    };
+  });
+  const primo = getServizio(scelti[0]!);
+  return {
+    risultati,
+    scheda: {
+      nome: primo?.name ?? "",
+      taglio: primo?.taglio ?? "",
+      prezzo: prezzoDa(scelti[0]!) ?? "",
+      // I primi tre di `output`, che è quello che la scheda del servizio
+      // dichiara di produrre: non una lista scritta per il mockup.
+      copre: (primo?.output ?? []).slice(0, 4).map((r) => r.split(/[,(—]/)[0]!.trim()),
+    },
+  };
+}
+
 export default function ComeFunzionaPage() {
   return (
     <main>
@@ -121,7 +163,7 @@ export default function ComeFunzionaPage() {
             Cinque passi, dall&apos;inizio alla consegna.
           </h2>
         </div>
-        <GuidaPassi />
+        <GuidaPassi vetrina={vetrinaGuida()} />
 
         {/* UNA SOLA CTA, e porta al catalogo: chi ha appena visto i
             cinque passi ha una domanda sola, «e quanto costa». */}
