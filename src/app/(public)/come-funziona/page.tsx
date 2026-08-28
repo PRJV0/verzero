@@ -278,25 +278,13 @@ export default function ComeFunzionaPage() {
         </div>
       </section>
 
-      {/* CTA finale: dal metodo al catalogo. */}
-      <section className="border-t-2 border-line bg-white px-5 py-16 text-center">
-        <h2 className="font-display text-4xl text-ink md:text-5xl">
-          Visto il metodo, scegli il percorso.
-        </h2>
-        <p className="mx-auto mt-3 max-w-lg text-sm text-gray-warm">
-          Ogni pagina servizio dichiara prezzo, perimetro e cosa produce.
-          Quando attivi, il portale ti chiede esattamente i documenti che
-          servono a quel percorso.
-        </p>
-        <div className="mt-7 flex justify-center">
-          <Link
-            href="/servizi"
-            className="vz-press inline-flex items-center gap-2 rounded-xl bg-pine px-7 py-4 text-base font-semibold text-white hover:-translate-y-0.5"
-          >
-            Calcola il prezzo <ArrowRight size={18} />
-          </Link>
-        </div>
-      </section>
+      {/* NESSUNA CTA IN FONDO ALLA PAGINA, ed è una scelta.
+          Ce n'era una — «Visto il metodo, scegli il percorso» — identica
+          per destinazione e per senso a quella che chiude i cinque
+          passi, quattro sezioni più su. Due inviti allo stesso posto
+          sulla stessa pagina non raddoppiano le probabilità che qualcuno
+          li segua: dicono che non sapevamo dove metterne uno. La
+          chiusura è quella della guida, che è la sezione principale. */}
     </main>
   );
 }

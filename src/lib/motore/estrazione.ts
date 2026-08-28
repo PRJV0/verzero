@@ -98,6 +98,47 @@ function descriviCampo(c: EtichettaCampo): string {
 }
 
 /**
+ * QUANTE AVVERTENZE ARRIVANO AL CLIENTE.
+ *
+ * Quattro. Non è una taratura fine: è il numero oltre il quale un
+ * elenco smette di essere una cosa che si legge e diventa una cosa che
+ * si scorre. Sul registro compilato a mano ne uscivano sette e nove —
+ * tutte vere, tutte ragionevoli, e insieme illeggibili.
+ */
+export const MAX_AVVERTENZE = 4;
+
+/**
+ * L'ordine è nostro: prima ciò che chiede un gesto, poi ciò che serve
+ * solo a sapere. Dentro ai due gruppi resta l'ordine del modello, che a
+ * quel punto è buono quanto un altro.
+ *
+ * Chiedere al modello di ordinare «per importanza» avrebbe voluto dire
+ * affidargli la definizione di importanza — e l'importanza qui ha un
+ * significato preciso e nostro: che il cliente debba alzarsi e fare
+ * qualcosa.
+ */
+export function ordinaAvvertenze(grezze: unknown): string[] {
+  const voci = (Array.isArray(grezze) ? grezze : [])
+    .map((a) => {
+      // Si accetta anche la forma vecchia, la stringa nuda: un documento
+      // riletto con uno schema precedente non deve perdere le avvertenze.
+      if (typeof a === "string") return { testo: a.trim(), azione: false };
+      const o = a as { testo?: unknown; azione?: unknown };
+      return {
+        testo: String(o?.testo ?? "").trim(),
+        azione: o?.azione === true,
+      };
+    })
+    .filter((a) => a.testo.length > 0);
+
+  const conAzione = voci.filter((a) => a.azione);
+  const soloDaSapere = voci.filter((a) => !a.azione);
+  return [...conAzione, ...soloDaSapere]
+    .slice(0, MAX_AVVERTENZE)
+    .map((a) => a.testo);
+}
+
+/**
  * Le regole del §4 dette al modello, più quelle specifiche del tipo.
  *
  * Non sostituiscono i controlli lato server — un'istruzione è una
@@ -139,7 +180,7 @@ export function istruzioni(voce: VoceLeggibile, ctx: ContestoLettura): string {
     "PRIMA DI TUTTO:",
     `- \`tipoRilevato\`: «atteso» se il documento è davvero ${voce.nome}; «altro-documento-dello-stesso-genere» se è un documento simile ma non quello (per esempio una bolletta del gas al posto di una elettrica); «altro» in ogni altro caso. Se non è «atteso», scrivi in \`tipoEffettivo\` che cosa è, in poche parole, e non estrarre nulla: un'estrazione parziale da un documento sbagliato sembra un successo ed è l'errore più costoso.`,
     "- `qualita`: «leggibile», «faticosa» se la scansione o la grafia ti costringono a indovinare, «illeggibile» se non si legge. Su «illeggibile» non estrarre nulla.",
-    "- `avvertenze`: quello che il documento dichiara e che chi lo legge deve sapere. Frasi brevi, in italiano.",
+    `- \`avvertenze\`: AL MASSIMO ${MAX_AVVERTENZE}, le più utili. Quello che il documento dichiara e che chi lo legge deve sapere, in frasi brevi: una riga l'una, non un paragrafo. Per ciascuna, \`azione\` vero se il cliente deve FARE qualcosa — controllare un valore, procurare un documento, correggere una cifra — e falso se è solo da sapere. Non ordinarle: all'ordine pensiamo noi.`,
     "- `noteLibere`: le note che qualcuno ha SCRITTO sul documento — la riga in fondo a un registro, l'annotazione a margine. Riportale parola per parola, per quanto la grafia lo permette, senza riassumerle e senza commentarle: sono parole del cliente, non tue. Se il documento non ne ha, lascia l'elenco vuoto. Qui NON vanno le tue osservazioni sulla lettura: quelle sono `avvertenze`.",
     "",
     ctx.nativo
@@ -245,7 +286,7 @@ export function interpretaRisposta(
       .map((a) => String(a).trim())
       .filter((a) => a.length > 0);
 
-  const avvertenze = righeDiTesto(dati.avvertenze);
+  const avvertenze = ordinaAvvertenze(dati.avvertenze);
   const noteLibere = righeDiTesto(dati.noteLibere);
 
   // Niente di utile letto: dirlo è più onesto che mostrare una tabella di

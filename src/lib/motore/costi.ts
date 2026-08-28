@@ -39,6 +39,20 @@ const TOKEN_PER_CELLA = 50;
 const RIGHE_PER_PAGINA = 30;
 
 /**
+ * QUANTO PRODUCE UNA TABELLA OLTRE ALLE SUE RIGHE.
+ *
+ * Intestazione, qualità, le quattro avvertenze, le note libere, la nota
+ * di riga — e il RAGIONAMENTO, che è la voce grossa. Misurato su un
+ * registro compilato a mano di una riga sola, dodici letture:
+ *
+ *   senza ragionamento   884 · 890 · 933 · 987 token      (varianza 11%)
+ *   con ragionamento     884 · 955 · 1.633 · 1.884        (varianza 113%)
+ *
+ * Duemila copre il caso peggiore con margine.
+ */
+const TOKEN_DI_CONTORNO = 2000;
+
+/**
  * IL TETTO DI TOKEN, calcolato invece che fissato.
  *
  * ═══ PERCHÉ NON BASTA UN NUMERO ═══
@@ -52,6 +66,20 @@ const RIGHE_PER_PAGINA = 30;
  *
  * Il tetto non costa nulla se non lo si usa: si pagano i token generati,
  * non quelli concessi. Quindi si concede largo e si controlla l'esito.
+ *
+ * ═══ PERCHÉ NON SI ABBASSA, ED È UNA MISURA NON UN'OPINIONE ═══
+ * La varianza di costo su uno stesso documento — da 865 a 1.884 token in
+ * uscita, il 114% — sembrava spreco di prosa, e la cura sembrava un
+ * tetto più stretto. Le dodici letture qui sopra dicono un'altra cosa:
+ * la differenza sta INTERAMENTE nel ragionamento adattivo, che il
+ * modello accende o no da sé. Senza, le letture stanno in undici punti
+ * percentuali; con, raddoppiano — e sono le letture in cui sta
+ * lavorando su una grafia difficile.
+ *
+ * Quindi abbassare il tetto non risparmierebbe un centesimo (si paga il
+ * generato, non il concesso) e rischierebbe di troncare la risposta DOPO
+ * che il ragionamento è stato speso: lo stesso vicolo cieco di prima, su
+ * documenti ancora peggiori. Il tetto è un tetto, non un obiettivo.
  */
 export function tettoToken(
   forma: "scheda" | "tabella",
@@ -60,7 +88,8 @@ export function tettoToken(
 ): number {
   if (forma === "scheda") return MAX_TOKEN_PREDEFINITO;
   const stimato =
-    2000 + Math.max(1, pagine) * RIGHE_PER_PAGINA * colonne * TOKEN_PER_CELLA;
+    TOKEN_DI_CONTORNO +
+    Math.max(1, pagine) * RIGHE_PER_PAGINA * colonne * TOKEN_PER_CELLA;
   return Math.min(MAX_TOKEN_ASSOLUTO, Math.max(MAX_TOKEN_PREDEFINITO, stimato));
 }
 

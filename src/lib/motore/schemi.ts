@@ -149,7 +149,33 @@ export function schemaScheda(campi: EtichettaCampo[], extra: z.ZodRawShape = {})
     tipoEffettivo: z.string(),
     qualita: z.enum(QUALITA),
     campi: z.array(involucro(chiaviDi(campi))),
-    avvertenze: z.array(z.string()),
+    /**
+     * LE AVVERTENZE — al massimo quattro, e l'ordine lo decidiamo noi.
+     *
+     * Non sono una stringa ma una coppia, perché servono due
+     * informazioni diverse: che cosa c'è da sapere, e se comporta
+     * qualcosa DA FARE. Misurato su un registro compilato a mano: ne
+     * uscivano sette in una lettura e nove in un'altra, tutte
+     * ragionevoli e tutte insieme — e sette righe su una lettura sola
+     * nessuno le legge. Le utili erano le prime due o tre, ma «prime»
+     * secondo l'ordine in cui il modello se le ricordava, che non è un
+     * ordine.
+     *
+     * Quindi qui si dichiara `azione`, e a mettere in fila ci pensa
+     * `estrazione.ts`: prima ciò che chiede un gesto al cliente, poi ciò
+     * che serve solo a sapere. L'ordinamento e il taglio stanno nel
+     * nostro codice — chiedere al modello di ordinare per importanza
+     * significa fidarsi del suo giudizio su quale sia l'importanza.
+     */
+    avvertenze: z.array(
+      z.object({
+        testo: z.string(),
+        /** Vero se il cliente deve FARE qualcosa: controllare un valore,
+         *  procurare un documento, correggere una cifra. Falso se è solo
+         *  da sapere. */
+        azione: z.boolean(),
+      }),
+    ),
     /**
      * LE NOTE SCRITTE DAL CLIENTE, se il documento ne ha.
      *
@@ -208,7 +234,33 @@ export function schemaTabella(
         nota: z.string(),
       }),
     ),
-    avvertenze: z.array(z.string()),
+    /**
+     * LE AVVERTENZE — al massimo quattro, e l'ordine lo decidiamo noi.
+     *
+     * Non sono una stringa ma una coppia, perché servono due
+     * informazioni diverse: che cosa c'è da sapere, e se comporta
+     * qualcosa DA FARE. Misurato su un registro compilato a mano: ne
+     * uscivano sette in una lettura e nove in un'altra, tutte
+     * ragionevoli e tutte insieme — e sette righe su una lettura sola
+     * nessuno le legge. Le utili erano le prime due o tre, ma «prime»
+     * secondo l'ordine in cui il modello se le ricordava, che non è un
+     * ordine.
+     *
+     * Quindi qui si dichiara `azione`, e a mettere in fila ci pensa
+     * `estrazione.ts`: prima ciò che chiede un gesto al cliente, poi ciò
+     * che serve solo a sapere. L'ordinamento e il taglio stanno nel
+     * nostro codice — chiedere al modello di ordinare per importanza
+     * significa fidarsi del suo giudizio su quale sia l'importanza.
+     */
+    avvertenze: z.array(
+      z.object({
+        testo: z.string(),
+        /** Vero se il cliente deve FARE qualcosa: controllare un valore,
+         *  procurare un documento, correggere una cifra. Falso se è solo
+         *  da sapere. */
+        azione: z.boolean(),
+      }),
+    ),
     /**
      * LE NOTE SCRITTE DAL CLIENTE, se il documento ne ha.
      *

@@ -59,6 +59,10 @@ import {
   verificaBollettaElettrica,
 } from "../src/lib/motore/plausibilita.ts";
 import {
+  MAX_AVVERTENZE,
+  ordinaAvvertenze,
+} from "../src/lib/motore/estrazione.ts";
+import {
   CAMPI_BOLLETTA_ELETTRICA,
   COLONNE_FORMAZIONE,
 } from "../src/lib/motore/schemi.ts";
@@ -1828,6 +1832,78 @@ verifica(
 verifica(
   "e la confidenza scende a zero, non resta alta su un campo vuoto",
   schedaCompletata.find((c) => c.chiave === "periodoFine")?.confidenza === 0,
+);
+
+
+/* ================================================================== */
+console.log("\n— le avvertenze: quattro, e l'ordine è nostro —\n");
+
+const SETTE = [
+  { testo: "informativa 1", azione: false },
+  { testo: "da fare 1", azione: true },
+  { testo: "informativa 2", azione: false },
+  { testo: "da fare 2", azione: true },
+  { testo: "informativa 3", azione: false },
+  { testo: "informativa 4", azione: false },
+  { testo: "informativa 5", azione: false },
+];
+const ordinate = ordinaAvvertenze(SETTE);
+
+verifica(
+  "non arrivano mai più di quattro avvertenze al cliente",
+  ordinate.length === MAX_AVVERTENZE,
+  `${ordinate.length}`,
+);
+verifica(
+  "prima quello che chiede un gesto, e nell'ordine in cui stava",
+  ordinate[0] === "da fare 1" && ordinate[1] === "da fare 2",
+  ordinate.join(" | "),
+);
+verifica(
+  "poi quello che serve solo a sapere",
+  ordinate[2] === "informativa 1" && ordinate[3] === "informativa 2",
+  ordinate.join(" | "),
+);
+verifica(
+  "un'avvertenza da fare non viene MAI tagliata a favore di una informativa",
+  ordinaAvvertenze([
+    ...Array.from({ length: 6 }, (_, i) => ({ testo: `info ${i}`, azione: false })),
+    { testo: "questa richiede un'azione", azione: true },
+  ])[0] === "questa richiede un'azione",
+);
+verifica(
+  "le stringhe nude della forma vecchia non si perdono",
+  ordinaAvvertenze(["una", "due"]).length === 2,
+);
+verifica(
+  "le voci vuote non occupano un posto dei quattro",
+  ordinaAvvertenze([
+    { testo: "   ", azione: true },
+    { testo: "vera", azione: false },
+  ]).join("") === "vera",
+);
+verifica(
+  "e un'uscita malformata non fa esplodere niente",
+  ordinaAvvertenze(null).length === 0 && ordinaAvvertenze("no").length === 0,
+);
+
+/* — Il tetto d'uscita: largo abbastanza per il ragionamento — */
+verifica(
+  "il tetto di una tabella copre il caso peggiore misurato col ragionamento acceso",
+  // 1.884 token è l'uscita più alta osservata su un registro di UNA
+  // riga; il tetto deve stare sopra con margine, altrimenti si tronca
+  // dopo aver già speso il ragionamento.
+  tettoToken("tabella", 1, 8) > 1884 * 2,
+  `${tettoToken("tabella", 1, 8)} token`,
+);
+verifica(
+  "e cresce con le righe attese, invece di restare fisso",
+  tettoToken("tabella", 3, 8) > tettoToken("tabella", 1, 8),
+  `${tettoToken("tabella", 1, 8)} → ${tettoToken("tabella", 3, 8)}`,
+);
+verifica(
+  "una scheda resta al tetto suo: pochi campi, nessuna riga",
+  tettoToken("scheda", 1, 10) === 4000,
 );
 
 console.log(
