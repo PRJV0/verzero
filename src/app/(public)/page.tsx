@@ -10,6 +10,7 @@ import { HeroHome } from "@/components/hero-home";
 import { OndaParticelle } from "@/components/onda-particelle";
 import { PrezzoPrincipio } from "@/components/prezzo-principio";
 import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
+import { GuidaPassiTitoli } from "@/components/guida-passi";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { JsonLd } from "@/components/json-ld";
 import { PhotoDuotone } from "@/components/photo-duotone";
@@ -251,9 +252,21 @@ export default function HomePage() {
             })}
           </div>
 
+          {/* I CINQUE PASSI, in versione ridotta: solo i titoli.
+              La home dice CHE c'è un percorso e com'è fatto in fila; la
+              pagina lo mostra schermata per schermata. Rimettere qui le
+              schermate vorrebbe dire spiegare due volte, e la seconda in
+              un posto dove nessuno l'ha chiesto. */}
+          <div className="mt-16 border-t border-white/12 pt-12">
+            <p className="mb-6 text-xs font-semibold tracking-widest text-mint-bright">
+              COME SUCCEDE, IN CINQUE PASSI
+            </p>
+            <GuidaPassiTitoli />
+          </div>
+
           <div className="mt-12">
             <CtaGrande href="/come-funziona" tone="white">
-              Guarda come funziona
+              Guarda i cinque passi
             </CtaGrande>
           </div>
         </div>

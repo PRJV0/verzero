@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, BookMarked, UserCheck } from "lucide-react";
 
 import { DocumentoEsito } from "@/components/documento-esito";
+import { GuidaPassi } from "@/components/guida-passi";
 import { JsonLd } from "@/components/json-ld";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { OndaParticelle } from "@/components/onda-particelle";
@@ -98,6 +99,39 @@ export default function ComeFunzionaPage() {
             sulle norme che li governano: legge quello che hai, compone quello
             che serve, un professionista valida. Qui vedi il lavoro da vicino.
           </p>
+        </div>
+      </section>
+
+      {/* LA GUIDA IN CINQUE PASSI — la sezione principale della pagina,
+          e sta per prima di proposito: prima di raccontare com'è fatto il
+          sistema, si mostra che cosa succede a chi lo usa. Chi arriva qui
+          non ha chiesto un'architettura, ha chiesto «e quindi?». */}
+      <section
+        aria-labelledby="guida-passi"
+        className="border-b border-line bg-white py-16 md:py-24"
+      >
+        <div className="mx-auto mb-12 max-w-3xl px-5 text-center">
+          <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
+            DAL TUO PUNTO DI VISTA
+          </p>
+          <h2
+            id="guida-passi"
+            className="font-display text-4xl leading-[1.05] text-ink md:text-5xl"
+          >
+            Cinque passi, dall&apos;inizio alla consegna.
+          </h2>
+        </div>
+        <GuidaPassi />
+
+        {/* UNA SOLA CTA, e porta al catalogo: chi ha appena visto i
+            cinque passi ha una domanda sola, «e quanto costa». */}
+        <div className="mt-14 flex justify-center px-5">
+          <Link
+            href="/servizi"
+            className="vz-press inline-flex items-center gap-2 rounded-xl bg-pine px-7 py-4 text-base font-semibold text-white hover:-translate-y-0.5"
+          >
+            Guarda i percorsi <ArrowRight size={18} />
+          </Link>
         </div>
       </section>
 
