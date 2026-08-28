@@ -54,6 +54,15 @@ export type EsitoEstrazione =
        * riga che invece è informazione del documento.
        */
       avvertenze: string[];
+      /**
+       * Le note scritte a mano dal cliente sul documento: contenuto suo,
+       * non nostro. Stanno separate dalle avvertenze perché in pagina si
+       * mostrano come una citazione e non come un problema — la riga in
+       * fondo a un registro che racconta come si è svolto il corso è
+       * informazione, e finché stava fra gli avvisi di qualità sembrava
+       * un difetto della lettura.
+       */
+      noteLibere: string[];
       fuoriPeriodo: boolean;
     }
   /** Il documento è di un altro tipo: non lo si legge col prompt sbagliato. */
@@ -131,6 +140,7 @@ export function istruzioni(voce: VoceLeggibile, ctx: ContestoLettura): string {
     `- \`tipoRilevato\`: «atteso» se il documento è davvero ${voce.nome}; «altro-documento-dello-stesso-genere» se è un documento simile ma non quello (per esempio una bolletta del gas al posto di una elettrica); «altro» in ogni altro caso. Se non è «atteso», scrivi in \`tipoEffettivo\` che cosa è, in poche parole, e non estrarre nulla: un'estrazione parziale da un documento sbagliato sembra un successo ed è l'errore più costoso.`,
     "- `qualita`: «leggibile», «faticosa» se la scansione o la grafia ti costringono a indovinare, «illeggibile» se non si legge. Su «illeggibile» non estrarre nulla.",
     "- `avvertenze`: quello che il documento dichiara e che chi lo legge deve sapere. Frasi brevi, in italiano.",
+    "- `noteLibere`: le note che qualcuno ha SCRITTO sul documento — la riga in fondo a un registro, l'annotazione a margine. Riportale parola per parola, per quanto la grafia lo permette, senza riassumerle e senza commentarle: sono parole del cliente, non tue. Se il documento non ne ha, lascia l'elenco vuoto. Qui NON vanno le tue osservazioni sulla lettura: quelle sono `avvertenze`.",
     "",
     ctx.nativo
       ? "Questo PDF ha uno strato di testo: i valori dovrebbero essere leggibili in chiaro."
@@ -230,11 +240,13 @@ export function interpretaRisposta(
   ];
   const fuoriPeriodo = generico.fuoriPeriodo || (proprio?.fuoriPeriodo ?? false);
 
-  const avvertenze = (
-    Array.isArray(dati.avvertenze) ? (dati.avvertenze as unknown[]) : []
-  )
-    .map((a) => String(a).trim())
-    .filter((a) => a.length > 0);
+  const righeDiTesto = (v: unknown) =>
+    (Array.isArray(v) ? (v as unknown[]) : [])
+      .map((a) => String(a).trim())
+      .filter((a) => a.length > 0);
+
+  const avvertenze = righeDiTesto(dati.avvertenze);
+  const noteLibere = righeDiTesto(dati.noteLibere);
 
   // Niente di utile letto: dirlo è più onesto che mostrare una tabella di
   // caselle vuote e lasciare al cliente il compito di accorgersene.
@@ -263,6 +275,7 @@ export function interpretaRisposta(
     qualita,
     avvisi: avvisiDocumento,
     avvertenze,
+    noteLibere,
     fuoriPeriodo,
   };
 }

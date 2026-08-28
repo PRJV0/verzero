@@ -53,10 +53,15 @@ import {
   TETTO_MANOSCRITTO,
   canonicalizza,
   dataValida,
+  completatoOltreLaFonte,
   normalizzaCampi,
+  normalizzaRighe,
   verificaBollettaElettrica,
 } from "../src/lib/motore/plausibilita.ts";
-import { CAMPI_BOLLETTA_ELETTRICA } from "../src/lib/motore/schemi.ts";
+import {
+  CAMPI_BOLLETTA_ELETTRICA,
+  COLONNE_FORMAZIONE,
+} from "../src/lib/motore/schemi.ts";
 import { formattaValore, raggruppaLetture, livelloConfidenza } from "../src/lib/motore/portale.ts";
 import { naturaPdf, testoDelPdf } from "../src/lib/motore/pdf.ts";
 import {
@@ -145,6 +150,7 @@ const bollettaSana = (sovrascrivi = {}) => {
     qualita: "leggibile",
     piuPod: false,
     avvertenze: [],
+    noteLibere: [],
   };
   for (const [k, v] of Object.entries(sovrascrivi)) {
     if (TESTA.has(k)) testa[k] = v;
@@ -865,6 +871,7 @@ const tabellaSana = (righe, extra = {}) => ({
   qualita: "leggibile",
   righe,
   avvertenze: [],
+  noteLibere: [],
   ...extra,
 });
 
@@ -944,7 +951,15 @@ verifica(
 );
 const annoSbagliato = interpretaRisposta(
   tabellaSana([
-    rigaCorso({ celle: [cella("corso", "Vecchio"), cella("data", "2019-05-01"), cella("partecipanti", "4")] }),
+    rigaCorso({
+      celle: [cella("corso", "Vecchio"), cella("data", "2019-05-01"), cella("partecipanti", "4")],
+      // La citazione deve REGGERE la data: prima diceva «12/03/2025» e
+      // la cella diceva 2019, e da quando il valore non può aggiungere
+      // niente alla fonte quella riga non è più «fuori periodo» — è una
+      // data inventata, e il controllo giusto la azzera prima. Il
+      // fixture era incoerente e non se n'era accorto nessuno.
+      estrattoDa: "Vecchio corso 01/05/2019 4 partecipanti",
+    }),
   ]),
   VOCE_FORMAZIONE,
   CTX,
@@ -1061,7 +1076,7 @@ const visura = (sovrascrivi = {}) => {
     sedeLegale: c("Via delle Officine 12, Brescia"),
     ateco: c("25.62.00"),
   };
-  const testa = { tipoRilevato: "atteso", tipoEffettivo: "", qualita: "leggibile", avvertenze: [] };
+  const testa = { tipoRilevato: "atteso", tipoEffettivo: "", qualita: "leggibile", avvertenze: [], noteLibere: [] };
   for (const [k, v] of Object.entries(sovrascrivi)) {
     if (["tipoRilevato", "tipoEffettivo", "qualita", "avvertenze"].includes(k)) testa[k] = v;
     else campi[k] = v;
@@ -1703,6 +1718,116 @@ verifica(
 verifica(
   "e l'elenco dei tipi è quello del registro, non una copia",
   REGISTRO_MOTORE.every((v) => testoTriage.includes(v.tipo)),
+);
+
+
+/* ================================================================== */
+console.log("\n═══ IL VALORE NON AGGIUNGE — il caso della data completata ═══\n");
+console.log("Misurato su un registro presenze vero, letto tre volte:");
+console.log("sul foglio c'è «28/08», una lettura su tre ha scritto 2025-08-28.\n");
+
+/* — L'aritmetica, prima di tutto — */
+verifica(
+  "una data completata con un anno che nella citazione non c'è viene riconosciuta",
+  completatoOltreLaFonte("2025-08-28", "... - 28/08 - Ing. A.Rossi - Ingresso 9:00 - Uscita 18:00"),
+);
+verifica(
+  "una data che nella citazione c'è tutta NON viene toccata",
+  !completatoOltreLaFonte("2025-01-31", "Periodo di riferimento: dal 01/01/2025 al 31/01/2025"),
+);
+verifica(
+  "i separatori di migliaia non fanno scattare l'allarme",
+  !completatoOltreLaFonte("3187.45", "TOTALE DA PAGARE 3.187,45 EUR"),
+);
+verifica(
+  "e nemmeno le barre di una data all'italiana",
+  !completatoOltreLaFonte("2025-08-28", "del 28/08/2025"),
+);
+verifica(
+  "senza citazione non si giudica: l'assenza di prove non è una prova",
+  !completatoOltreLaFonte("2025-08-28", ""),
+);
+verifica(
+  "un valore senza cifre non riguarda questa regola",
+  !completatoOltreLaFonte("Ing. A.Rossi", "Docente"),
+);
+
+/* — La riga vera, quella che è uscita dall'API — */
+const RIGA_REGISTRO = {
+  celle: [
+    { colonna: "corso", valore: "CORSO DI FORMAZIONE CYBER SECURITY E RISCHI INFORMATICI" },
+    { colonna: "data", valore: "2025-08-28" },
+    { colonna: "oreTotali", valore: "9" },
+    { colonna: "partecipanti", valore: "5" },
+    { colonna: "ambito", valore: "tecnico-professionale" },
+    { colonna: "docente", valore: "Ing. A.Rossi" },
+  ],
+  confidenza: 0.62,
+  pagina: 1,
+  estrattoDa:
+    "REGISTRTO PRESENZE - CORSO DI FORMAZIONE CYBER SECURITY E RISCHI INFORMATICI - 28/08 - Ing. A.Rossi - Ingresso 9:00 - Uscita 18:00",
+  fonteLettura: "manoscritto",
+  nota: "Sul foglio è indicato solo 28/08, senza anno.",
+};
+
+const righeRegistro = normalizzaRighe([RIGA_REGISTRO], COLONNE_FORMAZIONE, "faticosa");
+const cellaRegistro = (chiave) =>
+  righeRegistro[0]?.celle.find((c) => c.chiave === chiave)?.valore ?? null;
+
+verifica(
+  "la data completata con l'anno che non c'è viene AZZERATA",
+  cellaRegistro("data") === null,
+  String(cellaRegistro("data")),
+);
+verifica(
+  "e il cliente legge perché, senza che gli si dia del distratto",
+  righeRegistro[0].avvisi.some((a) => /non c'è per intero/.test(a)),
+  righeRegistro[0].avvisi.join(" | "),
+);
+verifica(
+  "le ore DEDOTTE dagli orari restano: dedurre da ciò che c'è non è inventare",
+  cellaRegistro("oreTotali") === "9",
+  String(cellaRegistro("oreTotali")),
+);
+verifica(
+  "i partecipanti contati dalle firme restano",
+  cellaRegistro("partecipanti") === "5",
+  String(cellaRegistro("partecipanti")),
+);
+verifica(
+  "il testo prestampato non viene toccato: non ha cifre da completare",
+  cellaRegistro("docente") === "Ing. A.Rossi",
+  String(cellaRegistro("docente")),
+);
+verifica(
+  "la riga non viene scartata: il resto vale ancora",
+  righeRegistro.length === 1,
+);
+
+/* — E la stessa regola sulle schede — */
+const schedaCompletata = normalizzaCampi(
+  [
+    {
+      nome: "periodoFine",
+      valore: "31/01/2025",
+      confidenza: 0.9,
+      pagina: 1,
+      estrattoDa: "Periodo: dal 01/01 al 31/01",
+      fonteLettura: "testo",
+      nota: "",
+    },
+  ],
+  CAMPI_BOLLETTA_ELETTRICA,
+  "leggibile",
+);
+verifica(
+  "vale identica sulle schede: un periodo completato con l'anno si azzera",
+  schedaCompletata.find((c) => c.chiave === "periodoFine")?.valore === null,
+  String(schedaCompletata.find((c) => c.chiave === "periodoFine")?.valore),
+);
+verifica(
+  "e la confidenza scende a zero, non resta alta su un campo vuoto",
+  schedaCompletata.find((c) => c.chiave === "periodoFine")?.confidenza === 0,
 );
 
 console.log(

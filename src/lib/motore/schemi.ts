@@ -79,6 +79,19 @@ export type EtichettaCampo = {
   nonSupera?: string;
   /** La data non può cadere fuori dall'anno di rendicontazione. */
   dentroLAnno?: boolean;
+  /**
+   * Il valore non può portare cifre che nella citazione non ci sono.
+   *
+   * Le DATE lo sono sempre, senza doverlo dichiarare: una data si legge,
+   * e l'anno mancante completato dal modello è il caso da manuale
+   * (`completatoOltreLaFonte` in plausibilita.ts, misurato su un
+   * registro vero). Per i numeri va dichiarato, perché alcuni si
+   * ricavano legittimamente dal documento senza esserci scritti — le ore
+   * di un corso stanno fra ingresso e uscita, i partecipanti si contano
+   * dalle firme. Importi, consumi e periodi invece si LEGGONO: lì va
+   * messo, e non costa niente metterlo.
+   */
+  soloSeScritto?: boolean;
 };
 
 type Chiavi = readonly [string, ...string[]];
@@ -137,6 +150,21 @@ export function schemaScheda(campi: EtichettaCampo[], extra: z.ZodRawShape = {})
     qualita: z.enum(QUALITA),
     campi: z.array(involucro(chiaviDi(campi))),
     avvertenze: z.array(z.string()),
+    /**
+     * LE NOTE SCRITTE DAL CLIENTE, se il documento ne ha.
+     *
+     * Non sono un'avvertenza: quelle sono nostre e parlano di com'è
+     * andata la lettura («la grafia non è agevole», «un orario è
+     * interpretato»). Queste sono CONTENUTO del documento — la riga in
+     * fondo a un registro che dice come si è svolto il corso, l'annotazione
+     * a margine di una bolletta. Mescolarle agli avvisi di qualità le
+     * trasformava in un problema, mentre sono la voce di chi ha compilato
+     * il foglio, e in pagina vanno mostrate come una citazione.
+     *
+     * Si riportano PAROLA PER PAROLA, per quanto la grafia lo permette:
+     * riassumerle vorrebbe dire farle dire da noi.
+     */
+    noteLibere: z.array(z.string()),
   });
 }
 
@@ -181,6 +209,21 @@ export function schemaTabella(
       }),
     ),
     avvertenze: z.array(z.string()),
+    /**
+     * LE NOTE SCRITTE DAL CLIENTE, se il documento ne ha.
+     *
+     * Non sono un'avvertenza: quelle sono nostre e parlano di com'è
+     * andata la lettura («la grafia non è agevole», «un orario è
+     * interpretato»). Queste sono CONTENUTO del documento — la riga in
+     * fondo a un registro che dice come si è svolto il corso, l'annotazione
+     * a margine di una bolletta. Mescolarle agli avvisi di qualità le
+     * trasformava in un problema, mentre sono la voce di chi ha compilato
+     * il foglio, e in pagina vanno mostrate come una citazione.
+     *
+     * Si riportano PAROLA PER PAROLA, per quanto la grafia lo permette:
+     * riassumerle vorrebbe dire farle dire da noi.
+     */
+    noteLibere: z.array(z.string()),
   });
 }
 
@@ -209,13 +252,14 @@ export const CAMPI_BOLLETTA_ELETTRICA: EtichettaCampo[] = [
     tipo: "numero",
     unita: "kWh",
     essenziale: true,
+    soloSeScritto: true,
     min: 0,
     max: 50_000_000,
   },
-  { chiave: "consumoF1Kwh", etichetta: "di cui fascia F1", tipo: "numero", unita: "kWh", min: 0, max: 50_000_000 },
-  { chiave: "consumoF2Kwh", etichetta: "di cui fascia F2", tipo: "numero", unita: "kWh", min: 0, max: 50_000_000 },
-  { chiave: "consumoF3Kwh", etichetta: "di cui fascia F3", tipo: "numero", unita: "kWh", min: 0, max: 50_000_000 },
-  { chiave: "importoEuro", etichetta: "Importo della bolletta", tipo: "numero", unita: "€", max: 5_000_000 },
+  { chiave: "consumoF1Kwh", etichetta: "di cui fascia F1", tipo: "numero", unita: "kWh", min: 0, max: 50_000_000, soloSeScritto: true },
+  { chiave: "consumoF2Kwh", etichetta: "di cui fascia F2", tipo: "numero", unita: "kWh", min: 0, max: 50_000_000, soloSeScritto: true },
+  { chiave: "consumoF3Kwh", etichetta: "di cui fascia F3", tipo: "numero", unita: "kWh", min: 0, max: 50_000_000, soloSeScritto: true },
+  { chiave: "importoEuro", etichetta: "Importo della bolletta", tipo: "numero", unita: "€", max: 5_000_000, soloSeScritto: true },
   {
     chiave: "energiaRinnovabile",
     etichetta: "Energia rinnovabile dichiarata",

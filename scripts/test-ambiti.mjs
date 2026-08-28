@@ -319,6 +319,7 @@ const rispostaTabella = (righe) => ({
   qualita: "leggibile",
   righe,
   avvertenze: [],
+  noteLibere: [],
 });
 
 const VOCE_MAPPATURA = TIPI_231[0];
@@ -431,6 +432,7 @@ const nomina = interpretaRisposta(
       { nome: "durataAnni", valore: "3", confidenza: 0.9, pagina: 1, estrattoDa: "tre anni", fonteLettura: "testo", nota: "" },
     ],
     avvertenze: [],
+    noteLibere: [],
   },
   TIPI_231[2],
   CTX,

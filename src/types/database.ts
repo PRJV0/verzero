@@ -197,6 +197,8 @@ type Documento = {
     | "illeggibile";
   /** Il motivo, in italiano, da mostrare in pagina. */
   lettura_nota: string | null;
+  /** Le note scritte sul documento dal cliente: citazione, non avviso. */
+  note_libere: string[] | null;
   letto_at: string | null;
   created_at: string;
   updated_at: string;

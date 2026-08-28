@@ -64,7 +64,7 @@ async function decodifica(file: File): Promise<ImageBitmap> {
     const heic = /heic|heif/i.test(file.type) || /\.hei[cf]$/i.test(file.name);
     throw new ErroreScatto(
       heic
-        ? "Questo browser non sa aprire le foto in formato HEIC. Dal telefono funziona; da computer, riesporta la foto in JPEG o carica il PDF."
+        ? "Questo browser non sa aprire le foto in formato HEIC. Dal telefono funziona; da computer, riesporta la foto in JPEG."
         : "Non siamo riusciti ad aprire questa immagine. Riprova, oppure scattala di nuovo.",
     );
   }
@@ -134,6 +134,46 @@ async function jpegDaTela(canvas: HTMLCanvasElement): Promise<Uint8Array> {
     }
     qualita -= 0.1;
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* Conversione e basta                                                 */
+/* ------------------------------------------------------------------ */
+
+/** Il file è un HEIC/HEIF, dal tipo dichiarato o dal nome? */
+export function eHeic(file: { type?: string; name: string }): boolean {
+  return /heic|heif/i.test(file.type ?? "") || /\.hei[cf]$/i.test(file.name);
+}
+
+/**
+ * SOLO LA CONVERSIONE, per il caricamento normale.
+ *
+ * Non è `preparaPagina`: quella ritaglia, raddrizza e alza il contrasto,
+ * ed è giusto per uno scatto appena fatto. Un file che qualcuno trascina
+ * dentro non l'ha chiesto — trasformarglielo di nascosto sarebbe fare
+ * qualcosa che non ci ha chiesto su un documento che poi porta la nostra
+ * validazione. Qui si cambia solo il formato: si decodifica e si
+ * riesporta in JPEG, ridimensionando se il lato è enorme.
+ *
+ * Serve perché la catena di lettura non sa aprire l'HEIC, e finora il
+ * file veniva caricato lo stesso e falliva DOPO — con l'archivio già
+ * sporcato da un documento illeggibile.
+ */
+export async function convertiInJpeg(file: File): Promise<File> {
+  const bitmap = await decodifica(file);
+  const fattore = Math.min(
+    1,
+    LATO_MASSIMO / Math.max(bitmap.width, bitmap.height),
+  );
+  const w = Math.round(bitmap.width * fattore);
+  const h = Math.round(bitmap.height * fattore);
+  const t = tela(w, h);
+  t.ctx.drawImage(bitmap, 0, 0, w, h);
+  bitmap.close?.();
+
+  const jpeg = await jpegDaTela(t.canvas);
+  const nome = file.name.replace(/\.hei[cf]$/i, "") + ".jpg";
+  return new File([new Uint8Array(jpeg)], nome, { type: "image/jpeg" });
 }
 
 /* ------------------------------------------------------------------ */

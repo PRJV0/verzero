@@ -51,6 +51,78 @@ export const TETTO_MANOSCRITTO = 0.6;
 export const PENALITA_QUALITA_FATICOSA = 0.2;
 
 /* ------------------------------------------------------------------ */
+/* Il completamento: un valore non può sapere più del documento        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * ═══ REGOLA INVIOLABILE — IL VALORE NON AGGIUNGE ═══
+ *
+ * Misurato su un registro presenze compilato a mano, letto tre volte di
+ * fila con lo stesso modello e lo stesso prompt. Sul foglio la data è
+ * «28/08» e basta: due letture su tre hanno lasciato il campo vuoto
+ * spiegando che l'anno non c'è, la terza ha scritto **2025-08-28** —
+ * completando con l'anno di rendicontazione che siamo NOI a passare nel
+ * contesto. E la confidenza era 0,42 in tutte e tre: non distingueva la
+ * lettura giusta da quella inventata.
+ *
+ * È il difetto peggiore che possa avere un motore che produce documenti
+ * firmati da un professionista, perché non si vede: un dato inventato
+ * con la stessa confidenza di uno letto passa la revisione come gli
+ * altri.
+ *
+ * ═══ PERCHÉ STA QUI E NON NELLE ISTRUZIONI ═══
+ * Nelle istruzioni c'era già («mai un valore inventato», e lo dice pure
+ * lo schema). Una regola affidata al prompt è una regola che il modello
+ * disattende una volta su tre — l'abbiamo appena contato. Qui è
+ * aritmetica: si confronta il valore con ciò che il modello DICHIARA di
+ * aver letto, e se il valore porta cifre che in quella stringa non
+ * compaiono, il valore non vale.
+ *
+ * ═══ COME, ESATTAMENTE ═══
+ * Si confrontano i gruppi di cifre. Il flusso di cifre della fonte si
+ * concatena — «3.187,45» e «28/08» diventano «318745» e «2808» — e ogni
+ * gruppo del valore dev'esserci dentro. Concatenare è VOLUTAMENTE
+ * permissivo: separatori di migliaia, punti e barre non devono far
+ * scattare l'allarme, e questo controllo deve accendersi solo quando è
+ * certo. Bloccare un valore giusto costa la fiducia in tutti gli altri.
+ *
+ * Senza `estrattoDa` non si giudica: non avere la citazione non è la
+ * prova che il dato sia inventato, è l'assenza di prove.
+ */
+const CIFRE = /\d+/g;
+
+export function completatoOltreLaFonte(
+  valore: string | null,
+  fonte: string | null | undefined,
+): boolean {
+  if (!valore || !fonte) return false;
+  const nelValore = valore.match(CIFRE);
+  if (!nelValore || nelValore.length === 0) return false;
+  const flusso = (fonte.match(CIFRE) ?? []).join("");
+  if (flusso === "") return false;
+  return nelValore.some((gruppo) => !flusso.includes(gruppo));
+}
+
+/**
+ * Il campo è di quelli che si possono COMPLETARE?
+ *
+ * Le date sempre: una data si legge, non si deduce, e l'anno mancante è
+ * il caso da manuale. I numeri solo se dichiarato, perché alcuni si
+ * ricavano davvero dal documento senza esserci scritti — le ore di un
+ * corso stanno fra l'ingresso e l'uscita, i partecipanti si contano
+ * dalle firme — e bloccarli sarebbe rifiutare una deduzione legittima.
+ * Importi e consumi invece si leggono: lì `soloSeScritto` va dichiarato.
+ */
+export function soggettoACompletamento(campo: EtichettaCampo): boolean {
+  return campo.tipo === "data" || campo.soloSeScritto === true;
+}
+
+/** Come si dice al cliente, senza dargli del bugiardo e senza gergo. */
+export function notaCompletamento(etichetta: string): string {
+  return `${etichetta}: sul documento non c'è per intero, e non lo completiamo noi. Scrivilo tu.`;
+}
+
+/* ------------------------------------------------------------------ */
 /* Limiti e forme                                                      */
 /* ------------------------------------------------------------------ */
 
@@ -174,11 +246,25 @@ export function normalizzaCampi(
       confidenza = Math.max(0, confidenza - PENALITA_QUALITA_FATICOSA);
     }
 
+    // ═══ REGOLA INVIOLABILE — IL VALORE NON AGGIUNGE ═══
+    // Prima di ogni altra cosa: se il valore porta cifre che nella
+    // citazione non ci sono, non è un valore letto male — è un valore
+    // completato, e va tolto.
+    let finale = valore;
+    if (
+      soggettoACompletamento(e) &&
+      completatoOltreLaFonte(valore, g?.estrattoDa)
+    ) {
+      finale = null;
+      confidenza = 0;
+      avvisi.push(notaCompletamento(e.etichetta));
+    }
+
     // ═══ REGOLA INVIOLABILE (docs/motore.md §3) ═══
     // Nessun dato letto da una scrittura a mano supera 0,6, qualunque
     // cosa dichiari il modello. Una cifra scritta a mano letta male
     // produce un documento sbagliato che porta la nostra validazione.
-    if (g?.fonteLettura === "manoscritto" && valore !== null) {
+    if (g?.fonteLettura === "manoscritto" && finale !== null) {
       if (confidenza > TETTO_MANOSCRITTO) confidenza = TETTO_MANOSCRITTO;
       avvisi.push(
         "Letto da una scrittura a mano: controllalo sul documento prima di confermare.",
@@ -188,7 +274,7 @@ export function normalizzaCampi(
     return {
       chiave: e.chiave,
       etichetta: e.etichetta,
-      valore,
+      valore: finale,
       unita: e.unita ?? null,
       confidenza: Math.round(Math.min(1, Math.max(0, confidenza)) * 100) / 100,
       // Pagina zero significa «non lo so»: non esiste una pagina zero, e
@@ -254,12 +340,30 @@ export function normalizzaRighe(
       }
     }
 
+    // ═══ REGOLA INVIOLABILE — IL VALORE NON AGGIUNGE ═══
+    // Qui la citazione è della RIGA e non della singola cella (finché la
+    // confidenza non scende dentro la cella), e va bene così: il
+    // confronto è sulle cifre, e le cifre della riga ci sono tutte.
+    const completate: string[] = [];
     const celle: CellaEstratta[] = colonne.map((col) => {
       const grezzo = (perColonna.get(col.chiave) ?? "").trim();
+      const valore = grezzo === "" ? null : canonicalizza(grezzo, col.tipo);
+      if (
+        soggettoACompletamento(col) &&
+        completatoOltreLaFonte(valore, r.estrattoDa)
+      ) {
+        completate.push(col.etichetta);
+        return {
+          chiave: col.chiave,
+          etichetta: col.etichetta,
+          valore: null,
+          unita: col.unita ?? null,
+        };
+      }
       return {
         chiave: col.chiave,
         etichetta: col.etichetta,
-        valore: grezzo === "" ? null : canonicalizza(grezzo, col.tipo),
+        valore,
         unita: col.unita ?? null,
       };
     });
@@ -268,6 +372,8 @@ export function normalizzaRighe(
 
     let confidenza = r.confidenza ?? 0;
     const avvisi: string[] = [];
+
+    for (const etichetta of completate) avvisi.push(notaCompletamento(etichetta));
 
     if (qualita === "faticosa") {
       confidenza = Math.max(0, confidenza - PENALITA_QUALITA_FATICOSA);

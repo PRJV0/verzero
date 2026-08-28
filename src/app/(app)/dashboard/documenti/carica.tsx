@@ -16,7 +16,12 @@ import {
 import { Fotocamera } from "@/components/scatto/fotocamera";
 import { MAX_BYTE } from "@/lib/documenti";
 import { nomeDelloScatto, pdfDaScatti } from "@/lib/scatto/pdf";
-import type { Pagina } from "@/lib/scatto/immagine";
+import {
+  ErroreScatto,
+  convertiInJpeg,
+  eHeic,
+  type Pagina,
+} from "@/lib/scatto/immagine";
 
 import { registraDocumento } from "./azioni";
 
@@ -80,11 +85,36 @@ export function CaricaDocumenti({
           return;
         }
 
-        const percorso = `${organizationId}/${Date.now()}-${nomeSicuro(file.name)}`;
+        /* — L'HEIC si converte PRIMA di caricarlo — */
+        // Il formato predefinito dell'iPhone: l'archivio lo accettava e
+        // la lettura lo rifiutava dopo, lasciando in archivio un
+        // documento che non si sarebbe mai potuto leggere. La
+        // conversione c'era già, la usava solo la fotocamera. Qui non si
+        // ritaglia e non si raddrizza niente: si cambia il formato, e
+        // basta. Dove il browser non sa decodificare l'HEIC — Chrome e
+        // Firefox su computer — si dice che cosa fare invece di caricare
+        // qualcosa che non servirà.
+        let daCaricare = file;
+        if (eHeic(file)) {
+          try {
+            daCaricare = await convertiInJpeg(file);
+          } catch (e) {
+            aggiorna({
+              stato: "errore",
+              messaggio:
+                e instanceof ErroreScatto
+                  ? e.message
+                  : "Non siamo riusciti a convertire questa foto. Riesportala in JPEG e riprova.",
+            });
+            return;
+          }
+        }
+
+        const percorso = `${organizationId}/${Date.now()}-${nomeSicuro(daCaricare.name)}`;
         const { error: erroreCaricamento } = await supabase.storage
           .from("documenti")
-          .upload(percorso, file, {
-            contentType: file.type || "application/octet-stream",
+          .upload(percorso, daCaricare, {
+            contentType: daCaricare.type || "application/octet-stream",
             upsert: false,
           });
         if (erroreCaricamento) {
@@ -100,9 +130,9 @@ export function CaricaDocumenti({
 
         const esito = await registraDocumento({
           percorso,
-          nomeFile: file.name,
-          mime: file.type || "application/pdf",
-          dimensione: file.size,
+          nomeFile: daCaricare.name,
+          mime: daCaricare.type || "application/pdf",
+          dimensione: daCaricare.size,
         });
 
         if (!esito.ok) {

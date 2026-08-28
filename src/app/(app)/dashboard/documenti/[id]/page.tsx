@@ -39,7 +39,7 @@ export default async function ConfermaDocumentoPage({
   // chi guarda, semplicemente non esiste.
   const { data: documento } = await supabase
     .from("documents")
-    .select("id, nome_file, mime, tipo, stato, lettura_nota")
+    .select("id, nome_file, mime, tipo, stato, lettura_nota, note_libere")
     .eq("id", id)
     .maybeSingle();
   if (!documento) notFound();
@@ -125,6 +125,27 @@ export default async function ConfermaDocumentoPage({
         <p className="mt-4 rounded-xl border border-amber-ink/25 bg-amber-soft/60 px-4 py-3 text-sm leading-relaxed text-amber-ink">
           {documento.lettura_nota}
         </p>
+      )}
+
+      {/* LE NOTE SCRITTE SUL DOCUMENTO — citazione, non avviso.
+          Stavano fra le avvertenze, cioè in ambra accanto a «la grafia
+          non è agevole»: una frase scritta dal cliente sembrava un
+          difetto della lettura. Qui è quello che è — una citazione, in
+          corsivo, dietro un filetto — e non ha il colore dell'allarme. */}
+      {documento.note_libere && documento.note_libere.length > 0 && (
+        <figure className="mt-4 border-l-2 border-pine/30 pl-4">
+          <figcaption className="text-[11px] font-semibold uppercase tracking-widest text-gray-light">
+            Scritto sul documento
+          </figcaption>
+          {documento.note_libere.map((nota: string) => (
+            <blockquote
+              key={nota}
+              className="mt-1.5 font-display text-[15px] italic leading-relaxed text-ink"
+            >
+              «{nota}»
+            </blockquote>
+          ))}
+        </figure>
       )}
 
       <div className="mt-6">

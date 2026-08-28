@@ -85,7 +85,11 @@ export async function leggiDocumento(opzioni: {
       esito: "errore",
       messaggio:
         mime === "image/heic" || mime === "image/heif"
-          ? "Le foto in formato HEIC (quello predefinito dell'iPhone) non le sappiamo ancora leggere. Riesporta la foto in JPEG, o carica il PDF del fornitore."
+          // Nessun riferimento a che cosa sia il documento: questa riga
+          // vale per una bolletta come per un registro di formazione, e
+          // «carica il PDF del fornitore» su un foglio firma non vuol
+          // dire niente.
+          ? "Le foto in formato HEIC (quello predefinito dell'iPhone) non le sappiamo ancora leggere. Riesporta la foto in JPEG o in PNG e ricaricala."
           : "Questo formato non lo sappiamo leggere. Accettiamo PDF, JPEG, PNG e WebP.",
     };
   }

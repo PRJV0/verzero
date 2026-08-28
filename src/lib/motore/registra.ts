@@ -384,7 +384,9 @@ export async function eseguiLettura(opzioni: {
   }
 
   // In pagina i due elenchi si mostrano insieme — al cliente serve sapere
-  // tutto quello che va guardato — ma nel log restano distinti.
+  // tutto quello che va guardato — ma nel log restano distinti. Le note
+  // libere NO: quelle non sono cose da guardare, sono cose che il
+  // cliente ha scritto, e vanno in una colonna loro.
   const daDire = [...esito.avvisi, ...esito.avvertenze];
   await concludi(
     documentId,
@@ -392,6 +394,7 @@ export async function eseguiLettura(opzioni: {
     "letto",
     daDire.length > 0 ? daDire.join(" ") : null,
     true,
+    esito.noteLibere.length > 0 ? esito.noteLibere : null,
   );
 
   const quanti =
@@ -719,6 +722,8 @@ async function concludi(
   stato: "smistato" | "letto" | "illeggibile" | "da_classificare" | "in_coda",
   nota: string | null,
   timbra = false,
+  /** Le note scritte dal cliente sul documento: colonna loro. */
+  noteLibere: string[] | null = null,
 ) {
   const admin = createAdminClient();
   await admin
@@ -726,6 +731,7 @@ async function concludi(
     .update({
       stato,
       lettura_nota: nota,
+      ...(noteLibere ? { note_libere: noteLibere } : {}),
       ...(timbra ? { letto_at: new Date().toISOString() } : {}),
     })
     .eq("id", documentId)
