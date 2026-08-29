@@ -28,7 +28,7 @@ const PUNTI = [
   {
     icon: Repeat,
     title: "Percorsi standardizzati",
-    desc: "Lo stesso impianto per ogni cliente: documenti conformi alle norme citate, dati tracciati alla fonte, tempi che si misurano in giorni.",
+    desc: "Lo stesso impianto per ogni cliente: documenti conformi alle norme citate, dati tracciati alla fonte, ogni elaborato validato prima della consegna.",
   },
   {
     icon: Handshake,

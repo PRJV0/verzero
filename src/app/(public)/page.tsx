@@ -14,6 +14,7 @@ import { GuidaPassiTitoli } from "@/components/guida-passi";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { JsonLd } from "@/components/json-ld";
 import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
+import { COMPETENZE_TEAM } from "@/lib/team";
 import { SITO, jsonLdOrganization, jsonLdWebSite } from "@/lib/seo";
 
 /**
@@ -97,21 +98,6 @@ function CtaGrande({
 /* --- Dati di pagina --- */
 
 /** Le tre battute della sezione documenti (§12.J): secche, senza processo. */
-/**
- * LE FIGURE CHE VALIDANO — solo qualifiche vere e verificabili.
- *
- * Non un organigramma desiderato e non titoli che suonano bene: chi non
- * c'è non si scrive. Se una di queste figure smette di far parte del
- * team, la riga esce di qui — e questo elenco è l'unico posto in cui
- * vive, così non resta da aggiornare in tre pagine diverse.
- */
-const COMPETENZE_TEAM = [
-  "Ingegneri",
-  "Auditor di sistemi di gestione",
-  "Specialisti di sostenibilità e rendicontazione",
-  "Specialisti di sicurezza sul lavoro",
-];
-
 const BATTUTE = [
   { icon: FileText, t: "Solo il necessario." },
   { icon: null, t: "L'AI Ver0 lavora." }, // icona: lo zero E1, disegnato sotto

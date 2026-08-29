@@ -89,6 +89,55 @@ const REGOLE = [
       "firma o sigla",
     ],
   },
+  {
+    nome: "le promesse di tempo",
+    /*
+     * Ogni numero promesso è un ostaggio (SPEC §12.O). Il divieto vale
+     * per il TEMPO DI CONSEGNA — quanto ci mettiamo noi a produrre un
+     * documento — ed è la regola che rientra più facilmente di tutte,
+     * perché «in pochi giorni» suona come un vantaggio e non come una
+     * promessa. Al momento di scrivere questa regola ce n'erano quattro
+     * vive in pagina, sopravvissute a due revisioni: «Giorni, non mesi»,
+     * «documenti conformi pronti in pochi giorni», «rapida nei tempi» e
+     * «tempi che si misurano in giorni», in due pagine diverse.
+     *
+     * Non cerca le durate in generale: cerca le forme in cui una durata
+     * diventa una promessa. Una durata che il cliente LEGGE sul proprio
+     * documento (un periodo di fatturazione, la validità di un
+     * attestato) non ha nessuna di queste forme.
+     */
+    cerca:
+      /\b(?:in|entro)\s+(?:pochi|poche|poch[ei]ssim[oi])\s+(?:minut|or|giorn|settiman|mes)\w*|\btempi\s+che\s+si\s+misurano\b|\b(?:giorni|settimane|ore|minuti),\s*non\s+(?:mesi|settimane|giorni|ore)\b|\brapid[aoie]\s+nei\s+tempi\b|\bpront[oiae]\s+in\s+(?:pochi|poche|un|una|due|tre|\d)|\b(?:in|entro)\s+(?:\d+|un|una|due|tre)\s+(?:or[ae]|giorn[oi]|settiman[ae]|mes[ei])\b/gi,
+    perche:
+      "SPEC §12.O — nessuna promessa sul tempo di consegna, in nessuna forma: ogni numero promesso è un ostaggio, e il payoff «A norma in tempo zero» parla del tempo del CLIENTE, non di una data di consegna.",
+    /*
+     * Il motore non parla al cliente: i suoi `perche` sono note
+     * operative che spiegano un tetto di spesa a chi legge il codice, e
+     * lì «concentrare in un mese» descrive il consumo del CLIENTE, non
+     * un tempo che promettiamo noi. Il divieto riguarda ciò che si
+     * legge in pagina.
+     */
+    escludi: [/^src\/lib\/motore\//],
+    ammessi: [
+      // Il tempo di RISPOSTA a chi ci scrive non è un tempo di
+      // consegna: è un impegno su una cosa che dipende solo da noi
+      // (pagina contatti), o un termine di legge (il mese del GDPR per
+      // riscontrare una richiesta dell'interessato, pagina privacy).
+      "rispond",
+      "riscontr",
+      "giorno lavorativo",
+      "giorni lavorativi",
+      // Una durata che sta SUL DOCUMENTO DEL CLIENTE — un periodo di
+      // fatturazione, la validità di un attestato — la leggiamo, non la
+      // promettiamo.
+      "periodo di",
+      "validità",
+      "valido per",
+      "scade fra",
+      "ogni tre mesi",
+      "ogni due mesi",
+    ],
+  },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -121,6 +170,7 @@ for (const file of sorgenti("src")) {
   const testo = senzaCommenti(originale);
 
   for (const regola of REGOLE) {
+    if (regola.escludi?.some((r) => r.test(file))) continue;
     regola.cerca.lastIndex = 0;
     let m;
     while ((m = regola.cerca.exec(testo)) !== null) {
