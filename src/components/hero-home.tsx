@@ -30,9 +30,9 @@ import { FONDO_SOGLIA, ONDA_CONTENUTA, ONDA_SOGLIA } from "@/lib/onda";
  * OTTIENI — «Qualifica la tua impresa» — e sta in grande, in peso pieno.
  * «In abbonamento.» è la seconda: dice come si compra, che è
  * un'informazione preziosa ma successiva, e sta a poco più di un terzo
- * della scala. Erano invertite, e chi leggeva vedeva prima il modello di
- * acquisto e poi il risultato: l'ordine sbagliato per chi ancora non sa
- * che cosa vendiamo.
+ * della scala — 2,8 a 1. Erano invertite, e chi leggeva vedeva prima il
+ * modello di acquisto e poi il risultato: l'ordine sbagliato per chi
+ * ancora non sa che cosa vendiamo.
  *
  * La sottolineatura menta resta sulla seconda riga. Serve a non farla
  * sparire ora che è più piccola — è un segno, non un cambio di colore
@@ -127,18 +127,46 @@ export function HeroHome() {
             una ragione per muoversi (v. `annuncio-fase.tsx`). */}
         <h1 className="font-display text-white">
           {/* Riga 1: che cosa ottieni. È la prima informazione, e sta
-              in grande a piena forza. */}
+              in grande a piena forza.
+
+              QUESTA RIGA PUÒ ANDARE A CAPO, e la seconda no. Il divieto
+              di spezzare vale per «In abbonamento.», che lasciato a metà
+              mette «In» da solo su una riga; «Qualifica la tua impresa.»
+              è una frase e va a capo come una frase. Tenerla su una riga
+              sola la inchiodava a 29,6 px sullo stretto — 320 dei 335
+              disponibili — e da lì il rapporto con la seconda riga non
+              poteva crescere. Lasciandola spezzare parte da 38,4 px.
+              `text-balance` fa in modo che le due righe vengano di
+              lunghezza simile invece di lasciare una parola sola in
+              fondo. */}
           <span className="block">
             <span
               data-onda-maschera
-              className="vz-entra inline-block whitespace-nowrap text-[clamp(1.85rem,5.6vw,5rem)] font-bold leading-[1.02] tracking-[-0.035em]"
+              className="vz-entra inline-block text-balance text-[clamp(2.4rem,6.4vw,5.6rem)] font-bold leading-[1.0] tracking-[-0.038em]"
               style={{ "--vz-i": 0 } as React.CSSProperties}
             >
               Qualifica la tua impresa.
             </span>
           </span>
           {/* Riga 2: come si compra. Seconda informazione, seconda
-              scala — poco più di un terzo della prima.
+              scala.
+
+              IL RAPPORTO FRA LE DUE RIGHE È 2,8 A 1, e prima era 1,9.
+              A un passo solo di distanza le due righe si leggevano come
+              un titolo su due livelli, cioè come una cosa sola: il
+              modello di acquisto tornava a pesare quanto il risultato.
+              A 2,8 la prima riga è il claim e la seconda è la
+              precisazione, e si vede senza doverci pensare.
+
+              SULLO STRETTO IL RAPPORTO È 2,2 E NON 2,8, ed è un limite
+              fisico: a 375 px la prima riga arriva a 38,4 px (due righe
+              bilanciate) e portare la seconda a 13,7 per rispettare il
+              rapporto la trasformerebbe in una didascalia — più piccola
+              perfino della riga di sottotitolo che le sta sotto. Il
+              minimo resta a 17,6 px. Da 768 px in su il rapporto è
+              quello pieno.
+              A 1440 la prima riga misura 969 px in un contenitore da
+              1024: il tetto di 5,6rem è tarato lì.
 
               NOWRAP E MISURA IN VW, tutte e due necessarie. «In
               abbonamento.» spezzato lascia «In» da solo su una riga, che
@@ -151,7 +179,7 @@ export function HeroHome() {
           <span className="mt-3 block">
             <span
               data-onda-maschera
-              className="vz-entra relative inline-block whitespace-nowrap text-[clamp(1.25rem,3.1vw,2.6rem)] font-normal leading-[1.1] tracking-[-0.02em] text-moss"
+              className="vz-entra relative inline-block whitespace-nowrap text-[clamp(1.1rem,2.3vw,2rem)] font-normal leading-[1.1] tracking-[-0.01em] text-moss"
               style={{ "--vz-i": 1 } as React.CSSProperties}
             >
               In{" "}
@@ -164,22 +192,29 @@ export function HeroHome() {
         </h1>
 
         {/* UNA RIGA SOLA fra il claim e la barra, e dice i due asset che
-            nessun altro ha: l'intelligenza è NOSTRA e costruita per
-            questo mestiere, e chi valida è un professionista che ne
-            risponde. Scritta come una frase e non come un elenco — «AI +
+            nessun altro ha: l'AI è NOSTRA e costruita per questo
+            mestiere, e chi valida è un professionista che ne risponde.
+            Scritta come una frase e non come un elenco — «AI +
             professionisti» separati da un punto sarebbero due voci di
             una scheda prodotto, e una scheda prodotto non riposiziona
-            nessuno. */}
+            nessuno.
+
+            «INTELLIGENZA ARTIFICIALE», PER ESTESO. Diceva
+            «un'intelligenza proprietaria», che è una perifrasi: chi
+            legge non sa se stiamo parlando di software, di un metodo o
+            di una squadra di persone in gamba. La cosa che rende questa
+            riga un asset è proprio che si tratta di un'AI, quindi la
+            parola va detta. */}
         <p
           data-onda-maschera
           className="vz-entra mx-auto mt-8 max-w-[30ch] font-display text-[1.25rem] leading-[1.45] text-moss sm:max-w-[42ch] sm:text-[1.5rem] md:text-[1.7rem]"
           style={{ "--vz-i": 2 } as React.CSSProperties}
         >
-          Un&apos;intelligenza{" "}
+          Un&apos;intelligenza artificiale{" "}
           <em className="font-semibold not-italic text-mint-bright">
             proprietaria
-          </em>{" "}
-          costruita per i documenti d&apos;impresa, e professionisti che
+          </em>
+          , costruita per i documenti d&apos;impresa, e professionisti che
           validano prima della consegna.
         </p>
 

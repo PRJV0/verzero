@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Search } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Search, Tag } from "lucide-react";
 
 import {
   Scrolly,
@@ -12,6 +12,7 @@ import {
 } from "@/components/scrolly";
 import { PASSI, type Passo } from "@/lib/guida-passi";
 import { FoglioDocumento } from "@/components/documento-esito";
+import { Sigillo } from "@/components/brand/sigillo";
 import { IMPRESA_ESEMPIO } from "@/lib/impresa-esempio";
 
 /**
@@ -625,232 +626,155 @@ export function GuidaPassi({ vetrina }: { vetrina: VetrinaGuida }) {
 /* ------------------------------------------------------------------ */
 
 /**
- * L'ANTEPRIMA IN HOME — cinque momenti, non cinque voci di elenco.
+ * L'ANTEPRIMA IN HOME — cinque segni, non cinque finestrelle.
  *
- * ═══ PERCHÉ NON BASTAVANO I TITOLI ═══
- * Prima c'erano i cinque titoli su un binario, con i numeri dentro un
- * pallino. Sulla pagina si leggeva come un elenco numerato: nessuno dei
- * cinque momenti aveva una faccia, quindi nessuno si distingueva dagli
- * altri, e la sequenza non si vedeva — si contava. In una home che per
- * il resto ha un protagonista visivo per sezione, era l'unico blocco a
- * non averne nessuno.
+ * ═══ PERCHÉ LE MINIATURE SONO USCITE ═══
+ * Ci sono state, e non funzionavano: cinque riquadri con una barra
+ * finta in cima e righe grigie dentro. A schermo pieno sembravano
+ * segnaposto non finiti, su finestra ridotta il formato si sfasciava.
  *
- * ═══ MICRO-SCHERMATE, NON ICONE GENERICHE ═══
- * Ogni passo porta una rappresentazione minima della schermata che la
- * guida mostra per intero: la barra di ricerca, la scheda col prezzo, il
- * documento con l'anello, le conferme, il documento finito col Sigillo.
- * Sono gli stessi elementi della pagina — la stessa cornice, lo stesso
- * anello, gli stessi colori — ridotti a quello che si riconosce a 200 px
- * di larghezza. Un'icona presa da un repertorio avrebbe detto
- * «documento» in astratto; questa dice «quel documento, lì».
+ * La scelta era fra riempirle di contenuto vero e rinunciarci. Ho
+ * rinunciato, e il motivo è una misura: nella fila le colonne stanno
+ * fra 184 px (a 1024) e 218 (a 1440). Perché dentro una miniatura si
+ * legga il nome di un percorso, un prezzo e due righe di dati serve un
+ * corpo di almeno 11 px, cioè una schermata larga almeno 320 px. Cinque
+ * da 320 con i distacchi fanno 1 700 px di fila: non ci stanno su
+ * nessuno schermo comune. Le alternative erano due righe da due e mezza
+ * — e una sequenza spezzata su due righe non è più una sequenza — o
+ * miniature illeggibili, che è precisamente quello che erano.
+ *
+ * Una miniatura di una schermata vera, rimpicciolita finché il testo non
+ * si legge più, È un segnaposto: quale che sia il contenuto che ci metti
+ * dentro. Il difetto era strutturale, non di riempimento.
+ *
+ * ═══ E LE SCHERMATE LE MOSTRA LA GUIDA ═══
+ * In /come-funziona ogni passo ha la sua schermata alta tre quarti di
+ * viewport, con i nomi e i prezzi veri del catalogo. Rifarle male qui le
+ * svaluta. La divisione del lavoro è quella di sempre: la home dice CHE
+ * c'è un percorso e in quanti momenti, la pagina lo mostra.
+ *
+ * ═══ SEGNI NOSTRI, NON ICONE DA REPERTORIO ═══
+ * Tre dei cinque segni sono oggetti che il cliente ritrova identici nel
+ * prodotto: l'anello di completamento ai passi 3 e 4 — lo stesso della
+ * guida, con la percentuale scritta e leggibile — e il Sigillo al passo
+ * 5, che è il marchio vero e non una sua allusione. I primi due sono la
+ * lente della barra di ricerca e il cartellino del prezzo, cioè le due
+ * cose che il cliente fa prima di entrare.
  *
  * ═══ LA PROGRESSIONE SI VEDE ═══
- * L'anello attraversa i passi 3, 4 e 5 e sale — 62, 88, 100 — come nella
- * guida. È l'elemento che fa leggere i cinque riquadri come una cosa
- * sola che avanza invece che come cinque riquadri.
+ * L'anello attraversa i passi 3 e 4 e sale, 62 → 88, e al quinto si
+ * chiude nel Sigillo. È quello che fa leggere i cinque segni come una
+ * cosa sola che avanza invece che come cinque icone in fila.
  *
- * ═══ NIENTE PROMESSE DI TEMPI ═══
- * Come nella guida: nessun passo dice quanto ci vuole (SPEC §12.O). La
- * tentazione qui è forte perché una sequenza sembra chiedere una durata.
- * Non la chiede.
+ * ═══ NESSUNA PROMESSA DI TEMPI ═══
+ * Come nella guida (SPEC §12.O). La tentazione è forte perché una
+ * sequenza sembra chiedere una durata. Non la chiede.
  */
 
-/** L'anello dell'anteprima: piccolo e senza percentuale scritta. */
-function AnelloMini({ percento }: { percento: number }) {
-  const r = 13;
+/** L'anello dei passi 3 e 4: lo stesso della guida, con la percentuale. */
+function AnelloSegno({ percento }: { percento: number }) {
+  const r = 30;
   const giro = 2 * Math.PI * r;
   return (
-    <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0" aria-hidden>
-      <circle cx="16" cy="16" r={r} fill="none" stroke="#E3E7E1" strokeWidth="3.5" />
+    <svg viewBox="0 0 72 72" className="h-full w-full" aria-hidden>
+      <circle cx="36" cy="36" r={r} fill="none" stroke="#D8E3DA" strokeWidth="5" />
       <circle
-        cx="16"
-        cy="16"
+        cx="36"
+        cy="36"
         r={r}
         fill="none"
-        stroke="#2FCF9A"
-        strokeWidth="3.5"
+        stroke="#1D9E75"
+        strokeWidth="5"
         strokeLinecap="round"
         strokeDasharray={`${(giro * percento) / 100} ${giro}`}
-        transform="rotate(-90 16 16)"
+        transform="rotate(-90 36 36)"
       />
+      <text
+        x="36"
+        y="42"
+        textAnchor="middle"
+        className="fill-pine font-display text-[19px] font-semibold"
+      >
+        {percento}%
+      </text>
     </svg>
   );
 }
 
-/** Una riga di testo finto: qui il segnaposto è legittimo, è un'anteprima. */
-function Tratto({ w, scuro = false }: { w: string; scuro?: boolean }) {
-  return (
-    <span
-      aria-hidden
-      className={`block h-1.5 rounded-full ${scuro ? "bg-pine/25" : "bg-line"}`}
-      style={{ width: w }}
-    />
-  );
-}
-
-/** La cornice comune: è la stessa finestra della guida, in miniatura. */
-function MiniFinestra({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex h-[104px] w-full flex-col overflow-hidden rounded-xl border border-line bg-white">
-      <div className="flex shrink-0 items-center gap-1 border-b border-line bg-paper px-2.5 py-1.5">
-        {[0, 1, 2].map((i) => (
-          <span key={i} aria-hidden className="block h-1 w-1 rounded-full bg-line" />
-        ))}
-      </div>
-      <div className="flex min-h-0 flex-1 flex-col justify-center gap-1.5 p-2.5">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-/** Le cinque micro-schermate, una per passo. */
-function MiniSchermo({ n }: { n: number }) {
-  if (n === 1) {
-    // La barra di ricerca: è la prima cosa che il cliente incontra.
-    return (
-      <MiniFinestra>
-        <span className="flex items-center gap-2 rounded-lg border border-pine/25 bg-paper/60 px-2.5 py-2">
-          <Search size={12} className="shrink-0 text-pine" aria-hidden />
-          <Tratto w="62%" scuro />
-        </span>
-        <span className="mt-0.5 flex flex-col gap-1 pl-1">
-          <Tratto w="78%" />
-          <Tratto w="54%" />
-        </span>
-      </MiniFinestra>
-    );
+/** I cinque segni. Misura unica: il quadrato che li contiene. */
+function SegnoPasso({ n }: { n: number }) {
+  if (n === 3) return <AnelloSegno percento={62} />;
+  if (n === 4) return <AnelloSegno percento={88} />;
+  {
+    /* `segmenti` e non il sigillo nudo: al quinto passo i percorsi sono
+       verificati, ed è la variante che porta gli archi — quello pino e
+       quello menta. Senza, sul fondo chiaro restava un anello
+       punteggiato pallido accanto a due anelli con l'accento acceso, e
+       il passo che chiude la sequenza era il più debole dei tre. */
   }
-  if (n === 2) {
-    // La scheda del percorso: quello che si vede è il prezzo.
-    return (
-      <MiniFinestra>
-        <span className="flex items-start justify-between gap-2 rounded-lg border border-line bg-paper/50 p-2">
-          <span className="flex flex-col gap-1 pt-0.5">
-            <Tratto w="72px" scuro />
-            <Tratto w="46px" />
-          </span>
-          <span className="shrink-0 rounded-md bg-pine px-1.5 py-1 font-display text-[9px] font-semibold leading-none text-white">
-            €/mese
-          </span>
-        </span>
-        <Tratto w="58%" />
-      </MiniFinestra>
-    );
-  }
-  if (n === 5) {
-    // Il documento finito, e accanto il Sigillo.
-    return (
-      <MiniFinestra>
-        <span className="flex items-center gap-2.5">
-          <span className="flex h-[52px] w-[40px] shrink-0 flex-col justify-center gap-1 rounded-[3px] border border-line bg-white px-1.5 shadow-soft">
-            <Tratto w="100%" scuro />
-            <Tratto w="70%" />
-            <Tratto w="88%" />
-            <Tratto w="60%" />
-          </span>
-          <span className="flex flex-col gap-1.5">
-            <span className="flex items-center gap-1.5">
-              <span
-                aria-hidden
-                className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-mint-bright font-display text-[10px] font-semibold text-pine"
-              >
-                0
-              </span>
-              <Tratto w="44px" scuro />
-            </span>
-            <Tratto w="66px" />
-          </span>
-        </span>
-      </MiniFinestra>
-    );
-  }
-  // Passi 3 e 4: lo stesso documento, e l'anello che sale.
-  const percento = n === 3 ? 62 : 88;
+  if (n === 5) return <Sigillo segmenti className="h-full w-full" />;
   return (
-    <MiniFinestra>
-      <span className="flex items-center gap-2.5">
-        <AnelloMini percento={percento} />
-        <span className="flex flex-1 flex-col gap-1">
-          <Tratto w="82%" scuro />
-          <Tratto w="60%" />
-        </span>
-      </span>
-      <span className="mt-0.5 flex flex-col gap-1 pl-1">
-        {n === 4 ? (
-          <>
-            <span className="flex items-center gap-1.5">
-              <Check size={10} strokeWidth={3} className="shrink-0 text-mint" aria-hidden />
-              <Tratto w="58%" />
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Check size={10} strokeWidth={3} className="shrink-0 text-mint" aria-hidden />
-              <Tratto w="42%" />
-            </span>
-          </>
-        ) : (
-          <>
-            <Tratto w="70%" />
-            <Tratto w="48%" />
-          </>
-        )}
-      </span>
-    </MiniFinestra>
+    <span className="flex h-full w-full items-center justify-center rounded-full bg-moss text-pine">
+      {n === 1 ? (
+        <Search size={30} strokeWidth={1.6} aria-hidden />
+      ) : (
+        <Tag size={30} strokeWidth={1.6} aria-hidden />
+      )}
+    </span>
   );
 }
 
 export function AnteprimaPassi() {
   return (
-    <ol className="relative mx-auto grid max-w-6xl gap-6 lg:grid-cols-5 lg:gap-4">
-      {/* IL BINARIO passa dietro i numeri e lega i cinque riquadri.
-          Comincia e finisce nei CENTRI del primo e dell'ultimo, non ai
-          bordi: una riga che sborda dal primo punto suggerisce che la
-          sequenza venga da prima e continui dopo, e non è così.
+    <ol className="relative mx-auto grid max-w-6xl gap-8 lg:grid-cols-5 lg:gap-5">
+      {/* IL BINARIO passa dietro i segni e li lega. Comincia e finisce
+          nei CENTRI del primo e dell'ultimo, non ai bordi: una riga che
+          sborda dal primo punto suggerisce che la sequenza venga da
+          prima e continui dopo, e non è così.
 
-          IL 9,4% È MISURATO. Un decimo per lato sarebbe il centro se le
-          colonne fossero attaccate; con `gap-4` fra cinque colonne il
-          centro della prima cade a (100% − 4·gap)/10, cioè al 9,44% con
-          il contenitore al massimo (1152 px) e al 9,35% dove la fila
-          comincia (1024). Col 10% il binario restava sei pixel dentro i
-          due numeri estremi, abbastanza per vedersi; col 9,4% sborda di
-          due, e due pixel dietro una pastiglia opaca da ventotto non si
-          vedono.
+          IL 9,25% È MISURATO. Un decimo per lato sarebbe il centro se le
+          colonne fossero attaccate; con `gap-5` fra cinque colonne il
+          centro della prima cade a (100% − 4·gap)/10, cioè al 9,19% a
+          984 px (dove la fila comincia) e al 9,31% a 1152 (dove il
+          contenitore si ferma). Il 9,25% sta entro un pixel a ogni
+          larghezza, e quel pixel finisce comunque sotto un segno opaco
+          da 64.
 
-          LA FILA COMINCIA A `lg`, non a `sm`. A 768 px le cinque colonne
-          scendevano a 133 px l'una e le descrizioni andavano a cinque
-          righe da ventun caratteri: leggibili per modo di dire. Sotto i
-          1024 i passi si impilano, e impilati una riga orizzontale non
-          collegherebbe niente — quindi il binario compare con la fila. */}
+          `top-8` è metà dei 64 px del segno: il binario passa per il
+          centro dei cerchi, non sopra o sotto.
+
+          LA FILA COMINCIA A `lg`, e non a `sm` come nella prima stesura.
+          Il segno di 64 px starebbe anche a 640, ma non ci sta il TESTO:
+          a quella larghezza le colonne scendono a 104 px e la riga di
+          descrizione va a otto caratteri per riga. Sotto i 1024 i passi
+          si impilano — e impilati una riga orizzontale non collegherebbe
+          niente, quindi il binario compare con la fila. */}
       <span
         aria-hidden
-        className="absolute left-[9.4%] right-[9.4%] top-3.5 hidden h-px bg-pine/20 lg:block"
+        className="absolute left-[9.25%] right-[9.25%] top-8 hidden h-px bg-pine/20 lg:block"
       />
       {PASSI.map((p, i) => (
         <li
           key={p.n}
-          className="vz-reveal relative"
+          className="vz-reveal relative flex items-start gap-5 lg:block"
           style={{ "--vz-i": i } as React.CSSProperties}
         >
-          <span
-            aria-hidden
-            className={
-              "relative z-10 flex h-7 w-7 items-center justify-center rounded-full font-display text-[13px] font-semibold lg:mx-auto " +
-              (i === 0 || i === PASSI.length - 1
-                ? "bg-pine text-white"
-                : "border border-pine/30 bg-paper text-pine")
-            }
-          >
-            {p.n}
+          {/* Il segno vive dentro una placca del colore del fondo, così
+              il binario gli passa dietro e non attraverso. */}
+          <span className="relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-paper p-1 lg:mx-auto">
+            <SegnoPasso n={p.n} />
           </span>
-          <div className="mt-4">
-            <MiniSchermo n={p.n} />
+          <div className="min-w-0 lg:mt-5 lg:text-center">
+            <p className="font-display text-[13px] font-semibold uppercase tracking-[0.14em] text-pine">
+              Passo {p.n}
+            </p>
+            <p className="mt-1.5 font-display text-[17px] leading-snug text-ink lg:text-[16px]">
+              {p.titolo}
+            </p>
+            <p className="mt-2 text-[13px] leading-snug text-gray-warm">
+              {p.riga}
+            </p>
           </div>
-          <p className="mt-3.5 font-display text-[16px] leading-snug text-ink lg:text-center lg:text-[15.5px]">
-            {p.titolo}
-          </p>
-          <p className="mt-1.5 text-[12.5px] leading-snug text-gray-warm lg:text-center">
-            {p.riga}
-          </p>
         </li>
       ))}
     </ol>

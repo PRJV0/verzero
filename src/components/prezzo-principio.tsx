@@ -67,33 +67,45 @@ export function PrezzoPrincipio() {
             titolo — «Pubblico, prima di parlare con noi» — senza capire
             di che cosa fosse pubblico. Un occhiello che non si legge non
             è un occhiello. */}
-        <p className="mb-5 text-[13px] font-semibold uppercase tracking-[0.16em] text-mint-bright">
+        <p className="mb-8 text-[13px] font-semibold uppercase tracking-[0.16em] text-mint-bright">
           Prezzi e canone
         </p>
-        <h2 className="font-display text-[2.6rem] leading-[1.02] tracking-[-0.02em] text-white md:text-[4.4rem]">
-          Pubblici, prima ancora di parlare con noi.
-        </h2>
 
-        {/* IL NUMERO È IL PROTAGONISTA della sezione, non una nota in
-            fondo. Era un rimando dentro una riga di testo, e un prezzo
-            che si legge solo avvicinandosi allo schermo non è un prezzo
-            trasparente: è un prezzo scritto. Qui si legge da lontano, e
-            la cifra viene da `pricing.ts` — mai ricopiata, perché un
+        {/* IL NUMERO VIENE PRIMA DEL TITOLO, e non dopo.
+            Era già grande — 128 px contro i 70 del titolo — e passava
+            comunque inosservato, perché la grandezza non è l'unica cosa
+            che decide che cosa si vede per primo: sopra c'era un titolo
+            di quarantadue caratteri su due righe, che di inchiostro ne
+            copriva molto di più dei 145 px della cifra. Si leggeva
+            l'occhiello, poi il titolo, e alla cifra ci si arrivava
+            quando ormai era «dentro al testo».
+
+            Adesso la cifra è la prima cosa della sezione — è la notizia
+            — e il titolo la commenta: leggi «45 €/mese» e poi scopri che
+            la cosa notevole è che sia scritto lì, prima di parlare con
+            noi. Ed è cresciuta a 160 px, che sono più del doppio del
+            titolo più grande della pagina.
+
+            La cifra viene da `pricing.ts` — mai ricopiata, perché un
             numero ricopiato è un numero che un giorno mentirà. */}
-        <p className="mt-9 flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1">
-          <span className="font-display text-[15px] font-medium text-moss/70">
+        <p className="flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1">
+          <span className="font-display text-[1.1rem] font-medium text-moss/70 md:text-[1.4rem]">
             da
           </span>
-          <span className="font-display text-[5.5rem] font-semibold leading-[0.85] tracking-[-0.04em] text-white tabular-nums md:text-[8rem]">
+          <span className="font-display text-[6.5rem] font-semibold leading-[0.82] tracking-[-0.045em] text-white tabular-nums md:text-[10rem]">
             {daMensile}
           </span>
-          <span className="font-display text-[2rem] font-semibold leading-none text-mint-bright md:text-[2.6rem]">
+          <span className="font-display text-[2.4rem] font-semibold leading-none text-mint-bright md:text-[3.4rem]">
             €/mese
           </span>
         </p>
-        <p className="mt-4 text-[13px] font-medium tracking-wide text-moss/70">
+        <p className="mt-5 text-[14px] font-medium tracking-wide text-moss/70">
           IVA esclusa, tutto incluso
         </p>
+
+        <h2 className="mx-auto mt-10 max-w-3xl font-display text-[2rem] leading-[1.06] tracking-[-0.02em] text-white md:text-[3.2rem]">
+          Pubblici, prima ancora di parlare con noi.
+        </h2>
       </div>
 
       <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">

@@ -109,7 +109,7 @@ const BATTUTE = [
 export const metadata: Metadata = {
   title: { absolute: `${SITO.nome} — ${SITO.payoff}` },
   description:
-    "Qualifica la tua impresa in abbonamento: un'intelligenza proprietaria costruita per i documenti d'impresa, professionisti che validano, prezzi pubblici.",
+    "Qualifica la tua impresa in abbonamento: un'AI proprietaria costruita per i documenti d'impresa, professionisti che validano, prezzi pubblici.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -117,7 +117,7 @@ export const metadata: Metadata = {
     siteName: SITO.nome,
     title: `${SITO.nome} — ${SITO.payoff}`,
     description:
-      "Qualifica la tua impresa in abbonamento: un'intelligenza proprietaria costruita per i documenti d'impresa, professionisti che validano, prezzi pubblici.",
+      "Qualifica la tua impresa in abbonamento: un'AI proprietaria costruita per i documenti d'impresa, professionisti che validano, prezzi pubblici.",
     url: "/",
     images: [
       {
@@ -266,36 +266,38 @@ export default function HomePage() {
         <span aria-hidden className="pointer-events-none absolute -right-32 -top-24 h-96 w-96 rounded-full bg-mint-bright/10 blur-3xl" />
         <span aria-hidden className="pointer-events-none absolute -bottom-32 left-1/4 h-80 w-80 rounded-full bg-mint-bright/[0.07] blur-3xl" />
         <div className="relative mx-auto max-w-4xl text-center">
-          {/* Mai "VER0" in maiuscoletto: si legge "VERO" (decisione già presa). */}
-          <p className="mb-6 text-[13px] font-semibold uppercase tracking-[0.16em] text-mint-bright">
-            L&apos;INTELLIGENZA È NOSTRA
-          </p>
-          <h2 className="mx-auto max-w-4xl font-display text-[2.5rem] leading-[1.02] tracking-[-0.02em] text-white md:text-[4rem]">
-            Costruito sui documenti che le imprese hanno già e le{" "}
-            <span className="text-mint-bright">norme che li governano.</span>
-          </h2>
-          {/* DUE VARIANTI SCRITTE, UNA SCELTA.
-              (a) «Verzero non adatta un assistente generico: l'intelligenza
-                  che legge i documenti d'impresa è nostra, ed è nata per
-                  farlo.»
-              (b) quella qui sotto.
-              Vince la (b) perché apre affermando invece di negare: la (a)
-              mette in testa alla frase quello che NON siamo, e la prima
-              cosa che il lettore incontra diventa l'assistente generico.
-              La negazione serve ancora — è il confronto che il lettore
-              farebbe comunque — ma sta dopo, come precisazione.
+          {/* Mai "VER0" in maiuscoletto: si legge "VERO" (decisione già presa).
 
-              La frase di prima («Non ci appoggiamo a un assistente
-              generico a cui si chiede di arrangiarsi: su questo mestiere
-              il Motore Ver0 non improvvisa») negava due volte, non
-              nominava mai il fatto, e affidava il senso a due metafore —
-              «arrangiarsi», «non improvvisa» — che dicono qualcosa solo
-              a chi ha già capito. E chiamava in causa il Motore, che
-              stiamo riducendo a nome interno. */}
+              L'OCCHIELLO ERA IL CLAIM, ED ERA LA COSA PIÙ PICCOLA DELLA
+              SEZIONE. Diceva «L'INTELLIGENZA È NOSTRA» a 13 px, cioè
+              affidava l'affermazione che regge tutto il riposizionamento
+              alla riga che nessuno legge. Ora l'affermazione la fa il
+              titolo, alla scala degli altri titoli di sezione, e
+              l'occhiello torna a fare quello che fanno gli altri: dire
+              in che sezione si è.
+
+              E DICE «AI», non una perifrasi. «Un'intelligenza
+              proprietaria» lascia il lettore a indovinare se parliamo di
+              software, di un metodo o di una squadra in gamba: proprio
+              la cosa che rende questo un asset resta implicita. */}
+          {/* «Ver0» non entra in un occhiello: gli occhielli sono in
+              maiuscoletto, e VER0 si legge VERO. Il nome per esteso non
+              ha quel problema. */}
+          <p className="mb-6 text-[13px] font-semibold uppercase tracking-[0.16em] text-mint-bright">
+            L&apos;AI di Verzero
+          </p>
+          <h2 className="mx-auto max-w-4xl font-display text-[2.3rem] leading-[1.04] tracking-[-0.02em] text-white md:text-[4rem]">
+            La nostra AI non è un{" "}
+            <span className="text-mint-bright">assistente generico.</span>
+          </h2>
+          {/* La riga sotto porta quello che il titolo di prima diceva —
+              su che cosa è costruita — e lo dice per esteso: è la
+              spiegazione dell'affermazione, non un secondo claim. */}
           <p className="mx-auto mt-7 max-w-2xl font-display text-xl leading-snug text-moss md:text-[1.6rem]">
-            È un&apos;intelligenza{" "}
-            <span className="text-mint-bright">proprietaria</span>, nata per
-            questo mestiere: non un assistente generico adattato a svolgerlo.
+            Un&apos;intelligenza artificiale{" "}
+            <span className="text-mint-bright">proprietaria</span>, costruita
+            sui documenti che le imprese hanno già e sulle norme che li
+            governano.
           </p>
 
           {/* LA SCENA MADRE: qui il Motore smette di essere raccontato e
