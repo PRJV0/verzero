@@ -9,11 +9,13 @@ import { FasciaListaAttesa } from "@/components/lista-attesa";
 import { HeroHome } from "@/components/hero-home";
 import { OndaParticelle } from "@/components/onda-particelle";
 import { PrezzoPrincipio } from "@/components/prezzo-principio";
+import { AnnuncioFase } from "@/components/annuncio-fase";
 import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
-import { GuidaPassiTitoli } from "@/components/guida-passi";
+import { AnteprimaPassi } from "@/components/guida-passi";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { JsonLd } from "@/components/json-ld";
 import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
+import { DIMENSIONE_LABEL, DIMENSIONE_RANGE, DIMENSIONI } from "@/lib/pricing";
 import { COMPETENZE_TEAM } from "@/lib/team";
 import { SITO, jsonLdOrganization, jsonLdWebSite } from "@/lib/seo";
 
@@ -143,38 +145,57 @@ export default function HomePage() {
           che uno si fa: «vale anche per me?». Il sito diceva «le
           imprese», che è come dire nessuno.
 
-          DUE POLI E UNA CERNIERA. Era una riga di testo appoggiata sotto
-          l'hero: vera e invisibile. I due estremi si nominano entrambi
-          apposta — chi non ha mai fatto niente e chi ha già qualcuno che
-          glielo chiede — e in mezzo sta la cosa che li tiene insieme.
-          Messi ai due lati diventano due poli fra cui il lettore si
-          colloca da sé, invece di una frase che deve leggere fino in
-          fondo per capire se lo riguarda. */}
-      <section className="border-b border-line bg-white px-5 py-14 md:py-16">
-        <div className="mx-auto grid max-w-5xl items-center gap-6 md:grid-cols-[1fr_auto_1fr] md:gap-8">
-          <p className="font-display text-[1.35rem] leading-snug text-ink md:text-right md:text-[1.7rem]">
-            La <strong className="font-semibold text-pine">micro impresa</strong>{" "}
-            che non ha mai fatto un bilancio di sostenibilità
+          ═══ PERCHÉ NON È PIÙ A DUE POLI ═══
+          C'erano due frasi ai lati e una pastiglia in mezzo che diceva
+          «stesso impianto». Chiedeva al lettore di ricostruire da sé il
+          senso della composizione: due etichette accostate non sono
+          un'affermazione, e la cosa che contava — che il metodo è UNO —
+          era la scritta più piccola delle tre.
+
+          Adesso l'affermazione la fa il titolo, in scala da titolo, e i
+          due casi stanno dentro la riga sotto, dove sono esempi che si
+          leggono invece che poli da interpretare. Sotto, le fasce vere
+          del listino: dicono la seconda metà della frase — che a cambiare
+          è il prezzo — con i nomi e le soglie che il cliente ritroverà
+          sul catalogo, non con un'allusione. */}
+      <section className="border-b border-line bg-white px-5 py-16 md:py-24">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="mb-5 text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
+            Per chi è
+          </p>
+          <h2 className="font-display text-[2.4rem] leading-[1.0] tracking-[-0.02em] text-ink md:text-[4rem]">
+            Lo stesso metodo,{" "}
+            <span className="text-pine">per ogni impresa.</span>
+          </h2>
+          <p className="mx-auto mt-7 max-w-[52ch] font-display text-[1.2rem] leading-snug text-gray-warm md:text-[1.55rem]">
+            Che tu debba fare il primo bilancio di sostenibilità o rispondere
+            alle richieste di banche e committenti, il percorso è lo stesso:
+            cambia il prezzo, che segue la dimensione della tua impresa.
           </p>
 
-          {/* La cerniera: piccola, in mezzo, e con le due linee che
-              collegano davvero i due poli invece di suggerirli. */}
-          <div className="flex items-center gap-3 md:flex-col md:gap-2">
-            <span aria-hidden className="h-px flex-1 bg-line md:h-8 md:w-px md:flex-none" />
-            <span className="shrink-0 whitespace-nowrap rounded-full border border-pine/25 bg-paper px-3.5 py-1.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-pine">
-              Stesso impianto
-            </span>
-            <span aria-hidden className="h-px flex-1 bg-line md:h-8 md:w-px md:flex-none" />
-          </div>
-
-          <p className="font-display text-[1.35rem] leading-snug text-ink md:text-[1.7rem]">
-            L&apos;<strong className="font-semibold text-pine">azienda strutturata</strong>{" "}
-            che deve rispondere a banca e capofiliera
-          </p>
+          {/* Le quattro fasce vengono da `pricing.ts`, come ogni altro
+              numero del sito: qui si vedono i nomi e le soglie, non una
+              parafrasi che il listino potrebbe smentire. */}
+          {/* Griglia sullo stretto, fila sul largo. A `flex-wrap` centrato
+              le quattro fasce venivano larghe una diversa dall'altra e
+              incolonnate storte: una griglia a due colonne le allinea, e
+              sul largo tornano una fila sola. */}
+          <ul className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-2.5 sm:flex sm:flex-wrap sm:justify-center">
+            {DIMENSIONI.map((d) => (
+              <li
+                key={d}
+                className="rounded-xl border border-line bg-paper/70 px-4 py-3 text-left"
+              >
+                <span className="block text-[14px] font-semibold text-ink">
+                  {DIMENSIONE_LABEL[d]}
+                </span>
+                <span className="block text-[12px] leading-snug text-gray-light">
+                  {DIMENSIONE_RANGE[d]}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
-        <p className="mx-auto mt-8 max-w-2xl text-center text-[14px] text-gray-warm">
-          Cambia solo il prezzo, che segue la fascia dimensionale.
-        </p>
       </section>
 
       {/* LO ZERO DI VER0 — un contenuto, due presentazioni.
@@ -253,9 +274,28 @@ export default function HomePage() {
             Costruito sui documenti che le imprese hanno già e le{" "}
             <span className="text-mint-bright">norme che li governano.</span>
           </h2>
+          {/* DUE VARIANTI SCRITTE, UNA SCELTA.
+              (a) «Verzero non adatta un assistente generico: l'intelligenza
+                  che legge i documenti d'impresa è nostra, ed è nata per
+                  farlo.»
+              (b) quella qui sotto.
+              Vince la (b) perché apre affermando invece di negare: la (a)
+              mette in testa alla frase quello che NON siamo, e la prima
+              cosa che il lettore incontra diventa l'assistente generico.
+              La negazione serve ancora — è il confronto che il lettore
+              farebbe comunque — ma sta dopo, come precisazione.
+
+              La frase di prima («Non ci appoggiamo a un assistente
+              generico a cui si chiede di arrangiarsi: su questo mestiere
+              il Motore Ver0 non improvvisa») negava due volte, non
+              nominava mai il fatto, e affidava il senso a due metafore —
+              «arrangiarsi», «non improvvisa» — che dicono qualcosa solo
+              a chi ha già capito. E chiamava in causa il Motore, che
+              stiamo riducendo a nome interno. */}
           <p className="mx-auto mt-7 max-w-2xl font-display text-xl leading-snug text-moss md:text-[1.6rem]">
-            Non ci appoggiamo a un assistente generico a cui si chiede di
-            arrangiarsi: su questo mestiere il Motore Ver0 non improvvisa.
+            È un&apos;intelligenza{" "}
+            <span className="text-mint-bright">proprietaria</span>, nata per
+            questo mestiere: non un assistente generico adattato a svolgerlo.
           </p>
 
           {/* LA SCENA MADRE: qui il Motore smette di essere raccontato e
@@ -281,13 +321,24 @@ export default function HomePage() {
           i passi. Una sezione con quattro centri non ne ha nessuno. Qui
           i passi hanno la loro fascia, stretta, e la sezione sopra torna
           ad avere una cosa sola da guardare. */}
-      <section className="border-y border-line bg-paper px-5 py-14 md:py-16">
-        <div className="mx-auto max-w-4xl text-center">
-          <p className="mb-8 text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
-            COME SUCCEDE, IN CINQUE PASSI
-          </p>
-          <GuidaPassiTitoli tono="chiaro" />
-          <div className="mt-10">
+      <section className="border-y border-line bg-paper px-5 py-16 md:py-20">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="mb-5 text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
+              Come succede, in cinque passi
+            </p>
+            <h2 className="font-display text-[2.1rem] leading-[1.04] tracking-[-0.02em] text-ink md:text-[3.2rem]">
+              {/* Niente virgola: «dal momento X a quello Y» è un arco
+                  continuo, e la virgola lo spezzava a metà. La pausa la
+                  dà già l'andata a capo. */}
+              Dal momento in cui scrivi{" "}
+              <span className="text-pine">a quello in cui ricevi.</span>
+            </h2>
+          </div>
+          <div className="mt-12">
+            <AnteprimaPassi />
+          </div>
+          <div className="mt-12 text-center">
             <CtaGrande href="/come-funziona">Guarda i cinque passi</CtaGrande>
           </div>
         </div>
@@ -368,6 +419,15 @@ export default function HomePage() {
         <OndaParticelle config={PRESET.tecnica} className="-z-10" />
         <div className="relative">
           <PrezzoPrincipio />
+          {/* L'ANNUNCIO DELLA FASE STA QUI, e non più in cima alla home.
+              Sopra il claim diceva «non siamo ancora pronti» a chi non
+              sapeva ancora che cosa vendiamo. Qui parla a chi ha appena
+              letto quanto costa: è il punto in cui «le prime hanno
+              condizioni riservate» smette di essere una riserva e
+              diventa una ragione per muoversi adesso. */}
+          <div className="mt-8 text-center">
+            <AnnuncioFase tono="scuro" />
+          </div>
         </div>
       </section>
 

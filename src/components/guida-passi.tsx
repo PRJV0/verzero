@@ -621,79 +621,238 @@ export function GuidaPassi({ vetrina }: { vetrina: VetrinaGuida }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* La versione ridotta per la home: i soli titoli                      */
+/* L'anteprima per la home                                             */
 /* ------------------------------------------------------------------ */
 
 /**
- * L'ANTEPRIMA IN HOME — i cinque titoli su un binario.
+ * L'ANTEPRIMA IN HOME — cinque momenti, non cinque voci di elenco.
  *
- * In home non si rifanno le schermate: la home dice CHE c'è un percorso,
- * la pagina lo mostra. Ma cinque titoli incolonnati senza niente attorno
- * sono un elenco appoggiato, e un elenco non racconta una sequenza.
+ * ═══ PERCHÉ NON BASTAVANO I TITOLI ═══
+ * Prima c'erano i cinque titoli su un binario, con i numeri dentro un
+ * pallino. Sulla pagina si leggeva come un elenco numerato: nessuno dei
+ * cinque momenti aveva una faccia, quindi nessuno si distingueva dagli
+ * altri, e la sequenza non si vedeva — si contava. In una home che per
+ * il resto ha un protagonista visivo per sezione, era l'unico blocco a
+ * non averne nessuno.
  *
- * Il binario serve a quello: una riga che attraversa i cinque numeri e
- * li lega, con il primo e l'ultimo che si distinguono — si parte da lì e
- * si arriva là. È il minimo che rende leggibile una progressione, e non
- * aggiunge un solo elemento grafico che non sia già nel linguaggio della
- * pagina.
+ * ═══ MICRO-SCHERMATE, NON ICONE GENERICHE ═══
+ * Ogni passo porta una rappresentazione minima della schermata che la
+ * guida mostra per intero: la barra di ricerca, la scheda col prezzo, il
+ * documento con l'anello, le conferme, il documento finito col Sigillo.
+ * Sono gli stessi elementi della pagina — la stessa cornice, lo stesso
+ * anello, gli stessi colori — ridotti a quello che si riconosce a 200 px
+ * di larghezza. Un'icona presa da un repertorio avrebbe detto
+ * «documento» in astratto; questa dice «quel documento, lì».
+ *
+ * ═══ LA PROGRESSIONE SI VEDE ═══
+ * L'anello attraversa i passi 3, 4 e 5 e sale — 62, 88, 100 — come nella
+ * guida. È l'elemento che fa leggere i cinque riquadri come una cosa
+ * sola che avanza invece che come cinque riquadri.
+ *
+ * ═══ NIENTE PROMESSE DI TEMPI ═══
+ * Come nella guida: nessun passo dice quanto ci vuole (SPEC §12.O). La
+ * tentazione qui è forte perché una sequenza sembra chiedere una durata.
+ * Non la chiede.
  */
-export function GuidaPassiTitoli({
-  tono = "scuro",
-}: {
-  /** Due fondi, un componente: due copie diventerebbero due elenchi. */
-  tono?: "scuro" | "chiaro";
-}) {
-  const chiaro = tono === "chiaro";
+
+/** L'anello dell'anteprima: piccolo e senza percentuale scritta. */
+function AnelloMini({ percento }: { percento: number }) {
+  const r = 13;
+  const giro = 2 * Math.PI * r;
   return (
-    <ol className="relative mx-auto grid max-w-4xl gap-6 sm:grid-cols-5 sm:gap-3">
-      {/* IL BINARIO, solo dove i passi stanno in fila. Sullo stretto
-          sono impilati e una riga orizzontale non collegherebbe niente.
-          Comincia e finisce nei CENTRI del primo e dell'ultimo numero —
-          a un decimo per lato, che con cinque colonne è dove cadono — e
-          non ai bordi del contenitore: una riga che sborda dal primo
-          punto suggerisce che la sequenza venga da prima e continui
-          dopo, e non è così. */}
+    <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0" aria-hidden>
+      <circle cx="16" cy="16" r={r} fill="none" stroke="#E3E7E1" strokeWidth="3.5" />
+      <circle
+        cx="16"
+        cy="16"
+        r={r}
+        fill="none"
+        stroke="#2FCF9A"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+        strokeDasharray={`${(giro * percento) / 100} ${giro}`}
+        transform="rotate(-90 16 16)"
+      />
+    </svg>
+  );
+}
+
+/** Una riga di testo finto: qui il segnaposto è legittimo, è un'anteprima. */
+function Tratto({ w, scuro = false }: { w: string; scuro?: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={`block h-1.5 rounded-full ${scuro ? "bg-pine/25" : "bg-line"}`}
+      style={{ width: w }}
+    />
+  );
+}
+
+/** La cornice comune: è la stessa finestra della guida, in miniatura. */
+function MiniFinestra({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex h-[104px] w-full flex-col overflow-hidden rounded-xl border border-line bg-white">
+      <div className="flex shrink-0 items-center gap-1 border-b border-line bg-paper px-2.5 py-1.5">
+        {[0, 1, 2].map((i) => (
+          <span key={i} aria-hidden className="block h-1 w-1 rounded-full bg-line" />
+        ))}
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col justify-center gap-1.5 p-2.5">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** Le cinque micro-schermate, una per passo. */
+function MiniSchermo({ n }: { n: number }) {
+  if (n === 1) {
+    // La barra di ricerca: è la prima cosa che il cliente incontra.
+    return (
+      <MiniFinestra>
+        <span className="flex items-center gap-2 rounded-lg border border-pine/25 bg-paper/60 px-2.5 py-2">
+          <Search size={12} className="shrink-0 text-pine" aria-hidden />
+          <Tratto w="62%" scuro />
+        </span>
+        <span className="mt-0.5 flex flex-col gap-1 pl-1">
+          <Tratto w="78%" />
+          <Tratto w="54%" />
+        </span>
+      </MiniFinestra>
+    );
+  }
+  if (n === 2) {
+    // La scheda del percorso: quello che si vede è il prezzo.
+    return (
+      <MiniFinestra>
+        <span className="flex items-start justify-between gap-2 rounded-lg border border-line bg-paper/50 p-2">
+          <span className="flex flex-col gap-1 pt-0.5">
+            <Tratto w="72px" scuro />
+            <Tratto w="46px" />
+          </span>
+          <span className="shrink-0 rounded-md bg-pine px-1.5 py-1 font-display text-[9px] font-semibold leading-none text-white">
+            €/mese
+          </span>
+        </span>
+        <Tratto w="58%" />
+      </MiniFinestra>
+    );
+  }
+  if (n === 5) {
+    // Il documento finito, e accanto il Sigillo.
+    return (
+      <MiniFinestra>
+        <span className="flex items-center gap-2.5">
+          <span className="flex h-[52px] w-[40px] shrink-0 flex-col justify-center gap-1 rounded-[3px] border border-line bg-white px-1.5 shadow-soft">
+            <Tratto w="100%" scuro />
+            <Tratto w="70%" />
+            <Tratto w="88%" />
+            <Tratto w="60%" />
+          </span>
+          <span className="flex flex-col gap-1.5">
+            <span className="flex items-center gap-1.5">
+              <span
+                aria-hidden
+                className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-mint-bright font-display text-[10px] font-semibold text-pine"
+              >
+                0
+              </span>
+              <Tratto w="44px" scuro />
+            </span>
+            <Tratto w="66px" />
+          </span>
+        </span>
+      </MiniFinestra>
+    );
+  }
+  // Passi 3 e 4: lo stesso documento, e l'anello che sale.
+  const percento = n === 3 ? 62 : 88;
+  return (
+    <MiniFinestra>
+      <span className="flex items-center gap-2.5">
+        <AnelloMini percento={percento} />
+        <span className="flex flex-1 flex-col gap-1">
+          <Tratto w="82%" scuro />
+          <Tratto w="60%" />
+        </span>
+      </span>
+      <span className="mt-0.5 flex flex-col gap-1 pl-1">
+        {n === 4 ? (
+          <>
+            <span className="flex items-center gap-1.5">
+              <Check size={10} strokeWidth={3} className="shrink-0 text-mint" aria-hidden />
+              <Tratto w="58%" />
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Check size={10} strokeWidth={3} className="shrink-0 text-mint" aria-hidden />
+              <Tratto w="42%" />
+            </span>
+          </>
+        ) : (
+          <>
+            <Tratto w="70%" />
+            <Tratto w="48%" />
+          </>
+        )}
+      </span>
+    </MiniFinestra>
+  );
+}
+
+export function AnteprimaPassi() {
+  return (
+    <ol className="relative mx-auto grid max-w-6xl gap-6 lg:grid-cols-5 lg:gap-4">
+      {/* IL BINARIO passa dietro i numeri e lega i cinque riquadri.
+          Comincia e finisce nei CENTRI del primo e dell'ultimo, non ai
+          bordi: una riga che sborda dal primo punto suggerisce che la
+          sequenza venga da prima e continui dopo, e non è così.
+
+          IL 9,4% È MISURATO. Un decimo per lato sarebbe il centro se le
+          colonne fossero attaccate; con `gap-4` fra cinque colonne il
+          centro della prima cade a (100% − 4·gap)/10, cioè al 9,44% con
+          il contenitore al massimo (1152 px) e al 9,35% dove la fila
+          comincia (1024). Col 10% il binario restava sei pixel dentro i
+          due numeri estremi, abbastanza per vedersi; col 9,4% sborda di
+          due, e due pixel dietro una pastiglia opaca da ventotto non si
+          vedono.
+
+          LA FILA COMINCIA A `lg`, non a `sm`. A 768 px le cinque colonne
+          scendevano a 133 px l'una e le descrizioni andavano a cinque
+          righe da ventun caratteri: leggibili per modo di dire. Sotto i
+          1024 i passi si impilano, e impilati una riga orizzontale non
+          collegherebbe niente — quindi il binario compare con la fila. */}
       <span
         aria-hidden
-        className={
-          "absolute left-[10%] right-[10%] top-4 hidden h-px sm:block " +
-          (chiaro ? "bg-pine/20" : "bg-mint-bright/25")
-        }
+        className="absolute left-[9.4%] right-[9.4%] top-3.5 hidden h-px bg-pine/20 lg:block"
       />
-      {PASSI.map((p, i) => {
-        const estremo = i === 0 || i === PASSI.length - 1;
-        return (
-          <li
-            key={p.n}
-            className="vz-reveal relative flex items-center gap-4 sm:block"
-            style={{ "--vz-i": i } as React.CSSProperties}
+      {PASSI.map((p, i) => (
+        <li
+          key={p.n}
+          className="vz-reveal relative"
+          style={{ "--vz-i": i } as React.CSSProperties}
+        >
+          <span
+            aria-hidden
+            className={
+              "relative z-10 flex h-7 w-7 items-center justify-center rounded-full font-display text-[13px] font-semibold lg:mx-auto " +
+              (i === 0 || i === PASSI.length - 1
+                ? "bg-pine text-white"
+                : "border border-pine/30 bg-paper text-pine")
+            }
           >
-            <span
-              aria-hidden
-              className={
-                "relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-[14px] font-semibold sm:mx-auto " +
-                (chiaro
-                  ? estremo
-                    ? "bg-pine text-white"
-                    : "border border-pine/30 bg-paper text-pine"
-                  : estremo
-                    ? "bg-mint-bright text-pine-deep"
-                    : "border border-mint-bright/45 bg-pine-deep text-mint-bright")
-              }
-            >
-              {p.n}
-            </span>
-            <p
-              className={
-                "font-display text-[16px] leading-snug sm:mt-4 sm:text-center sm:text-[15.5px] " +
-                (chiaro ? "text-ink" : "text-white")
-              }
-            >
-              {p.titolo}
-            </p>
-          </li>
-        );
-      })}
+            {p.n}
+          </span>
+          <div className="mt-4">
+            <MiniSchermo n={p.n} />
+          </div>
+          <p className="mt-3.5 font-display text-[16px] leading-snug text-ink lg:text-center lg:text-[15.5px]">
+            {p.titolo}
+          </p>
+          <p className="mt-1.5 text-[12.5px] leading-snug text-gray-warm lg:text-center">
+            {p.riga}
+          </p>
+        </li>
+      ))}
     </ol>
   );
 }

@@ -117,37 +117,14 @@ export function HeroHome() {
       />
 
       <div ref={blocco} className="relative mx-auto max-w-5xl text-center">
-        {/* LA FASE, DETTA SUBITO E NON IN FONDO.
-            Stava in fondo alla home, dopo che le CTA avevano già
-            invitato ad attivare: si scopriva alla fine di essere in fila.
-            Detta qui diventa un'altra cosa — non una scusa, una ragione
-            per muoversi adesso — e le CTA che seguono dicono quello che
-            succede davvero, cioè una richiesta senza addebito.
-            Prende il posto dell'occhiello con le tre parole di dominio:
-            quelle le dice ora il sottotitolo, e questa riga vale di più. */}
-        <p
-          data-onda-maschera
-          className="vz-entra mb-8 inline-flex max-w-full items-center gap-2.5 rounded-full border border-mint-bright/30 bg-mint-bright/[0.07] px-4 py-2 text-left text-[12.5px] leading-snug text-moss sm:py-1.5"
-          style={{ "--vz-i": 0 } as React.CSSProperties}
-        >
-          <span
-            aria-hidden
-            className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint-bright"
-          />
-          {/* UN SOLO figlio di testo, e non due. Con il testo spezzato
-              fra un nodo e uno `<strong>` il flex li tratta come due
-              elementi: su schermo stretto andavano a capo come blocchi
-              separati, col pallino da una parte e mezza frase
-              dall'altra. Dentro un unico span il testo va a capo come
-              testo. */}
-          <span>
-            Stiamo aprendo a poche imprese alla volta —{" "}
-            <strong className="font-semibold text-mint-bright">
-              condizioni fondatori per le prime
-            </strong>
-          </span>
-        </p>
-
+        {/* QUI NON C'È PIÙ L'ANNUNCIO DELLA FASE.
+            Stava sopra il claim, ed era la prima cosa che si leggeva del
+            sito: «stiamo aprendo a poche imprese alla volta». Vera, ma
+            in cima dice «non siamo ancora pronti», e ogni affermazione
+            che seguiva arrivava a un lettore che aveva già ricevuto una
+            riserva. Adesso sta accanto al prezzo e nel catalogo, dove
+            chi legge sta già valutando e le condizioni fondatori sono
+            una ragione per muoversi (v. `annuncio-fase.tsx`). */}
         <h1 className="font-display text-white">
           {/* Riga 1: che cosa ottieni. È la prima informazione, e sta
               in grande a piena forza. */}
@@ -155,7 +132,7 @@ export function HeroHome() {
             <span
               data-onda-maschera
               className="vz-entra inline-block whitespace-nowrap text-[clamp(1.85rem,5.6vw,5rem)] font-bold leading-[1.02] tracking-[-0.035em]"
-              style={{ "--vz-i": 1 } as React.CSSProperties}
+              style={{ "--vz-i": 0 } as React.CSSProperties}
             >
               Qualifica la tua impresa.
             </span>
@@ -175,7 +152,7 @@ export function HeroHome() {
             <span
               data-onda-maschera
               className="vz-entra relative inline-block whitespace-nowrap text-[clamp(1.25rem,3.1vw,2.6rem)] font-normal leading-[1.1] tracking-[-0.02em] text-moss"
-              style={{ "--vz-i": 2 } as React.CSSProperties}
+              style={{ "--vz-i": 1 } as React.CSSProperties}
             >
               In{" "}
               <span className="relative inline-block">
@@ -196,7 +173,7 @@ export function HeroHome() {
         <p
           data-onda-maschera
           className="vz-entra mx-auto mt-8 max-w-[30ch] font-display text-[1.25rem] leading-[1.45] text-moss sm:max-w-[42ch] sm:text-[1.5rem] md:text-[1.7rem]"
-          style={{ "--vz-i": 3 } as React.CSSProperties}
+          style={{ "--vz-i": 2 } as React.CSSProperties}
         >
           Un&apos;intelligenza{" "}
           <em className="font-semibold not-italic text-mint-bright">
@@ -215,7 +192,7 @@ export function HeroHome() {
         <div
           data-onda-maschera
           className="vz-entra mt-9"
-          style={{ "--vz-i": 4 } as React.CSSProperties}
+          style={{ "--vz-i": 3 } as React.CSSProperties}
         >
           <Orientatore />
         </div>
@@ -229,7 +206,7 @@ export function HeroHome() {
         <div
           data-onda-maschera
           className="vz-entra mt-6 text-sm"
-          style={{ "--vz-i": 5 } as React.CSSProperties}
+          style={{ "--vz-i": 4 } as React.CSSProperties}
         >
           <Link
             href="/servizi"

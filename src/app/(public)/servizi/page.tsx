@@ -5,6 +5,7 @@ import { CatalogoFamiglie } from "@/components/catalogo-famiglie";
 import { BISOGNI, type Bisogno } from "@/lib/catalog";
 import { orienta, raggruppaPerMomento } from "@/lib/orientatore";
 import { JsonLd } from "@/components/json-ld";
+import { AnnuncioFase } from "@/components/annuncio-fase";
 import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
 export const metadata: Metadata = metadataPagina({
@@ -73,6 +74,15 @@ export default async function ServiziPage({
         sono scritti prima di iniziare. Ogni percorso riusa i dati che hai già,
         così il secondo costa meno lavoro del primo.
       </p>
+
+      {/* LA FASE, dove è un'informazione utile: chi è su questa pagina
+          sta guardando i prezzi, e sapere che le prime imprese hanno
+          condizioni riservate è una ragione per muoversi, non una
+          riserva. In cima alla home diceva l'opposto (v.
+          `annuncio-fase.tsx`). */}
+      <div className="mt-7 text-center">
+        <AnnuncioFase tono="chiaro" />
+      </div>
 
       {/* Un solo rimando, e discreto: il contesto normativo — perché la
           banca, il committente o un bando chiedono quei dati — è uscito

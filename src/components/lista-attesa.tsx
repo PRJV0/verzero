@@ -6,6 +6,7 @@ import { ArrowRight, Check, CircleAlert } from "lucide-react";
 import { EVENTI, traccia } from "@/lib/eventi";
 import { OndaParticelle } from "@/components/onda-particelle";
 import { PRESET } from "@/lib/onda";
+import { TESTI_ATTESA } from "@/lib/attesa";
 
 /**
  * MODULO LISTA D'ATTESA.
@@ -19,14 +20,6 @@ import { PRESET } from "@/lib/onda";
  * montaggio, perché leggere l'orologio durante il render è impuro.
  */
 
-export const TESTI_ATTESA = {
-  titolo: "Apriamo a poche imprese alla volta.",
-  testo:
-    "Vogliamo che ogni impresa parta con il percorso costruito bene. Lascia il tuo contatto: ti avvisiamo quando tocca a te — con le condizioni fondatori riservate ai primi.",
-  pulsante: "Voglio esserci",
-  conferma:
-    "Ci sei. Ti scriviamo noi quando apriamo il tuo turno — niente newsletter, niente promozioni.",
-} as const;
 
 export function ListaAttesa({
   /** Da dove arriva l'iscrizione: serve al fondatore per capire l'interesse. */
