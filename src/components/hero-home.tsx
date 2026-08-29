@@ -142,7 +142,7 @@ export function HeroHome() {
           <span className="block">
             <span
               data-onda-maschera
-              className="vz-entra inline-block text-balance text-[clamp(2.4rem,6.4vw,5.6rem)] font-bold leading-[1.0] tracking-[-0.038em]"
+              className="vz-entra inline-block text-balance text-[clamp(2.85rem,6.4vw,5.6rem)] font-bold leading-[0.98] tracking-[-0.038em]"
               style={{ "--vz-i": 0 } as React.CSSProperties}
             >
               Qualifica la tua impresa.
@@ -151,20 +151,34 @@ export function HeroHome() {
           {/* Riga 2: come si compra. Seconda informazione, seconda
               scala.
 
-              IL RAPPORTO FRA LE DUE RIGHE È 2,8 A 1, e prima era 1,9.
-              A un passo solo di distanza le due righe si leggevano come
-              un titolo su due livelli, cioè come una cosa sola: il
-              modello di acquisto tornava a pesare quanto il risultato.
-              A 2,8 la prima riga è il claim e la seconda è la
-              precisazione, e si vede senza doverci pensare.
+              ═══ LE TRE SCALE DELL'HERO, E PERCHÉ SONO CLAMP ═══
+              Il claim deve stare sopra a TUTTE E DUE le righe che lo
+              seguono — la seconda riga del claim e il sottotitolo — e
+              deve farlo a ogni larghezza, non solo sul desktop. Con i
+              corpi a scaglioni (`sm:` / `md:`) i rapporti si rompono
+              proprio nelle larghezze in mezzo, che sono quelle che
+              nessuno guarda: a 768 px il sottotitolo saltava a 24 px
+              mentre la seconda riga del claim restava a 17,7, cioè la
+              riga del claim diventava più piccola del corpo del testo.
+              Tre `clamp()` con pendenze diverse tengono l'ordine a
+              qualunque misura, senza scalini.
 
-              SULLO STRETTO IL RAPPORTO È 2,2 E NON 2,8, ed è un limite
-              fisico: a 375 px la prima riga arriva a 38,4 px (due righe
-              bilanciate) e portare la seconda a 13,7 per rispettare il
-              rapporto la trasformerebbe in una didascalia — più piccola
-              perfino della riga di sottotitolo che le sta sotto. Il
-              minimo resta a 17,6 px. Da 768 px in su il rapporto è
-              quello pieno.
+                riga 1     clamp(2,85rem  6,4vw  5,6rem)
+                riga 2     clamp(1,15rem  2,5vw  2rem)
+                sottotitolo clamp(1,1rem  2,3vw  1,8rem)
+
+              Ne esce, misurato in pagina:
+                375 e 390   45,6 / 18,4 / 17,6   → 2,6 e 2,5
+                768         49,2 / 19,2 / 17,7   → 2,8 e 2,6
+                1440        89,6 / 32   / 28,8   → 3,1 e 2,8
+              Sotto il rapporto 2:1 non si scende da nessuna parte: era
+              1,9 sullo stretto, dove il claim valeva quanto il testo che
+              gli stava sotto.
+
+              IL MINIMO DEL CLAIM È 2,85rem E NON DI PIÙ perché a 375 px
+              il contenitore è largo 335: a 45,6 px «Qualifica la» e «tua
+              impresa.» ci stanno su due righe bilanciate, più su si va a
+              tre e l'hero si allunga senza guadagnare gerarchia.
               A 1440 la prima riga misura 969 px in un contenitore da
               1024: il tetto di 5,6rem è tarato lì.
 
@@ -179,7 +193,7 @@ export function HeroHome() {
           <span className="mt-3 block">
             <span
               data-onda-maschera
-              className="vz-entra relative inline-block whitespace-nowrap text-[clamp(1.1rem,2.3vw,2rem)] font-normal leading-[1.1] tracking-[-0.01em] text-moss"
+              className="vz-entra relative inline-block whitespace-nowrap text-[clamp(1.15rem,2.5vw,2rem)] font-normal leading-[1.1] tracking-[-0.01em] text-moss"
               style={{ "--vz-i": 1 } as React.CSSProperties}
             >
               In{" "}
@@ -190,6 +204,26 @@ export function HeroHome() {
             </span>
           </span>
         </h1>
+
+        {/* IL FILETTO DI STACCO — dichiara che sotto comincia un'altra
+            cosa.
+            Sullo stretto il claim e la riga che segue si leggevano come
+            un testo unico: stesso carattere, stesso allineamento
+            centrato, e trentadue pixel di distacco che a quella scala
+            non sono un distacco. La differenza di corpo da sola non
+            basta, perché fra la seconda riga del claim e il sottotitolo
+            il salto è piccolo per forza — sono entrambe righe seconde.
+
+            Un filetto corto e chiaro fa il lavoro che la tipografia non
+            può fare qui: è un segno, non un contenuto, quindi
+            `aria-hidden`. Entra insieme al testo che introduce — stesso
+            `--vz-i` del sottotitolo — altrimenti comparirebbe da solo
+            su uno spazio ancora vuoto. */}
+        <span
+          aria-hidden
+          className="vz-entra mx-auto mt-10 block h-px w-14 bg-moss/35 sm:mt-12"
+          style={{ "--vz-i": 2 } as React.CSSProperties}
+        />
 
         {/* UNA RIGA SOLA fra il claim e la barra, e dice i due asset che
             nessun altro ha: l'AI è NOSTRA e costruita per questo
@@ -207,7 +241,7 @@ export function HeroHome() {
             parola va detta. */}
         <p
           data-onda-maschera
-          className="vz-entra mx-auto mt-8 max-w-[30ch] font-display text-[1.25rem] leading-[1.45] text-moss sm:max-w-[42ch] sm:text-[1.5rem] md:text-[1.7rem]"
+          className="vz-entra mx-auto mt-9 max-w-[32ch] font-display text-[clamp(1.1rem,2.3vw,1.8rem)] leading-[1.5] text-moss/85 sm:max-w-[44ch]"
           style={{ "--vz-i": 2 } as React.CSSProperties}
         >
           Un&apos;intelligenza artificiale{" "}
