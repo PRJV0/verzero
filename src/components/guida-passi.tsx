@@ -11,6 +11,7 @@ import {
   ScrollySteps,
 } from "@/components/scrolly";
 import { PASSI, type Passo } from "@/lib/guida-passi";
+import { FoglioDocumento } from "@/components/documento-esito";
 import { IMPRESA_ESEMPIO } from "@/lib/impresa-esempio";
 
 /**
@@ -94,14 +95,11 @@ function Finestra({
   );
 }
 
-/** Una riga di testo finto: un rettangolo, non del lorem ipsum. */
-function Riga({ largo = "w-full", scuro = false }: { largo?: string; scuro?: boolean }) {
-  return (
-    <div
-      className={`h-2 rounded-full ${scuro ? "bg-line" : "bg-line/60"} ${largo}`}
-    />
-  );
-}
+/* Qui c'era `Riga`, il rettangolo grigio che faceva da testo finto.
+   Non serve più: nessuna delle cinque schermate contiene segnaposto —
+   i risultati hanno i nomi e i prezzi veri del catalogo, i campi
+   mancanti dicono «ancora da inserire», e il documento del quinto passo
+   è quello vero. Un mockup credibile non ha righe grigie dentro. */
 
 /**
  * L'ANELLO — l'elemento che attraversa i passi 3, 4 e 5.
@@ -200,15 +198,17 @@ function Campo({
       <span className="w-[38%] shrink-0 truncate text-[12px] text-gray-light">
         {etichetta}
       </span>
-      {valore ? (
-        <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium text-ink">
-          {valore}
-        </span>
-      ) : (
-        <span className="min-w-0 flex-1">
-          <Riga largo="w-2/3" />
-        </span>
-      )}
+      {/* Un valore che manca si dice, non si disegna: una barra grigia
+          è un segnaposto, e un segnaposto dentro un mockup che deve
+          essere credibile è la cosa che lo rende finto. */}
+      <span
+        className={
+          "min-w-0 flex-1 truncate text-[12.5px] " +
+          (valore ? "font-medium text-ink" : "italic text-gray-light")
+        }
+      >
+        {valore ?? "ancora da inserire"}
+      </span>
       {provenienza && (
         <span
           className={
@@ -394,43 +394,20 @@ function VistaConferma() {
 /**
  * 5 — il documento è finito: si ritira, e con lui il Sigillo e il Kit.
  *
- * Tre riquadri uguali lasciavano tre buchi: un'icona piccola in mezzo a
- * una scatola alta. Qui il documento OCCUPA — è la cosa che si è
- * costruita in quattro passi — e Sigillo e Kit gli stanno accanto, più
- * piccoli, che è anche la gerarchia giusta.
+ * Il foglio è lo STESSO che mostra `/come-funziona` — copertina,
+ * riferimento normativo, indice, tabella dei dati, pagina di
+ * validazione — e non un secondo disegno: è quello che nei passi 3 e 4
+ * si stava completando, e la testata sopra è identica a quella di
+ * prima con l'anello arrivato a cento. Prima qui c'erano righe grigie:
+ * un documento «pronto» fatto di segnaposto dice il contrario di quello
+ * che l'anello ha appena detto.
  */
 function VistaConsegna() {
   return (
     <Finestra luogo={`${IMPRESA_ESEMPIO.nome} · il tuo spazio`}>
       <TestataDocumento percento={100} stato="pronto" />
-      <div className="mt-3.5 grid min-h-0 flex-1 grid-cols-[1.35fr_1fr] gap-3">
-        {/* Il documento: una pagina piena, non un rettangolo vuoto. */}
-        <div className="flex min-h-0 flex-col rounded-xl border border-line bg-white p-3.5 shadow-soft">
-          <div className="flex shrink-0 items-center justify-between">
-            <p className="text-[11.5px] font-semibold text-ink">Documento</p>
-            <span className="rounded bg-mint/15 px-1.5 py-0.5 text-[10px] font-medium text-pine">
-              pronto
-            </span>
-          </div>
-          {/* La pagina si riempie fino in fondo: un documento «pronto»
-              con l'ultimo terzo bianco direbbe il contrario di quello
-              che l'anello al 100% ha appena detto. */}
-          <div className="mt-3 flex min-h-0 flex-1 flex-col justify-between gap-2 overflow-hidden">
-            {[
-              { titolo: "w-2/3", righe: ["w-full", "w-full", "w-5/6"] },
-              { titolo: "w-1/2", righe: ["w-full", "w-4/5", "w-full", "w-3/4"] },
-              { titolo: "w-3/5", righe: ["w-full", "w-5/6", "w-full"] },
-              { titolo: "w-5/12", righe: ["w-full", "w-2/3"] },
-            ].map((blocco, b) => (
-              <div key={b} className="flex flex-col gap-2">
-                <Riga largo={blocco.titolo} scuro />
-                {blocco.righe.map((l, i) => (
-                  <Riga key={i} largo={l} />
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="mt-3.5 grid min-h-0 flex-1 grid-cols-[1.25fr_1fr] gap-3">
+        <FoglioDocumento compatto grande />
 
         <div className="grid min-h-0 grid-rows-2 gap-3">
           <div className="flex min-h-0 flex-col items-center justify-center gap-2 rounded-xl border border-line bg-paper/60 p-3">
@@ -648,9 +625,17 @@ export function GuidaPassi({ vetrina }: { vetrina: VetrinaGuida }) {
 /* ------------------------------------------------------------------ */
 
 /**
- * In home i cinque titoli e basta: la home dice CHE c'è un percorso, la
- * pagina lo mostra. Ripetere qui le schermate vorrebbe dire due volte la
- * stessa spiegazione, e la seconda in un posto dove nessuno l'ha chiesta.
+ * L'ANTEPRIMA IN HOME — i cinque titoli su un binario.
+ *
+ * In home non si rifanno le schermate: la home dice CHE c'è un percorso,
+ * la pagina lo mostra. Ma cinque titoli incolonnati senza niente attorno
+ * sono un elenco appoggiato, e un elenco non racconta una sequenza.
+ *
+ * Il binario serve a quello: una riga che attraversa i cinque numeri e
+ * li lega, con il primo e l'ultimo che si distinguono — si parte da lì e
+ * si arriva là. È il minimo che rende leggibile una progressione, e non
+ * aggiunge un solo elemento grafico che non sia già nel linguaggio della
+ * pagina.
  */
 export function GuidaPassiTitoli({
   tono = "scuro",
@@ -660,34 +645,55 @@ export function GuidaPassiTitoli({
 }) {
   const chiaro = tono === "chiaro";
   return (
-    <ol className="mx-auto grid max-w-4xl gap-3 sm:grid-cols-5 sm:gap-2">
-      {PASSI.map((p, i) => (
-        <li
-          key={p.n}
-          className="vz-reveal flex items-center gap-3 sm:block"
-          style={{ "--vz-i": i } as React.CSSProperties}
-        >
-          <span
-            aria-hidden
-            className={
-              "flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-[14px] " +
-              (chiaro
-                ? "border border-pine/30 text-pine"
-                : "border border-mint-bright/45 text-mint-bright")
-            }
+    <ol className="relative mx-auto grid max-w-4xl gap-6 sm:grid-cols-5 sm:gap-3">
+      {/* IL BINARIO, solo dove i passi stanno in fila. Sullo stretto
+          sono impilati e una riga orizzontale non collegherebbe niente.
+          Comincia e finisce nei CENTRI del primo e dell'ultimo numero —
+          a un decimo per lato, che con cinque colonne è dove cadono — e
+          non ai bordi del contenitore: una riga che sborda dal primo
+          punto suggerisce che la sequenza venga da prima e continui
+          dopo, e non è così. */}
+      <span
+        aria-hidden
+        className={
+          "absolute left-[10%] right-[10%] top-4 hidden h-px sm:block " +
+          (chiaro ? "bg-pine/20" : "bg-mint-bright/25")
+        }
+      />
+      {PASSI.map((p, i) => {
+        const estremo = i === 0 || i === PASSI.length - 1;
+        return (
+          <li
+            key={p.n}
+            className="vz-reveal relative flex items-center gap-4 sm:block"
+            style={{ "--vz-i": i } as React.CSSProperties}
           >
-            {p.n}
-          </span>
-          <p
-            className={
-              "font-display text-[15.5px] leading-snug sm:mt-3 " +
-              (chiaro ? "text-ink" : "text-white")
-            }
-          >
-            {p.titolo}
-          </p>
-        </li>
-      ))}
+            <span
+              aria-hidden
+              className={
+                "relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-[14px] font-semibold sm:mx-auto " +
+                (chiaro
+                  ? estremo
+                    ? "bg-pine text-white"
+                    : "border border-pine/30 bg-paper text-pine"
+                  : estremo
+                    ? "bg-mint-bright text-pine-deep"
+                    : "border border-mint-bright/45 bg-pine-deep text-mint-bright")
+              }
+            >
+              {p.n}
+            </span>
+            <p
+              className={
+                "font-display text-[16px] leading-snug sm:mt-4 sm:text-center sm:text-[15.5px] " +
+                (chiaro ? "text-ink" : "text-white")
+              }
+            >
+              {p.titolo}
+            </p>
+          </li>
+        );
+      })}
     </ol>
   );
 }

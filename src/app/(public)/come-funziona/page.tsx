@@ -50,7 +50,7 @@ const FASI = [
   {
     titolo: "Un professionista valida, e ci mette il nome",
     testo:
-      "Nessun documento esce senza il controllo di una persona del team tecnico, che verifica perimetro, criteri e completezza e mette per iscritto i rilievi. La responsabilità resta di chi firma la verifica, dentro la piattaforma.",
+      "Nessun documento esce senza il controllo di una persona del team tecnico, che verifica perimetro, criteri e completezza e mette per iscritto i rilievi. La responsabilità resta di chi lo ha validato, e resta tracciata dentro la piattaforma.",
   },
   {
     titolo: "Quando la norma cambia, il documento si aggiorna",
@@ -264,7 +264,7 @@ export default function ComeFunzionaPage() {
             </h2>
             <p className="mx-auto mt-4 text-sm leading-relaxed text-gray-warm">
               Impaginato, con l&apos;indice, il riferimento normativo del
-              percorso, i dati in tabella e la pagina di validazione firmata da
+              percorso, i dati in tabella e la pagina di validazione a nome di
               chi l&apos;ha controllato.
             </p>
           </div>

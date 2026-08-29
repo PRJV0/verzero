@@ -297,7 +297,7 @@ export default function ChiSiamoPage() {
               {
                 icona: ShieldCheck,
                 t: "La responsabilità resta nostra",
-                d: "I documenti li produce e li valida il nostro team tecnico. Tu non firmi nulla al posto nostro.",
+                d: "I documenti li produce e li valida il nostro team tecnico. Tu non ti assumi niente al posto nostro.",
               },
             ].map(({ icona: Icona, t: titolo, d }) => (
               <article

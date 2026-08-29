@@ -59,36 +59,52 @@ const ACCESSORI = [
   },
 ];
 
-export function DocumentoEsito({
-  tono = "scuro",
+/**
+ * IL FOGLIO — la bozza del documento, da sola.
+ *
+ * Sta in un componente suo perché lo usano in due: questa sezione, che
+ * gli mette accanto gli accessori, e la guida in cinque passi, dove al
+ * quinto passo il documento finito si vede dentro il portale. È lo
+ * STESSO documento che nei passi prima si sta completando, e disegnarlo
+ * due volte vorrebbe dire farne due diversi alla prima correzione.
+ */
+export function FoglioDocumento({
   grande = false,
+  compatto = false,
 }: {
-  tono?: "chiaro" | "scuro";
   grande?: boolean;
+  /** Dentro una finestra stretta: niente foglio dietro, niente ombra. */
+  compatto?: boolean;
 }) {
-  const scuro = tono === "scuro";
   const scala = grande ? "text-[11px]" : "text-[8px]";
 
   return (
-    <div className="min-w-0">
+    <>
       <div
         role="img"
-        aria-label="Bozza del documento che ricevi: copertina con il riferimento normativo del percorso, indice, tabella dei dati con l'unità di misura e pagina di validazione firmata dal team tecnico. Esempio su un'impresa inventata."
+        aria-label="Bozza del documento che ricevi: copertina con il riferimento normativo del percorso, indice, tabella dei dati con l'unità di misura e pagina di validazione a nome del team tecnico. Esempio su un'impresa inventata."
         className={
-          "relative mx-auto " + (grande ? "max-w-md" : "max-w-[22rem]")
+          "relative " +
+          (compatto ? "h-full w-full" : "mx-auto ") +
+          (compatto ? "" : grande ? "max-w-md" : "max-w-[22rem]")
         }
       >
         {/* Il foglio dietro: profondità, e il documento non è mai una
-            pagina sola. Inclinato appena — di più sembrerebbe un ventaglio. */}
-        <div
-          aria-hidden
-          className="absolute inset-0 translate-x-2 translate-y-2 rotate-[1.4deg] rounded-lg border border-line bg-white/85 shadow-lift"
-        />
+            pagina sola. Inclinato appena — di più sembrerebbe un
+            ventaglio. Dentro una finestra non ci va: lì il documento è
+            già dentro una cornice, e una seconda ombra sarebbe rumore. */}
+        {!compatto && (
+          <div
+            aria-hidden
+            className="absolute inset-0 translate-x-2 translate-y-2 rotate-[1.4deg] rounded-lg border border-line bg-white/85 shadow-lift"
+          />
+        )}
 
         <div
           aria-hidden
           className={
-            "relative overflow-hidden rounded-lg border border-line bg-white text-ink shadow-lift " +
+            "relative flex flex-col overflow-hidden rounded-lg border border-line bg-white text-ink " +
+            (compatto ? "h-full " : "shadow-lift ") +
             scala
           }
         >
@@ -112,7 +128,7 @@ export function DocumentoEsito({
             </span>
           </div>
 
-          <div className="px-4 pb-4 pt-3.5">
+          <div className="flex min-h-0 flex-1 flex-col px-4 pb-4 pt-3.5">
             {/* Copertina */}
             <p className="font-display leading-tight text-ink" style={{ fontSize: "2.1em" }}>
               Bilancio di Sostenibilità
@@ -198,6 +214,22 @@ export function DocumentoEsito({
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+export function DocumentoEsito({
+  tono = "scuro",
+  grande = false,
+}: {
+  tono?: "chiaro" | "scuro";
+  grande?: boolean;
+}) {
+  const scuro = tono === "scuro";
+
+  return (
+    <div className="min-w-0">
+      <FoglioDocumento grande={grande} />
 
       {/* Gli accessori: più piccoli, sotto, e detti come accessori. */}
       <div className="mt-4 grid grid-cols-2 gap-2">

@@ -62,11 +62,16 @@ export function PrezzoPrincipio() {
   return (
     <div className="mx-auto max-w-4xl">
       <div className="text-center">
-        <p className="mb-5 text-xs font-semibold tracking-widest text-mint-bright">
-          IL PREZZO
+        {/* L'OCCHIELLO DEVE DIRE DI CHE SEZIONE SI TRATTA. Era «IL
+            PREZZO» in caratteri minuscoli, e chi scorreva leggeva solo il
+            titolo — «Pubblico, prima di parlare con noi» — senza capire
+            di che cosa fosse pubblico. Un occhiello che non si legge non
+            è un occhiello. */}
+        <p className="mb-5 text-[13px] font-semibold uppercase tracking-[0.16em] text-mint-bright">
+          Prezzi e canone
         </p>
         <h2 className="font-display text-[2.6rem] leading-[1.02] tracking-[-0.02em] text-white md:text-[4.4rem]">
-          Pubblico, prima di parlare con noi.
+          Pubblici, prima ancora di parlare con noi.
         </h2>
 
         {/* IL NUMERO È IL PROTAGONISTA della sezione, non una nota in

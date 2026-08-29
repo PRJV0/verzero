@@ -155,18 +155,39 @@ export default function HomePage() {
 
       {/* CHI SI DEVE RICONOSCERE, e sta qui perché è la prima domanda
           che uno si fa: «vale anche per me?». Il sito diceva «le
-          imprese», che è come dire nessuno. I due estremi si nominano
-          entrambi apposta — chi non ha mai fatto niente e chi ha già
-          qualcuno che glielo chiede — così nessuna dimensione si sente
-          esclusa e nessuna pensa che sia un prodotto per piccoli. */}
-      <section className="border-b border-line bg-white px-5 py-7">
-        <p className="mx-auto max-w-3xl text-center text-[15px] leading-relaxed text-gray-warm md:text-base">
-          Dalla{" "}
-          <strong className="font-semibold text-ink">micro impresa</strong> che
-          non ha mai fatto un bilancio di sostenibilità all&apos;
-          <strong className="font-semibold text-ink">azienda strutturata</strong>{" "}
-          che deve rispondere a banca e capofiliera: stesso impianto, prezzo
-          per fascia dimensionale.
+          imprese», che è come dire nessuno.
+
+          DUE POLI E UNA CERNIERA. Era una riga di testo appoggiata sotto
+          l'hero: vera e invisibile. I due estremi si nominano entrambi
+          apposta — chi non ha mai fatto niente e chi ha già qualcuno che
+          glielo chiede — e in mezzo sta la cosa che li tiene insieme.
+          Messi ai due lati diventano due poli fra cui il lettore si
+          colloca da sé, invece di una frase che deve leggere fino in
+          fondo per capire se lo riguarda. */}
+      <section className="border-b border-line bg-white px-5 py-14 md:py-16">
+        <div className="mx-auto grid max-w-5xl items-center gap-6 md:grid-cols-[1fr_auto_1fr] md:gap-8">
+          <p className="font-display text-[1.35rem] leading-snug text-ink md:text-right md:text-[1.7rem]">
+            La <strong className="font-semibold text-pine">micro impresa</strong>{" "}
+            che non ha mai fatto un bilancio di sostenibilità
+          </p>
+
+          {/* La cerniera: piccola, in mezzo, e con le due linee che
+              collegano davvero i due poli invece di suggerirli. */}
+          <div className="flex items-center gap-3 md:flex-col md:gap-2">
+            <span aria-hidden className="h-px flex-1 bg-line md:h-8 md:w-px md:flex-none" />
+            <span className="shrink-0 whitespace-nowrap rounded-full border border-pine/25 bg-paper px-3.5 py-1.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-pine">
+              Stesso impianto
+            </span>
+            <span aria-hidden className="h-px flex-1 bg-line md:h-8 md:w-px md:flex-none" />
+          </div>
+
+          <p className="font-display text-[1.35rem] leading-snug text-ink md:text-[1.7rem]">
+            L&apos;<strong className="font-semibold text-pine">azienda strutturata</strong>{" "}
+            che deve rispondere a banca e capofiliera
+          </p>
+        </div>
+        <p className="mx-auto mt-8 max-w-2xl text-center text-[14px] text-gray-warm">
+          Cambia solo il prezzo, che segue la fascia dimensionale.
         </p>
       </section>
 
@@ -239,16 +260,16 @@ export default function HomePage() {
         <span aria-hidden className="pointer-events-none absolute -bottom-32 left-1/4 h-80 w-80 rounded-full bg-mint-bright/[0.07] blur-3xl" />
         <div className="relative mx-auto max-w-4xl text-center">
           {/* Mai "VER0" in maiuscoletto: si legge "VERO" (decisione già presa). */}
-          <p className="mb-6 text-xs font-semibold tracking-widest text-mint-bright">
+          <p className="mb-6 text-[13px] font-semibold uppercase tracking-[0.16em] text-mint-bright">
             L&apos;INTELLIGENZA È NOSTRA
           </p>
-          <h2 className="font-display text-[3.4rem] leading-[0.98] tracking-[-0.02em] text-white sm:text-6xl md:text-[5.6rem]">
-            Non un assistente.
-            <span className="mt-1 block text-mint-bright">Un motore nostro.</span>
+          <h2 className="mx-auto max-w-4xl font-display text-[2.5rem] leading-[1.02] tracking-[-0.02em] text-white md:text-[4rem]">
+            Costruito sui documenti che le imprese hanno già e le{" "}
+            <span className="text-mint-bright">norme che li governano.</span>
           </h2>
-          <p className="mx-auto mt-7 max-w-2xl font-display text-xl leading-snug text-moss md:text-[1.75rem]">
-            Costruito su una cosa sola: i documenti che le imprese hanno già e
-            le norme che li governano. Su quella non improvvisa.
+          <p className="mx-auto mt-7 max-w-2xl font-display text-xl leading-snug text-moss md:text-[1.6rem]">
+            Non ci appoggiamo a un assistente generico a cui si chiede di
+            arrangiarsi: su questo mestiere il Motore Ver0 non improvvisa.
           </p>
 
           {/* LA SCENA MADRE: qui il Motore smette di essere raccontato e
@@ -276,7 +297,7 @@ export default function HomePage() {
           ad avere una cosa sola da guardare. */}
       <section className="border-y border-line bg-paper px-5 py-14 md:py-16">
         <div className="mx-auto max-w-4xl text-center">
-          <p className="mb-8 text-xs font-semibold tracking-widest text-pine">
+          <p className="mb-8 text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
             COME SUCCEDE, IN CINQUE PASSI
           </p>
           <GuidaPassiTitoli tono="chiaro" />
@@ -305,17 +326,17 @@ export default function HomePage() {
       <section className="bg-white px-5 py-16 md:py-24">
         <div className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-12 md:grid-cols-[1fr_1fr]">
           <div>
-            <p className="mb-5 text-xs font-semibold tracking-widest text-pine">
-              CHI FIRMA
+            <p className="mb-5 text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
+              Chi valida
             </p>
             <h2 className="font-display text-[3rem] leading-[0.98] tracking-[-0.02em] text-ink md:text-[4.2rem]">
-              Un documento lo firma
-              <span className="block text-pine">una persona.</span>
+              Ogni documento passa
+              <span className="block text-pine">da una persona.</span>
             </h2>
             <p className="mt-6 max-w-md text-[15px] leading-relaxed text-gray-warm md:text-base">
               Non un revisore chiamato all&apos;occorrenza: un team di
               professionisti qualificati che valida ogni documento prima che
-              esca, e che di quella firma resta responsabile.
+              esca, e che di quella validazione resta responsabile.
             </p>
             <div className="mt-8">
               <CtaGrande href="/chi-siamo">Conosci chi valida</CtaGrande>

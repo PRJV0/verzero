@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "controlli": "node scripts/controllo-lessico.mjs",
+    "prebuild": "node scripts/controllo-lessico.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

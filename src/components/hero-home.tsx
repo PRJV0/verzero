@@ -26,11 +26,18 @@ import { FONDO_SOGLIA, ONDA_CONTENUTA, ONDA_SOGLIA } from "@/lib/onda";
  * DI MODELLO — una qualifica che si attiva come un abbonamento — e lascia
  * al lettore il compito di accorgersi che non è la stessa cosa.
  *
- * IL CLAIM HA DUE PESI, non uno. «Qualifica la tua impresa» è la
- * premessa e sta in peso normale; «In abbonamento.» è la promessa, vale
- * una volta e mezza e porta la sottolineatura menta. L'occhio ci cade
- * sopra perché è più grande, non perché è colorato: il colore l'avrebbe
- * reso più CHIARO, cioè più fragile sopra le particelle.
+ * IL CLAIM HA DUE PESI, e l'ordine conta. La prima informazione è COSA
+ * OTTIENI — «Qualifica la tua impresa» — e sta in grande, in peso pieno.
+ * «In abbonamento.» è la seconda: dice come si compra, che è
+ * un'informazione preziosa ma successiva, e sta a poco più di un terzo
+ * della scala. Erano invertite, e chi leggeva vedeva prima il modello di
+ * acquisto e poi il risultato: l'ordine sbagliato per chi ancora non sa
+ * che cosa vendiamo.
+ *
+ * La sottolineatura menta resta sulla seconda riga. Serve a non farla
+ * sparire ora che è più piccola — è un segno, non un cambio di colore
+ * del testo: il colore l'avrebbe resa più CHIARA, cioè più fragile
+ * sopra le particelle.
  *
  * LE MASCHERE RESTANO. Sembra controintuitivo su fondo scuro, ma
  * particelle chiare dietro testo bianco abbassano il contrasto
@@ -142,29 +149,32 @@ export function HeroHome() {
         </p>
 
         <h1 className="font-display text-white">
-          {/* Riga 1: la premessa. Peso normale, scala grande. */}
+          {/* Riga 1: che cosa ottieni. È la prima informazione, e sta
+              in grande a piena forza. */}
           <span className="block">
             <span
               data-onda-maschera
-              className="vz-entra inline-block whitespace-nowrap text-[clamp(1.55rem,5.1vw,3.9rem)] font-normal leading-[1.06] tracking-[-0.015em] text-moss"
+              className="vz-entra inline-block whitespace-nowrap text-[clamp(1.85rem,5.6vw,5rem)] font-bold leading-[1.02] tracking-[-0.035em]"
               style={{ "--vz-i": 1 } as React.CSSProperties}
             >
               Qualifica la tua impresa.
             </span>
           </span>
-          {/* Riga 2: la promessa. Una volta e mezza, a piena forza. */}
-          <span className="mt-1 block">
+          {/* Riga 2: come si compra. Seconda informazione, seconda
+              scala — poco più di un terzo della prima.
+
+              NOWRAP E MISURA IN VW, tutte e due necessarie. «In
+              abbonamento.» spezzato lascia «In» da solo su una riga, che
+              non è un claim: è un errore di impaginazione. Ma fissare il
+              corpo a scaglioni vuol dire che a una certa larghezza si
+              rompe comunque — basta una lingua, un carattere di ripiego
+              o uno schermo che non avevamo previsto. Legandolo alla
+              larghezza della finestra la riga non può rompersi a nessuna
+              misura. */}
+          <span className="mt-3 block">
             <span
               data-onda-maschera
-              // NOWRAP E MISURA IN VW, tutte e due necessarie. «In
-              // abbonamento.» spezzato lascia «In» da solo su una riga,
-              // che non è un claim: è un errore di impaginazione. Ma
-              // fissare il corpo a scaglioni vuol dire che a una certa
-              // larghezza si rompe comunque — basta una lingua, un
-              // carattere di ripiego o uno schermo che non avevamo
-              // previsto. Legandolo alla larghezza della finestra la
-              // riga non può rompersi a nessuna misura.
-              className="vz-entra relative inline-block whitespace-nowrap text-[clamp(2.4rem,7vw,6.6rem)] font-bold leading-[0.98] tracking-[-0.038em]"
+              className="vz-entra relative inline-block whitespace-nowrap text-[clamp(1.25rem,3.1vw,2.6rem)] font-normal leading-[1.1] tracking-[-0.02em] text-moss"
               style={{ "--vz-i": 2 } as React.CSSProperties}
             >
               In{" "}

@@ -233,6 +233,18 @@ Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs`.
   `supabase_migrations.schema_migrations`. Mai `supabase db push`.
 - **Etichette di catalogo**: solo fattuali (Novità, In arrivo, Spesso richiesto
   insieme a X, Premiante nei bandi). Mai diciture di domanda non verificabili.
+- **Il lessico si controlla da solo.** `node scripts/controllo-lessico.mjs`
+  gira PRIMA della build (`prebuild`) e la ferma se rientra una parola
+  vietata. Oggi ne sorveglia una: i professionisti **validano /
+  convalidano / analizzano**, MAI «firmano» (SPEC §12.O — la firma
+  implica un'assunzione di responsabilità professionale e
+  un'asseverazione che non fanno parte del servizio). La regola era già
+  stata violata due volte, la seconda da un titolo che suonava bene: una
+  regola che vive solo in un documento rientra alla terza riscrittura.
+  Gli usi legittimi della parola — la firma di un'email, il foglio firma
+  che è un tipo di documento del cliente, la firma DKIM — stanno in un
+  elenco chiuso dentro lo script, e ci si aggiungono consapevolmente.
+  I commenti non si controllano: lì il divieto si deve poter spiegare.
 - **«Zero effort»**: non si dichiara mai da solo, sempre con la definizione.
   VIETATE le quantificazioni di tempo o impegno del cliente («un'ora del tuo
   tempo» e simili): ogni numero promesso è un ostaggio (SPEC §12.O).
