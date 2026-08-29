@@ -13,7 +13,6 @@ import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
 import { GuidaPassiTitoli } from "@/components/guida-passi";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { JsonLd } from "@/components/json-ld";
-import { PhotoDuotone } from "@/components/photo-duotone";
 import { SOLO_STANDARD_UFFICIALI } from "@/lib/catalog";
 import { SITO, jsonLdOrganization, jsonLdWebSite } from "@/lib/seo";
 
@@ -98,6 +97,21 @@ function CtaGrande({
 /* --- Dati di pagina --- */
 
 /** Le tre battute della sezione documenti (§12.J): secche, senza processo. */
+/**
+ * LE FIGURE CHE VALIDANO — solo qualifiche vere e verificabili.
+ *
+ * Non un organigramma desiderato e non titoli che suonano bene: chi non
+ * c'è non si scrive. Se una di queste figure smette di far parte del
+ * team, la riga esce di qui — e questo elenco è l'unico posto in cui
+ * vive, così non resta da aggiornare in tre pagine diverse.
+ */
+const COMPETENZE_TEAM = [
+  "Ingegneri",
+  "Auditor di sistemi di gestione",
+  "Specialisti di sostenibilità e rendicontazione",
+  "Specialisti di sicurezza sul lavoro",
+];
+
 const BATTUTE = [
   { icon: FileText, t: "Solo il necessario." },
   { icon: null, t: "L'AI Ver0 lavora." }, // icona: lo zero E1, disegnato sotto
@@ -107,7 +121,7 @@ const BATTUTE = [
 export const metadata: Metadata = {
   title: { absolute: `${SITO.nome} — ${SITO.payoff}` },
   description:
-    "Sostenibilità, sistemi di gestione e consulenza con l'AI Ver0: documenti conformi in giorni, verificati da professionisti, con prezzi pubblici.",
+    "Qualifica la tua impresa in abbonamento: un'intelligenza proprietaria costruita per i documenti d'impresa, professionisti che validano, prezzi pubblici.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -115,7 +129,7 @@ export const metadata: Metadata = {
     siteName: SITO.nome,
     title: `${SITO.nome} — ${SITO.payoff}`,
     description:
-      "Sostenibilità, sistemi di gestione e consulenza con l'AI Ver0: documenti conformi in giorni, verificati da professionisti, con prezzi pubblici.",
+      "Qualifica la tua impresa in abbonamento: un'intelligenza proprietaria costruita per i documenti d'impresa, professionisti che validano, prezzi pubblici.",
     url: "/",
     images: [
       {
@@ -138,6 +152,23 @@ export default function HomePage() {
       <JsonLd dati={jsonLdWebSite()} />
 
       <HeroHome />
+
+      {/* CHI SI DEVE RICONOSCERE, e sta qui perché è la prima domanda
+          che uno si fa: «vale anche per me?». Il sito diceva «le
+          imprese», che è come dire nessuno. I due estremi si nominano
+          entrambi apposta — chi non ha mai fatto niente e chi ha già
+          qualcuno che glielo chiede — così nessuna dimensione si sente
+          esclusa e nessuna pensa che sia un prodotto per piccoli. */}
+      <section className="border-b border-line bg-white px-5 py-7">
+        <p className="mx-auto max-w-3xl text-center text-[15px] leading-relaxed text-gray-warm md:text-base">
+          Dalla{" "}
+          <strong className="font-semibold text-ink">micro impresa</strong> che
+          non ha mai fatto un bilancio di sostenibilità all&apos;
+          <strong className="font-semibold text-ink">azienda strutturata</strong>{" "}
+          che deve rispondere a banca e capofiliera: stesso impianto, prezzo
+          per fascia dimensionale.
+        </p>
+      </section>
 
       {/* LO ZERO DI VER0 — un contenuto, due presentazioni.
           Le sei declinazioni vengono dalla stessa fonte (`src/lib/zeri.ts`);
@@ -170,7 +201,7 @@ export default function HomePage() {
         </div>
         <div className="relative">
           <div className="mx-auto max-w-4xl px-5 text-center">
-            <h2 className="font-display text-5xl text-ink md:text-6xl">
+            <h2 className="font-display text-[3rem] leading-[0.98] tracking-[-0.02em] text-ink md:text-[4.6rem]">
               Lo <ZeroWord>Zero</ZeroWord> di Ver0
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-sm text-gray-warm md:text-base">
@@ -209,90 +240,103 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-4xl text-center">
           {/* Mai "VER0" in maiuscoletto: si legge "VERO" (decisione già presa). */}
           <p className="mb-6 text-xs font-semibold tracking-widest text-mint-bright">
-            LA NOSTRA AI
+            L&apos;INTELLIGENZA È NOSTRA
           </p>
-          <h2 className="font-display text-5xl leading-[1.02] text-white md:text-7xl">
-            Un&apos;AI proprietaria.
+          <h2 className="font-display text-[3.4rem] leading-[0.98] tracking-[-0.02em] text-white sm:text-6xl md:text-[5.6rem]">
+            Non un assistente.
+            <span className="mt-1 block text-mint-bright">Un motore nostro.</span>
           </h2>
-          <p className="mx-auto mt-5 max-w-2xl font-display text-2xl leading-snug text-moss md:text-3xl">
-            Costruito per i documenti d&apos;impresa. Verificato da
-            professionisti.
+          <p className="mx-auto mt-7 max-w-2xl font-display text-xl leading-snug text-moss md:text-[1.75rem]">
+            Costruito su una cosa sola: i documenti che le imprese hanno già e
+            le norme che li governano. Su quella non improvvisa.
           </p>
 
           {/* LA SCENA MADRE: qui il Motore smette di essere raccontato e
-              si vede lavorare. È il protagonista della sezione — le tre
-              battute qui sotto sono la sua didascalia, non un secondo
-              centro di attenzione (brief §2a, §3.2). */}
+              si vede lavorare. È il PROTAGONISTA UNICO della sezione: le
+              tre battute che gli stavano sotto e i cinque passi sono
+              usciti di qui, perché una sezione con quattro centri non ne
+              ha nessuno (brief §2a, §3.2). */}
           <div className="mt-12">
             <MotoreInAzione />
           </div>
 
-          {/* Le tre battute della sezione documenti: secche, visual minimi. */}
-          <div className="mx-auto mt-14 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-            {BATTUTE.map((b) => {
-              const Icon = b.icon;
-              return (
-                <div
-                  key={b.t}
-                  className="border border-white/15 bg-white/[0.03] px-5 py-8"
-                >
-                  <span className="mx-auto flex h-12 w-12 items-center justify-center text-mint-bright">
-                    {Icon ? (
-                      <Icon size={30} strokeWidth={1.6} />
-                    ) : (
-                      /* Lo zero E1: l'icona del Motore */
-                      <svg viewBox="0 0 30 40" className="h-9 w-auto" fill="none" aria-hidden>
-                        <ellipse cx="15" cy="20" rx="11" ry="15" stroke="currentColor" strokeWidth="3" />
-                      </svg>
-                    )}
-                  </span>
-                  <p className="mt-4 font-display text-xl text-white">{b.t}</p>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* I CINQUE PASSI, in versione ridotta: solo i titoli.
-              La home dice CHE c'è un percorso e com'è fatto in fila; la
-              pagina lo mostra schermata per schermata. Rimettere qui le
-              schermate vorrebbe dire spiegare due volte, e la seconda in
-              un posto dove nessuno l'ha chiesto. */}
-          <div className="mt-16 border-t border-white/12 pt-12">
-            <p className="mb-6 text-xs font-semibold tracking-widest text-mint-bright">
-              COME SUCCEDE, IN CINQUE PASSI
-            </p>
-            <GuidaPassiTitoli />
-          </div>
-
           <div className="mt-12">
             <CtaGrande href="/come-funziona" tone="white">
-              Guarda i cinque passi
+              Guardalo da vicino
             </CtaGrande>
           </div>
         </div>
       </section>
 
-      {/* CONSULENZA — statement + due righe + CTA. Il dettaglio vive dentro. */}
+      {/* I CINQUE PASSI, fascia loro.
+          Stavano dentro la sezione del Motore, che così aveva quattro
+          protagonisti: lo statement, la scena del Motore, tre battute e
+          i passi. Una sezione con quattro centri non ne ha nessuno. Qui
+          i passi hanno la loro fascia, stretta, e la sezione sopra torna
+          ad avere una cosa sola da guardare. */}
+      <section className="border-y border-line bg-paper px-5 py-14 md:py-16">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="mb-8 text-xs font-semibold tracking-widest text-pine">
+            COME SUCCEDE, IN CINQUE PASSI
+          </p>
+          <GuidaPassiTitoli tono="chiaro" />
+          <div className="mt-10">
+            <CtaGrande href="/come-funziona">Guarda i cinque passi</CtaGrande>
+          </div>
+        </div>
+      </section>
+
+      {/* IL TEAM COME ASSET, non come rassicurazione.
+          Prima c'era una fotografia di due persone al lavoro e la riga
+          «dietro lo schermo, consulenti veri»: si leggeva come «stai
+          tranquillo, c'è anche qualcuno». Ma il team non è la rete di
+          sicurezza dell'AI — è la seconda metà del prodotto, e quella che
+          si assume la responsabilità.
+
+          VIA LA FOTOGRAFIA. Mostrava persone che non sono le nostre:
+          rivendicare un'organizzazione strutturata con l'immagine di
+          qualcun altro è esattamente il tipo di prova che non regge. Al
+          suo posto le competenze, che sono verificabili.
+
+          NIENTE NOMI, NIENTE VOLTI, NIENTE GEOGRAFIA — la stessa regola
+          del profilo del fondatore. E nessuna qualifica che non possiamo
+          dimostrare: qui stanno le figure che validano davvero, non un
+          organigramma desiderato. */}
       <section className="bg-white px-5 py-16 md:py-24">
-        <div className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-10 md:grid-cols-2">
-          <PhotoDuotone
-            src="/photos/consulenza.jpg"
-            alt="Due professionisti al lavoro su documenti d'impresa: la verifica umana che chiude ogni percorso Ver0."
-            intensity="soft"
-            className="vz-reveal aspect-[4/3] rounded-3xl shadow-lift"
-          />
+        <div className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-12 md:grid-cols-[1fr_1fr]">
           <div>
-            <h2 className="font-display text-5xl leading-[1.02] text-ink md:text-6xl">
-              Dietro lo schermo, consulenti veri.
+            <p className="mb-5 text-xs font-semibold tracking-widest text-pine">
+              CHI FIRMA
+            </p>
+            <h2 className="font-display text-[3rem] leading-[0.98] tracking-[-0.02em] text-ink md:text-[4.2rem]">
+              Un documento lo firma
+              <span className="block text-pine">una persona.</span>
             </h2>
-            <p className="mt-5 max-w-md text-sm leading-relaxed text-gray-warm md:text-base">
-              Ogni documento passa da una verifica umana e porta il nome di chi
-              l&apos;ha fatta. Specialisti prenotabili quando servono a te.
+            <p className="mt-6 max-w-md text-[15px] leading-relaxed text-gray-warm md:text-base">
+              Non un revisore chiamato all&apos;occorrenza: un team di
+              professionisti qualificati che valida ogni documento prima che
+              esca, e che di quella firma resta responsabile.
             </p>
             <div className="mt-8">
-              <CtaGrande href="/chi-siamo">Conosci chi verifica</CtaGrande>
+              <CtaGrande href="/chi-siamo">Conosci chi valida</CtaGrande>
             </div>
           </div>
+
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {COMPETENZE_TEAM.map((c) => (
+              <li
+                key={c}
+                className="flex items-start gap-3 rounded-xl border border-line bg-paper/60 px-4 py-4"
+              >
+                <UserCheck
+                  size={17}
+                  className="mt-0.5 shrink-0 text-pine"
+                  aria-hidden
+                />
+                <span className="text-[14px] leading-snug text-ink">{c}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
@@ -326,8 +370,9 @@ export default function HomePage() {
         <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-8 text-center sm:flex-row sm:gap-10 sm:text-left">
           <Sigillo tone="dark" className="h-32 w-32 shrink-0 md:h-40 md:w-40" />
           <div className="min-w-0">
-            <h2 className="font-display text-4xl leading-[1.05] text-white md:text-6xl">
-              Il Sigillo non si compra. Si dimostra.
+            <h2 className="font-display text-[2.7rem] leading-[0.98] tracking-[-0.02em] text-white md:text-[4.4rem]">
+              Il Sigillo non si compra.
+              <span className="block text-mint-bright">Si dimostra.</span>
             </h2>
             <p className="mt-4 max-w-lg text-sm text-moss md:text-base">
               Criteri pubblici, dati verificati, QR di controllo. Millesimato:

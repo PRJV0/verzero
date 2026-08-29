@@ -18,12 +18,19 @@ import { FONDO_SOGLIA, ONDA_CONTENUTA, ONDA_SOGLIA } from "@/lib/onda";
  * essere luminoso davvero: bagliore additivo, scie, particelle fino a
  * sei pixel.
  *
- * IL CLAIM HA DUE PESI, non uno. «I tuoi consulenti» è la premessa e sta
- * in peso normale; «in cloud.» è la promessa e vale una volta e mezza, a
- * piena forza. L'occhio ci cade sopra perché è più grande, non perché è
- * colorato: il colore l'avrebbe reso più CHIARO, cioè più fragile sopra
- * le particelle. L'accento menta è una sottolineatura tracciata a mano
- * sotto «cloud» — un segno, non un cambio di colore del testo.
+ * ═══ PERCHÉ NON DICE PIÙ «I TUOI CONSULENTI IN CLOUD» ═══
+ * Perché ci metteva dentro la categoria che vogliamo lasciare. Un
+ * cliente che legge «consulenti» pensa a un consulente, e da lì confronta
+ * quello che facciamo con quello che fa un consulente: parcelle,
+ * giornate, un preventivo da aspettare. Il claim ora dichiara il CAMBIO
+ * DI MODELLO — una qualifica che si attiva come un abbonamento — e lascia
+ * al lettore il compito di accorgersi che non è la stessa cosa.
+ *
+ * IL CLAIM HA DUE PESI, non uno. «Qualifica la tua impresa» è la
+ * premessa e sta in peso normale; «In abbonamento.» è la promessa, vale
+ * una volta e mezza e porta la sottolineatura menta. L'occhio ci cade
+ * sopra perché è più grande, non perché è colorato: il colore l'avrebbe
+ * reso più CHIARO, cioè più fragile sopra le particelle.
  *
  * LE MASCHERE RESTANO. Sembra controintuitivo su fondo scuro, ma
  * particelle chiare dietro testo bianco abbassano il contrasto
@@ -31,7 +38,7 @@ import { FONDO_SOGLIA, ONDA_CONTENUTA, ONDA_SOGLIA } from "@/lib/onda";
  * molto, non sparisce.
  */
 
-/** La sottolineatura di «cloud»: un tratto, non un rettangolo. */
+/** La sottolineatura del claim: un tratto, non un rettangolo. */
 function TrattoMenta() {
   return (
     <svg
@@ -102,13 +109,36 @@ export function HeroHome() {
         className="-z-10"
       />
 
-      <div ref={blocco} className="relative mx-auto max-w-4xl text-center">
+      <div ref={blocco} className="relative mx-auto max-w-5xl text-center">
+        {/* LA FASE, DETTA SUBITO E NON IN FONDO.
+            Stava in fondo alla home, dopo che le CTA avevano già
+            invitato ad attivare: si scopriva alla fine di essere in fila.
+            Detta qui diventa un'altra cosa — non una scusa, una ragione
+            per muoversi adesso — e le CTA che seguono dicono quello che
+            succede davvero, cioè una richiesta senza addebito.
+            Prende il posto dell'occhiello con le tre parole di dominio:
+            quelle le dice ora il sottotitolo, e questa riga vale di più. */}
         <p
           data-onda-maschera
-          className="vz-entra mb-8 inline-block text-xs font-semibold tracking-[0.18em] text-mint-bright"
+          className="vz-entra mb-8 inline-flex max-w-full items-center gap-2.5 rounded-full border border-mint-bright/30 bg-mint-bright/[0.07] px-4 py-2 text-left text-[12.5px] leading-snug text-moss sm:py-1.5"
           style={{ "--vz-i": 0 } as React.CSSProperties}
         >
-          SOSTENIBILITÀ · SISTEMI DI GESTIONE · CONSULENZA
+          <span
+            aria-hidden
+            className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint-bright"
+          />
+          {/* UN SOLO figlio di testo, e non due. Con il testo spezzato
+              fra un nodo e uno `<strong>` il flex li tratta come due
+              elementi: su schermo stretto andavano a capo come blocchi
+              separati, col pallino da una parte e mezza frase
+              dall'altra. Dentro un unico span il testo va a capo come
+              testo. */}
+          <span>
+            Stiamo aprendo a poche imprese alla volta —{" "}
+            <strong className="font-semibold text-mint-bright">
+              condizioni fondatori per le prime
+            </strong>
+          </span>
         </p>
 
         <h1 className="font-display text-white">
@@ -116,51 +146,54 @@ export function HeroHome() {
           <span className="block">
             <span
               data-onda-maschera
-              className="vz-entra inline-block text-[2.15rem] font-normal leading-[1.04] tracking-[-0.015em] text-moss sm:text-[2.9rem] md:text-[3.9rem]"
+              className="vz-entra inline-block whitespace-nowrap text-[clamp(1.55rem,5.1vw,3.9rem)] font-normal leading-[1.06] tracking-[-0.015em] text-moss"
               style={{ "--vz-i": 1 } as React.CSSProperties}
             >
-              I tuoi consulenti
+              Qualifica la tua impresa.
             </span>
           </span>
           {/* Riga 2: la promessa. Una volta e mezza, a piena forza. */}
           <span className="mt-1 block">
             <span
               data-onda-maschera
-              className="vz-entra relative inline-block text-[3.4rem] font-bold leading-[0.96] tracking-[-0.038em] sm:text-[4.7rem] md:text-[6.2rem] xl:text-[7rem]"
+              // NOWRAP E MISURA IN VW, tutte e due necessarie. «In
+              // abbonamento.» spezzato lascia «In» da solo su una riga,
+              // che non è un claim: è un errore di impaginazione. Ma
+              // fissare il corpo a scaglioni vuol dire che a una certa
+              // larghezza si rompe comunque — basta una lingua, un
+              // carattere di ripiego o uno schermo che non avevamo
+              // previsto. Legandolo alla larghezza della finestra la
+              // riga non può rompersi a nessuna misura.
+              className="vz-entra relative inline-block whitespace-nowrap text-[clamp(2.4rem,7vw,6.6rem)] font-bold leading-[0.98] tracking-[-0.038em]"
               style={{ "--vz-i": 2 } as React.CSSProperties}
             >
-              in{" "}
+              In{" "}
               <span className="relative inline-block">
-                cloud.
+                abbonamento.
                 <TrattoMenta />
               </span>
             </span>
           </span>
         </h1>
 
-        {/* UNA RIGA SOLA fra il claim e la barra, e dice che cosa si
-            riceve. Il claim dichiara CHI siamo («i tuoi consulenti»), la
-            riga dichiara COSA arriva: due lavori diversi, nessuna
-            ripetizione fra i due.
-
-            «Zero» porta il peso e il colore del sistema dello Zero —
-            semibold in menta viva, esattamente come l'accento del nastro
-            (`src/lib/zeri.ts`, `NastroZero`), non in corsivo: il corsivo
-            qui era di «effort», che era la coda e non l'accento.
-
-            «in tempo Zero» resta unito: spezzato a capo, «Zero» da solo
-            su una riga diventa un numero e non più la parola della
-            marca. */}
+        {/* UNA RIGA SOLA fra il claim e la barra, e dice i due asset che
+            nessun altro ha: l'intelligenza è NOSTRA e costruita per
+            questo mestiere, e chi valida è un professionista che ne
+            risponde. Scritta come una frase e non come un elenco — «AI +
+            professionisti» separati da un punto sarebbero due voci di
+            una scheda prodotto, e una scheda prodotto non riposiziona
+            nessuno. */}
         <p
           data-onda-maschera
-          className="vz-entra mx-auto mt-8 max-w-[26ch] font-display text-[1.3rem] leading-[1.45] text-moss sm:max-w-[34ch] sm:text-[1.55rem] md:text-[1.75rem]"
+          className="vz-entra mx-auto mt-8 max-w-[30ch] font-display text-[1.25rem] leading-[1.45] text-moss sm:max-w-[42ch] sm:text-[1.5rem] md:text-[1.7rem]"
           style={{ "--vz-i": 3 } as React.CSSProperties}
         >
-          Documenti a norma,{" "}
-          <span className="whitespace-nowrap">
-            in tempo{" "}
-            <span className="font-semibold text-mint-bright">Zero</span>.
-          </span>
+          Un&apos;intelligenza{" "}
+          <em className="font-semibold not-italic text-mint-bright">
+            proprietaria
+          </em>{" "}
+          costruita per i documenti d&apos;impresa, e professionisti che
+          validano prima della consegna.
         </p>
 
         {/* L'ORIENTATORE, subito sotto il claim.

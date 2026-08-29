@@ -51,8 +51,8 @@ const PUNTI = [
 ];
 
 export function PrezzoPrincipio() {
-  // Il prezzo minimo reale, calcolato: serve solo come rimando al
-  // catalogo, e deve muoversi da sé se il listino cambia.
+  // Il prezzo minimo reale, calcolato: è il numero che apre la sezione,
+  // e deve muoversi da sé se il listino cambia.
   const daMensile = Math.min(
     ...SERVIZI.map((s) => prezzoDettaglio(s.slug, "micro")?.mensile).filter(
       (v): v is number => typeof v === "number",
@@ -62,14 +62,32 @@ export function PrezzoPrincipio() {
   return (
     <div className="mx-auto max-w-4xl">
       <div className="text-center">
-        <p className="mb-4 text-xs font-semibold tracking-widest text-mint-bright">
+        <p className="mb-5 text-xs font-semibold tracking-widest text-mint-bright">
           IL PREZZO
         </p>
-        <h2 className="font-display text-4xl leading-[1.04] text-white md:text-6xl">
-          Pubblici, per fascia dimensionale, tutto incluso.
+        <h2 className="font-display text-[2.6rem] leading-[1.02] tracking-[-0.02em] text-white md:text-[4.4rem]">
+          Pubblico, prima di parlare con noi.
         </h2>
-        <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-moss/80 md:text-base">
-          Li leggi, li confronti, decidi. Senza preventivi da aspettare.
+
+        {/* IL NUMERO È IL PROTAGONISTA della sezione, non una nota in
+            fondo. Era un rimando dentro una riga di testo, e un prezzo
+            che si legge solo avvicinandosi allo schermo non è un prezzo
+            trasparente: è un prezzo scritto. Qui si legge da lontano, e
+            la cifra viene da `pricing.ts` — mai ricopiata, perché un
+            numero ricopiato è un numero che un giorno mentirà. */}
+        <p className="mt-9 flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1">
+          <span className="font-display text-[15px] font-medium text-moss/70">
+            da
+          </span>
+          <span className="font-display text-[5.5rem] font-semibold leading-[0.85] tracking-[-0.04em] text-white tabular-nums md:text-[8rem]">
+            {daMensile}
+          </span>
+          <span className="font-display text-[2rem] font-semibold leading-none text-mint-bright md:text-[2.6rem]">
+            €/mese
+          </span>
+        </p>
+        <p className="mt-4 text-[13px] font-medium tracking-wide text-moss/70">
+          IVA esclusa, tutto incluso
         </p>
       </div>
 
@@ -125,8 +143,11 @@ export function PrezzoPrincipio() {
         >
           Vedi tutti i servizi e i prezzi <ArrowRight size={18} />
         </Link>
+        {/* La cifra la dice già il titolo, in grande: ripeterla qui in
+            piccolo la indebolirebbe. Resta quello che il titolo non
+            dice, cioè che il prezzo cambia con la dimensione. */}
         <p className="mt-3 text-xs text-moss/60">
-          Percorsi da {daMensile} €/mese, IVA esclusa
+          Il canone segue la fascia dimensionale dell&apos;impresa
         </p>
       </div>
     </div>

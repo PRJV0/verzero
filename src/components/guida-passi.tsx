@@ -322,7 +322,7 @@ function VistaScheda({ vetrina }: { vetrina: VetrinaGuida }) {
       </div>
 
       <div className="mt-4 flex shrink-0 items-center justify-center rounded-xl bg-pine px-4 py-3 text-[13px] font-semibold text-white">
-        Attiva il percorso
+        Richiedi l&apos;attivazione
       </div>
     </Finestra>
   );
@@ -652,7 +652,13 @@ export function GuidaPassi({ vetrina }: { vetrina: VetrinaGuida }) {
  * pagina lo mostra. Ripetere qui le schermate vorrebbe dire due volte la
  * stessa spiegazione, e la seconda in un posto dove nessuno l'ha chiesta.
  */
-export function GuidaPassiTitoli() {
+export function GuidaPassiTitoli({
+  tono = "scuro",
+}: {
+  /** Due fondi, un componente: due copie diventerebbero due elenchi. */
+  tono?: "scuro" | "chiaro";
+}) {
+  const chiaro = tono === "chiaro";
   return (
     <ol className="mx-auto grid max-w-4xl gap-3 sm:grid-cols-5 sm:gap-2">
       {PASSI.map((p, i) => (
@@ -663,11 +669,21 @@ export function GuidaPassiTitoli() {
         >
           <span
             aria-hidden
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-mint-bright/45 font-display text-[13px] text-mint-bright"
+            className={
+              "flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-display text-[14px] " +
+              (chiaro
+                ? "border border-pine/30 text-pine"
+                : "border border-mint-bright/45 text-mint-bright")
+            }
           >
             {p.n}
           </span>
-          <p className="font-display text-[15px] leading-snug text-white sm:mt-3">
+          <p
+            className={
+              "font-display text-[15.5px] leading-snug sm:mt-3 " +
+              (chiaro ? "text-ink" : "text-white")
+            }
+          >
             {p.titolo}
           </p>
         </li>
