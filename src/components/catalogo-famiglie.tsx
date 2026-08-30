@@ -222,7 +222,7 @@ function MappaCatalogo({
   return (
     <section aria-labelledby="mappa-catalogo" className="mt-10">
       <h2 id="mappa-catalogo" className="text-center text-sm text-gray-warm">
-        Ogni percorso produce una qualifica documentata della tua impresa.
+        Ogni voce qui sotto è un documento che prepariamo noi e che la tua impresa può mostrare a chi glielo chiede.
       </h2>
       <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {FAMIGLIE.map((f) => {

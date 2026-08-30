@@ -54,12 +54,12 @@ const DOMANDE = [
   {
     domanda: "Il Sigillo Ver0 è una certificazione?",
     risposta:
-      "No. È il marchio di verifica della piattaforma: attesta percorsi completati e validati dal team tecnico. Le certificazioni di norma le rilasciano esclusivamente gli enti terzi accreditati; Verzero prepara e accompagna.",
+      "No. È il marchio di verifica della piattaforma: attesta documenti finiti e controllati dal team tecnico. Le certificazioni di norma le rilasciano esclusivamente gli enti terzi accreditati; Verzero prepara e accompagna.",
   },
   {
     domanda: "Il Sigillo si può comprare?",
     risposta:
-      "No. Non è mai una voce di prezzo: si ottiene completando percorsi qualificanti con criteri pubblici, e i dati vengono verificati prima del rilascio.",
+      "No. Non è mai una voce di prezzo: si ottiene completando i documenti previsti, con criteri pubblici, e i dati vengono verificati prima del rilascio.",
   },
   {
     domanda: "Quanto dura il Sigillo?",
@@ -108,33 +108,33 @@ export default function SigilloPage() {
       <section className="bg-pine-deep px-5 py-20 md:py-28">
         <div className="mx-auto max-w-3xl">
           <h2 className="font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-white md:text-[3rem]">
-            Una qualifica, non un logo
+            Un attestato che si può controllare
           </h2>
           <p className="mt-6 max-w-[62ch] text-[16px] leading-[1.7] text-moss">
-            Attraverso i servizi Ver0 le imprese ottengono qualcosa che vale al
-            di fuori della piattaforma: reputazione, attendibilità e
-            riconoscimento davanti a banche, clienti capofiliera e stazioni
-            appaltanti. Il Sigillo rende quella qualifica — lo status{" "}
-            <strong className="font-semibold text-pine">Impresa Ver0</strong> —
-            leggibile e verificabile da chiunque, in un colpo d&apos;occhio. Non
-            è il timbro di un&apos;intenzione: è l&apos;evidenza di un lavoro
-            fatto e controllato dal team tecnico. Verzero prepara e accompagna;
-            le certificazioni di norma le rilasciano gli enti terzi accreditati.
+            Quando un&apos;impresa completa con noi uno dei documenti che le
+            vengono chiesti — un bilancio di sostenibilità, un calcolo delle
+            emissioni, un manuale ISO — e quel documento viene controllato dal
+            nostro team tecnico, l&apos;impresa può esporre il Sigillo. Serve a
+            far vedere in un colpo d&apos;occhio, a una banca o a un cliente,
+            che quel lavoro è stato fatto davvero e che chiunque può andare a
+            controllarlo. Non è una certificazione: quelle le rilasciano gli
+            enti terzi accreditati, e noi prepariamo i documenti e
+            accompagniamo l&apos;impresa fino all&apos;esame.
           </p>
         </div>
       </section>
 
-      {/* Scala multi-percorso */}
+      {/* Come si ottiene, e che cosa cambia completandone più d'uno */}
       <section className="bg-pine-dark px-5 py-20 md:py-28">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-center font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-white md:text-[3rem]">
-            Un solo Sigillo, più strade per meritarlo
+            Un solo Sigillo, più modi per ottenerlo
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-center text-[16px] leading-relaxed text-moss">
-            La scala è multi-percorso: si sale completando percorsi qualificanti,
-            ognuno con criteri pubblici e mai a pagamento. Più percorsi
-            verificati = più ambiti sulla stessa pagina di verifica, mai Sigilli
-            multipli.
+            Ogni documento completato e controllato aggiunge un ambito alla
+            stessa pagina pubblica di verifica: il Sigillo resta uno solo, e non
+            se ne comprano altri. I criteri per ottenerlo sono scritti qui sotto
+            e non hanno un prezzo.
           </p>
 
           <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -144,16 +144,16 @@ export default function SigilloPage() {
                 <ShieldCheck size={14} /> Livello 1
               </span>
               <p className="mt-4 font-display text-xl text-white">
-                Percorso verificato
+                Un documento completato
               </p>
               <p className="mt-2.5 text-[15px] leading-relaxed text-moss/85">
-                Si ottiene completando almeno un percorso qualificante con la
-                validazione del team tecnico. La dicitura sotto il Sigillo dice
+                Si ottiene quando almeno uno dei documenti qui sotto è finito
+                e controllato dal nostro team tecnico. La dicitura sotto il Sigillo dice
                 quale ambito è verificato (es. «dati verificati — carbon»); la
                 pagina pubblica elenca quali ambiti e da quando.
               </p>
               <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-mint-bright">
-                Percorsi qualificanti
+                I documenti che danno diritto al Sigillo
               </p>
               <ul className="mt-2 space-y-1.5">
                 {PERCORSI.map((p) => (
@@ -222,7 +222,7 @@ export default function SigilloPage() {
           <p className="mx-auto mt-3 max-w-2xl text-sm text-moss">
             La verificabilità è la promessa del Sigillo: chi lo espone accetta di
             poter essere controllato. Ecco l&apos;anteprima della targa di
-            verifica che accompagnerà ogni impresa qualificata.
+            verifica che accompagnerà ogni impresa che ottiene il Sigillo.
           </p>
 
           <div className="mx-auto mt-8 max-w-xl rounded-2xl bg-white p-4 shadow-lift sm:p-6">
@@ -321,7 +321,7 @@ export default function SigilloPage() {
           className="mx-auto mt-8 flex max-w-xl flex-wrap justify-center gap-x-5 gap-y-2 text-sm"
         >
           <Link href="/servizi" className="font-medium text-mint-bright hover:underline">
-            Tutti i percorsi qualificanti
+            Tutti i documenti che prepariamo
           </Link>
           <Link
             href="/chi-siamo"

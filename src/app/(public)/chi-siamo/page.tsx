@@ -11,9 +11,9 @@ import { COMPETENZE_TEAM } from "@/lib/team";
 import { SITO, jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
 export const metadata: Metadata = metadataPagina({
-  title: "Chi siamo: le persone e l'AI dietro i documenti d'impresa",
+  title: "Chi siamo: chi prepara i documenti e chi li controlla",
   description:
-    "Verzero qualifica le imprese in abbonamento: un'AI proprietaria per i documenti d'impresa, professionisti qualificati che validano, prezzi pubblici.",
+    "Verzero prepara i documenti che le imprese devono avere in regola — bilanci di sostenibilità, manuali ISO, calcoli delle emissioni — e li tiene aggiornati.",
   path: "/chi-siamo",
   // Pagina istituzionale: qui il soggetto è Verzero, quindi
   // l'anteprima social porta il marchio e non una fotografia.
@@ -52,7 +52,19 @@ export const metadata: Metadata = metadataPagina({
  *     ragioni per cui le tre pagine si somigliavano. Qui l'AI si
  *     racconta a parole, che è quello che fa un articolo.
  *
- * ═══ L'APERTURA NON NEGA PIÙ ═══
+ * ═══ L'APERTURA SI CAPISCE AL PRIMO PASSAGGIO ═══
+ * Diceva «Abbiamo messo la qualifica d'impresa in abbonamento», ed era
+ * gergo nostro: «qualifica d'impresa» è il modo in cui chiamiamo il
+ * mestiere fra noi, non una cosa che qualcuno cerchi o riconosca, e «in
+ * abbonamento» da solo è un modello di vendita senza un oggetto. Chi non
+ * ci ha mai sentiti nominare leggeva una frase che non gli diceva
+ * niente, in cima alla pagina che dovrebbe spiegargli chi siamo.
+ *
+ * Adesso l'apertura nomina le COSE: i documenti, e tre esempi di
+ * documento. Il criterio, che vale per tutto il sito: se una frase ha
+ * bisogno di essere riletta o decodificata, è scritta per noi.
+ *
+ * ═══ E NON NEGA ═══
  * Diceva «La qualifica d'impresa non è un progetto. È uno stato.» —
  * negazione più affermazione. La stessa identica figura apriva
  * /come-funziona («Non è un assistente. È un'intelligenza…») e la pagina
@@ -83,7 +95,7 @@ const REGOLE = [
   {
     titolo: "Zero scorciatoie",
     testo:
-      "Il Sigillo Ver0 non si compra: si ottiene con percorsi verificati, e ogni anno va riconquistato. Un attestato che si potesse comprare non varrebbe niente per chi lo riceve, e chi lo espone lo sa.",
+      "Il Sigillo Ver0 non si compra: lo si ottiene completando i documenti previsti e facendoli controllare, e ogni anno va riconquistato. Un attestato che si potesse comprare non varrebbe niente per chi lo riceve, e chi lo espone lo sa.",
   },
   {
     titolo: "Dati custoditi in Europa",
@@ -93,7 +105,7 @@ const REGOLE = [
   {
     titolo: "Prezzi pubblici",
     testo:
-      "Il listino Verzero è pubblico e per fascia dimensionale: chiunque può fare il conto da solo, anche prima di parlarci. Non ci sono preventivi su misura, e quindi non c'è la trattativa in cui chi sa negoziare paga meno di chi non sa.",
+      "I prezzi sono scritti sul sito e cambiano solo con la dimensione dell'impresa: chiunque può fare il conto da solo, anche prima di parlarci. Non ci sono preventivi su misura, e quindi non c'è la trattativa in cui chi sa negoziare paga meno di chi non sa.",
   },
 ];
 
@@ -150,14 +162,16 @@ export default function ChiSiamoPage() {
           <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
             Chi siamo
           </p>
-          <h1 className="mt-6 max-w-[16ch] font-display text-[2.6rem] leading-[1.02] tracking-[-0.025em] text-ink md:text-[4rem]">
-            Abbiamo messo la qualifica d&apos;impresa{" "}
-            <span className="text-pine">in abbonamento.</span>
+          <h1 className="mt-6 max-w-[19ch] font-display text-[2.05rem] leading-[1.1] tracking-[-0.02em] text-ink md:text-[3.6rem]">
+            Prepariamo i documenti che le imprese devono avere in regola,{" "}
+            <span className="text-pine">e li teniamo aggiornati.</span>
           </h1>
-          <p className="mt-8 max-w-[58ch] font-display text-[1.25rem] leading-[1.45] text-pine md:text-[1.6rem]">
-            Tutto il resto di quello che siamo viene da questa scelta: come
-            lavoriamo, chi abbiamo assunto, che cosa costruiamo noi e che cosa
-            compriamo, perché il listino è pubblico.
+          <p className="mt-8 max-w-[58ch] font-display text-[1.2rem] leading-[1.5] text-pine md:text-[1.5rem]">
+            Bilanci di sostenibilità, manuali dei sistemi di gestione, calcoli
+            delle emissioni: li scrive un&apos;intelligenza artificiale che
+            abbiamo costruito noi e li controlla un professionista prima che
+            arrivino all&apos;impresa. Si paga con un canone mensile, e i prezzi
+            sono scritti sul sito.
           </p>
         </div>
       </section>
@@ -201,9 +215,9 @@ export default function ChiSiamoPage() {
           </P>
           <P>
             È anche la ragione per cui non la chiamiamo un chatbot e non la
-            mettiamo a disposizione per parlarci. Fa una cosa sola, e quella
-            cosa la restituisce sotto forma di elaborato con ogni dato
-            riconducibile alla riga da cui viene.
+            mettiamo a disposizione per parlarci. Fa una cosa sola: prende i
+            documenti che le dai e ne scrive uno nuovo, in cui ogni dato resta
+            riconducibile alla riga da cui è stato preso.
           </P>
           <p className="mt-7">
             <Link
@@ -223,16 +237,16 @@ export default function ChiSiamoPage() {
           <H2>Un documento esce quando una persona lo convalida.</H2>
           <P>
             Il team di Verzero è fatto di professionisti qualificati che
-            esaminano ogni elaborato prima che arrivi al cliente e restano
-            responsabili di quella validazione. Non è un controllo a campione:
+            leggono ogni documento prima che arrivi al cliente e restano
+            responsabili di quel controllo. Non è un controllo a campione:
             è il passaggio obbligato di ogni documento, e non esiste una via che
             lo salti quando c&apos;è fretta.
           </P>
           <P>
             È la metà del prodotto che non si può automatizzare, ed è anche la
-            metà che costa. La teniamo perché un elaborato che nessuno ha
-            guardato è un elaborato di cui nessuno risponde — e chi lo porta a
-            un audit è il cliente, non noi.
+            metà che costa. La teniamo perché un documento che nessuno ha
+            letto è un documento di cui nessuno risponde — e chi lo porta a un
+            controllo è il cliente, non noi.
           </P>
 
           <ul className="mt-9 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-2">

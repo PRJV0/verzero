@@ -109,7 +109,7 @@ const BATTUTE = [
 export const metadata: Metadata = {
   title: { absolute: `${SITO.nome} — ${SITO.payoff}` },
   description:
-    "Qualifica la tua impresa in abbonamento: un'AI proprietaria costruita per i documenti d'impresa, professionisti che validano, prezzi pubblici.",
+    "Prepariamo i documenti che le imprese devono avere in regola — bilanci di sostenibilità, manuali ISO, calcoli delle emissioni — con un'AI nostra e professionisti che li controllano.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -117,7 +117,7 @@ export const metadata: Metadata = {
     siteName: SITO.nome,
     title: `${SITO.nome} — ${SITO.payoff}`,
     description:
-      "Qualifica la tua impresa in abbonamento: un'AI proprietaria costruita per i documenti d'impresa, professionisti che validano, prezzi pubblici.",
+      "Prepariamo i documenti che le imprese devono avere in regola — bilanci di sostenibilità, manuali ISO, calcoli delle emissioni — con un'AI nostra e professionisti che li controllano.",
     url: "/",
     images: [
       {
@@ -169,8 +169,9 @@ export default function HomePage() {
           </h2>
           <p className="mx-auto mt-7 max-w-[52ch] font-display text-[1.2rem] leading-snug text-gray-warm md:text-[1.55rem]">
             Che tu debba fare il primo bilancio di sostenibilità o rispondere
-            alle richieste di banche e committenti, il percorso è lo stesso:
-            cambia il prezzo, che segue la dimensione della tua impresa.
+            alle richieste di banche e clienti, il lavoro che facciamo è lo
+            stesso: cambia solo il prezzo, che segue la dimensione della tua
+            impresa.
           </p>
 
           {/* Le quattro fasce vengono da `pricing.ts`, come ogni altro
@@ -232,9 +233,16 @@ export default function HomePage() {
             <h2 className="font-display text-[3rem] leading-[0.98] tracking-[-0.02em] text-ink md:text-[4.6rem]">
               Lo <ZeroWord>Zero</ZeroWord> di Ver0
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-sm text-gray-warm md:text-base">
-              Un principio solo, che regge sempre la stessa domanda:
-              «dimostramelo».
+            {/* Il titolo è il nome del sistema di marca e resta. La riga
+                sotto no: diceva «Un principio solo, che regge sempre la
+                stessa domanda: dimostramelo» — un enunciato che chiede
+                di essere decodificato, in cima a una sezione che il
+                lettore non ha ancora capito che cosa sia. Adesso dice
+                che cosa sta per vedere. */}
+            <p className="mx-auto mt-4 max-w-[52ch] text-[15px] leading-relaxed text-gray-warm md:text-base">
+              Ci chiamiamo Ver0 per le sei promesse qui sotto: cominciano tutte
+              con la stessa parola, e ognuna porta scritto accanto che cosa
+              significa in concreto.
             </p>
           </div>
 

@@ -212,11 +212,13 @@ export default function ComeFunzionaPage() {
             Il sistema
           </p>
           <h2 className="mt-5 max-w-[20ch] font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-ink md:text-[3rem]">
-            Lo stesso schema, per ogni percorso.
+            Lo stesso modo di lavorare, per ogni documento.
           </h2>
           <p className="mt-6 max-w-[62ch] text-[17px] leading-[1.7] text-gray-warm">
-            Cambia la norma, non il modo di lavorare. Ogni blocco dello schema
-            si apre: dentro c&apos;è il metodo, non le nostre regole interne.
+            Che sia un bilancio di sostenibilità o un manuale ISO cambia la
+            norma di riferimento, non il modo in cui il documento viene
+            costruito e controllato. Ogni blocco dello schema qui sotto si
+            apre e dice che cosa succede in quel passaggio.
           </p>
         </div>
         <div className="mx-auto mt-10 max-w-6xl overflow-hidden rounded-3xl bg-pine-deep px-5 py-12 md:py-16">

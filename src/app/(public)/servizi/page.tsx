@@ -9,9 +9,9 @@ import { AnnuncioFase } from "@/components/annuncio-fase";
 import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
 export const metadata: Metadata = metadataPagina({
-  title: "Servizi e prezzi in chiaro, per ogni dimensione",
+  title: "I documenti che prepariamo, con i prezzi in chiaro",
   description:
-    "Misura e rendiconta, sistemi certificabili, qualifica e accesso: i percorsi Verzero con prezzo a partire da e perimetro scritti prima di iniziare.",
+    "Bilanci di sostenibilità, manuali ISO, calcoli delle emissioni: i documenti che Verzero prepara per le imprese, con il prezzo e cosa comprende scritti prima.",
   path: "/servizi",
 });
 
@@ -66,13 +66,19 @@ export default async function ServiziPage({
           { nome: "Servizi", path: "/servizi" },
         ])}
       />
+      {/* «I percorsi che qualificano la tua impresa» era gergo doppio:
+          «percorso» è il nome che diamo noi a un servizio, e
+          «qualificare» non dice che cosa si ottiene. Chi arriva qui da
+          una ricerca vuole sapere quali documenti prepariamo e quanto
+          costano — e adesso lo legge nella prima riga. */}
       <h1 className="text-center font-display text-4xl text-ink md:text-5xl">
-        I percorsi che qualificano la tua impresa.
+        I documenti che prepariamo, con i prezzi.
       </h1>
-      <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-gray-warm">
-        Scegli quello che ti serve: prezzo, perimetro e norme di riferimento
-        sono scritti prima di iniziare. Ogni percorso riusa i dati che hai già,
-        così il secondo costa meno lavoro del primo.
+      <p className="mx-auto mt-4 max-w-2xl text-center text-[15px] leading-relaxed text-gray-warm">
+        Bilanci di sostenibilità, manuali dei sistemi di gestione, calcoli delle
+        emissioni e altri documenti che banche, clienti e bandi chiedono alle
+        imprese. Per ognuno trovi scritto prima di iniziare quanto costa, che
+        cosa comprende e che cosa no, e su quale norma è costruito.
       </p>
 
       {/* LA FASE, dove è un'informazione utile: chi è su questa pagina
