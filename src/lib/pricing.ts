@@ -99,6 +99,15 @@ const LISTINO: Record<string, Voce> = {
     annuale: 1500,
     rinnovo: { tipo: "mantenimento", mensile: 59 },
   },
+  // Famiglia A, allineato agli altri manuali ISO: stessa struttura HLS,
+  // stesso impianto documentale, stessa preparazione all'audit di un
+  // organismo accreditato. Un prezzo diverso avrebbe dovuto avere una
+  // ragione, e non ce n'è.
+  "manuale-sistema-gestione-iso-27001": {
+    mensile: 139,
+    annuale: 1500,
+    rinnovo: { tipo: "mantenimento", mensile: 59 },
+  },
   // Famiglia B — linee guida non certificabili, venduti come add-on di
   // UNI/PdR 125 e ISO 45001: prezzo ridotto (§12.M).
   "iso-45003": {

@@ -56,6 +56,12 @@ export const REGISTRO_NORME: VoceRegistro[] = [
     stato: "in vigore",
   },
   {
+    codice: "UNI CEI EN ISO/IEC 27001:2024+A1:2024",
+    url: "https://store.uni.com/uni-cei-en-iso-iec-27001-2024-a1-2024",
+    stato: "in vigore",
+    dal: "16 ottobre 2024",
+  },
+  {
     codice: "UNI EN ISO 14064-1:2019",
     url: "https://store.uni.com/uni-en-iso-14064-1-2019",
     stato: "in vigore",
@@ -127,6 +133,18 @@ export const REGISTRO_NORME: VoceRegistro[] = [
     stato: "ritirata",
     ritirataIl: "28 settembre 2023",
     sostituita: "UNI EN ISO 45001:2023+A1:2024",
+  },
+  {
+    // La designazione che chiunque scriverebbe a memoria, ed è ritirata
+    // dallo stesso giorno in cui è entrato in vigore l'emendamento sul
+    // clima: nove mesi di vita. È esattamente il caso per cui esiste
+    // questo registro.
+    codice: "UNI CEI EN ISO/IEC 27001:2024",
+    url: "https://store.uni.com/uni-cei-en-iso-iec-27001-2024",
+    stato: "ritirata",
+    dal: "25 gennaio 2024",
+    ritirataIl: "16 ottobre 2024",
+    sostituita: "UNI CEI EN ISO/IEC 27001:2024+A1:2024",
   },
   {
     codice: "UNI/TS 11820:2022",
@@ -222,6 +240,21 @@ export const FAMIGLIE_NORMA: FamigliaNorma[] = [
     percorso: "manuale-sistema-gestione-iso-45001",
   },
   {
+    id: "iso-27001",
+    etichetta: "ISO/IEC 27001",
+    ambito: "sicurezza delle informazioni",
+    vigente: "UNI CEI EN ISO/IEC 27001:2024+A1:2024",
+    vigenteDal: "16 ottobre 2024",
+    vigenteDalAnno: 2024,
+    precedente: {
+      codice: "UNI CEI EN ISO/IEC 27001:2024",
+      dalAnno: 2024,
+      ritirataIl: "16 ottobre 2024",
+    },
+    url: "https://store.uni.com/uni-cei-en-iso-iec-27001-2024-a1-2024",
+    percorso: "manuale-sistema-gestione-iso-27001",
+  },
+  {
     id: "pdr-125",
     etichetta: "UNI/PdR 125",
     ambito: "parità di genere",
@@ -296,6 +329,13 @@ export const NORME = [
   { chiave: "iso-14001", etichetta: "ISO 14001", chiavi: ["14001"] },
   { chiave: "iso-45001", etichetta: "ISO 45001", chiavi: ["45001"] },
   { chiave: "iso-45003", etichetta: "ISO 45003", chiavi: ["45003"] },
+  {
+    chiave: "iso-27001",
+    etichetta: "ISO/IEC 27001",
+    // «27001» identifica la norma da solo; le altre due sono i nomi con
+    // cui la cerca chi non ne conosce il numero.
+    chiavi: ["27001", "sicurezza delle informazioni", "sicurezza informatica"],
+  },
   { chiave: "iso-30415", etichetta: "ISO 30415", chiavi: ["30415"] },
   {
     chiave: "pdr-125",

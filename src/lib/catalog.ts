@@ -489,6 +489,68 @@ export const SERVIZI: Servizio[] = [
     ],
   },
   {
+    slug: "manuale-sistema-gestione-iso-27001",
+    perChi:
+      "Serve alle imprese a cui un committente, una banca o un bando chiede una certificazione sulla sicurezza delle informazioni, e che hanno gia\u0300 un assetto informatico funzionante da mettere a sistema.",
+    name: "Manuale del Sistema di Gestione ISO/IEC 27001",
+    taglio:
+      "UNI CEI EN ISO/IEC 27001:2024+A1:2024 \u2014 informazioni, attivit\u00e0 tecniche IT escluse",
+    icon: ShieldCheck,
+    short:
+      "Il sistema di gestione della sicurezza delle informazioni, integrato con l'assetto tecnico che hai gi\u00e0.",
+    cosE: "L'impianto documentale del sistema di gestione per la sicurezza delle informazioni secondo UNI CEI EN ISO/IEC 27001:2024+A1:2024: contesto e parti interessate, politica, ruoli e responsabilit\u00e0, valutazione e trattamento del rischio informativo, dichiarazione di applicabilit\u00e0, procedure operative, gestione degli incidenti, continuit\u00e0, monitoraggio, audit interni e riesame della direzione. Il sistema si costruisce attorno agli strumenti e ai fornitori informatici che l'impresa ha gi\u00e0.",
+    // Il confine va detto prima di ogni cosa: \u00e8 la differenza tra un
+    // servizio corretto e una promessa che non possiamo mantenere. Qui
+    // pi\u00f9 che altrove, perch\u00e9 «27001» viene letta da molti come
+    // «ci mettono in sicurezza i computer», che non \u00e8 quello che
+    // vendiamo.
+    perimetro:
+      "Verzero produce il sistema di gestione documentale e lo integra con l'assetto tecnico esistente dell'azienda. Le attivit\u00e0 tecniche di sicurezza informatica \u2014 test di vulnerabilit\u00e0, penetration test, hardening dei sistemi, configurazione di reti e backup, valutazioni infrastrutturali \u2014 restano di competenza di specialisti IT e non rientrano nel servizio.",
+    perimetroBreve:
+      "Le attivit\u00e0 tecniche IT non sono incluse: restano di specialisti informatici.",
+    copre: [
+      "Sistema di gestione UNI CEI EN ISO/IEC 27001:2024+A1:2024",
+      "Integrazione con l'assetto informatico esistente",
+      "Attivit\u00e0 tecniche di sicurezza informatica escluse",
+    ],
+    comeFunziona: [
+      "L'AI Ver0 raccoglie visura, organigramma, elenco dei sistemi e dei fornitori informatici, politiche e procedure gi\u00e0 in uso.",
+      "Ricostruisce il perimetro informativo dell'impresa \u2014 quali informazioni tratta, dove stanno, chi vi accede \u2014 e ne ricava la valutazione del rischio e la dichiarazione di applicabilit\u00e0, senza duplicare quello che hai gi\u00e0 documentato.",
+      "Genera manuale, politica, procedure, modulistica, piano di audit interni e riesame della direzione secondo la struttura HLS della norma.",
+      "Un professionista del team tecnico verifica l'impianto prima della consegna; il fascicolo \u00e8 pronto per l'audit dell'organismo accreditato.",
+    ],
+    output: [
+      "Manuale del sistema di gestione per la sicurezza delle informazioni secondo UNI CEI EN ISO/IEC 27001:2024+A1:2024",
+      "Politica per la sicurezza delle informazioni, procedure e modulistica operativa",
+      "Valutazione del rischio informativo e dichiarazione di applicabilit\u00e0 dei controlli",
+      "Piano di audit interni, indicatori di monitoraggio e verbale di riesame della direzione",
+      "Matrice di correlazione tra requisiti della norma e documenti prodotti, per l'audit dell'ente",
+    ],
+    requisiti: [
+      "Serve un assetto informatico gi\u00e0 funzionante: il sistema di gestione lo mette a norma, non lo costruisce",
+      "Le attivit\u00e0 tecniche di sicurezza informatica \u2014 test di vulnerabilit\u00e0, hardening, valutazioni infrastrutturali \u2014 non rientrano nel servizio e restano di specialisti IT",
+      "La certificazione \u00e8 rilasciata esclusivamente da organismi accreditati: Verzero prepara il fascicolo e accompagna, non certifica",
+      "Il sistema produce effetti solo se attuato: la documentazione \u00e8 la base, l'applicazione quotidiana resta dell'impresa",
+    ],
+    documenti: [
+      "Visura camerale aggiornata",
+      "Organigramma e ruoli con responsabilit\u00e0 sui sistemi informativi",
+      "Elenco dei sistemi, degli applicativi e dei fornitori informatici in uso",
+      "Politiche, procedure e regolamenti informatici gi\u00e0 adottati, se esistenti",
+      "Registro dei trattamenti e documentazione privacy gi\u00e0 predisposta",
+      "Elenco degli incidenti informatici rilevati negli ultimi anni, se tenuto",
+    ],
+    riferimenti: [
+      "UNI CEI EN ISO/IEC 27001:2024+A1:2024 (sistemi di gestione per la sicurezza delle informazioni \u2014 requisiti)",
+      "Regolamento (UE) 2016/679 (GDPR), in particolare artt. 24, 25 e 32",
+    ],
+    opportunita: [
+      "Qualifica fornitori: nelle filiere e negli appalti la certificazione sulla sicurezza delle informazioni \u00e8 sempre pi\u00f9 spesso un requisito di ammissione",
+      "Struttura HLS condivisa con ISO 9001, ISO 14001 e ISO 45001: chi ha gi\u00e0 un sistema di gestione riusa contesto, ruoli, audit e riesame",
+      "Percorso qualificante per il Sigillo Ver0",
+    ],
+  },
+  {
     slug: "manuale-sistema-gestione-iso-45001",
     perChi:
       "Serve alle imprese che hanno già un DVR in vigore e vogliono strutturare la sicurezza sul lavoro in un sistema di gestione certificabile.",
@@ -847,6 +909,7 @@ export const SERVIZI_CERTIFICABILI = [
   "manuale-sistema-gestione-iso-9001",
   "manuale-sistema-gestione-iso-14001",
   "manuale-sistema-gestione-iso-45001",
+  "manuale-sistema-gestione-iso-27001",
   "parita-di-genere-pdr-125",
   // Schema accreditato di parte terza: l'audit c'è, quindi i rilievi anche.
   "sa8000",
@@ -1011,6 +1074,22 @@ export const AMBITI = [
       "salute e sicurezza",
       "sicurezza dei lavoratori",
       "infortuni",
+    ],
+  },
+  {
+    // NON è l'ambito «sicurezza»: quello è la salute e sicurezza sul
+    // lavoro, un mestiere diverso con norme diverse. Tenerli separati
+    // serve a chi cerca — «sicurezza» da solo non deve portare a
+    // entrambi — e a non far comparire la 27001 fra i risultati
+    // correlati del DVR.
+    key: "informazioni",
+    label: "sicurezza delle informazioni",
+    chiavi: [
+      "sicurezza delle informazioni",
+      "sicurezza informatica",
+      "cybersecurity",
+      "cyber security",
+      "protezione dei dati aziendali",
     ],
   },
   {
@@ -1248,6 +1327,24 @@ export const FAMIGLIE: Famiglia[] = [
         etichetta: "Novità",
       },
       {
+        slug: "manuale-sistema-gestione-iso-27001",
+        benefit:
+          "Il sistema di gestione della sicurezza delle informazioni, integrato con l'assetto tecnico che hai già.",
+        pilastro: "G",
+        bisogni: ["bando", "committente"],
+        momento: "partenza",
+        norme: ["iso-27001"],
+        ambiti: ["informazioni"],
+        chiavi: [
+          "sicurezza delle informazioni",
+          "27001",
+          "sicurezza informatica",
+          "cybersecurity",
+          "protezione dei dati aziendali",
+        ],
+        etichetta: "Novità",
+      },
+      {
         slug: "parita-di-genere-pdr-125",
         benefit: "KPI e fascicolo pronti per l'audit; esonero contributivo di legge.",
         pilastro: "S",
@@ -1282,7 +1379,7 @@ export const FAMIGLIE: Famiglia[] = [
         momento: "aggiornamento",
         // Le stesse cinque norme su cui un organismo fa audit
         // (SERVIZI_CERTIFICABILI): è il percorso che le riprende tutte.
-        norme: ["iso-9001", "iso-14001", "iso-45001", "pdr-125", "sa8000"],
+        norme: ["iso-9001", "iso-14001", "iso-45001", "iso-27001", "pdr-125", "sa8000"],
         ambiti: ["qualita", "ambiente", "sicurezza", "sociale"],
         chiavi: ["manuale vecchio", "aggiornare il manuale", "edizione ritirata", "norma cambiata"],
         etichetta: "Novità",
@@ -1375,7 +1472,7 @@ export const FAMIGLIE: Famiglia[] = [
         pilastro: "G",
         bisogni: ["audit", "committente", "bando"],
         momento: "verifica",
-        norme: ["iso-9001", "iso-14001", "iso-45001", "pdr-125", "sa8000"],
+        norme: ["iso-9001", "iso-14001", "iso-45001", "iso-27001", "pdr-125", "sa8000"],
         ambiti: ["qualita", "ambiente", "sicurezza", "sociale"],
         chiavi: ["audit", "verifica ispettiva", "visita dell ente", "organismo di certificazione"],
       },
