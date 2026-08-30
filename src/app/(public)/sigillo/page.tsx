@@ -85,18 +85,18 @@ export default function SigilloPage() {
       <JsonLd dati={jsonLdFaq(DOMANDE)} />
       {/* Hero — registro scuro istituzionale (§11.X): pino profondo, sigillo
           tono-su-tono bianco con segmento menta acceso. */}
-      <section className="bg-pine-deep px-5 py-16 text-center">
+      <section className="bg-pine-deep px-5 py-24 text-center md:py-32">
         <div className="mb-6 flex justify-center">
           <Sigillo tone="dark" vivo className="h-28 w-28" />
         </div>
-        <p className="mb-4 text-xs font-semibold tracking-widest text-mint-bright">
+        <p className="mb-6 text-[13px] font-semibold uppercase tracking-[0.16em] text-mint-bright">
           IL MARCHIO DI VERIFICA
         </p>
-        <h1 className="mx-auto max-w-2xl font-display text-5xl leading-[1.05] text-white md:text-6xl">
+        <h1 className="mx-auto max-w-[16ch] font-display text-[2.6rem] leading-[1.04] tracking-[-0.025em] text-white md:text-[4rem]">
           Il Sigillo non si compra.{" "}
           <em className="text-mint-bright">Si dimostra.</em>
         </h1>
-        <p className="mx-auto mt-5 max-w-xl text-sm text-moss">
+        <p className="mx-auto mt-8 max-w-[54ch] text-[16px] leading-[1.7] text-moss">
           È il marchio di verifica della piattaforma, esposto dalle aziende che
           raggiungono i criteri. Criteri pubblici, dati verificati da persone,
           revocabilità: costruito in coerenza con la direttiva UE 2024/825
@@ -105,12 +105,12 @@ export default function SigilloPage() {
       </section>
 
       {/* Cos'è */}
-      <section className="bg-white px-5 py-16">
+      <section className="bg-pine-deep px-5 py-20 md:py-28">
         <div className="mx-auto max-w-3xl">
-          <h2 className="font-display text-4xl text-ink md:text-5xl">
+          <h2 className="font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-white md:text-[3rem]">
             Una qualifica, non un logo
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-gray-warm">
+          <p className="mt-6 max-w-[62ch] text-[16px] leading-[1.7] text-moss">
             Attraverso i servizi Ver0 le imprese ottengono qualcosa che vale al
             di fuori della piattaforma: reputazione, attendibilità e
             riconoscimento davanti a banche, clienti capofiliera e stazioni
@@ -125,12 +125,12 @@ export default function SigilloPage() {
       </section>
 
       {/* Scala multi-percorso */}
-      <section className="bg-paper px-5 py-16">
+      <section className="bg-pine-dark px-5 py-20 md:py-28">
         <div className="mx-auto max-w-4xl">
-          <h2 className="text-center font-display text-4xl text-ink md:text-5xl">
+          <h2 className="text-center font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-white md:text-[3rem]">
             Un solo Sigillo, più strade per meritarlo
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-gray-warm">
+          <p className="mx-auto mt-5 max-w-2xl text-center text-[16px] leading-relaxed text-moss">
             La scala è multi-percorso: si sale completando percorsi qualificanti,
             ognuno con criteri pubblici e mai a pagamento. Più percorsi
             verificati = più ambiti sulla stessa pagina di verifica, mai Sigilli
@@ -139,31 +139,31 @@ export default function SigilloPage() {
 
           <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Livello 1 */}
-            <div className="rounded-2xl bg-white p-5 shadow-soft">
-              <span className="inline-flex items-center gap-2 rounded-full bg-moss px-3 py-1 text-xs font-medium text-pine">
+            <div className="rounded-2xl border border-white/12 bg-white/[0.04] p-6">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-moss">
                 <ShieldCheck size={14} /> Livello 1
               </span>
-              <p className="mt-3 font-display text-xl text-ink">
+              <p className="mt-4 font-display text-xl text-white">
                 Percorso verificato
               </p>
-              <p className="mt-2 text-sm text-gray-warm">
+              <p className="mt-2.5 text-[15px] leading-relaxed text-moss/85">
                 Si ottiene completando almeno un percorso qualificante con la
                 validazione del team tecnico. La dicitura sotto il Sigillo dice
                 quale ambito è verificato (es. «dati verificati — carbon»); la
                 pagina pubblica elenca quali ambiti e da quando.
               </p>
-              <p className="mt-4 text-xs font-medium text-pine">
+              <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-mint-bright">
                 Percorsi qualificanti
               </p>
               <ul className="mt-2 space-y-1.5">
                 {PERCORSI.map((p) => (
                   <li
                     key={p}
-                    className="flex items-start gap-2 text-sm text-gray-warm"
+                    className="flex items-start gap-2 text-[15px] leading-snug text-moss/85"
                   >
                     <BadgeCheck
                       size={15}
-                      className="mt-0.5 shrink-0 text-mint"
+                      className="mt-0.5 shrink-0 text-mint-bright"
                     />
                     {p}
                   </li>
@@ -172,14 +172,14 @@ export default function SigilloPage() {
             </div>
 
             {/* Livello 2 */}
-            <div className="rounded-2xl bg-white p-5 shadow-soft ring-2 ring-pine">
-              <span className="inline-flex items-center gap-2 rounded-full bg-pine px-3 py-1 text-xs font-medium text-white">
+            <div className="rounded-2xl border-2 border-mint-bright/40 bg-mint-bright/[0.07] p-6">
+              <span className="inline-flex items-center gap-2 rounded-full bg-mint-bright px-3 py-1 text-xs font-medium text-pine-deep">
                 <BadgeCheck size={14} /> Livello 2 — Sigillo pieno
               </span>
-              <p className="mt-3 font-display text-xl text-ink">
+              <p className="mt-4 font-display text-xl text-white">
                 Risultato dimostrato
               </p>
-              <p className="mt-2 text-sm text-gray-warm">
+              <p className="mt-2.5 text-[15px] leading-relaxed text-moss/85">
                 Il livello 1 più un risultato misurato nel proprio ambito. Premia
                 il fatto, non il documento:
               </p>
@@ -192,11 +192,11 @@ export default function SigilloPage() {
                 ].map((p) => (
                   <li
                     key={p}
-                    className="flex items-start gap-2 text-sm text-gray-warm"
+                    className="flex items-start gap-2 text-[15px] leading-snug text-moss/85"
                   >
                     <BadgeCheck
                       size={15}
-                      className="mt-0.5 shrink-0 text-pine"
+                      className="mt-0.5 shrink-0 text-mint-bright"
                     />
                     {p}
                   </li>
@@ -214,7 +214,7 @@ export default function SigilloPage() {
 
       {/* Verificabilità + targa — fondo scuro istituzionale, targa presentata
           su placca bianca (§11.X: su superfici stampate sempre placca bianca) */}
-      <section className="bg-pine-deep px-5 py-16">
+      <section className="bg-pine-deep px-5 py-20 md:py-28">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="font-display text-4xl text-white md:text-5xl">
             Ogni Sigillo sarà verificabile pubblicamente
@@ -254,7 +254,7 @@ export default function SigilloPage() {
       </section>
 
       {/* Millesimatura */}
-      <section className="bg-pine-dark px-5 py-16">
+      <section className="bg-pine-dark px-5 py-20 md:py-28">
         <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 md:flex-row">
           <Sigillo tone="dark" className="h-24 w-24 shrink-0" />
           <div className="text-center md:text-left">
@@ -276,19 +276,19 @@ export default function SigilloPage() {
       </section>
 
       {/* Domande frequenti: le stesse marcate in JSON-LD */}
-      <section className="bg-paper px-5 py-16">
+      <section className="bg-pine-deep px-5 py-20 md:py-28">
         <div className="mx-auto max-w-3xl">
-          <h2 className="font-display text-4xl text-ink md:text-5xl">
+          <h2 className="font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-white md:text-[3rem]">
             Domande frequenti
           </h2>
           <dl className="mt-8 space-y-5">
             {DOMANDE.map((d) => (
               <div
                 key={d.domanda}
-                className="rounded-2xl border border-line/70 bg-white p-5"
+                className="rounded-2xl border border-white/12 bg-white/[0.04] p-6"
               >
-                <dt className="font-display text-xl text-ink">{d.domanda}</dt>
-                <dd className="mt-2 text-sm leading-relaxed text-gray-warm">
+                <dt className="font-display text-xl text-white">{d.domanda}</dt>
+                <dd className="mt-2.5 text-[15px] leading-relaxed text-moss/85">
                   {d.risposta}
                 </dd>
               </div>
@@ -298,11 +298,11 @@ export default function SigilloPage() {
       </section>
 
       {/* CTA + nota conformità */}
-      <section className="bg-white px-5 py-16 text-center">
-        <h2 className="font-display text-4xl text-ink md:text-5xl">
+      <section className="bg-pine-dark px-5 py-24 text-center md:py-32">
+        <h2 className="font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-white md:text-[3rem]">
           La via diretta al Sigillo
         </h2>
-        <p className="mx-auto mt-3 max-w-lg text-sm text-gray-warm">
+        <p className="mx-auto mt-5 max-w-lg text-[16px] leading-relaxed text-moss">
           Il Percorso Ver0 riunisce carbon footprint e bilancio VSME e dà accesso
           ai requisiti del livello 1. Il Sigillo non è mai una voce di prezzo: si
           conquista con il lavoro verificato.
@@ -310,7 +310,7 @@ export default function SigilloPage() {
         <div className="mt-6 flex justify-center">
           <Link
             href="/servizi/percorso-ver0"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-pine px-5 py-2.5 text-sm font-medium text-white shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lift"
+            className="inline-flex items-center gap-1.5 vz-press rounded-xl bg-white px-7 py-4 text-base font-semibold text-pine"
           >
             Scopri il Percorso Ver0 <ArrowRight size={15} />
           </Link>
@@ -320,24 +320,24 @@ export default function SigilloPage() {
           aria-label="Pagine correlate"
           className="mx-auto mt-8 flex max-w-xl flex-wrap justify-center gap-x-5 gap-y-2 text-sm"
         >
-          <Link href="/servizi" className="font-medium text-pine hover:underline">
+          <Link href="/servizi" className="font-medium text-mint-bright hover:underline">
             Tutti i percorsi qualificanti
           </Link>
           <Link
             href="/chi-siamo"
-            className="font-medium text-pine hover:underline"
+            className="font-medium text-mint-bright hover:underline"
           >
             Chi verifica i dati
           </Link>
           <Link
             href="/contatti"
-            className="font-medium text-pine hover:underline"
+            className="font-medium text-mint-bright hover:underline"
           >
             Domande sul Sigillo? Scrivici
           </Link>
         </nav>
 
-        <p className="mx-auto mt-8 max-w-xl text-xs leading-relaxed text-gray-light">
+        <p className="mx-auto mt-10 max-w-xl text-xs leading-relaxed text-moss/55">
           Marchio di verifica conforme alla direttiva UE 2024/825: criteri
           pubblici per ogni percorso, verifica da parte del team tecnico,
           revocabilità con motivazione. Il Sigillo Ver0 non è uno schema di

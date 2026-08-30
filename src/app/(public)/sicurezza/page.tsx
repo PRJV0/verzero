@@ -10,8 +10,6 @@ import {
 } from "lucide-react";
 
 import { JsonLd } from "@/components/json-ld";
-import { OndaParticelle } from "@/components/onda-particelle";
-import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
 import { jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 import {
   DOMANDE_DIRETTE,
@@ -57,29 +55,38 @@ export default function SicurezzaPage() {
         ])}
       />
 
-      {/* APERTURA */}
-      <section className="bg-moss px-5 py-16 md:py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
-            SICUREZZA E RISERVATEZZA
+      {/* ── LA TESTATA, non un'apertura ──────────────────────────────
+          Questa pagina è un DOCUMENTO, e su questo tema la credibilità
+          viene dall'assenza di spettacolo: chi legge una pagina sulla
+          sicurezza e trova un fondo colorato, un titolo da manifesto e
+          un fascio di particelle si chiede che cosa stiamo compensando.
+
+          Quindi niente fascia salvia, niente centraggio, titolo a corpo
+          da documento e non da manifesto, e la data della verifica
+          SUBITO SOTTO IL TITOLO — dove sta la data su un documento
+          serio — invece che in fondo in grigio chiaro. */}
+      <section className="border-b border-line bg-white px-5 pb-10 pt-14 md:pb-12 md:pt-16">
+        <div className="mx-auto max-w-4xl">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
+            Sicurezza e riservatezza
           </p>
-          <h1 className="font-display text-5xl leading-[1.02] text-pine-dark md:text-6xl">
+          <h1 className="mt-5 max-w-[18ch] font-display text-[2.1rem] leading-[1.1] tracking-[-0.02em] text-ink md:text-[2.9rem]">
             I tuoi documenti restano tuoi.
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-pine">
+          <p className="mt-3 text-[13px] font-medium text-gray-light">
+            Verifiche svolte il {aggiornatoIl}.
+          </p>
+          <p className="mt-6 max-w-[64ch] text-[16px] leading-[1.7] text-gray-warm">
             Questa pagina dice dove vivono i dati, chi può vederli e cosa non
             facciamo. Senza formule: quello che c&apos;è scritto è verificato,
             e quello che è ancora in corso lo diciamo.
-          </p>
-          <p className="mt-4 text-xs text-gray-warm">
-            Verifiche svolte il {aggiornatoIl}.
           </p>
         </div>
       </section>
 
       {/* LIVELLO 1 — le garanzie, in parole comuni. Ogni blocco ha il suo
           livello 2 richiudibile per chi sa leggerlo. */}
-      <section className="bg-white px-5 py-16 md:py-20">
+      <section className="bg-white px-5 py-14 md:py-16">
         <div className="mx-auto max-w-4xl space-y-4">
           {GARANZIE.map((g) => {
             const Icona = {
@@ -148,34 +155,30 @@ export default function SicurezzaPage() {
       </section>
 
       {/* LA PROVA, NON LA PROMESSA — l'affermazione più forte della pagina. */}
-      <section
-        className="relative isolate overflow-hidden px-5 py-16 md:py-24"
-        style={{
-          background: `linear-gradient(to bottom, ${FONDO_SOGLIA[0]}, ${FONDO_SOGLIA[1]})`,
-        }}
-      >
-        <OndaParticelle config={PRESET.tecnica} className="-z-10" />
-        <div className="relative mx-auto max-w-3xl text-center">
-          <span
-            aria-hidden
-            className="mx-auto mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-mint-bright/15 text-mint-bright"
-          >
-            <ShieldCheck size={26} />
-          </span>
-          <p className="mb-4 text-xs font-semibold tracking-widest text-mint-bright">
-            LA PROVA, NON LA PROMESSA
+      {/* LA PROVA — era una fascia scura a tutta larghezza con il fascio
+          di particelle, cioè il momento più spettacolare del sito su una
+          pagina che deve essere la meno spettacolare di tutte. Il fatto
+          è forte da solo: cinquantatré controlli che fermano un rilascio
+          non hanno bisogno di un fondo animato. Qui è un riquadro
+          rientrato, con il filetto menta a sinistra come una citazione
+          in un documento tecnico. */}
+      <section className="bg-white px-5 pb-14 md:pb-16">
+        <div className="mx-auto max-w-4xl border-l-2 border-mint pl-6 md:pl-8">
+          <p className="flex items-center gap-2.5 text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
+            <ShieldCheck size={16} aria-hidden className="shrink-0" />
+            La prova, non la promessa
           </p>
-          <h2 className="font-display text-4xl leading-[1.05] text-white md:text-5xl">
+          <h2 className="mt-5 max-w-[26ch] font-display text-[1.7rem] leading-[1.2] text-ink md:text-[2.2rem]">
             L&apos;isolamento fra imprese è coperto da{" "}
-            <span className="text-mint-bright">53 test automatici</span>,
-            eseguiti a ogni rilascio.
+            <span className="text-pine">53 test automatici</span>, eseguiti a
+            ogni rilascio.
           </h2>
-          <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-moss/80">
+          <p className="mt-5 max-w-[64ch] text-[16px] leading-[1.7] text-gray-warm">
             Non è una dichiarazione d&apos;intenti: è una suite che gira contro
             il database vero e che, se fallisce anche un solo controllo, ferma
             il rilascio. Ecco cosa verifica, in concreto.
           </p>
-          <ul className="mx-auto mt-8 grid max-w-2xl grid-cols-1 gap-2.5 text-left sm:grid-cols-2">
+          <ul className="mt-7 grid max-w-3xl grid-cols-1 gap-2.5 sm:grid-cols-2">
             {[
               "Un'impresa non legge né scrive i dati di un'altra.",
               "Chi non ha fatto l'accesso non vede nulla.",
@@ -184,7 +187,7 @@ export default function SicurezzaPage() {
             ].map((t) => (
               <li
                 key={t}
-                className="rounded-xl border border-white/12 bg-white/[0.04] px-4 py-3 text-sm leading-relaxed text-white"
+                className="rounded-xl border border-line bg-paper/70 px-4 py-3 text-[15px] leading-relaxed text-ink"
               >
                 {t}
               </li>
@@ -195,9 +198,9 @@ export default function SicurezzaPage() {
 
       {/* I FORNITORI — chi sono, cosa fanno, cosa risulta dalle loro
           condizioni. Verificato, con la data. */}
-      <section className="bg-paper px-5 py-16 md:py-20">
+      <section className="bg-white px-5 pb-14 md:pb-16">
         <div className="mx-auto max-w-4xl">
-          <h2 className="font-display text-3xl leading-tight text-ink md:text-4xl">
+          <h2 className="font-display text-[1.7rem] leading-[1.2] text-ink md:text-[2.2rem]">
             Chi tocca i tuoi dati, e per fare cosa.
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-gray-warm">
@@ -233,9 +236,9 @@ export default function SicurezzaPage() {
       </section>
 
       {/* DOMANDE DIRETTE, RISPOSTE DIRETTE */}
-      <section className="bg-white px-5 py-16 md:py-20">
+      <section className="border-t border-line bg-white px-5 py-14 md:py-16">
         <div className="mx-auto max-w-3xl">
-          <h2 className="font-display text-3xl leading-tight text-ink md:text-4xl">
+          <h2 className="font-display text-[1.7rem] leading-[1.2] text-ink md:text-[2.2rem]">
             Domande dirette, risposte dirette.
           </h2>
           <dl className="mt-8 space-y-5">

@@ -474,16 +474,31 @@ function Vista({ n, vetrina }: { n: number; vetrina: VetrinaGuida }) {
 /* Il testo di un passo, uguale nelle due rese                         */
 /* ------------------------------------------------------------------ */
 
-function TestoPasso({ passo }: { passo: Passo }) {
+function TestoPasso({ passo, scuro }: { passo: Passo; scuro: boolean }) {
   return (
     <>
-      <p className="text-[11px] font-semibold tracking-widest text-pine">
+      <p
+        className={
+          "text-[11px] font-semibold tracking-widest " +
+          (scuro ? "text-mint-bright" : "text-pine")
+        }
+      >
         PASSO {passo.n} DI {PASSI.length}
       </p>
-      <h3 className="mt-3 font-display text-[2rem] leading-[1.06] text-ink lg:text-[2.4rem]">
+      <h3
+        className={
+          "mt-3 font-display text-[2rem] leading-[1.06] lg:text-[2.4rem] " +
+          (scuro ? "text-white" : "text-ink")
+        }
+      >
         {passo.titolo}
       </h3>
-      <p className="mt-4 text-[15px] leading-relaxed text-gray-warm">
+      <p
+        className={
+          "mt-4 text-[15px] leading-relaxed " +
+          (scuro ? "text-moss/85" : "text-gray-warm")
+        }
+      >
         {passo.riga}
       </p>
     </>
@@ -505,7 +520,22 @@ function TestoPasso({ passo }: { passo: Passo }) {
  */
 const ALTEZZA_VISIVO = "h-[clamp(20rem,76svh,44rem)]";
 
-export function GuidaPassi({ vetrina }: { vetrina: VetrinaGuida }) {
+export function GuidaPassi({
+  vetrina,
+  tono = "chiaro",
+}: {
+  vetrina: VetrinaGuida;
+  /**
+   * IL TONO ESISTE PER /come-funziona, dove la sequenza dei cinque passi
+   * è l'UNICO momento scuro di una pagina altrimenti tutta chiara: è
+   * quello che le dà un'architettura riconoscibile invece dell'alternanza
+   * a fasce che avevano tutte le pagine. I mockup non cambiano — sono
+   * finestre bianche, e su fondo scuro staccano di più — cambia solo il
+   * testo che li accompagna.
+   */
+  tono?: "chiaro" | "scuro";
+}) {
+  const scuro = tono === "scuro";
   const [passo, setPasso] = useState(0);
   /**
    * Finché il JavaScript non è montato, i cinque passi stanno tutti in
@@ -534,7 +564,7 @@ export function GuidaPassi({ vetrina }: { vetrina: VetrinaGuida }) {
                   <ScrollyStep key={p.n} index={p.n}>
                     <div className="grid grid-cols-[minmax(0,36fr)_minmax(0,60fr)] items-center gap-8 lg:gap-12">
                       <div>
-                        <TestoPasso passo={p} />
+                        <TestoPasso passo={p} scuro={scuro} />
                       </div>
                       <div className={ALTEZZA_VISIVO}>
                         <Vista n={p.n} vetrina={vetrina} />
@@ -544,7 +574,7 @@ export function GuidaPassi({ vetrina }: { vetrina: VetrinaGuida }) {
                 ))}
               </ScrollySteps>
               <div className="mt-6">
-                <ScrollyProgress />
+                <ScrollyProgress tone={scuro ? "dark" : "light"} />
               </div>
             </div>
           </ScrollyStage>
@@ -564,7 +594,7 @@ export function GuidaPassi({ vetrina }: { vetrina: VetrinaGuida }) {
                 <Vista n={p.n} vetrina={vetrina} />
               </div>
               <div className="mt-6">
-                <TestoPasso passo={p} />
+                <TestoPasso passo={p} scuro={scuro} />
               </div>
             </div>
           ))}
@@ -581,7 +611,12 @@ export function GuidaPassi({ vetrina }: { vetrina: VetrinaGuida }) {
             type="button"
             onClick={() => setPasso((p) => Math.max(0, p - 1))}
             disabled={passo === 0}
-            className="vz-press inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-sm font-medium text-ink disabled:opacity-35"
+            className={
+              "vz-press inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-35 " +
+              (scuro
+                ? "border-white/25 text-moss"
+                : "border-line text-ink")
+            }
           >
             <ArrowLeft size={15} aria-hidden />
             Indietro
@@ -599,7 +634,13 @@ export function GuidaPassi({ vetrina }: { vetrina: VetrinaGuida }) {
                   aria-current={i === passo ? "step" : undefined}
                   className={
                     "vz-stato block h-2 w-2 rounded-full " +
-                    (i === passo ? "w-5 bg-pine" : "bg-line")
+                    (i === passo
+                      ? scuro
+                        ? "w-5 bg-mint-bright"
+                        : "w-5 bg-pine"
+                      : scuro
+                        ? "bg-white/25"
+                        : "bg-line")
                   }
                 />
               </li>
@@ -610,7 +651,10 @@ export function GuidaPassi({ vetrina }: { vetrina: VetrinaGuida }) {
             type="button"
             onClick={() => setPasso((p) => Math.min(PASSI.length - 1, p + 1))}
             disabled={passo === PASSI.length - 1}
-            className="vz-press inline-flex items-center gap-1.5 rounded-lg bg-pine px-3 py-2 text-sm font-semibold text-white disabled:opacity-35"
+            className={
+              "vz-press inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-35 " +
+              (scuro ? "bg-white text-pine" : "bg-pine text-white")
+            }
           >
             Avanti
             <ArrowRight size={15} aria-hidden />

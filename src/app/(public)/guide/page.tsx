@@ -25,7 +25,7 @@ export const metadata: Metadata = metadataPagina({
  */
 export default function GuidePage() {
   return (
-    <main className="mx-auto max-w-3xl px-5 py-16">
+    <main className="mx-auto max-w-[42rem] px-5 py-16 md:py-20">
       <JsonLd
         dati={jsonLdBreadcrumb([
           { nome: "Home", path: "/" },
@@ -35,7 +35,7 @@ export default function GuidePage() {
       <h1 className="font-display text-4xl leading-[1.05] text-ink md:text-5xl">
         Perché te lo chiedono
       </h1>
-      <p className="mt-4 max-w-2xl text-base leading-relaxed text-gray-warm">
+      <p className="mt-5 text-[17.5px] leading-[1.75] text-gray-warm">
         Quando una banca, un committente o un bando chiedono dati di
         sostenibilità, di solito c&apos;è una norma dietro. Qui sotto ci sono
         quattro guide brevi che dicono quale, cosa comporta per la tua impresa

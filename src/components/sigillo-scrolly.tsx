@@ -63,18 +63,26 @@ function arco(from: number, to: number) {
   return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A 82 82 0 ${largo} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
 }
 
+/**
+ * SCURA COME TUTTA LA PAGINA DEL SIGILLO. È l'unica pagina del sito
+ * interamente su fondo scuro — registro istituzionale, pochi elementi,
+ * molto vuoto — e questa sezione ci vive dentro.
+ *
+ * La placca bianca dentro l'SVG resta: è la regola di marca (§11.X), e
+ * su pino profondo è proprio ciò che fa staccare il Sigillo.
+ */
 export function SigilloScrolly() {
   return (
-    <section className="bg-white px-5 py-16">
+    <section className="bg-pine-deep px-5 py-20 md:py-28">
       <div className="mx-auto max-w-4xl">
         <div className="text-center">
-          <h2 className="font-display text-4xl text-ink md:text-5xl">
+          <h2 className="font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-white md:text-[3rem]">
             Un anello che si riempie
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-gray-warm">
+          <p className="mx-auto mt-5 max-w-[62ch] text-[16px] leading-[1.7] text-moss">
             Il Sigillo è uno solo, ma racconta quanto hai fatto. L&apos;anello
             punteggiato è la cornice; ogni percorso verificato ne{" "}
-            <strong className="font-semibold text-pine">
+            <strong className="font-semibold text-mint-bright">
               riempie un segmento
             </strong>
             . Più percorsi porti a termine, più l&apos;anello si completa —
@@ -150,13 +158,13 @@ export function SigilloScrolly() {
                 <ScrollySteps className="min-h-[11rem]">
                   {PERCORSI_SEGMENTI.map((p, i) => (
                     <ScrollyStep key={p.titolo} index={i + 1}>
-                      <p className="text-xs font-semibold tracking-widest text-mint">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-mint-bright">
                         PERCORSO {i + 1} DI {PERCORSI_SEGMENTI.length}
                       </p>
-                      <h3 className="mt-2 font-display text-2xl text-ink md:text-3xl">
+                      <h3 className="mt-3 font-display text-2xl text-white md:text-3xl">
                         {p.titolo}
                       </h3>
-                      <p className="mt-3 max-w-md text-sm leading-relaxed text-gray-warm">
+                      <p className="mt-4 max-w-md text-[15px] leading-relaxed text-moss/85">
                         {p.desc}
                       </p>
                     </ScrollyStep>
@@ -164,14 +172,14 @@ export function SigilloScrolly() {
                 </ScrollySteps>
 
                 <div className="mt-8">
-                  <ScrollyProgress />
+                  <ScrollyProgress tone="dark" />
                 </div>
               </div>
             </div>
           </ScrollyStage>
         </Scrolly>
 
-        <p className="mt-8 text-center text-xs text-gray-light">
+        <p className="mt-10 text-center text-xs text-moss/55">
           Ogni percorso verificato aggiunge un ambito alla stessa pagina
           pubblica di verifica. Un solo Sigillo, mai Sigilli multipli.
         </p>

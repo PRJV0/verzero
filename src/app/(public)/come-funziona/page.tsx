@@ -6,11 +6,9 @@ import { DocumentoEsito } from "@/components/documento-esito";
 import { GuidaPassi, type VetrinaGuida } from "@/components/guida-passi";
 import { JsonLd } from "@/components/json-ld";
 import { MotoreInAzione } from "@/components/motore-in-azione";
-import { OndaParticelle } from "@/components/onda-particelle";
 import { QualitaOutput } from "@/components/qualita-output";
 import { SOLO_STANDARD_UFFICIALI, getServizio } from "@/lib/catalog";
 import { prezzoDa } from "@/lib/pricing";
-import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
 import { SITO, jsonLdBreadcrumb, metadataPagina } from "@/lib/seo";
 
 export const metadata: Metadata = metadataPagina({
@@ -127,19 +125,32 @@ export default function ComeFunzionaPage() {
         ])}
       />
 
-      {/* Apertura: qui si spiega, e lo si dichiara. */}
-      <section className="bg-moss px-5 py-16 md:py-24">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
-            COME FUNZIONA
+      {/* ── L'APERTURA, IN VOCE DIDATTICA ────────────────────────────
+          Il titolo è un'ENUMERAZIONE TERNARIA, e non è una scelta di
+          gusto: diceva «Non è un assistente. È un'intelligenza costruita
+          per questo» — negazione più affermazione, la stessa identica
+          figura che apriva /chi-siamo e la pagina del Sigillo. Tre
+          pagine su otto con la stessa mossa. Qui l'enumerazione fa anche
+          il lavoro giusto per questa pagina: dichiara l'indice di quello
+          che si sta per vedere, che è come si apre una dimostrazione.
+
+          Fondo CARTA e non salvia, e testo a sinistra: da qui in giù la
+          pagina non cambia più colore fino ai cinque passi. */}
+      <section className="bg-paper px-5 pb-12 pt-16 md:pb-16 md:pt-20">
+        <div className="mx-auto max-w-4xl">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
+            Come funziona
           </p>
-          <h1 className="font-display text-5xl leading-[1.02] text-pine-dark md:text-6xl">
-            Non è un assistente. È un&apos;intelligenza costruita per questo.
+          <h1 className="mt-6 max-w-[18ch] font-display text-[2.4rem] leading-[1.06] tracking-[-0.02em] text-ink md:text-[3.6rem]">
+            Che cosa leggiamo, chi lo verifica,{" "}
+            <span className="text-pine">che cosa ricevi.</span>
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-pine">
-            Un&apos;AI proprietaria specializzata sui documenti d&apos;impresa e
-            sulle norme che li governano: legge quello che hai, compone quello
-            che serve, un professionista valida. Qui vedi il lavoro da vicino.
+          <p className="mt-7 max-w-[62ch] text-[17px] leading-[1.7] text-gray-warm">
+            Un&apos;intelligenza artificiale proprietaria, specializzata sui
+            documenti d&apos;impresa e sulle norme che li governano: legge
+            quello che hai, compone quello che serve, un professionista valida.
+            Questa pagina non lo racconta — lo mostra, nell&apos;ordine in cui
+            succede.
           </p>
         </div>
       </section>
@@ -148,29 +159,37 @@ export default function ComeFunzionaPage() {
           e sta per prima di proposito: prima di raccontare com'è fatto il
           sistema, si mostra che cosa succede a chi lo usa. Chi arriva qui
           non ha chiesto un'architettura, ha chiesto «e quindi?». */}
+      {/* ── L'UNICO MOMENTO SCURO DELLA PAGINA ───────────────────────
+          È la dimostrazione vera e propria, ed è l'unica cosa che questa
+          pagina fa meglio di ogni altra: quindi si stacca. Il pino
+          profondo qui non è decorazione — le cinque schermate sono
+          finestre bianche, e su fondo scuro staccano dalla pagina invece
+          di confondersi con essa. Tutto il resto della pagina resta
+          chiaro, così questo blocco si vede da lontano nello
+          scorrimento. */}
       <section
         aria-labelledby="guida-passi"
-        className="border-b border-line bg-white py-16 md:py-24"
+        className="bg-pine-deep py-16 md:py-24"
       >
-        <div className="mx-auto mb-12 max-w-3xl px-5 text-center">
-          <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
-            DAL TUO PUNTO DI VISTA
+        <div className="mx-auto mb-12 max-w-4xl px-5">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-mint-bright">
+            Dal tuo punto di vista
           </p>
           <h2
             id="guida-passi"
-            className="font-display text-4xl leading-[1.05] text-ink md:text-5xl"
+            className="mt-5 max-w-[20ch] font-display text-[2.2rem] leading-[1.06] tracking-[-0.02em] text-white md:text-[3.4rem]"
           >
             Cinque passi, dall&apos;inizio alla consegna.
           </h2>
         </div>
-        <GuidaPassi vetrina={vetrinaGuida()} />
+        <GuidaPassi vetrina={vetrinaGuida()} tono="scuro" />
 
         {/* UNA SOLA CTA, e porta al catalogo: chi ha appena visto i
             cinque passi ha una domanda sola, «e quanto costa». */}
         <div className="mt-14 flex justify-center px-5">
           <Link
             href="/servizi"
-            className="vz-press inline-flex items-center gap-2 rounded-xl bg-pine px-7 py-4 text-base font-semibold text-white hover:-translate-y-0.5"
+            className="vz-press inline-flex items-center gap-2 rounded-xl bg-white px-7 py-4 text-base font-semibold text-pine hover:-translate-y-0.5"
           >
             Guarda i percorsi <ArrowRight size={18} />
           </Link>
@@ -179,26 +198,28 @@ export default function ComeFunzionaPage() {
 
       {/* LO SCHEMA DEL SISTEMA, lo stesso della home, con il dettaglio
           che qui si può aprire. */}
-      <section
-        className="relative isolate overflow-hidden px-5 py-16 md:py-24"
-        style={{
-          background: `linear-gradient(to bottom, ${FONDO_SOGLIA[0]}, ${FONDO_SOGLIA[1]})`,
-        }}
-      >
-        <OndaParticelle config={PRESET.tecnica} className="-z-10" />
-        <div className="relative mx-auto mb-10 max-w-3xl text-center">
-          <p className="mb-4 text-xs font-semibold tracking-widest text-mint-bright">
-            IL SISTEMA
+      {/* LO SCHEMA DEL SISTEMA — la FIGURA di un testo didattico.
+          Era una seconda fascia scura a tutta larghezza con le
+          particelle: due fasce scure su una pagina che ne deve avere
+          UNA, e il fascio di particelle in una pagina che deve
+          dimostrare invece di impressionare. `MotoreInAzione` resta
+          scuro perché è costruito così, ma adesso è un RIQUADRO dentro
+          una sezione chiara — cioè una figura in mezzo al testo, con la
+          sua didascalia — e non un cambio di scena. */}
+      <section className="bg-paper px-5 py-16 md:py-24">
+        <div className="mx-auto max-w-4xl">
+          <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
+            Il sistema
           </p>
-          <h2 className="font-display text-4xl leading-[1.05] text-white md:text-5xl">
+          <h2 className="mt-5 max-w-[20ch] font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-ink md:text-[3rem]">
             Lo stesso schema, per ogni percorso.
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-moss/75">
-            Ogni blocco si apre: dentro c&apos;è il metodo, non le nostre
-            regole interne.
+          <p className="mt-6 max-w-[62ch] text-[17px] leading-[1.7] text-gray-warm">
+            Cambia la norma, non il modo di lavorare. Ogni blocco dello schema
+            si apre: dentro c&apos;è il metodo, non le nostre regole interne.
           </p>
         </div>
-        <div className="relative">
+        <div className="mx-auto mt-10 max-w-6xl overflow-hidden rounded-3xl bg-pine-deep px-5 py-12 md:py-16">
           <MotoreInAzione dettaglio />
         </div>
       </section>
@@ -210,19 +231,16 @@ export default function ComeFunzionaPage() {
           lista precisa esiste ancora, ma dove serve davvero: nel portale,
           costruita sul percorso attivato. Qui resta il metodo — come
           lavoriamo e cosa ne esce — con esempi generici e non esaustivi. */}
-      <section className="bg-paper px-5 py-16 md:py-24">
+      <section className="bg-paper px-5 pb-16 md:pb-24">
         <div className="mx-auto max-w-4xl">
-          <div className="mb-10 text-center">
-            <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
-              IL METODO
+          <div className="mb-10">
+            <span aria-hidden className="mb-8 block h-px w-full bg-line" />
+            <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
+              Il metodo
             </p>
-            <h2 className="font-display text-4xl leading-[1.05] text-ink md:text-5xl">
+            <h2 className="mt-5 max-w-[20ch] font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-ink md:text-[3rem]">
               Come lavoriamo, fase per fase.
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-gray-warm">
-              Lo stesso impianto per ogni percorso: cambia la norma, non il
-              modo di lavorare.
-            </p>
           </div>
           <ol className="space-y-3">
             {FASI.map((f, i) => (
@@ -253,16 +271,17 @@ export default function ComeFunzionaPage() {
       {/* IL DOCUMENTO CHE RICEVI — prima si vede, poi si legge com'è
           fatto. In home lo stesso mockup sta dentro la terza fase del
           flusso; qui ha lo spazio per essere guardato. */}
-      <section className="bg-white px-5 py-16 md:py-24">
+      <section className="bg-paper px-5 pb-16 md:pb-24">
         <div className="mx-auto max-w-5xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <p className="mb-4 text-xs font-semibold tracking-widest text-pine">
-              TU RICEVI
+          <div className="max-w-4xl">
+            <span aria-hidden className="mb-8 block h-px w-full bg-line" />
+            <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
+              Tu ricevi
             </p>
-            <h2 className="font-display text-4xl leading-[1.05] text-ink md:text-5xl">
+            <h2 className="mt-5 max-w-[20ch] font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-ink md:text-[3rem]">
               Un documento, non una scheda.
             </h2>
-            <p className="mx-auto mt-4 text-sm leading-relaxed text-gray-warm">
+            <p className="mt-6 max-w-[62ch] text-[17px] leading-[1.7] text-gray-warm">
               Impaginato, con l&apos;indice, il riferimento normativo del
               percorso, i dati in tabella e la pagina di validazione a nome di
               chi l&apos;ha controllato.
@@ -278,7 +297,7 @@ export default function ComeFunzionaPage() {
       </section>
 
       {/* La validazione umana e il principio delle norme: i due pilastri del metodo */}
-      <section className="bg-white px-5 py-16">
+      <section className="bg-paper px-5 pb-20 md:pb-28">
         <div className="mx-auto grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="border-2 border-line p-6">
             <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-moss text-pine">

@@ -62,8 +62,21 @@ export default async function GuidaPage({
     .map((c) => getGuida(c))
     .filter((c): c is NonNullable<typeof c> => Boolean(c));
 
+  /*
+   * LA MISURA DA LETTURA, e non una colonna qualsiasi.
+   *
+   * Era `max-w-2xl` (672 px) con il corpo a 15 px: fanno novanta
+   * caratteri per riga, cioè venti più del punto in cui l'occhio
+   * comincia a perdere l'inizio della riga successiva. Qui il corpo sale
+   * a 17,5 px e la colonna scende a 38rem: settanta caratteri, la misura
+   * classica del testo lungo.
+   *
+   * Questa pagina non fa altro che farsi leggere — niente fasce, niente
+   * schede, niente alternanza di fondi — quindi la misura è l'unica cosa
+   * che deve essere giusta.
+   */
   return (
-    <main className="mx-auto max-w-2xl px-5 py-12">
+    <main className="mx-auto max-w-[38rem] px-5 py-16 md:py-20">
       <JsonLd
         dati={jsonLdArticle({
           titolo: g.domanda,
@@ -100,12 +113,12 @@ export default async function GuidaPage({
       <p className="mt-6 text-[11px] font-semibold uppercase tracking-widest text-pine">
         {g.chi}
       </p>
-      <h1 className="mt-1.5 font-display text-3xl leading-[1.08] text-ink md:text-4xl">
+      <h1 className="mt-2 font-display text-[2rem] leading-[1.12] tracking-[-0.015em] text-ink md:text-[2.6rem]">
         {g.domanda}
       </h1>
 
       {/* La risposta, in apertura e autoconclusiva. */}
-      <p className="mt-5 border-l-2 border-mint pl-4 text-base leading-relaxed text-ink">
+      <p className="mt-7 border-l-2 border-mint pl-5 text-[18px] leading-[1.65] text-ink">
         {g.risposta}
       </p>
 
@@ -113,23 +126,23 @@ export default async function GuidaPage({
           alla risposta. Le altre rispondono e basta. */}
       {g.sezioni?.map((s) => (
         <section key={s.titolo}>
-          <h2 className="mt-9 font-display text-2xl text-ink">{s.titolo}</h2>
+          <h2 className="mt-12 font-display text-[1.5rem] leading-tight text-ink">{s.titolo}</h2>
           {s.paragrafi.map((par) => (
-            <p key={par} className="mt-2 text-[15px] leading-relaxed text-gray-warm">
+            <p key={par} className="mt-4 text-[17.5px] leading-[1.75] text-gray-warm">
               {par}
             </p>
           ))}
         </section>
       ))}
 
-      <h2 className="mt-9 font-display text-2xl text-ink">
+      <h2 className="mt-12 font-display text-[1.5rem] leading-tight text-ink">
         Che cosa comporta per la tua impresa
       </h2>
-      <p className="mt-2 text-[15px] leading-relaxed text-gray-warm">
+      <p className="mt-4 text-[17.5px] leading-[1.75] text-gray-warm">
         {g.comporta}
       </p>
 
-      <h2 className="mt-7 font-display text-2xl text-ink">Dove controllare</h2>
+      <h2 className="mt-12 font-display text-[1.5rem] leading-tight text-ink">Dove controllare</h2>
       <p className="mt-2 text-sm leading-relaxed text-gray-warm">
         <a
           href={g.url}

@@ -57,18 +57,24 @@ export default function ContattiPage() {
         ])}
       />
 
+      {/* L'APERTURA NON È PIÙ IMPERATIVA. Diceva «Scrivici. Risponde una
+          persona…»: imperativo, la stessa figura del claim di home
+          («Qualifica la tua impresa»). Sono le due pagine più lontane
+          del sito, ma la regola è che nessuna coppia condivida la mossa
+          d'apertura — e qui l'informazione che conta non è l'ordine di
+          scrivere, è chi trova dall'altra parte. Dichiarativo, quindi. */}
       <div className="max-w-2xl">
-        <p className="mb-3 text-xs font-semibold tracking-widest text-pine">
-          CONTATTI
+        <p className="mb-3 text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
+          Contatti
         </p>
-        <h1 className="font-display text-4xl leading-[1.08] text-ink md:text-5xl">
-          Scrivici. Risponde una persona, entro un giorno lavorativo.
+        <h1 className="font-display text-[2.1rem] leading-[1.1] tracking-[-0.02em] text-ink md:text-[2.9rem]">
+          Da questo modulo risponde una persona.
         </h1>
-        <p className="mt-4 text-sm leading-relaxed text-gray-warm">
+        <p className="mt-5 text-[16px] leading-[1.7] text-gray-warm">
           Che tu voglia capire da dove si comincia, chiedere di un servizio
-          preciso o proporre una collaborazione, questo modulo è la via più
-          diretta. Non serve preparare nulla: bastano il tuo settore e la
-          domanda che hai in testa.
+          preciso o proporre una collaborazione, questa è la via più diretta.
+          Non serve preparare nulla: bastano il tuo settore e la domanda che
+          hai in testa. La risposta arriva entro un giorno lavorativo.
         </p>
       </div>
 
