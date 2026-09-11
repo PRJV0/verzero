@@ -35,11 +35,11 @@ import { fbm01, fbm3, fbmPieno, rumore3 } from "@/lib/rumore";
 /* ------------------------------------------------------------------ */
 
 /** Verde pino del marchio e menta: l'onda sui fondi chiari. */
-export const PINO: readonly [number, number, number] = [14, 82, 56];
-export const MENTA: readonly [number, number, number] = [29, 158, 117];
+export const PINO: readonly [number, number, number] = [12, 90, 48];
+export const MENTA: readonly [number, number, number] = [16, 132, 78];
 /** Sui fondi scuri si inverte: bianco con accenti menta accesa. */
 export const BIANCO: readonly [number, number, number] = [255, 255, 255];
-export const MENTA_ACCESA: readonly [number, number, number] = [47, 207, 154];
+export const MENTA_ACCESA: readonly [number, number, number] = [49, 216, 135];
 
 export type Palette = "chiara" | "scura";
 
@@ -130,7 +130,7 @@ export const ONDA_DECISA: ConfigOnda = {
 };
 
 /** Il pino profondo dell'hero, e il suo schiarimento verso il basso. */
-export const FONDO_SOGLIA = ["#0A2E1F", "#0C3927"] as const;
+export const FONDO_SOGLIA = ["#092F1D", "#0F3E26"] as const;
 
 /**
  * L'ONDA DELLA SOGLIA — l'hero su fondo scuro.

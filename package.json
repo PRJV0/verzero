@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "controlli": "node scripts/controllo-lessico.mjs",
-    "prebuild": "node scripts/controllo-lessico.mjs"
+    "prebuild": "node scripts/controllo-lessico.mjs && node scripts/controllo-contrasti.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",

@@ -4,24 +4,56 @@
  * Token di brand ripresi dal prototipo (docs/riferimenti/verzero-prototipo.jsx).
  * Da qui in poi si usano le utility Tailwind: bg-paper, text-pine, border-line...
  */
+/*
+ * ═══ LA PALETTE, RITARATA (variante B) ═══
+ *
+ * Il verde istituzionale risultava freddo e formale, e la misura diceva
+ * perché: i cinque verdi stavano TUTTI fra 155° e 161° di tinta — pino
+ * 157°, menta 161°, menta viva 160° — cioè una famiglia interamente
+ * spostata verso il ciano. E fra il pino (luminosità 19%) e il salvia
+ * (92%) non c'era niente: ogni passaggio chiaro-scuro era un salto di
+ * settantatré punti, ed è la parte di freddezza che non viene dalla
+ * tinta ma dallo spigolo fra una fascia e l'altra.
+ *
+ * Due mosse, misurate prima di sceglierle:
+ *   1. il verde principale scende a 148° — verso il giallo, non verso il
+ *      blu — e sale di saturazione da 71% a 76%;
+ *   2. entra `--color-sage`, il verde intermedio che mancava: all'80% di
+ *      luminosità è un fondo su cui il testo pino sta a 5,60:1, quindi si
+ *      può usare per fasce e mezzitoni invece di alternare solo bianco e
+ *      verde scuro.
+ *
+ * NON È SOLO ESTETICA. La palette di prima aveva tre casi sotto soglia:
+ * il grigio chiaro su carta a 2,47:1, la menta su bianco a 3,39:1 e la
+ * parola «Zero» in menta sulla fascia salvia della home a 2,91:1 — sotto
+ * il minimo anche per il corpo grande. Sono rientrati tutti e tre.
+ *
+ * I contrasti si rimisurano con `node scripts/controllo-contrasti.mjs`:
+ * un token cambiato a occhio non dà errore da nessuna parte.
+ */
 @theme {
-  --color-ink: #17251f;
-  --color-pine: #0e5238;
-  --color-pine-dark: #0a3d2a;
-  --color-moss: #e7f0ea;
+  --color-ink: #18251f;
+  --color-pine: #0c5a30;
+  --color-pine-dark: #094425;
+  --color-moss: #e5f0e8;
   --color-paper: #f6f7f5;
-  --color-line: #e3e6e1;
-  --color-mint: #1d9e75;
-  --color-gray-warm: #66716b;
-  --color-gray-light: #98a19b;
+  --color-line: #e0e6e1;
+  --color-mint: #10844e;
+  --color-gray-warm: #5e6e63;
+  --color-gray-light: #7b8e81;
   --color-amber-soft: #f7ecd9;
   --color-amber-ink: #7a4e0e;
+
+  /* Il verde intermedio che mancava: fondi e mezzitoni. Sopra ci va il
+     testo pino (5,60:1) o l'inchiostro (10,67:1) — NON la menta, che a
+     questa luminosità non tiene. */
+  --color-sage: #bddbc7;
 
   /* Direzione grafica (SPEC §12.W) — due registri: editoriale chiaro e
      scuro istituzionale. Il registro "carta e timbro" (crema/terracotta) è
      stato ritirato: sul sito non esistono più quei token. */
-  --color-mint-bright: #2fcf9a; /* bagliori e segmenti su fondo scuro */
-  --color-pine-deep: #0a2e1f; /* fondo del registro scuro istituzionale */
+  --color-mint-bright: #31d887; /* bagliori e segmenti su fondo scuro */
+  --color-pine-deep: #092f1d; /* fondo del registro scuro istituzionale */
 
   /* ---------------------------------------------------------------
    * SISTEMA DI MOVIMENTO (brief §5). Regole, non gusti.

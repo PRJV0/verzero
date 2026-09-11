@@ -56,7 +56,7 @@ export function AnelloSigillo({
   // «piena», l'anello direbbe che il lavoro è finito quando manca proprio
   // il gesto su cui si regge il prodotto.
   const colore = {
-    piena: "#1D9E75",
+    piena: "#10844E",
     letta: "#3BAF86",
     quasi: "#5FBF9B",
     mezza: "#9ED9C2",
@@ -79,7 +79,7 @@ export function AnelloSigillo({
         cy="50"
         r="47"
         fill="none"
-        stroke="#0E5238"
+        stroke="#0C5A30"
         strokeOpacity="0.3"
         strokeWidth="1.4"
         strokeDasharray="0.1 6.4"
@@ -109,7 +109,7 @@ export function AnelloSigillo({
           fontSize: "24px",
           fontVariantNumeric: "tabular-nums",
         }}
-        fill="#0E5238"
+        fill="#0C5A30"
       >
         <NumeroCheSale valore={percentuale} chiave={chiave} />
       </text>

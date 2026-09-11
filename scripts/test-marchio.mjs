@@ -184,7 +184,7 @@ verifica(
 const scuro = readFileSync("public/brand/marchio-esteso-scuro.svg", "utf8");
 verifica(
   "la versione scura ha un fondo dipinto: un SVG trasparente su bianco sparisce",
-  /<rect width="[\d.]+" height="[\d.]+" fill="#0A2E1F"\/>/.test(scuro),
+  /<rect width="[\d.]+" height="[\d.]+" fill="#092F1D"\/>/.test(scuro),
 );
 
 /* ================================================================== */

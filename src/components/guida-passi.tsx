@@ -118,13 +118,13 @@ function Anello({ percento, grande = false }: { percento: number; grande?: boole
       className={grande ? "h-[4.5rem] w-[4.5rem] shrink-0" : "h-14 w-14 shrink-0"}
       aria-hidden
     >
-      <circle cx="34" cy="34" r={r} fill="none" stroke="#E3E7E1" strokeWidth="6" />
+      <circle cx="34" cy="34" r={r} fill="none" stroke="#E0E6E1" strokeWidth="6" />
       <circle
         cx="34"
         cy="34"
         r={r}
         fill="none"
-        stroke="#2FCF9A"
+        stroke="#31D887"
         strokeWidth="6"
         strokeLinecap="round"
         strokeDasharray={`${(giro * percento) / 100} ${giro}`}
@@ -418,7 +418,7 @@ function VistaConsegna() {
                 cy="24"
                 r="20"
                 fill="none"
-                stroke="#2FCF9A"
+                stroke="#31D887"
                 strokeWidth="2.5"
                 strokeDasharray="0.2 5.2"
                 strokeLinecap="round"
@@ -429,7 +429,7 @@ function VistaConsegna() {
                 rx="7"
                 ry="10"
                 fill="none"
-                stroke="#0E5238"
+                stroke="#0C5A30"
                 strokeWidth="2.5"
               />
             </svg>
@@ -721,13 +721,13 @@ function AnelloSegno({ percento }: { percento: number }) {
   const giro = 2 * Math.PI * r;
   return (
     <svg viewBox="0 0 72 72" className="h-full w-full" aria-hidden>
-      <circle cx="36" cy="36" r={r} fill="none" stroke="#D8E3DA" strokeWidth="5" />
+      <circle cx="36" cy="36" r={r} fill="none" stroke="#CFDFD5" strokeWidth="5" />
       <circle
         cx="36"
         cy="36"
         r={r}
         fill="none"
-        stroke="#1D9E75"
+        stroke="#10844E"
         strokeWidth="5"
         strokeLinecap="round"
         strokeDasharray={`${(giro * percento) / 100} ${giro}`}

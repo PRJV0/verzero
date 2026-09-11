@@ -1139,7 +1139,7 @@ function StepConsensi({
               set({ consensi: { ...c, tos: e.target.checked } });
               setErrore(false);
             }}
-            className="mt-0.5 h-4 w-4 accent-[#0E5238]"
+            className="mt-0.5 h-4 w-4 accent-[#0C5A30]"
           />
           <span className="text-gray-warm">
             Ho letto e accetto le{" "}
@@ -1170,7 +1170,7 @@ function StepConsensi({
               set({ consensi: { ...c, bancheDati: e.target.checked } });
               setErrore(false);
             }}
-            className="mt-0.5 h-4 w-4 accent-[#0E5238]"
+            className="mt-0.5 h-4 w-4 accent-[#0C5A30]"
           />
           <span className="text-gray-warm">
             <strong className="font-medium text-ink">

@@ -59,7 +59,7 @@ function TrattoMenta() {
       <path
         d="M2 8.2 C 38 4.1, 76 5.4, 116 6.2 S 176 4.6, 198 5.1"
         fill="none"
-        stroke="#2FCF9A"
+        stroke="#31D887"
         strokeWidth="3.4"
         strokeLinecap="round"
         vectorEffect="non-scaling-stroke"
@@ -67,7 +67,7 @@ function TrattoMenta() {
       <path
         d="M8 10 C 52 7.6, 96 8.8, 140 8.1 S 184 7.2, 194 7.8"
         fill="none"
-        stroke="#2FCF9A"
+        stroke="#31D887"
         strokeOpacity="0.45"
         strokeWidth="2"
         strokeLinecap="round"

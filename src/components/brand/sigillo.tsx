@@ -8,7 +8,7 @@
  * - "light" (default): placca circolare bianca, tratti pino — per superfici
  *   chiare e stampate.
  * - "dark": tono-su-tono in bianco, senza placca, con segmento menta acceso
- *   #2FCF9A — per le sezioni scure del sito (fondo pino).
+ *   #31D887 — per le sezioni scure del sito (fondo pino).
  *
  * Inline (non <img>) così il millesimo usa il vero Fraunces della pagina.
  */
@@ -33,9 +33,9 @@ export function Sigillo({
   vivo?: boolean;
 }) {
   const dark = tone === "dark";
-  const ink = dark ? "#FFFFFF" : "#0E5238";
-  const mint = dark ? "#2FCF9A" : "#1D9E75";
-  const yearFill = dark ? "#E7F0EA" : "#0A3D2A";
+  const ink = dark ? "#FFFFFF" : "#0C5A30";
+  const mint = dark ? "#31D887" : "#10844E";
+  const yearFill = dark ? "#E5F0E8" : "#094425";
 
   return (
     <svg
