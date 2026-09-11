@@ -108,6 +108,19 @@ const LISTINO: Record<string, Voce> = {
     annuale: 1500,
     rinnovo: { tipo: "mantenimento", mensile: 59 },
   },
+  // EMAS è un'ESTENSIONE, non un manuale nuovo: il sistema di gestione
+  // ambientale c'è già e si riusa. Quello che si aggiunge — analisi
+  // ambientale iniziale, dimostrazione della conformità legislativa,
+  // Dichiarazione Ambientale con gli indicatori — è lavoro vero ma
+  // minore di un impianto da zero, e il prezzo lo dice: sta sotto un
+  // manuale ISO e sopra le linee guida della famiglia B. Il mantenimento
+  // è pieno come quello di un manuale, perché la Dichiarazione
+  // Ambientale va aggiornata ogni anno e resta pubblica.
+  "emas-dichiarazione-ambientale": {
+    mensile: 99,
+    annuale: 1070,
+    rinnovo: { tipo: "mantenimento", mensile: 59 },
+  },
   // Famiglia B — linee guida non certificabili, venduti come add-on di
   // UNI/PdR 125 e ISO 45001: prezzo ridotto (§12.M).
   "iso-45003": {

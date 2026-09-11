@@ -107,6 +107,18 @@ export const REGISTRO_NORME: VoceRegistro[] = [
     stato: "in vigore",
     nota: "Schema privato di Social Accountability International, non una norma UNI: si verifica su sa-intl.org.",
   },
+  {
+    // Non è una norma UNI ma un REGOLAMENTO EUROPEO, e si verifica su
+    // EUR-Lex. Sta nel registro lo stesso perché la designazione finisce
+    // nei documenti dei clienti, ed è lì che una citazione sbagliata fa
+    // danno. Gli allegati sono stati rivisti due volte, e citarlo senza
+    // le modifiche significa citare un testo che non è più quello.
+    codice: "Regolamento (CE) n. 1221/2009",
+    url: "https://eur-lex.europa.eu/eli/reg/2009/1221/oj",
+    stato: "in vigore",
+    dal: "11 gennaio 2010",
+    nota: "EMAS. Allegati I, II e III modificati dal Regolamento (UE) 2017/1505 del 28 agosto 2017 (allineamento alla ISO 14001:2015); allegato IV — la Dichiarazione Ambientale — sostituito dal Regolamento (UE) 2018/2026 del 19 dicembre 2018, in vigore dal 9 gennaio 2019. Verificato su EUR-Lex l'11 settembre 2026: nessun regolamento di modifica successivo.",
+  },
   /* ── Ritirate: citabili SOLO per dire che sono ritirate ───────────── */
   {
     codice: "UNI EN ISO 9001:2015",
@@ -563,6 +575,13 @@ export type Norma = {
 export const NORME = [
   { chiave: "iso-9001", etichetta: "ISO 9001", chiavi: ["9001"] },
   { chiave: "iso-14001", etichetta: "ISO 14001", chiavi: ["14001"] },
+  {
+    chiave: "emas",
+    etichetta: "EMAS",
+    // «Emas» da sola identifica lo schema: non è una parola che compaia
+    // in frasi d'altro argomento, al contrario di «registrazione».
+    chiavi: ["emas", "ecogestione", "eco-management", "dichiarazione ambientale"],
+  },
   { chiave: "iso-45001", etichetta: "ISO 45001", chiavi: ["45001"] },
   { chiave: "iso-45003", etichetta: "ISO 45003", chiavi: ["45003"] },
   {

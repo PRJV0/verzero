@@ -285,7 +285,7 @@ export const SERVIZI: Servizio[] = [
     taglio: "Base",
     icon: FileText,
     short: "Il bilancio di sostenibilità nel formato europeo VSME.",
-    cosE: "Il bilancio di sostenibilità redatto secondo lo standard volontario VSME pubblicato da EFRAG per le imprese non quotate: un documento unico e standardizzato che risponde alle richieste di banche, clienti e bandi senza rifare il lavoro per ogni questionario.",
+    cosE: "Il bilancio di sostenibilità redatto secondo lo standard volontario VSME, raccomandato dalla Commissione europea alle imprese non quotate e alle microimprese con la Raccomandazione (UE) 2025/1710 del 30 luglio 2025: un documento unico e standardizzato che risponde alle richieste di banche, clienti e bandi senza rifare il lavoro per ogni questionario.",
     comeFunziona: [
       "La piattaforma precompila anagrafica e dati economici dalle banche dati ufficiali; gli indicatori ambientali arrivano dai moduli carbon se attivi.",
       "Completi le sezioni restanti con un questionario guidato; ogni campo ha un'alternativa (documento, stima dichiarata, delega).",
@@ -301,6 +301,7 @@ export const SERVIZI: Servizio[] = [
     requisiti: [
       "Dati di organico e governance dell'anno di rendicontazione; i dati economici arrivano dal bilancio depositato",
       "Lo standard VSME è volontario: non sostituisce obblighi di rendicontazione eventualmente applicabili alla tua impresa",
+      "Il bilancio VSME è una rendicontazione redatta dall'impresa: non è una certificazione e non viene rilasciato da un organismo terzo",
     ],
     documenti: [
       "Visura camerale e ultimo bilancio depositato",
@@ -310,11 +311,19 @@ export const SERVIZI: Servizio[] = [
       "Politiche e procedure già adottate, se esistenti",
     ],
     riferimenti: [
-      "Standard VSME (EFRAG), modulo base",
-      "GHG Protocol e UNI EN ISO 14064-1 per gli indicatori ambientali",
+      "Standard volontario VSME, allegato I della Raccomandazione (UE) 2025/1710 della Commissione del 30 luglio 2025 — modulo base",
+      "Direttiva (UE) 2026/470 («Omnibus I»): alle imprese della catena del valore fino a 1.000 dipendenti non si possono chiedere più informazioni di quelle previste dallo standard volontario",
+      "GHG Protocol e UNI EN ISO 14064-1:2019 per gli indicatori ambientali",
     ],
     opportunita: [
       "Un documento standard al posto di questionari diversi per ogni banca o cliente",
+      // ═══ IL TETTO È LA MISURA DELLA RISPOSTA COMPLETA ═══
+      // È il fatto più forte che questa scheda possa dire, e sta in piedi
+      // solo perché è in vigore: la Direttiva (UE) 2026/470 del 24
+      // febbraio 2026. Si dice il tetto e la soglia, che sono nel testo
+      // della direttiva; NON si descrive il contenuto di dettaglio del
+      // tetto, che lo fissa un atto delegato non ancora in vigore.
+      "La Direttiva (UE) 2026/470 fissa un tetto alle richieste: a un'impresa della catena del valore con non più di 1.000 dipendenti non si possono chiedere più informazioni di quelle previste dallo standard volontario. Chi rendiconta in quel formato ha già risposto a tutto ciò che un committente può chiedere",
       "Sempre più istituti lo usano nei propri rating ESG per l'accesso al credito: il punteggio resta loro, noi prepariamo le risposte",
       "Percorso qualificante per il Sigillo Ver0",
     ],
@@ -328,7 +337,7 @@ export const SERVIZI: Servizio[] = [
     icon: FileText,
     short:
       "Il VSME completo: modulo base più il modulo comprehensive, per partner e finanziatori esigenti.",
-    cosE: "Il bilancio di sostenibilità VSME nella versione estesa: al modulo base si aggiunge il modulo completo dello standard EFRAG — politiche, azioni e obiettivi, più le informazioni richieste da partner commerciali e finanziatori quando il modulo base non basta a chiudere la richiesta.",
+    cosE: "Il bilancio di sostenibilità VSME nella versione estesa: al modulo base si aggiunge il modulo completo dello standard volontario raccomandato dalla Commissione europea — politiche, azioni e obiettivi, più le informazioni richieste da partner commerciali e finanziatori quando il modulo base non basta a chiudere la richiesta.",
     copre: [
       "Tutto il modulo base",
       "Modulo completo: politiche, azioni, obiettivi",
@@ -358,12 +367,14 @@ export const SERVIZI: Servizio[] = [
       "Informazioni su rapporti con partner commerciali e finanziatori",
     ],
     riferimenti: [
-      "Standard VSME (EFRAG), modulo base e modulo completo",
-      "GHG Protocol e UNI EN ISO 14064-1 per gli indicatori ambientali",
+      "Standard volontario VSME, allegato I della Raccomandazione (UE) 2025/1710 della Commissione del 30 luglio 2025 — modulo base e modulo completo",
+      "Direttiva (UE) 2026/470 («Omnibus I»): alle imprese della catena del valore fino a 1.000 dipendenti non si possono chiedere più informazioni di quelle previste dallo standard volontario",
+      "GHG Protocol e UNI EN ISO 14064-1:2019 per gli indicatori ambientali",
     ],
     opportunita: [
       "Quando il modulo base non basta, evita di rifare il lavoro: il completo si costruisce sugli stessi dati",
       "Le informazioni del modulo completo sono quelle che banche e capofiliera chiedono in seconda battuta",
+      "Con base e completo insieme il bilancio copre l'intero standard volontario, che la Direttiva (UE) 2026/470 fissa come tetto delle richieste verso le imprese della catena del valore fino a 1.000 dipendenti",
       "Percorso qualificante per il Sigillo Ver0",
     ],
   },
@@ -446,6 +457,79 @@ export const SERVIZI: Servizio[] = [
       "Requisito o premialità in bandi, appalti verdi e qualifiche di filiera",
       "Con i dati carbon già in piattaforma l'analisi ambientale nasce precompilata: meno lavoro, più coerenza",
       "Percorso qualificante per il Sigillo Ver0",
+    ],
+  },
+  {
+    /**
+     * ═══ EMAS NON È UN'ALTERNATIVA ALLA 14001 ═══
+     * È il gradino sopra, e il sistema di gestione ambientale della
+     * 14001 è il suo presupposto — gli allegati I-III del regolamento
+     * sono stati scritti apposta per combaciare con la norma. Chi legge
+     * questa scheda come «o l'una o l'altro» sceglie male: perciò la
+     * copy parla sempre di AGGIUNTA, mai di confronto, e il `momento` è
+     * «ce l'hai già», non «parti da zero».
+     *
+     * ═══ IL CONFINE, PIÙ STRETTO CHE ALTROVE ═══
+     * Sulle ISO il confine è «prepariamo, non certifichiamo». Qui i
+     * soggetti terzi sono DUE e distinti — il verificatore ambientale
+     * accreditato che convalida, e l'organismo competente che registra —
+     * e nessuno dei due è un organismo di certificazione. Confonderli è
+     * facile, e chi li confonde crede di comprare la registrazione.
+     */
+    slug: "emas-dichiarazione-ambientale",
+    perChi:
+      "Serve alle imprese che hanno già un sistema di gestione ambientale ISO 14001 e vogliono aggiungere la registrazione EMAS, richiesta o premiata in appalti pubblici, autorizzazioni ambientali e qualifiche di filiera.",
+    name: "Estensione EMAS del Sistema di Gestione Ambientale",
+    taglio: "Regolamento (CE) n. 1221/2009 — sopra la ISO 14001",
+    icon: Leaf,
+    short:
+      "Analisi ambientale iniziale, conformità legislativa e Dichiarazione Ambientale, sopra il sistema ISO 14001 che hai già.",
+    richiamo:
+      "Hai già la ISO 14001: EMAS è il passo successivo, e riusa quasi tutto quello che hai costruito.",
+    cosE: "L'estensione a EMAS di un sistema di gestione ambientale già conforme a UNI EN ISO 14001:2026. Il Regolamento (CE) n. 1221/2009 costruisce sullo stesso sistema di gestione e aggiunge tre cose: l'analisi ambientale iniziale nella forma che il regolamento richiede, la dimostrazione documentata della conformità legislativa ambientale, e la Dichiarazione Ambientale con gli indicatori chiave di prestazione previsti dall'allegato IV. Verzero prepara i tre elaborati e accompagna alla verifica.",
+    perimetro:
+      "Verzero prepara l'analisi ambientale iniziale, adegua il sistema di gestione ai requisiti del regolamento e redige la Dichiarazione Ambientale, accompagnando l'impresa fino alla verifica. La convalida della Dichiarazione da parte del verificatore ambientale accreditato e la successiva registrazione presso l'organismo competente sono atti di soggetti terzi, non rientrano nel servizio e non possono essere garantiti da nessun fornitore.",
+    perimetroBreve:
+      "Convalida del verificatore accreditato e registrazione restano di terzi: non sono nel servizio.",
+    copre: [
+      "Analisi ambientale iniziale secondo il regolamento",
+      "Dimostrazione della conformità legislativa",
+      "Dichiarazione Ambientale con gli indicatori chiave",
+    ],
+    comeFunziona: [
+      "Si parte dal sistema ISO 14001 che hai già: contesto, aspetti e impatti, procedure e riesame si riusano, non si rifanno.",
+      "L'AI Ver0 ricostruisce l'analisi ambientale iniziale nella forma richiesta dal regolamento e compila il registro degli obblighi ambientali applicabili, sito per sito.",
+      "Gli indicatori chiave — energia, materiali, acqua, rifiuti, uso del suolo, emissioni — si calcolano dai dati già in piattaforma, con la loro fonte e il loro anno.",
+      "Il team tecnico verifica l'impianto e la Dichiarazione Ambientale prima della consegna; il fascicolo è pronto per il verificatore ambientale accreditato.",
+    ],
+    output: [
+      "Analisi ambientale iniziale conforme all'allegato I del Regolamento (CE) n. 1221/2009",
+      "Registro degli obblighi ambientali applicabili con evidenza documentata della conformità legislativa",
+      "Dichiarazione Ambientale secondo l'allegato IV del regolamento, con gli indicatori chiave di prestazione e la serie storica",
+      "Adeguamento del sistema di gestione ai requisiti aggiuntivi dell'allegato II",
+      "Fascicolo pronto per la verifica, in Word modificabile",
+    ],
+    requisiti: [
+      "Serve un sistema di gestione ambientale già impostato secondo UNI EN ISO 14001:2026: EMAS lo estende, non lo sostituisce",
+      "La conformità legislativa va dimostrata, non dichiarata: autorizzazioni, scarichi, emissioni e rifiuti devono essere in regola e documentati",
+      "La Dichiarazione Ambientale è convalidata da un verificatore ambientale accreditato e la registrazione la dispone l'organismo competente: entrambi sono soggetti terzi, fuori dal servizio",
+      "La Dichiarazione Ambientale è un documento pubblico, e va aggiornata ogni anno",
+    ],
+    documenti: [
+      "Manuale e documentazione del sistema di gestione ambientale ISO 14001 in uso",
+      "Autorizzazioni ambientali, titoli abilitativi, scarichi ed emissioni di ogni sito",
+      "Registri dei rifiuti e formulari dell'anno di rendicontazione",
+      "Dati di consumo di energia, acqua e materiali per gli indicatori chiave",
+      "Planimetrie e descrizione dei siti da registrare",
+    ],
+    riferimenti: [
+      "Regolamento (CE) n. 1221/2009 (EMAS), allegati I, II e III come modificati dal Regolamento (UE) 2017/1505 e allegato IV come sostituito dal Regolamento (UE) 2018/2026",
+      "UNI EN ISO 14001:2026 (sistema di gestione ambientale: è il presupposto dell'estensione)",
+    ],
+    opportunita: [
+      "Negli appalti pubblici e nei bandi la registrazione EMAS è spesso valutata più della sola certificazione ambientale",
+      "Diverse norme ambientali riconoscono alle organizzazioni registrate semplificazioni e durate autorizzative più lunghe: si verificano caso per caso con l'autorità competente",
+      "Il sistema ISO 14001 e i dati di consumo già in piattaforma coprono gran parte di quello che serve: l'estensione costa meno di un percorso nuovo",
     ],
   },
   {
@@ -1313,6 +1397,25 @@ export const FAMIGLIE: Famiglia[] = [
         norme: ["iso-14001"],
         ambiti: ["ambiente"],
         chiavi: ["ambiente", "14001", "sistema ambientale", "certificazione ambientale"],
+      },
+      {
+        slug: "emas-dichiarazione-ambientale",
+        benefit:
+          "Il passo sopra la 14001: analisi iniziale, conformità legislativa e Dichiarazione Ambientale.",
+        pilastro: "E",
+        bisogni: ["bando", "committente"],
+        // «Ce l'hai già» e non «parti da zero»: EMAS si aggiunge a un
+        // sistema ambientale esistente, e chi parte da zero deve trovare
+        // prima la 14001.
+        momento: "aggiornamento",
+        norme: ["emas", "iso-14001"],
+        ambiti: ["ambiente"],
+        chiavi: [
+          "emas",
+          "dichiarazione ambientale",
+          "registrazione ambientale",
+          "ecogestione",
+        ],
       },
       {
         slug: "manuale-sistema-gestione-iso-45001",

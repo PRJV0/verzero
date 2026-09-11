@@ -295,6 +295,10 @@ const PER_NORMA = [
       "manuale-sistema-gestione-iso-14001",
       "aggiornamento-sistema-gestione",
       "supporto-audit",
+      // EMAS si costruisce SOPRA la 14001: chi cerca la norma deve
+      // trovarlo, sotto «se ce l'hai già». È il collegamento per norma
+      // che fa il suo mestiere, non un risultato di troppo.
+      "emas-dichiarazione-ambientale",
     ],
     ammessi: ["controllo-edizione"],
   },
