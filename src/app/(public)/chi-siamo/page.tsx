@@ -125,9 +125,29 @@ function ApreSezione({ children }: { children: React.ReactNode }) {
 }
 
 /** Il paragrafo dell'articolo: misura e corpo da lettura lunga. */
-function P({ children }: { children: React.ReactNode }) {
+/**
+ * Il corpo dell'articolo.
+ *
+ * `su` non è un vezzo: il grigio caldo sta a 4,98:1 sulla carta e a
+ * 3,51:1 sul salvia, cioè sotto la soglia del testo normale. Sul livello
+ * intermedio il secondario è il pino (5,60:1). Il colore lo decide il
+ * FONDO, quindi lo dichiara chi mette il paragrafo su un fondo diverso —
+ * e non c'è modo di dimenticarsene senza vederlo scritto.
+ */
+function P({
+  children,
+  su = "carta",
+}: {
+  children: React.ReactNode;
+  su?: "carta" | "salvia";
+}) {
   return (
-    <p className="mt-5 max-w-[62ch] text-[17px] leading-[1.7] text-gray-warm">
+    <p
+      className={
+        "mt-5 max-w-[62ch] text-[17px] leading-[1.7] " +
+        (su === "salvia" ? "text-pine/90" : "text-gray-warm")
+      }
+    >
       {children}
     </p>
   );
@@ -328,17 +348,26 @@ export default function ChiSiamoPage() {
           diverso: i consulenti, non le imprese. Ed è il posto in cui la
           regola di tono diventa concreta — sono partner del modello, e
           questa sezione è la prova che non sono un bersaglio. */}
-      <section className="px-5 pb-20 md:pb-28">
+      {/* L'ULTIMA FASCIA CHIARA PRENDE IL LIVELLO INTERMEDIO. La pagina è
+          un long-read: quattro sezioni sulla carta, poi il pino profondo
+          della chiusura. Quel salto era di novanta punti di luminanza in
+          una riga, e in un registro editoriale è il punto in cui il
+          lettore perde il filo invece di sentire che l'articolo finisce.
+          Il salvia qui è la penultima pagina di un capitolo: si vede che
+          si sta arrivando in fondo, e la chiusura scura resta la chiusura
+          — l'unica, e la sola volta che questa pagina usa il fondo più
+          profondo. */}
+      <section className="bg-sage px-5 py-20 md:py-28">
         <div className="mx-auto max-w-4xl">
           <ApreSezione>Per commercialisti e consulenti</ApreSezione>
           <H2>Il lavoro documentale lo facciamo noi, la relazione resta tua.</H2>
-          <P>
+          <P su="salvia">
             Se segui delle imprese, puoi portarle su Ver0 e restare tu il
             riferimento. Un accesso solo con il selettore per passare da
             un&apos;impresa all&apos;altra, e vedi soltanto quelle che ti hanno
             dato il mandato, finché è attivo.
           </P>
-          <P>
+          <P su="salvia">
             I documenti li produce e li valida il team tecnico di Verzero: la
             responsabilità di quello che esce resta nostra, e tu non ti assumi
             niente al posto nostro. Le condizioni dedicate ai partner si

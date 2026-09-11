@@ -104,8 +104,17 @@ export default function SigilloPage() {
         </p>
       </section>
 
+      {/* ── LA SCALA DENTRO LO SCURO ─────────────────────────────────
+          Questa pagina è tutta scura, e resta tutta scura: è la sua
+          architettura. Ma usava il fondo più profondo QUATTRO volte su
+          sette, e un fondo ripetuto quattro volte smette di essere un
+          registro e diventa un'assenza di ritmo — l'apertura pesava come
+          le domande frequenti. Adesso il pino profondo fa solo le due
+          estremità, l'apertura e la chiusura, e in mezzo la pagina sale e
+          scende fra pino scuro e pino: lo stesso principio del livello
+          intermedio, applicato in basso invece che in alto. */}
       {/* Cos'è */}
-      <section className="bg-pine-deep px-5 py-20 md:py-28">
+      <section className="bg-pine-dark px-5 py-20 md:py-28">
         <div className="mx-auto max-w-3xl">
           <h2 className="font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-white md:text-[3rem]">
             Un attestato che si può controllare
@@ -124,8 +133,11 @@ export default function SigilloPage() {
         </div>
       </section>
 
-      {/* Come si ottiene, e che cosa cambia completandone più d'uno */}
-      <section className="bg-pine-dark px-5 py-20 md:py-28">
+      {/* Come si ottiene, e che cosa cambia completandone più d'uno.
+          È la sezione più operativa della pagina — elenchi, percorsi,
+          condizioni — e prende il più chiaro dei tre scuri: l'avorio ci
+          sta a 8,30:1 e la menta viva a 4,71:1. */}
+      <section className="bg-pine px-5 py-20 md:py-28">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-center font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-white md:text-[3rem]">
             Un solo Sigillo, più modi per ottenerlo
@@ -214,7 +226,7 @@ export default function SigilloPage() {
 
       {/* Verificabilità + targa — fondo scuro istituzionale, targa presentata
           su placca bianca (§11.X: su superfici stampate sempre placca bianca) */}
-      <section className="bg-pine-deep px-5 py-20 md:py-28">
+      <section className="bg-pine-dark px-5 py-20 md:py-28">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="font-display text-4xl text-white md:text-5xl">
             Ogni Sigillo sarà verificabile pubblicamente
@@ -254,7 +266,7 @@ export default function SigilloPage() {
       </section>
 
       {/* Millesimatura */}
-      <section className="bg-pine-dark px-5 py-20 md:py-28">
+      <section className="bg-pine px-5 py-20 md:py-28">
         <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 md:flex-row">
           <Sigillo tone="dark" className="h-24 w-24 shrink-0" />
           <div className="text-center md:text-left">
@@ -276,7 +288,7 @@ export default function SigilloPage() {
       </section>
 
       {/* Domande frequenti: le stesse marcate in JSON-LD */}
-      <section className="bg-pine-deep px-5 py-20 md:py-28">
+      <section className="bg-pine-dark px-5 py-20 md:py-28">
         <div className="mx-auto max-w-3xl">
           <h2 className="font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-white md:text-[3rem]">
             Domande frequenti
@@ -297,8 +309,10 @@ export default function SigilloPage() {
         </div>
       </section>
 
-      {/* CTA + nota conformità */}
-      <section className="bg-pine-dark px-5 py-24 text-center md:py-32">
+      {/* CTA + nota conformità. Il pino profondo torna qui, e solo qui:
+          la chiusura richiama l'apertura e la pagina si chiude come si è
+          aperta. */}
+      <section className="bg-pine-deep px-5 py-24 text-center md:py-32">
         <h2 className="font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-white md:text-[3rem]">
           La via diretta al Sigillo
         </h2>

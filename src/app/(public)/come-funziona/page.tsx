@@ -206,7 +206,14 @@ export default function ComeFunzionaPage() {
           scuro perché è costruito così, ma adesso è un RIQUADRO dentro
           una sezione chiara — cioè una figura in mezzo al testo, con la
           sua didascalia — e non un cambio di scena. */}
-      <section className="bg-paper px-5 py-16 md:py-24">
+      {/* LA RISALITA DAL BUIO, non la discesa. L'entrata nella fascia
+          scura è brusca di proposito — è la dimostrazione, e deve vedersi
+          da lontano nello scorrimento — ma l'uscita tornava dritta alla
+          carta: novanta punti di luminanza in una riga, e subito dopo un
+          riquadro di nuovo scuro. Qui il salvia fa da appoggio, e il
+          riquadro del Motore diventa una figura incorniciata invece di
+          un secondo cambio di scena. */}
+      <section className="bg-sage px-5 py-16 md:py-24">
         <div className="mx-auto max-w-4xl">
           <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
             Il sistema
@@ -214,7 +221,9 @@ export default function ComeFunzionaPage() {
           <h2 className="mt-5 max-w-[20ch] font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-ink md:text-[3rem]">
             Lo stesso modo di lavorare, per ogni documento.
           </h2>
-          <p className="mt-6 max-w-[62ch] text-[17px] leading-[1.7] text-gray-warm">
+          {/* Sul salvia il secondario è il pino: il grigio caldo ci sta a
+              3,51:1, sotto la soglia del corpo. */}
+          <p className="mt-6 max-w-[62ch] text-[17px] leading-[1.7] text-pine/90">
             Che sia un bilancio di sostenibilità o un manuale ISO cambia la
             norma di riferimento, non il modo in cui il documento viene
             costruito e controllato. Ogni blocco dello schema qui sotto si
@@ -298,8 +307,11 @@ export default function ComeFunzionaPage() {
         </div>
       </section>
 
-      {/* La validazione umana e il principio delle norme: i due pilastri del metodo */}
-      <section className="bg-paper px-5 pb-20 md:pb-28">
+      {/* La validazione umana e il principio delle norme: i due pilastri
+          del metodo. Chiudono sulla salvia chiara: dopo tre fasce carta
+          di fila serviva un cambio di respiro prima del piè di pagina, e
+          questo è il più piccolo che il sistema abbia. */}
+      <section className="bg-moss px-5 py-20 md:py-28">
         <div className="mx-auto grid max-w-4xl grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="border-2 border-line p-6">
             <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-moss text-pine">

@@ -133,6 +133,22 @@ export const ONDA_DECISA: ConfigOnda = {
 export const FONDO_SOGLIA = ["#15322F", "#214542"] as const;
 
 /**
+ * IL SECONDO SCURO — perché il fondo più profondo non torni quattro volte.
+ *
+ * Il fascio si dipinge il fondo da sé (senza possederlo non può fare le
+ * scie, che sono il fondo ridipinto in trasparenza). Finché esisteva un
+ * solo fondo scuro, ogni sezione col fascio era la stessa superficie: in
+ * home erano l'apertura, il Motore e il prezzo, più il Sigillo in pino
+ * profondo piatto. Quattro volte il nero della pagina, e l'apertura
+ * smetteva di essere un'apertura.
+ *
+ * Questo è il gradiente del PINO, non del pino profondo: sopra ci sta
+ * l'avorio a 8,30:1 e la menta viva a 4,71:1 — margine abbondante per
+ * un fondo che deve reggere il prezzo scritto grande.
+ */
+export const FONDO_PINO = ["#21544F", "#2B6560"] as const;
+
+/**
  * L'ALONE attorno al fascio.
  *
  * Il fondo dell'hero era una superficie PIATTA più un canvas sopra: due
@@ -151,6 +167,11 @@ export const ALONE_SOGLIA = "rgba(89, 212, 183, 0.17)";
 export const SFONDO_SOGLIA =
   `radial-gradient(78% 58% at 50% 30%, ${ALONE_SOGLIA}, transparent 70%),` +
   ` linear-gradient(to bottom, ${FONDO_SOGLIA[0]}, ${FONDO_SOGLIA[1]})`;
+
+/** Lo stesso trattamento sul secondo scuro, per le sezioni in pino. */
+export const SFONDO_PINO =
+  `radial-gradient(78% 58% at 50% 30%, ${ALONE_SOGLIA}, transparent 70%),` +
+  ` linear-gradient(to bottom, ${FONDO_PINO[0]}, ${FONDO_PINO[1]})`;
 
 /**
  * L'ONDA DELLA SOGLIA — l'hero su fondo scuro.
@@ -214,6 +235,28 @@ export const PRESET = {
     primoPiano: 0.05,
     scie: 0.14,
     fondo: FONDO_SOGLIA,
+    additivo: true,
+  },
+  /**
+   * Lo stesso carattere tecnico di `tecnica`, sul secondo scuro.
+   *
+   * Non è un preset «più chiaro» per capriccio: serve a dare alla pagina
+   * una scala anche DENTRO gli scuri — apertura profonda, sezioni
+   * intermedie in pino, chiusura di nuovo profonda — invece di ripetere
+   * quattro volte la stessa superficie.
+   */
+  tecnicaPino: {
+    ...ONDA_DECISA,
+    densita: 0.8,
+    opacita: 0.36,
+    velocita: 1.15,
+    ampiezza: 0.8,
+    raggio: 0.9,
+    palette: "scura" as const,
+    posizione: 0.5,
+    primoPiano: 0.05,
+    scie: 0.14,
+    fondo: FONDO_PINO,
     additivo: true,
   },
   /** Chi siamo: presenza pacata dietro un testo che si legge. */

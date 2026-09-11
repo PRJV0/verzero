@@ -162,7 +162,14 @@ export default function SicurezzaPage() {
           non hanno bisogno di un fondo animato. Qui è un riquadro
           rientrato, con il filetto menta a sinistra come una citazione
           in un documento tecnico. */}
-      <section className="bg-white px-5 pb-14 md:pb-16">
+      {/* IL LIVELLO INTERMEDIO, QUI E SOLO QUI. La pagina era cinque
+          fasce avorio di fila: nessun rilievo, e l'affermazione più forte
+          del sito sulla sicurezza pesava come l'elenco dei fornitori. Una
+          fascia scura sarebbe il contrario del registro documentario — è
+          già stata tolta una volta. Il salvia è il rilievo che questa
+          pagina si può permettere: si vede che è un'altra cosa, e non
+          diventa uno spettacolo. */}
+      <section className="bg-sage px-5 py-14 md:py-16">
         <div className="mx-auto max-w-4xl border-l-2 border-mint pl-6 md:pl-8">
           <p className="flex items-center gap-2.5 text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
             <ShieldCheck size={16} aria-hidden className="shrink-0" />
@@ -173,7 +180,9 @@ export default function SicurezzaPage() {
             <span className="text-pine">53 test automatici</span>, eseguiti a
             ogni rilascio.
           </h2>
-          <p className="mt-5 max-w-[64ch] text-[16px] leading-[1.7] text-gray-warm">
+          {/* Sul salvia il secondario è il pino: il grigio caldo ci sta a
+              3,51:1, sotto la soglia del corpo. */}
+          <p className="mt-5 max-w-[64ch] text-[16px] leading-[1.7] text-pine/90">
             Non è una dichiarazione d&apos;intenti: è una suite che gira contro
             il database vero e che, se fallisce anche un solo controllo, ferma
             il rilascio. Ecco cosa verifica, in concreto.
@@ -187,7 +196,9 @@ export default function SicurezzaPage() {
             ].map((t) => (
               <li
                 key={t}
-                className="rounded-xl border border-line bg-paper/70 px-4 py-3 text-[15px] leading-relaxed text-ink"
+                // Sul salvia il filetto chiaro sparisce (1,22:1) e la
+                // carta in trasparenza non stacca: bordo pino, fondo avorio.
+                className="rounded-xl border border-pine/15 bg-white/75 px-4 py-3 text-[15px] leading-relaxed text-ink"
               >
                 {t}
               </li>
@@ -236,7 +247,10 @@ export default function SicurezzaPage() {
       </section>
 
       {/* DOMANDE DIRETTE, RISPOSTE DIRETTE */}
-      <section className="border-t border-line bg-white px-5 py-14 md:py-16">
+      {/* La chiusura si posa sulla salvia chiara: fra la fascia dei
+          fornitori e il piè di pagina serviva un cambio di respiro, e
+          questo è il più piccolo che il sistema abbia. */}
+      <section className="border-t border-line bg-moss px-5 py-14 md:py-16">
         <div className="mx-auto max-w-3xl">
           <h2 className="font-display text-[1.7rem] leading-[1.2] text-ink md:text-[2.2rem]">
             Domande dirette, risposte dirette.

@@ -10,7 +10,7 @@ import { HeroHome } from "@/components/hero-home";
 import { OndaParticelle } from "@/components/onda-particelle";
 import { PrezzoPrincipio } from "@/components/prezzo-principio";
 import { AnnuncioFase } from "@/components/annuncio-fase";
-import { SFONDO_SOGLIA, PRESET } from "@/lib/onda";
+import { SFONDO_PINO, PRESET } from "@/lib/onda";
 import { AnteprimaPassi } from "@/components/guida-passi";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { JsonLd } from "@/components/json-ld";
@@ -246,7 +246,10 @@ export default function HomePage() {
                 di essere decodificato, in cima a una sezione che il
                 lettore non ha ancora capito che cosa sia. Adesso dice
                 che cosa sta per vedere. */}
-            <p className="mx-auto mt-4 max-w-[52ch] text-[15px] leading-relaxed text-gray-warm md:text-base">
+            {/* NON text-gray-warm: sul salvia fa 3,51:1, sotto la soglia
+                del corpo. Sul livello intermedio il secondario è il pino,
+                che ci sta a 5,60:1. */}
+            <p className="mx-auto mt-4 max-w-[52ch] text-[15px] leading-relaxed text-pine/90 md:text-base">
               Ci chiamiamo Ver0 per le sei promesse qui sotto: cominciano tutte
               con la stessa parola, e ognuna porta scritto accanto che cosa
               significa in concreto.
@@ -269,10 +272,16 @@ export default function HomePage() {
 
       {/* IL MOTORE — manifesto della potenza, senza fasi né meccanismi
           (§12.J: il «come» vive dentro, in /come-funziona). */}
-      <section className="relative isolate overflow-hidden bg-pine-deep px-5 py-16 md:py-24">
+      {/* IL SECONDO SCURO, non il primo. Il fascio si dipinge il fondo da
+          sé, quindi finché esisteva un solo gradiente scuro questa
+          sezione, l'apertura e il prezzo erano LA STESSA superficie: tre
+          volte il nero della pagina, più il Sigillo, e l'apertura
+          smetteva di essere un'apertura. Qui è il pino: resta una sezione
+          scura e autorevole, ma sta un gradino sopra la soglia. */}
+      <section className="relative isolate overflow-hidden bg-pine px-5 py-16 md:py-24">
         {/* L'onda torna qui in palette invertita e più nitida: è la
             sezione del Motore, e le si addice un carattere tecnico. */}
-        <OndaParticelle config={PRESET.tecnica} className="-z-10" />
+        <OndaParticelle config={PRESET.tecnicaPino} className="-z-10" />
         <ZeroWatermark
           tone="light"
           className="-left-20 top-1/2 -translate-y-1/2 text-[28rem]"
@@ -377,7 +386,12 @@ export default function HomePage() {
           del profilo del fondatore. E nessuna qualifica che non possiamo
           dimostrare: qui stanno le figure che validano davvero, non un
           organigramma desiderato. */}
-      <section className="bg-white px-5 py-16 md:py-24">
+      {/* IL GRADINO PRIMA DELLA DISCESA. Da qui la pagina scende: prezzo
+          in pino, Sigillo in pino profondo. Con l'avorio qui sopra si
+          passava da 0,97 di luminanza a 0,07 in una riga sola; col salvia
+          il passaggio ha un appoggio, ed è la stessa funzione che il
+          livello intermedio svolge sopra, fra la carta e il Motore. */}
+      <section className="bg-sage px-5 py-16 md:py-24">
         <div className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-12 md:grid-cols-[1fr_1fr]">
           <div>
             <p className="mb-5 text-[13px] font-semibold uppercase tracking-[0.16em] text-pine">
@@ -387,7 +401,9 @@ export default function HomePage() {
               Ogni documento passa
               <span className="block text-pine">da una persona.</span>
             </h2>
-            <p className="mt-6 max-w-md text-[15px] leading-relaxed text-gray-warm md:text-base">
+            {/* Sul salvia il secondario è il pino: il grigio caldo ci sta
+                a 3,51:1, sotto la soglia del corpo. */}
+            <p className="mt-6 max-w-md text-[15px] leading-relaxed text-pine/90 md:text-base">
               Non un revisore chiamato all&apos;occorrenza: un team di
               professionisti qualificati che valida ogni documento prima che
               esca, e che di quella validazione resta responsabile.
@@ -401,7 +417,10 @@ export default function HomePage() {
             {COMPETENZE_TEAM.map((c) => (
               <li
                 key={c}
-                className="flex items-start gap-3 rounded-xl border border-line bg-paper/60 px-4 py-4"
+                // Sul salvia il filetto chiaro sparisce (1,22:1): il
+                // bordo si fa col pino in trasparenza, e il riquadro si
+                // schiarisce invece di scurirsi.
+                className="flex items-start gap-3 rounded-xl border border-pine/15 bg-white/70 px-4 py-4"
               >
                 <UserCheck
                   size={17}
@@ -430,10 +449,10 @@ export default function HomePage() {
         id="prezzo"
         className="relative isolate overflow-hidden px-5 py-16 md:py-24"
         style={{
-          background: SFONDO_SOGLIA,
+          background: SFONDO_PINO,
         }}
       >
-        <OndaParticelle config={PRESET.tecnica} className="-z-10" />
+        <OndaParticelle config={PRESET.tecnicaPino} className="-z-10" />
         <div className="relative">
           <PrezzoPrincipio />
           {/* L'ANNUNCIO DELLA FASE STA QUI, e non più in cima alla home.

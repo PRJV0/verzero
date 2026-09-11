@@ -87,6 +87,29 @@ Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs`.
 
 ## Altre regole già in vigore
 
+- **Il livello intermedio, e i tre scuri.** Fra la carta e il pino
+  profondo ci sono novanta punti di luminanza: senza un gradino ogni
+  fascia sbatte contro la successiva. Il gradino è il **salvia**
+  (`bg-sage`), e va dove due estremi si scontrano — i passaggi da e
+  verso una fascia scura, e le sequenze di fasce tutte chiare. Regole
+  che valgono su ogni pagina: (1) si CAMBIA il colore di una fascia, non
+  se ne aggiunge una; (2) il fondo più profondo (`pine-deep`) non
+  compare **più di due volte per pagina**, e le due volte sono le
+  estremità — apertura e chiusura; in mezzo si sale a `pine-dark` e
+  `pine`, che è lo stesso principio applicato in basso. (3) Ogni pagina
+  conserva il registro suo: `/sicurezza` resta documentaria e non prende
+  fasce scure, `/sigillo` resta interamente scura e prende la scala
+  dentro lo scuro.
+  **Sul salvia i grigi della carta non reggono**, ed è l'unico fondo su
+  cui l'errore non si vede: `text-gray-warm` fa 3,51:1, `text-gray-light`
+  2,26:1, `border-line` 1,22:1. Il secondario lì è `text-pine`, il bordo
+  `border-pine/15`. Non è una raccomandazione:
+  `scripts/controllo-contrasti.mjs` gira nel `prebuild`, misura 23 coppie
+  critiche e poi **legge il codice** — ogni blocco che apre con `bg-sage`
+  viene ispezionato, e una di quelle classi lì dentro ferma la build. Il
+  limite noto del controllo: una classe che arriva da un componente
+  condiviso non si vede dal blocco, quindi un helper che porta un grigio
+  va reso consapevole del fondo (v. `P({ su })` in `/chi-siamo`).
 - **Movimento**: fonte unica in `src/app/globals.css` (token `--vz-micro`
   150ms, `--vz-stato` 250ms, `--vz-ingresso` 400ms, `--vz-scaglione` 70ms,
   `--vz-curva`). Mai durate o curve scritte a mano in un componente, mai

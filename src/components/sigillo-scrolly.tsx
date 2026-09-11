@@ -68,12 +68,18 @@ function arco(from: number, to: number) {
  * interamente su fondo scuro — registro istituzionale, pochi elementi,
  * molto vuoto — e questa sezione ci vive dentro.
  *
+ * PINO SCURO E NON PINO PROFONDO: il più profondo fa solo le due
+ * estremità della pagina, l'apertura e la chiusura. Qui siamo a metà
+ * narrazione, e ripetere il nero dell'apertura toglieva all'apertura il
+ * suo peso senza dare niente a questa sezione.
+ *
  * La placca bianca dentro l'SVG resta: è la regola di marca (§11.X), e
- * su pino profondo è proprio ciò che fa staccare il Sigillo.
+ * sul fondo scuro è proprio ciò che fa staccare il Sigillo — su pino
+ * scuro l'avorio ci sta a 11,33:1.
  */
 export function SigilloScrolly() {
   return (
-    <section className="bg-pine-deep px-5 py-20 md:py-28">
+    <section className="bg-pine-dark px-5 py-20 md:py-28">
       <div className="mx-auto max-w-4xl">
         <div className="text-center">
           <h2 className="font-display text-[2rem] leading-[1.1] tracking-[-0.02em] text-white md:text-[3rem]">

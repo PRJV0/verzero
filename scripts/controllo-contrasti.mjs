@@ -31,7 +31,8 @@
  * controllo serve a non scendere, non a inseguire il massimo.
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 
 /* ── i token, letti dalla fonte ─────────────────────────────────────── */
 
@@ -94,6 +95,11 @@ const CASI = [
   ["pino su salvia — le fasce chiare", C.pine, C.moss, 4.5],
   ["pino su salvia media — le fasce intermedie", C.pine, C.sage, 4.5],
   ["inchiostro su salvia media", C.ink, C.sage, 4.5],
+  // Sul salvia il grigio caldo NON regge (3,51:1): il secondario è il
+  // pino. Il caso sta qui perché è quello che si sbaglia — e il
+  // controllo d'uso in fondo allo script verifica che nessuna fascia
+  // salvia porti i grigi della carta.
+  ["pino su salvia media — il corpo secondario", C.pine, C.sage, 4.5],
   ["inchiostro su carta — il corpo del testo", C.ink, C.paper, 4.5],
   ["grigio caldo su carta — il corpo secondario", C.grayWarm, C.paper, 4.5],
   ["grigio chiaro su carta — le note piccole", C.grayLight, C.paper, 3],
@@ -104,6 +110,18 @@ const CASI = [
   // il fondo su cui la parola-Zero va letta.
   ["menta su salvia media — la parola «Zero» nella fascia", C.mint, C.sage, 3],
   ["menta viva su pino — i bordi sul fondo scuro", C.mintBright, C.pine, 3],
+  // ── IL SECONDO E IL TERZO SCURO ──────────────────────────────────
+  // Il pino profondo fa solo le estremità di una pagina; in mezzo si
+  // sale a pino scuro e pino. Tre fondi scuri invece di uno, quindi tre
+  // volte i casi da tenere: un testo che sta bene sul più profondo non
+  // sta automaticamente bene sul più chiaro dei tre.
+  ["avorio su pino scuro — le fasce intermedie del Sigillo", C.avorio, C.pineDark, 4.5],
+  ["salvia su pino scuro — il corpo sul fondo scuro", C.moss, C.pineDark, 4.5],
+  ["menta viva su pino scuro — l'accento", C.mintBright, C.pineDark, 3],
+  ["salvia su pino — il corpo sulla sezione più chiara", C.moss, C.pine, 4.5],
+  // Il fondo del prezzo e del Motore in home: il gradiente parte da qui,
+  // e il prezzo va letto grande e senza sforzo.
+  ["avorio su pino — il prezzo e il Motore", C.avorio, C.pine, 4.5],
   ["inchiostro ambra su ambra — lo stato «da fare»", C.amberInk, C.amberSoft, 4.5],
 ];
 
@@ -128,3 +146,91 @@ if (sotto > 0) {
 }
 
 console.log(`\n✅ contrasti: ${CASI.length} casi critici, nessuno sotto soglia.`);
+
+/* ══════════════════════════════════════════════════════════════════ */
+/* CHI STA SOPRA IL SALVIA — il controllo che i token da soli non fanno */
+/* ══════════════════════════════════════════════════════════════════ */
+
+/**
+ * ═══ PERCHÉ NON BASTA MISURARE LE COPPIE ═══
+ * Il controllo sopra verifica che ogni coppia dichiarata stia sopra
+ * soglia. Non sa quale testo finisce su quale fondo — e la prima fascia
+ * salvia del sito portava il corpo in grigio caldo, che ci sta a 3,51:1:
+ * sotto la soglia del testo normale, su un fondo scelto apposta per
+ * migliorare la leggibilità. Nessuno se n'era accorto, perché guardando
+ * la pagina non si vede.
+ *
+ * Il salvia è il caso critico perché sta NEL MEZZO: abbastanza chiaro da
+ * sembrare un fondo chiaro, abbastanza scuro da far cadere sotto soglia
+ * i grigi pensati per la carta. Sul pino profondo l'errore non si fa —
+ * si vede subito — e sulla carta non esiste.
+ *
+ * ═══ COME ═══
+ * Si prende ogni blocco che apre con `bg-sage` e si guarda che cosa ci
+ * sta dentro. Il blocco finisce dove ne comincia un altro: è
+ * un'euristica, non un parser JSX, e sbaglia solo nel verso prudente —
+ * al massimo controlla qualche riga in più del dovuto.
+ */
+const VIETATI_SU_SALVIA = [
+  ["text-gray-warm", "3,51:1 — sotto la soglia del corpo. Usa text-ink o text-pine."],
+  ["text-gray-light", "2,26:1 — illeggibile. Usa text-pine."],
+  ["border-line", "1,22:1 — il filetto sparisce. Usa border-pine/15."],
+];
+
+function fileSorgente(dir) {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((d) => {
+    const p = join(dir, d.name);
+    if (d.isDirectory()) return fileSorgente(p);
+    return /\.(tsx|ts)$/.test(d.name) ? [p] : [];
+  });
+}
+
+const APERTURA = /<(?:section|div|main|article|aside|header|footer)\b/g;
+
+let violazioni = 0;
+for (const file of fileSorgente("src")) {
+  const testo = readFileSync(file, "utf8");
+  if (!testo.includes("bg-sage")) continue;
+
+  // I confini dei blocchi: ogni tag di apertura di un contenitore.
+  const inizi = [...testo.matchAll(APERTURA)].map((m) => m.index);
+  for (let i = 0; i < inizi.length; i++) {
+    const blocco = testo.slice(inizi[i], inizi[i + 1] ?? testo.length);
+    // Solo i blocchi che DICHIARANO il salvia nella propria apertura.
+    const apertura = blocco.slice(0, blocco.indexOf(">") + 1);
+    if (!/\bbg-sage\b/.test(apertura)) continue;
+
+    // Il blocco vero: da qui fino a dove ricomincia un contenitore che
+    // non è salvia — cioè tutto il sottoalbero, approssimato.
+    let fine = testo.length;
+    for (let j = i + 1; j < inizi.length; j++) {
+      const succ = testo.slice(inizi[j], inizi[j] + 400);
+      if (/\bbg-(pine|paper|white|moss)\b/.test(succ.slice(0, succ.indexOf(">") + 1))) {
+        fine = inizi[j];
+        break;
+      }
+    }
+    const dentro = testo.slice(inizi[i], fine);
+    for (const [classe, perche] of VIETATI_SU_SALVIA) {
+      // I commenti spiegano il divieto: non si controllano.
+      const righe = dentro
+        .split("\n")
+        .filter((r) => r.includes(classe) && !/^\s*(\/\/|\*|\{\/\*)/.test(r));
+      if (righe.length > 0) {
+        violazioni++;
+        console.error(
+          `\n❌ ${file}: «${classe}» dentro una fascia bg-sage — ${perche}`,
+        );
+        for (const r of righe.slice(0, 3)) console.error(`     ${r.trim().slice(0, 100)}`);
+      }
+    }
+  }
+}
+
+if (violazioni > 0) {
+  console.error(
+    `\n${violazioni} usi sotto soglia sul livello intermedio.\n\nIl salvia sta nel mezzo: abbastanza chiaro da sembrare un fondo\nchiaro, abbastanza scuro da far cadere sotto soglia i grigi pensati\nper la carta. È l'unico fondo su cui questo errore non si vede.\n`,
+  );
+  process.exit(1);
+}
+console.log("✅ livello intermedio: nessun testo sotto soglia sulle fasce salvia.");
