@@ -1,6 +1,10 @@
 /**
  * CONTROLLO DEI CONTRASTI — la palette non si cambia a occhio.
  *
+ * NOTA SUL BIANCO: `--color-white` è ridefinito ad avorio (v. la
+ * doctrine in globals.css), quindi i casi che qui si chiamano «avorio»
+ * sono gli stessi `bg-white` / `text-white` di tutto il prodotto.
+ *
  *   node scripts/controllo-contrasti.mjs
  *
  * Gira PRIMA DELLA BUILD (`prebuild`): se un token scende sotto la
@@ -57,7 +61,7 @@ const C = {
   grayLight: token("gray-light"),
   amberSoft: token("amber-soft"),
   amberInk: token("amber-ink"),
-  bianco: "#FFFFFF",
+  avorio: token("white"),
 };
 
 /* ── il calcolo, secondo WCAG 2.1 ───────────────────────────────────── */
@@ -81,11 +85,11 @@ function contrasto(a, b) {
 /* ── i casi critici, con il posto in cui vivono ─────────────────────── */
 
 const CASI = [
-  ["bianco su pino profondo — il claim dell'hero", C.bianco, C.pineDeep, 4.5],
+  ["avorio su pino profondo — il claim dell'hero", C.avorio, C.pineDeep, 4.5],
   ["salvia su pino profondo — il sottotitolo dell'hero", C.moss, C.pineDeep, 4.5],
   ["menta viva su pino profondo — l'accento dell'hero", C.mintBright, C.pineDeep, 4.5],
-  ["bianco su pino — il pulsante pieno", C.bianco, C.pine, 4.5],
-  ["pino su bianco — il pulsante di contorno", C.pine, C.bianco, 4.5],
+  ["avorio su pino — il pulsante pieno", C.avorio, C.pine, 4.5],
+  ["pino su avorio — il pulsante di contorno", C.pine, C.avorio, 4.5],
   ["pino su carta — occhielli e rimandi", C.pine, C.paper, 4.5],
   ["pino su salvia — le fasce chiare", C.pine, C.moss, 4.5],
   ["pino su salvia media — le fasce intermedie", C.pine, C.sage, 4.5],
@@ -93,9 +97,12 @@ const CASI = [
   ["inchiostro su carta — il corpo del testo", C.ink, C.paper, 4.5],
   ["grigio caldo su carta — il corpo secondario", C.grayWarm, C.paper, 4.5],
   ["grigio chiaro su carta — le note piccole", C.grayLight, C.paper, 3],
-  ["menta su bianco — icone e rimandi", C.mint, C.bianco, 4.5],
+  ["menta su avorio — icone e rimandi", C.mint, C.avorio, 4.5],
   // La parola-Zero del sistema di marca: corpo grande, quindi 3:1.
   ["menta su salvia — la parola «Zero»", C.mint, C.moss, 3],
+  // Da quando la fascia dello Zero sta sul livello intermedio, è QUESTO
+  // il fondo su cui la parola-Zero va letta.
+  ["menta su salvia media — la parola «Zero» nella fascia", C.mint, C.sage, 3],
   ["menta viva su pino — i bordi sul fondo scuro", C.mintBright, C.pine, 3],
   ["inchiostro ambra su ambra — lo stato «da fare»", C.amberInk, C.amberSoft, 4.5],
 ];

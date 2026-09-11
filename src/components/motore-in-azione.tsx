@@ -99,7 +99,7 @@ function AnelloEsempio({ percentuale = 68 }: { percentuale?: number }) {
         cy="50"
         r="47"
         fill="none"
-        stroke="#31D887"
+        stroke="#2AEFA7"
         strokeOpacity="0.25"
         strokeWidth="1.4"
         strokeDasharray="0.1 6.4"
@@ -112,7 +112,7 @@ function AnelloEsempio({ percentuale = 68 }: { percentuale?: number }) {
           style={{ "--vz-i": i } as React.CSSProperties}
           d={arco(i)}
           fill="none"
-          stroke={i < piene ? "#31D887" : "#F7ECD9"}
+          stroke={i < piene ? "#2AEFA7" : "#F7ECD9"}
           strokeOpacity={i < piene ? 1 : 0.85}
           strokeWidth="5"
           strokeLinecap="round"
@@ -136,7 +136,7 @@ function AnelloEsempio({ percentuale = 68 }: { percentuale?: number }) {
         y="62"
         textAnchor="middle"
         style={{ fontSize: "7px", letterSpacing: "1px" }}
-        fill="#31D887"
+        fill="#2AEFA7"
       >
         GIÀ COMPOSTO
       </text>

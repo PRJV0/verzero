@@ -224,7 +224,14 @@ export default function HomePage() {
           narrazione perde l'ancoraggio senza dare alcun errore. Chi
           ritaglia lo fa per conto suo — la filigrana qui sotto e il
           nastro dentro di sé. */}
-      <section className="relative bg-moss py-16 md:py-24">
+      {/* LA FASCIA VA SULLA SALVIA MEDIA, non sul salvia chiarissimo.
+          È il livello intermedio che mancava: fra la carta e il pino
+          profondo c'erano novanta punti di luminosità e nessun gradino,
+          e ogni fascia sbatteva contro la successiva. Qui il gradino
+          c'è, e il pino sopra ci sta a 5,53:1.
+          La parola-Zero resta in menta: su questo fondo fa 3,40:1, che
+          per un corpo da 48 px in su è sopra la soglia. */}
+      <section className="relative bg-sage py-16 md:py-24">
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
           <ZeroWatermark tone="pine" className="-bottom-24 -left-10 text-[26rem]" />
         </div>

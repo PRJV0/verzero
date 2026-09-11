@@ -5,55 +5,69 @@
  * Da qui in poi si usano le utility Tailwind: bg-paper, text-pine, border-line...
  */
 /*
- * ═══ LA PALETTE, RITARATA (variante B) ═══
+ * ═══ LA PALETTE — IL CARATTERE STA NEL VERDE, IL CALORE NEI NEUTRI ═══
  *
- * Il verde istituzionale risultava freddo e formale, e la misura diceva
- * perché: i cinque verdi stavano TUTTI fra 155° e 161° di tinta — pino
- * 157°, menta 161°, menta viva 160° — cioè una famiglia interamente
- * spostata verso il ciano. E fra il pino (luminosità 19%) e il salvia
- * (92%) non c'era niente: ogni passaggio chiaro-scuro era un salto di
- * settantatré punti, ed è la parte di freddezza che non viene dalla
- * tinta ma dallo spigolo fra una fascia e l'altra.
+ * ═══ L'ERRORE PRECEDENTE, E PERCHÉ ═══
+ * Il verde istituzionale sembrava freddo, e la correzione è stata
+ * scaldarlo: la tinta era scesa a 148°, verso il giallo. Sbagliato. Un
+ * verde profondo a 148° con quella saturazione non diventa caldo,
+ * diventa OLIVASTRO — perde il nerbo e sembra impolverato. Il verde
+ * scuro è la voce istituzionale del marchio: non è lì che si mette il
+ * calore.
  *
- * Due mosse, misurate prima di sceglierle:
- *   1. il verde principale scende a 148° — verso il giallo, non verso il
- *      blu — e sale di saturazione da 71% a 76%;
- *   2. entra `--color-sage`, il verde intermedio che mancava: all'80% di
- *      luminosità è un fondo su cui il testo pino sta a 5,60:1, quindi si
- *      può usare per fasce e mezzitoni invece di alternare solo bianco e
- *      verde scuro.
+ * La tesi giusta è un'altra, e divide i compiti:
+ *   · IL CARATTERE sta nel verde profondo — saturo, con nerbo,
+ *     leggermente verso il blu-verde (158°) e mai verso il giallo;
+ *   · IL CALORE viene dai NEUTRI — l'avorio al posto del bianco puro e
+ *     una carta appena calda. È la leva che rende accogliente una pagina
+ *     senza toccare il colore istituzionale;
+ *   · L'ENERGIA è del MENTA, non del verde scuro: la menta viva sale a
+ *     55% di luminosità e 86% di saturazione, e sul pino profondo fa
+ *     9,87:1 — è lei a portare il dinamismo.
  *
- * NON È SOLO ESTETICA. La palette di prima aveva tre casi sotto soglia:
- * il grigio chiaro su carta a 2,47:1, la menta su bianco a 3,39:1 e la
- * parola «Zero» in menta sulla fascia salvia della home a 2,91:1 — sotto
- * il minimo anche per il corpo grande. Sono rientrati tutti e tre.
+ * ═══ IL BIANCO PURO NON ESISTE PIÙ ═══
+ * `--color-white` è ridefinito ad avorio: ogni `bg-white` e `text-white`
+ * del prodotto diventa caldo in un colpo solo, senza riscrivere
+ * centinaia di classi. Il bianco vero resta dove deve restare — la
+ * placca del Sigillo, che su carta stampata è bianca e basta, e lo
+ * dichiara col suo `#FFFFFF` dentro l'SVG.
  *
- * I contrasti si rimisurano con `node scripts/controllo-contrasti.mjs`:
- * un token cambiato a occhio non dà errore da nessuna parte.
+ * ═══ IL VERDE INTERMEDIO ═══
+ * `--color-sage` riempie il vuoto fra il pino (19% di luminosità) e il
+ * salvia (93%): all'80% è un fondo su cui il pino sta a 5,53:1, ed è
+ * quello che toglie lo spigolo alle fasce.
+ *
+ * I contrasti si rimisurano con `node scripts/controllo-contrasti.mjs`,
+ * che gira nel `prebuild`: un token cambiato a occhio non dà errore da
+ * nessuna parte, ed è così che tre casi sotto soglia erano sopravvissuti
+ * per mesi.
  */
 @theme {
-  --color-ink: #18251f;
-  --color-pine: #0c5a30;
-  --color-pine-dark: #094425;
-  --color-moss: #e5f0e8;
-  --color-paper: #f6f7f5;
-  --color-line: #e0e6e1;
-  --color-mint: #10844e;
-  --color-gray-warm: #5e6e63;
-  --color-gray-light: #7b8e81;
+  --color-ink: #15231e;
+  --color-pine: #065b3c;
+  --color-pine-dark: #04432D;
+  --color-moss: #e8f3ee;
+  --color-paper: #f7f6f2;
+  --color-line: #e7e5df;
+  --color-mint: #057f57;
+  --color-gray-warm: #5e6e66;
+  --color-gray-light: #7b8e85;
   --color-amber-soft: #f7ecd9;
   --color-amber-ink: #7a4e0e;
+
+  /* L'avorio al posto del bianco puro: è la leva del calore. */
+  --color-white: #fcfbf8;
 
   /* Il verde intermedio che mancava: fondi e mezzitoni. Sopra ci va il
      testo pino (5,60:1) o l'inchiostro (10,67:1) — NON la menta, che a
      questa luminosità non tiene. */
-  --color-sage: #bddbc7;
+  --color-sage: #bddbcf;
 
   /* Direzione grafica (SPEC §12.W) — due registri: editoriale chiaro e
      scuro istituzionale. Il registro "carta e timbro" (crema/terracotta) è
      stato ritirato: sul sito non esistono più quei token. */
-  --color-mint-bright: #31d887; /* bagliori e segmenti su fondo scuro */
-  --color-pine-deep: #092f1d; /* fondo del registro scuro istituzionale */
+  --color-mint-bright: #2aefa7; /* bagliori e segmenti su fondo scuro */
+  --color-pine-deep: #052e20; /* fondo del registro scuro istituzionale */
 
   /* ---------------------------------------------------------------
    * SISTEMA DI MOVIMENTO (brief §5). Regole, non gusti.

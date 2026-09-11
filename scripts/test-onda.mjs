@@ -142,7 +142,7 @@ const sopraBianco = ([r, g, b], a) => [
    luminose, SCHIARISCONO il fondo — quindi abbassano il contrasto
    esattamente come le scure lo abbassavano sotto un testo scuro. Il
    vincolo si allenta molto (si parte da 15:1), non sparisce. */
-const FONDO_SCURO = [10, 46, 31]; // #092F1D
+const FONDO_SCURO = [10, 46, 31]; // #052E20
 const LUCE = [255, 255, 255]; // le particelle in palette invertita
 const sopraFondo = ([r, g, b], a) => [
   Math.round(FONDO_SCURO[0] + (r - FONDO_SCURO[0]) * a),
