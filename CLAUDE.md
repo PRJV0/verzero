@@ -181,6 +181,31 @@ Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs`.
   l'ultima verifica. Da eseguire ogni pochi mesi e prima di ogni
   revisione dei contenuti normativi — non a ogni build, perché interroga
   un sito terzo. La data dell'ultima verifica sta nel registro.
+- **Gli standard di rendicontazione si VERSIONANO, non si ritirano.** Una
+  norma UNI è in vigore o ritirata; il VSME, gli ESRS e gli standard GHG
+  no: si succedono per **esercizio di rendicontazione**, ed esistono
+  prima di essere in vigore (un atto delegato adottato aspetta lo
+  scrutinio e la Gazzetta). Perciò vivono in un secondo registro,
+  `VERSIONI_STANDARD` in `src/lib/norme.ts`, dove ogni voce dichiara
+  standard, versione, designazione per esteso, stato (`in vigore` /
+  `attesa` / `superata`), **primo esercizio applicabile** e la fonte
+  UFFICIALE — EUR-Lex, la Commissione, EFRAG, mai l'UNI e mai un blog.
+  `versioneApplicabile()` non restituisce MAI una versione in `attesa`:
+  un atto delegato non ancora in Gazzetta non può finire dentro il
+  documento che un cliente porta in banca.
+  Strutture, checklist documentali e requisiti di conformità sono **dati
+  versionati**, non elenchi fissi: un modello in `src/lib/elaborati.ts`
+  dichiara `standard`, `versione` e `daEsercizio`. **Una revisione si
+  AGGIUNGE e non modifica niente** — nuova voce col suo `daEsercizio`, la
+  precedente non si tocca e continua a governare i suoi esercizi. Ogni
+  documento composto porta il timbro `costruitaSu`, e
+  `documentiDaRifare()` dice chi è rimasto indietro, sempre a parità di
+  esercizio: un bilancio 2025 sulla versione 2025 è corretto anche quando
+  esiste quella del 2027.
+  Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-versioni.mjs`,
+  che esegue l'esercizio a tavolino aggiungendo davvero la revisione
+  attesa e verificando che la bozza di un esercizio precedente resti
+  identica carattere per carattere. Dettagli in `docs/motore.md` §8.1.
 - **Fatti con la fonte, o niente fatti.** Ogni affermazione su norme,
   obblighi o numeri di mercato pubblicata sul sito porta il riferimento
   per esteso (numero, data, articolo o paragrafo) e un link alla fonte

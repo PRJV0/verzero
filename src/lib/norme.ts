@@ -281,6 +281,242 @@ export const FAMIGLIE_NORMA: FamigliaNorma[] = [
   },
 ];
 
+/* ================================================================== */
+/* GLI STANDARD DI RENDICONTAZIONE — versionati per esercizio          */
+/* ================================================================== */
+
+/**
+ * ═══ PERCHÉ UN SECONDO REGISTRO, E NON UNA RIGA IN PIÙ NEL PRIMO ═══
+ * `REGISTRO_NORME` sorveglia le DESIGNAZIONI UNI: una norma è in vigore
+ * oppure ritirata, e il controllo si fa su store.uni.com. Gli standard di
+ * rendicontazione funzionano in un altro modo, e trattarli come norme UNI
+ * significherebbe sbagliarli entrambi:
+ *
+ * 1. NON SI RITIRANO, SI SUCCEDONO PER ESERCIZIO. La revisione VSME
+ *    adottata a luglio 2026 si applica agli esercizi dal 2027: il
+ *    bilancio 2025 di un cliente resta costruito sulla versione del
+ *    2025, e resta giusto. «Ritirata» sarebbe falso — quella versione
+ *    continua a governare gli esercizi suoi.
+ * 2. ESISTONO PRIMA DI ESSERE IN VIGORE. Un atto delegato adottato dalla
+ *    Commissione passa dallo scrutinio di Parlamento e Consiglio e entra
+ *    in vigore con la pubblicazione in Gazzetta. Fra l'adozione e
+ *    l'entrata in vigore la versione ESISTE, va registrata — altrimenti
+ *    ci arriva addosso — e NON va usata per costruire niente.
+ * 3. LA FONTE NON È L'UNI. È EUR-Lex, la Commissione, EFRAG: il
+ *    controllo `scripts/controllo-norme.mjs` non può e non deve
+ *    interrogarli.
+ *
+ * ═══ COME SI AGGIUNGE UNA REVISIONE ═══
+ * Si aggiunge una voce. Non si tocca la precedente — che continua a
+ * governare i suoi esercizi — e non si tocca una riga di pipeline. La
+ * prova è in `scripts/test-versioni.mjs`, che aggiunge una revisione
+ * finta e verifica che tutto il resto non si muova.
+ *
+ * ═══ VERIFICATO ═══ 11 settembre 2026, su EUR-Lex e sui documenti
+ * della Commissione linkati in ciascuna voce.
+ */
+export const STANDARD_VERIFICATI_IL = {
+  iso: "2026-09-11",
+  esteso: "11 settembre 2026",
+} as const;
+
+export type StatoVersione =
+  /** Si può usare per costruire documenti dell'esercizio applicabile. */
+  | "in vigore"
+  /**
+   * Adottata o pubblicata ma NON ancora applicabile: registrata perché
+   * esiste e perché arriverà, mai usata per costruire.
+   */
+  | "attesa"
+  /** Sostituita da una versione successiva per gli esercizi futuri. */
+  | "superata";
+
+export type VersioneStandard = {
+  /** La famiglia dello standard: `vsme`, `iso-14064-1`, `pdr-125`… */
+  standard: string;
+  /** L'etichetta della versione, breve e stabile: è la chiave. */
+  versione: string;
+  /** Come si cita dentro il documento consegnato, per esteso. */
+  designazione: string;
+  stato: StatoVersione;
+  /**
+   * Il primo ESERCIZIO DI RENDICONTAZIONE a cui si applica — non l'anno
+   * in cui è stata pubblicata. È la distinzione che tiene in piedi tutto
+   * il meccanismo: un bilancio 2026 elaborato nel 2027 si costruisce
+   * sulla versione dell'esercizio 2026.
+   */
+  daEsercizio: number;
+  /** L'ultimo esercizio a cui si applica, compreso. Assente = fino a oggi. */
+  aEsercizio?: number;
+  /** L'atto che la introduce, per esteso: finisce nel documento. */
+  atto?: string;
+  /** La fonte UFFICIALE: EUR-Lex, Commissione, ente che pubblica. */
+  fonte?: string;
+  /** Perché è in questo stato: si legge nel cruscotto, non si deduce. */
+  nota?: string;
+};
+
+export const VERSIONI_STANDARD: VersioneStandard[] = [
+  /* ══ VSME — lo standard volontario per le PMI ═══════════════════ */
+  {
+    standard: "vsme",
+    versione: "efrag-2024",
+    designazione: "VSME — EFRAG Voluntary Standard, dicembre 2024",
+    stato: "superata",
+    daEsercizio: 2024,
+    aEsercizio: 2024,
+    atto: "Parere finale EFRAG del 17 dicembre 2024",
+    fonte:
+      "https://www.efrag.org/en/projects/voluntary-reporting-standard-for-smes-vsme/concluded",
+    nota: "La versione consegnata da EFRAG alla Commissione, prima che un atto europeo la facesse propria.",
+  },
+  {
+    standard: "vsme",
+    versione: "reco-2025",
+    designazione:
+      "VSME — Allegato I della Raccomandazione (UE) 2025/1710 della Commissione, del 30 luglio 2025",
+    stato: "in vigore",
+    daEsercizio: 2025,
+    atto: "Raccomandazione (UE) 2025/1710 del 30 luglio 2025",
+    fonte: "https://eur-lex.europa.eu/eli/reco/2025/1710/oj/eng",
+    nota: "È la versione su cui si costruiscono oggi i bilanci VSME.",
+  },
+  {
+    standard: "vsme",
+    versione: "atto-delegato-2026",
+    designazione:
+      "Standard volontario per il tetto della catena del valore — atto delegato C(2026) 5011 final del 3 luglio 2026",
+    stato: "attesa",
+    daEsercizio: 2027,
+    atto: "Atto delegato C(2026) 5011 final, adottato il 3 luglio 2026",
+    fonte:
+      "https://ec.europa.eu/finance/docs/level-2-measures/csrd-delegated-act-2026-5011_en.pdf",
+    nota:
+      "Adottato dalla Commissione il 3 luglio 2026 e trasmesso a Parlamento e Consiglio per lo scrutinio (due mesi, prorogabili di altri due): entra in vigore con la pubblicazione in Gazzetta ufficiale. Si applicherà agli esercizi che iniziano dal 1° gennaio 2027, con adozione anticipata ammessa per l'esercizio 2026 una volta entrato in vigore. Alla verifica dell'11 settembre 2026 la pubblicazione in Gazzetta non risultava avvenuta: la voce è registrata perché ESISTE, non perché sia utilizzabile.",
+  },
+
+  /* ══ Inventario GHG ═════════════════════════════════════════════ */
+  {
+    standard: "iso-14064-1",
+    versione: "2019",
+    designazione: "UNI EN ISO 14064-1:2019",
+    stato: "in vigore",
+    daEsercizio: 2019,
+    fonte: "https://store.uni.com/uni-en-iso-14064-1-2019",
+  },
+
+  /* ══ Parità di genere ═══════════════════════════════════════════ */
+  {
+    standard: "pdr-125",
+    versione: "2022",
+    designazione: "UNI/PdR 125:2022",
+    stato: "in vigore",
+    daEsercizio: 2022,
+    fonte: "https://store.uni.com/uni-pdr-125-2022",
+  },
+];
+
+/* ── Le domande che si fanno al registro ───────────────────────────── */
+
+/**
+ * La versione da usare per costruire il documento di UN esercizio.
+ *
+ * Sceglie fra le versioni `in vigore` o `superata` — una versione
+ * superata resta quella giusta per i suoi esercizi — e non restituisce
+ * MAI una versione in `attesa`: un atto delegato adottato e non ancora
+ * in Gazzetta non può finire dentro il documento che un cliente porta in
+ * banca. Se più versioni coprono lo stesso esercizio vince la più
+ * recente, che è il caso di un'entrata in vigore anticipata.
+ */
+export function versioneApplicabile(
+  standard: string,
+  esercizio: number,
+): VersioneStandard | undefined {
+  return VERSIONI_STANDARD.filter(
+    (v) =>
+      v.standard === standard &&
+      v.stato !== "attesa" &&
+      esercizio >= v.daEsercizio &&
+      (v.aEsercizio === undefined || esercizio <= v.aEsercizio),
+  ).sort((a, b) => b.daEsercizio - a.daEsercizio)[0];
+}
+
+/** Tutte le versioni di uno standard, dalla più vecchia alla più nuova. */
+export function versioniDi(standard: string): VersioneStandard[] {
+  return VERSIONI_STANDARD.filter((v) => v.standard === standard).sort(
+    (a, b) => a.daEsercizio - b.daEsercizio,
+  );
+}
+
+export function versioneStandard(
+  standard: string,
+  versione: string,
+): VersioneStandard | undefined {
+  return VERSIONI_STANDARD.find(
+    (v) => v.standard === standard && v.versione === versione,
+  );
+}
+
+export type EsitoVersione = {
+  /** La versione su cui il documento È stato costruito. */
+  costruitoSu: VersioneStandard | undefined;
+  /** Quella che si userebbe oggi per lo stesso esercizio. */
+  applicabile: VersioneStandard | undefined;
+  superata: boolean;
+  /** Che cosa dire al cliente. Vuoto quando non c'è niente da dire. */
+  messaggio?: string;
+};
+
+/**
+ * IL DOCUMENTO DI UN CLIENTE È COSTRUITO SU UNA VERSIONE SUPERATA?
+ *
+ * La domanda si fa sempre a parità di ESERCIZIO: un bilancio 2025
+ * costruito sulla versione del 2025 è corretto anche quando esiste una
+ * versione del 2027, e dirgli il contrario sarebbe mandare un cliente a
+ * rifare un documento giusto. Superato significa una cosa sola: per
+ * QUELL'esercizio, oggi, useremmo un'altra versione.
+ */
+export function statoVersioneDocumento(
+  standard: string,
+  versioneUsata: string | undefined,
+  esercizio: number,
+): EsitoVersione {
+  const applicabile = versioneApplicabile(standard, esercizio);
+  const costruitoSu = versioneUsata
+    ? versioneStandard(standard, versioneUsata)
+    : undefined;
+
+  // Un documento che non dichiara la versione è il caso peggiore, ed è
+  // anche quello dei documenti costruiti prima che questo registro
+  // esistesse: non si può dire se è allineato, e lo si dice.
+  if (!versioneUsata) {
+    return {
+      costruitoSu: undefined,
+      applicabile,
+      superata: false,
+      messaggio:
+        "Questo documento non dichiara su quale versione dello standard è stato costruito: per saperlo va ricomposto.",
+    };
+  }
+  if (!costruitoSu) {
+    return {
+      costruitoSu: undefined,
+      applicabile,
+      superata: true,
+      messaggio: `Questo documento dichiara una versione («${versioneUsata}») che non è nel registro: va ricomposto sulla versione applicabile all'esercizio ${esercizio}.`,
+    };
+  }
+  if (!applicabile || applicabile.versione === costruitoSu.versione) {
+    return { costruitoSu, applicabile, superata: false };
+  }
+  return {
+    costruitoSu,
+    applicabile,
+    superata: true,
+    messaggio: `Costruito su ${costruitoSu.designazione}. Per l'esercizio ${esercizio} oggi si applica ${applicabile.designazione}: il documento va rifatto su quella.`,
+  };
+}
+
 /* ------------------------------------------------------------------ */
 /* Le norme come CHIAVE DI COLLEGAMENTO                                */
 /* ------------------------------------------------------------------ */

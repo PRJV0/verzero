@@ -837,6 +837,69 @@ versioni precedenti restano: un documento consegnato non si cancella.
 È il meccanismo che rende vera la promessa «i documenti non invecchiano nel
 cassetto», e che alimenta il mantenimento del percorso di aggiornamento.
 
+### 8.1 Le versioni degli STANDARD (non delle norme)
+
+Una norma UNI è in vigore o è ritirata, e il registro `REGISTRO_NORME` la
+sorveglia così. Uno **standard di rendicontazione** — VSME, ESRS, gli
+standard GHG — non funziona in quel modo, e trattarlo come una norma UNI
+significa sbagliarli entrambi:
+
+1. **Non si ritirano, si succedono per esercizio.** La revisione VSME
+   adottata a luglio 2026 governerà gli esercizi dal 2027; il bilancio 2025
+   di un cliente resta costruito sulla versione del 2025 **ed è giusto
+   così**. Mandare quel cliente a rifare un documento corretto è un danno,
+   non una premura.
+2. **Esistono prima di essere in vigore.** Un atto delegato adottato dalla
+   Commissione passa dallo scrutinio di Parlamento e Consiglio e entra in
+   vigore con la pubblicazione in Gazzetta. In mezzo la versione **esiste**
+   — va registrata, altrimenti ci arriva addosso — e **non va usata**.
+3. **La fonte non è l'UNI**: è EUR-Lex, la Commissione, EFRAG.
+
+Perciò `src/lib/norme.ts` porta un secondo registro, `VERSIONI_STANDARD`,
+dove ogni voce dichiara standard, versione, designazione per esteso,
+stato (`in vigore` / `attesa` / `superata`), **primo esercizio
+applicabile** e la fonte ufficiale. `versioneApplicabile()` non
+restituisce MAI una versione in attesa.
+
+**Struttura, checklist e requisiti sono dati versionati.** Un modello di
+`src/lib/elaborati.ts` dichiara `standard`, `versione` e il proprio
+`daEsercizio`. Fra le versioni di una chiave vince quella col
+`daEsercizio` più alto che non superi l'esercizio chiesto; una voce senza
+`daEsercizio` vale «da sempre» e perde contro qualunque voce datata.
+
+La conseguenza è il punto di tutto:
+
+> **Una revisione si aggiunge. Non si modifica niente.**
+> Si aggiunge una voce al registro delle versioni e una voce ai modelli,
+> con il suo `daEsercizio`. La versione precedente non si tocca — non le
+> si scrive nemmeno un `aEsercizio` — e smette da sola di essere scelta
+> dall'esercizio nuovo in poi, continuando a governare i suoi. Nessuna
+> riga di pipeline cambia.
+
+**Il timbro.** Ogni documento composto porta `costruitaSu`: standard,
+versione, designazione per esteso ed esercizio. La designazione si legge
+dal registro e non si ricopia nel modello, altrimenti alla prima
+correzione di un riferimento avremmo due documenti che citano lo stesso
+standard con due nomi diversi — incoerenza che si vede solo in audit.
+
+**Chi sta indietro.** `documentiDaRifare()` risponde alla domanda «quali
+documenti di questo cliente sono costruiti su una versione superata?»
+**sempre a parità di esercizio**. Oggi si calcola dai dati vivi, perché
+finché un elaborato non è consegnato viene ricomposto ogni volta: non c'è
+nessun timbro d'archivio che possa restare indietro rispetto alla realtà.
+Quando esisterà la consegna — un documento congelato, con la sua data —
+quel documento porterà il suo timbro e la domanda si farà su quello.
+Un documento che non dichiara la versione **non viene dato per superato**:
+si dice che non si sa, ed è il caso di tutti quelli composti prima che
+questo registro esistesse.
+
+**La prova**: `node --import ./scripts/risolutore-ts.mjs
+scripts/test-versioni.mjs` esegue l'esercizio a tavolino sulla revisione
+VSME attesa — la aggiunge davvero, verifica che l'esercizio 2027 la prenda,
+che il 2026 non la prenda, che la checklist documentale del 2027 chieda un
+documento in più, e che **la bozza dell'esercizio 2025 resti identica
+carattere per carattere**.
+
 ---
 
 ## 9. Le scelte sul modello e sulla chiamata

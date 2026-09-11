@@ -27,7 +27,15 @@
  * esteso. Si sciolgono al momento della composizione: un modello non
  * conosce l'anno del cliente, e scriverlo dentro il dato lo renderebbe
  * vero per un anno solo.
+ *
+ * ═══ LE VERSIONI ═══
+ * Una struttura non è «quella del VSME»: è quella del VSME in una certa
+ * versione, applicabile a certi esercizi. Perché e come, in
+ * `modelloElaborato` più sotto e nel registro `VERSIONI_STANDARD`
+ * (`src/lib/norme.ts`).
  */
+
+import { statoVersioneDocumento } from "@/lib/norme";
 
 export type StatoModello = "impostata" | "in-attesa";
 
@@ -86,6 +94,28 @@ export type ModelloElaborato = {
    * qualcuno se ne accorga.
    */
   norme?: string[];
+
+  /* ── La versione dello standard ─────────────────────────────────── */
+  /**
+   * La famiglia di standard che governa QUESTA struttura, come chiave di
+   * `VERSIONI_STANDARD` (`src/lib/norme.ts`).
+   *
+   * Dichiararla è ciò che rende il modello versionato: da qui in poi
+   * struttura, checklist documentale e requisiti di conformità non sono
+   * più «quelli del VSME», sono quelli del VSME **in una certa
+   * versione**, e il documento generato lo registra.
+   */
+  standard?: string;
+  /** La versione di quello standard su cui questa struttura è costruita. */
+  versione?: string;
+  /**
+   * Il primo esercizio di rendicontazione a cui questa struttura si
+   * applica. Assente = da sempre, cioè da prima che ci fossero versioni.
+   */
+  daEsercizio?: number;
+  /** L'ultimo esercizio, compreso. Assente = fino a oggi. */
+  aEsercizio?: number;
+
   sezioni: SezioneModello[];
   daFornire: VoceModello[];
   /** Quando il fascicolo è vuoto di proposito: da dove si compone. */
@@ -112,6 +142,8 @@ export const MODELLI_ELABORATO: ModelloElaborato[] = [
     intestazione: "Inventario GHG",
     conAnno: true,
     norme: ["UNI EN ISO 14064-1:2019"],
+    standard: "iso-14064-1",
+    versione: "2019",
     sezioni: [
       { titolo: "Anagrafica e identificazione dell'organizzazione", binding: "anagrafica", obbligatoria: true },
       { titolo: "Perimetro organizzativo e periodo di rendicontazione", binding: "perimetro", obbligatoria: true },
@@ -187,6 +219,13 @@ export const MODELLI_ELABORATO: ModelloElaborato[] = [
     chiave: "bilancio-vsme",
     ambito: "sostenibilita",
     documento: DOC_VSME,
+    // La struttura del bilancio VSME è quella della Raccomandazione (UE)
+    // 2025/1710. `daEsercizio` resta ASSENTE di proposito — «da sempre,
+    // finché non arriva qualcosa dopo»: una revisione si aggiunge come
+    // voce nuova con il SUO `daEsercizio`, e da quel momento questa
+    // governa gli esercizi precedenti senza che nessuno la modifichi.
+    standard: "vsme",
+    versione: "reco-2025",
     intestazione: "Bilancio di Sostenibilità (VSME)",
     conAnno: true,
     sezioni: [
@@ -321,6 +360,8 @@ export const MODELLI_ELABORATO: ModelloElaborato[] = [
     intestazione: "Sistema di Gestione della Parità",
     conAnno: true,
     norme: ["UNI/PdR 125:2022"],
+    standard: "pdr-125",
+    versione: "2022",
     sezioni: [
       { titolo: "Anagrafica e identificazione dell'organizzazione", binding: "anagrafica", obbligatoria: true },
       {
@@ -469,19 +510,81 @@ const TUTTI = [
   modelloManualeIso("ISO 45001", "UNI EN ISO 45001:2023+A1:2024"),
 ];
 
-const PER_CHIAVE = new Map(TUTTI.map((m) => [m.chiave, m]));
-
-export function modelloElaborato(chiave: string): ModelloElaborato | undefined {
-  return PER_CHIAVE.get(chiave);
+/**
+ * Le versioni di ciascun modello, dalla più recente alla più vecchia.
+ *
+ * Una chiave può avere PIÙ voci: sono le versioni della stessa struttura,
+ * ciascuna col suo primo esercizio applicabile. Oggi ne ha più di una
+ * nessuno — ed è giusto così: il meccanismo esiste perché il giorno in
+ * cui serve non sia una riscrittura.
+ */
+const PER_CHIAVE = new Map<string, ModelloElaborato[]>();
+for (const m of TUTTI) {
+  const elenco = PER_CHIAVE.get(m.chiave) ?? [];
+  elenco.push(m);
+  PER_CHIAVE.set(m.chiave, elenco);
+}
+for (const elenco of PER_CHIAVE.values()) {
+  elenco.sort((a, b) => (b.daEsercizio ?? -Infinity) - (a.daEsercizio ?? -Infinity));
 }
 
+/**
+ * Il modello da usare per costruire il documento di UN esercizio.
+ *
+ * ═══ LA REGOLA, E PERCHÉ UNA REVISIONE NON TOCCA NIENTE ═══
+ * Fra le versioni di una chiave vince quella col `daEsercizio` più alto
+ * che non superi l'esercizio chiesto. Una versione senza `daEsercizio`
+ * vale «da sempre», quindi perde contro qualunque versione datata e
+ * vince quando non ce ne sono.
+ *
+ * La conseguenza è il punto di tutto il meccanismo: per far entrare in
+ * vigore una revisione dal 2027 si AGGIUNGE una voce con
+ * `daEsercizio: 2027`. La voce precedente non si tocca — non le si
+ * scrive nemmeno un `aEsercizio` — e da sola smette di essere scelta dal
+ * 2027 in poi, continuando a governare gli esercizi che erano suoi.
+ * Nessuna riga di pipeline cambia.
+ *
+ * Senza esercizio si ottiene la versione più recente: è quello che serve
+ * a chi elenca i documenti prodotti o compone una vetrina, dove l'anno
+ * del cliente non c'è.
+ */
+export function modelloElaborato(
+  chiave: string,
+  esercizio?: number,
+): ModelloElaborato | undefined {
+  const versioni = PER_CHIAVE.get(chiave);
+  if (!versioni || versioni.length === 0) return undefined;
+  if (esercizio === undefined) return versioni[0];
+  return (
+    versioni.find((m) => (m.daEsercizio ?? -Infinity) <= esercizio) ??
+    // Più vecchio della prima versione datata: si usa comunque la più
+    // antica che abbiamo, e il timbro di versione dirà quale — meglio un
+    // documento che dichiara una versione discutibile di un documento che
+    // non si lascia comporre.
+    versioni[versioni.length - 1]
+  );
+}
+
+/** Tutte le versioni di un modello: serve al cruscotto e alle prove. */
+export function versioniModello(chiave: string): ModelloElaborato[] {
+  return [...(PER_CHIAVE.get(chiave) ?? [])];
+}
+
+/**
+ * I modelli, UNO PER CHIAVE: la versione più recente di ciascuno.
+ *
+ * Chi elenca i documenti che sappiamo produrre vuole sapere quanti sono,
+ * non quante revisioni ha attraversato ciascuno. Contarli con le versioni
+ * dentro farebbe crescere il catalogo a ogni revisione di uno standard,
+ * che è l'opposto di quello che succede davvero.
+ */
 export function tuttiIModelli(): ModelloElaborato[] {
-  return TUTTI;
+  return [...PER_CHIAVE.values()].map((v) => v[0]);
 }
 
 /** I modelli di un ambito: serve al cruscotto e alla prova di estendibilità. */
 export function modelliDiAmbito(ambito: string): ModelloElaborato[] {
-  return TUTTI.filter((m) => m.ambito === ambito);
+  return tuttiIModelli().filter((m) => m.ambito === ambito);
 }
 
 /* ================================================================== */
@@ -517,6 +620,14 @@ export function controllaConformita(
     normeRitirate?: string[];
     /** I valori numerici senza fonte tracciata o non confermati. */
     valoriSenzaFonte?: string[];
+    /**
+     * L'esercizio di rendicontazione del documento. Quando c'è, il
+     * controllo verifica anche che la struttura usata sia quella
+     * applicabile a QUELL'esercizio: una revisione entrata in vigore
+     * mentre il documento era in lavorazione non deve poter passare in
+     * silenzio, ed è esattamente il caso che nessuno si accorge di avere.
+     */
+    esercizio?: number;
   },
 ): EsitoConformita {
   const opzioni = new Set(stato.opzioni ?? []);
@@ -546,6 +657,19 @@ export function controllaConformita(
     mancanze.push(
       `Il valore «${v}» non ha una fonte tracciata e confermata: non può entrare in un documento consegnato.`,
     );
+  }
+
+  // La versione dello standard, quando il modello ne dichiara una. Il
+  // controllo resta ignaro dei domini: non sa che cosa sia il VSME, sa
+  // che un modello dichiara standard e versione e che il registro dice
+  // quale versione vale per quell'esercizio.
+  if (modello.standard && stato.esercizio !== undefined) {
+    const esito = statoVersioneDocumento(
+      modello.standard,
+      modello.versione,
+      stato.esercizio,
+    );
+    if (esito.superata && esito.messaggio) mancanze.push(esito.messaggio);
   }
 
   return { conforme: mancanze.length === 0, mancanze };

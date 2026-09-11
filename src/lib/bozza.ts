@@ -4,6 +4,7 @@ import {
   modelloElaborato,
   type ModelloElaborato,
 } from "@/lib/elaborati";
+import { statoVersioneDocumento, versioneStandard } from "@/lib/norme";
 import {
   annoElaborazione,
   annoRendicontazioneDefault,
@@ -80,6 +81,26 @@ export type VoceDaFornire = {
   destinazioni?: string[];
 };
 
+/**
+ * IL TIMBRO DI VERSIONE — su quale versione dello standard è costruito
+ * questo documento.
+ *
+ * Non è metadato d'archivio: è la riga che permette, fra due anni, di
+ * rispondere alla domanda «quali documenti dei miei clienti sono
+ * costruiti su una versione superata?» senza riaprirli uno per uno. Un
+ * documento che non la porta non è sbagliato — è solo un documento a cui
+ * quella domanda non si può fare, ed è il caso di tutti quelli composti
+ * prima che il registro delle versioni esistesse.
+ */
+export type TimbroVersione = {
+  standard: string;
+  versione: string;
+  /** Come si cita, per esteso: è questa che finisce nel documento. */
+  designazione: string;
+  /** L'esercizio di rendicontazione a cui il documento si riferisce. */
+  esercizio: number;
+};
+
 export type Bozza = {
   /** Intestazione del foglio: "Bozza · Inventario GHG 2026". */
   intestazione: string;
@@ -87,6 +108,12 @@ export type Bozza = {
   daFornire: VoceDaFornire[];
   /** Quando il fascicolo è vuoto di proposito: da dove si compone. */
   zeroDocumenti?: string;
+  /**
+   * Su che cosa è costruito. Assente per i percorsi che un modello non
+   * ce l'hanno ancora: lì non c'è nessuna versione da dichiarare, e
+   * dichiararne una sarebbe inventarla.
+   */
+  costruitaSu?: TimbroVersione;
 };
 
 type DatiOrg = {
@@ -444,6 +471,7 @@ export function bozzaDaModello(
   const anno = annoDi(org);
   const attive = new Set(opzioni);
   const vale = (soloSe?: string) => !soloSe || attive.has(soloSe);
+  const timbro = timbroDi(modello, anno);
 
   const sezioni = modello.sezioni.filter((s) => vale(s.soloSe)).map((s): SezioneBozza => {
     if (s.binding) {
@@ -478,6 +506,30 @@ export function bozzaDaModello(
         ...(v.destinazioni ? { destinazioni: v.destinazioni } : {}),
       })),
     ...(modello.zeroDocumenti ? { zeroDocumenti: modello.zeroDocumenti } : {}),
+    ...(timbro ? { costruitaSu: timbro } : {}),
+  };
+}
+
+/**
+ * Il timbro di versione di un modello per un esercizio.
+ *
+ * La designazione si legge dal registro e non dal modello: il modello
+ * dice QUALE versione, il registro dice come si chiama per esteso. Se le
+ * scrivessimo in due posti, alla prima correzione di un riferimento
+ * normativo avremmo due documenti che citano lo stesso standard con due
+ * nomi diversi — ed è il genere di incoerenza che si vede solo in audit.
+ */
+function timbroDi(
+  modello: ModelloElaborato,
+  esercizio: number,
+): TimbroVersione | undefined {
+  if (!modello.standard || !modello.versione) return undefined;
+  const v = versioneStandard(modello.standard, modello.versione);
+  return {
+    standard: modello.standard,
+    versione: modello.versione,
+    designazione: v?.designazione ?? modello.versione,
+    esercizio,
   };
 }
 
@@ -518,7 +570,11 @@ export function bozzaPercorso(
 ): Bozza {
   const voci = MODELLO_PER_PERCORSO[slug];
   const prima = voci?.[0];
-  const modello = prima ? modelloElaborato(prima.modello) : undefined;
+  // Il modello si sceglie PER ESERCIZIO: è qui che una revisione di
+  // standard entra in vigore da sola, senza che nessuno la chiami.
+  const modello = prima
+    ? modelloElaborato(prima.modello, annoDi(org))
+    : undefined;
   return modello
     ? bozzaDaModello(modello, org, campi, prima?.opzioni)
     : bozzaDaCatalogo(org, slug, campi);
@@ -568,7 +624,7 @@ export function componentiPercorso(
   }
 
   return voci.flatMap((v) => {
-    const modello = modelloElaborato(v.modello);
+    const modello = modelloElaborato(v.modello, annoDi(org));
     if (!modello) return [];
     const bundle = voci.length > 1;
     return [
@@ -700,3 +756,89 @@ export type DatiLetti = Record<
     confermati: number;
   }
 >;
+
+/* ------------------------------------------------------------------ */
+/* Chi sta su una versione superata                                    */
+/* ------------------------------------------------------------------ */
+
+export type VersioneDocumento = {
+  /** Il percorso attivo che lo produce. */
+  percorso: string;
+  /** L'etichetta del documento: «Bilancio VSME». */
+  documento: string;
+  esercizio: number;
+  /** Il timbro: su che cosa il documento è costruito. */
+  costruitoSu?: TimbroVersione;
+  superata: boolean;
+  /** Che cosa dire, quando c'è qualcosa da dire. */
+  messaggio?: string;
+};
+
+/**
+ * QUALI DOCUMENTI DI UN CLIENTE STANNO SU UNA VERSIONE SUPERATA.
+ *
+ * ═══ SI CALCOLA, NON SI ARCHIVIA ═══
+ * La risposta viene dai dati vivi — i percorsi attivi e l'esercizio di
+ * rendicontazione dell'impresa — perché finché un elaborato non viene
+ * consegnato non esiste da nessuna parte se non ricomposto ogni volta.
+ * È un vantaggio, non un ripiego: non c'è nessun timbro d'archivio che
+ * possa restare indietro rispetto alla realtà.
+ *
+ * Il giorno in cui esisterà la consegna — un documento congelato, con la
+ * sua data, che il cliente ha portato in banca — quel documento porterà
+ * il suo `TimbroVersione` e la domanda si farà a `statoVersioneDocumento`
+ * con la versione scritta lì dentro invece che con quella corrente.
+ * Quella è la sola parte che manca, ed è una colonna: non si aggiunge
+ * adesso perché la consegna non c'è, e una colonna che nessuno scrive è
+ * una colonna che a nessuno risulta vuota.
+ *
+ * ═══ SEMPRE A PARITÀ DI ESERCIZIO ═══
+ * Un bilancio 2025 costruito sulla versione del 2025 è corretto anche
+ * quando esiste una versione del 2027. Mandare un cliente a rifare un
+ * documento giusto è un danno, non una premura.
+ */
+export function versioniDeiDocumenti(
+  percorsiAttivi: string[],
+  org: DatiOrg,
+): VersioneDocumento[] {
+  const esercizio = annoDi(org);
+  return percorsiAttivi.flatMap((slug) =>
+    (MODELLO_PER_PERCORSO[slug] ?? []).flatMap((v) => {
+      const modello = modelloElaborato(v.modello, esercizio);
+      if (!modello?.standard) return [];
+      const esito = statoVersioneDocumento(
+        modello.standard,
+        modello.versione,
+        esercizio,
+      );
+      return [
+        {
+          percorso: slug,
+          documento: modello.documento,
+          esercizio,
+          ...(modello.versione
+            ? {
+                costruitoSu: {
+                  standard: modello.standard,
+                  versione: modello.versione,
+                  designazione:
+                    esito.costruitoSu?.designazione ?? modello.versione,
+                  esercizio,
+                },
+              }
+            : {}),
+          superata: esito.superata,
+          ...(esito.messaggio ? { messaggio: esito.messaggio } : {}),
+        },
+      ];
+    }),
+  );
+}
+
+/** Solo quelli da rifare: è la domanda che si fa davvero. */
+export function documentiDaRifare(
+  percorsiAttivi: string[],
+  org: DatiOrg,
+): VersioneDocumento[] {
+  return versioniDeiDocumenti(percorsiAttivi, org).filter((d) => d.superata);
+}

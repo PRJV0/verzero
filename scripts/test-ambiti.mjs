@@ -303,7 +303,16 @@ verifica(
 /* ================================================================== */
 console.log("\n— la PIPELINE DI ESTRAZIONE lo legge senza saperlo —\n");
 
-const cella = (colonna, valore) => ({ colonna, valore: String(valore) });
+// Da quando la verificabilità sta nella CELLA (docs/motore.md §4), una
+// cella porta la SUA confidenza, la SUA citazione e la SUA fonte di
+// lettura: lo schema le pretende, e una risposta senza non è valida.
+const cella = (colonna, valore) => ({
+  colonna,
+  valore: String(valore),
+  confidenza: 0.9,
+  estrattoDa: String(valore),
+  fonteLettura: "testo",
+});
 const riga231 = (celle, extra = {}) => ({
   celle,
   confidenza: 0.9,
