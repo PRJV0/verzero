@@ -60,6 +60,8 @@ import {
   indizioMancante,
   normalizzaCampi,
   normalizzaRighe,
+  notaCalcolata,
+  notaCompletamento,
   verificaBollettaElettrica,
 } from "../src/lib/motore/plausibilita.ts";
 import {
@@ -71,7 +73,14 @@ import {
   COLONNE_FORMAZIONE,
   COLONNE_ORGANICO,
 } from "../src/lib/motore/schemi.ts";
-import { formattaValore, raggruppaLetture, livelloConfidenza } from "../src/lib/motore/portale.ts";
+import {
+  cellaCalcolata,
+  formattaValore,
+  livelloConfidenza,
+  raggruppaLetture,
+  riassumiRiga,
+  statoCella,
+} from "../src/lib/motore/portale.ts";
 import { naturaPdf, testoDelPdf } from "../src/lib/motore/pdf.ts";
 import {
   CATEGORIE_PARTICOLARI,
@@ -857,15 +866,27 @@ verifica(
 console.log("\n— le tabelle: N righe, non un campo ripetuto —\n");
 
 const VOCE_FORMAZIONE = voceMotore("formazione");
-const cella = (colonna, valore) => ({ colonna, valore: String(valore) });
+/**
+ * Una cella come la restituisce il modello: porta la SUA verificabilità.
+ * `da` è la citazione della cella; senza, si ripiega su quella di riga —
+ * ed è il caso dei documenti letti prima di questo schema.
+ */
+const cella = (colonna, valore, da = "", extra = {}) => ({
+  colonna,
+  valore: String(valore),
+  confidenza: 0.9,
+  estrattoDa: da,
+  fonteLettura: "testo",
+  ...extra,
+});
 const rigaCorso = (sovrascrivi = {}) => ({
   celle: [
-    cella("corso", "Sicurezza generale"),
-    cella("data", "2025-03-12"),
-    cella("oreTotali", "4"),
-    cella("partecipanti", "8"),
-    cella("partecipantiDonne", "3"),
-    cella("ambito", "sicurezza"),
+    cella("corso", "Sicurezza generale", "Sicurezza generale"),
+    cella("data", "2025-03-12", "12/03/2025"),
+    cella("oreTotali", "4", "4h"),
+    cella("partecipanti", "8", "8 partecipanti"),
+    cella("partecipantiDonne", "3", "di cui donne 3"),
+    cella("ambito", "sicurezza", "Sicurezza generale"),
   ],
   confidenza: 0.9,
   pagina: 1,
@@ -1125,7 +1146,12 @@ verifica(
 );
 verifica(
   "le istruzioni di una tabella parlano di righe, non di campi",
-  testoIstruzioni.includes("TABELLA") && testoIstruzioni.includes("CONFIDENZA PER RIGA"),
+  testoIstruzioni.includes("TABELLA") && testoIstruzioni.includes("righe"),
+);
+verifica(
+  "★ e chiedono la confidenza della CELLA, non solo quella della riga",
+  testoIstruzioni.includes("CONFIDENZA PER CELLA") &&
+    testoIstruzioni.includes("cella peggiore"),
 );
 verifica(
   "quelle di una scheda parlano di campi",
@@ -2114,6 +2140,347 @@ const righeVuote = normalizzaRighe([rigaFoglio([["docente", ""]], "")], COLONNE_
 verifica(
   "una riga senza nessun valore resta scartata come prima",
   righeVuote.length === 0,
+);
+
+/* ══════════════════════════════════════════════════════════════════
+   LA CONFIDENZA PER CELLA — il limite dichiarato nell'ultimo collaudo.
+   ══════════════════════════════════════════════════════════════════ */
+
+console.log("\n— LA VERIFICABILITÀ SCENDE NELLA CELLA —");
+
+const rigaReg = (celle, estrattoDaRiga, extra = {}) => ({
+  celle,
+  confidenza: 0.85,
+  pagina: 1,
+  estrattoDa: estrattoDaRiga,
+  fonteLettura: "manoscritto",
+  nota: "",
+  ...extra,
+});
+
+// Il caso esatto del collaudo: la citazione di RIGA contiene un «4»
+// (da «4 righe firmate»), quindi il presidio sui calcolati non scattava.
+const CITAZIONE_RIGA = "8/09/26 Ing. M.Fittipaldi ANDREA FIORI Ingresso 9:00 Uscita 13:00 — 4 righe compilate con firma";
+
+const conCitazioneDiRiga = normalizzaRighe(
+  [rigaReg([
+    { colonna: "data", valore: "2026-09-08" },
+    { colonna: "oreTotali", valore: "4" },
+    { colonna: "partecipanti", valore: "4" },
+  ], CITAZIONE_RIGA)],
+  COLONNE_FORMAZIONE, "faticosa",
+);
+const oreRiga = conCitazioneDiRiga[0].celle.find((c) => c.chiave === "oreTotali");
+verifica(
+  "con la sola citazione di riga le ore NON risultano calcolate — è il limite di prima",
+  oreRiga.valore === "4" && oreRiga.calcolato === false,
+  `calcolato=${oreRiga.calcolato}`,
+);
+verifica(
+  "e il cliente almeno legge che la provenienza è di tutta la riga",
+  oreRiga.avvisi.some((a) => /provenienza è di tutta la riga/i.test(a)),
+);
+
+// Con la citazione DELLA CELLA il presidio torna onesto.
+const conCitazioneDiCella = normalizzaRighe(
+  [rigaReg([
+    { colonna: "data", valore: "2026-09-08", estrattoDa: "8/09/26", confidenza: 0.8, fonteLettura: "manoscritto" },
+    { colonna: "oreTotali", valore: "4", estrattoDa: "Ingresso 9:00 Uscita 13:00", confidenza: 0.9, fonteLettura: "manoscritto" },
+    { colonna: "partecipanti", valore: "4", estrattoDa: "quattro righe firmate", confidenza: 0.9, fonteLettura: "manoscritto" },
+  ], CITAZIONE_RIGA)],
+  COLONNE_FORMAZIONE, "faticosa",
+);
+const celleC = Object.fromEntries(conCitazioneDiCella[0].celle.map((c) => [c.chiave, c]));
+verifica(
+  "★ con la citazione per cella le ore risultano CALCOLATE",
+  celleC.oreTotali.valore === "4" && celleC.oreTotali.calcolato === true,
+  `calcolato=${celleC.oreTotali.calcolato}`,
+);
+verifica(
+  "★ e anche i partecipanti contati dalle firme",
+  celleC.partecipanti.calcolato === true,
+);
+verifica(
+  "una cella calcolata non supera il tetto dei calcolati",
+  celleC.oreTotali.confidenza <= TETTO_CALCOLATO,
+  `confidenza ${celleC.oreTotali.confidenza}`,
+);
+verifica(
+  "★ la data letta per intero dalla SUA cella si tiene",
+  celleC.data.valore === "2026-09-08",
+);
+verifica(
+  "e porta la propria citazione, non quella della riga",
+  celleC.data.estrattoDa === "8/09/26",
+  celleC.data.estrattoDa,
+);
+
+// Il presidio sulle date, per cella: giorno illeggibile in quella cella.
+const dataIlleggibile = normalizzaRighe(
+  [rigaReg([
+    { colonna: "data", valore: "2026-09-08", estrattoDa: "/9/26", confidenza: 0.6, fonteLettura: "manoscritto" },
+    { colonna: "partecipanti", valore: "1", estrattoDa: "una firma", confidenza: 0.9, fonteLettura: "manoscritto" },
+  ], CITAZIONE_RIGA)],
+  COLONNE_FORMAZIONE, "faticosa",
+);
+const dIll = Object.fromEntries(dataIlleggibile[0].celle.map((c) => [c.chiave, c]));
+verifica(
+  "★ la data col giorno illeggibile si azzera anche se la RIGA la conterrebbe",
+  dIll.data.valore === null && dIll.data.confidenza === 0,
+);
+verifica(
+  "e le altre celle della stessa riga restano intatte",
+  dIll.partecipanti.valore === "1",
+);
+
+// La guardia sul genere, per cella.
+const genereDedotto = normalizzaRighe(
+  [rigaReg([
+    { colonna: "partecipanti", valore: "4", estrattoDa: "quattro firme", confidenza: 0.9, fonteLettura: "manoscritto" },
+    { colonna: "partecipantiDonne", valore: "3", estrattoDa: "ANDREA, ROBERTA, ANNA", confidenza: 0.9, fonteLettura: "manoscritto" },
+  ], "elenco dei discenti con quattro nomi")],
+  COLONNE_FORMAZIONE, "faticosa",
+);
+const gD = Object.fromEntries(genereDedotto[0].celle.map((c) => [c.chiave, c]));
+verifica(
+  "★ il genere dedotto dai nomi si azzera nella SUA cella",
+  gD.partecipantiDonne.valore === null,
+);
+verifica(
+  "e il cliente legge perché, sulla cella e non sulla riga",
+  gD.partecipantiDonne.avvisi.some((a) => /non lo dichiara/i.test(a)),
+);
+
+// La confidenza smette di essere uniforme: è questo che rende
+// confermabile un registro lungo senza guardare tutto.
+const mista = normalizzaRighe(
+  [rigaReg([
+    { colonna: "corso", valore: "Come lavorare in team", estrattoDa: "CORSO DI FORMAZIONE \"COME LAVORARE IN TEAM\"", confidenza: 0.98, fonteLettura: "testo" },
+    { colonna: "data", valore: "2026-09-08", estrattoDa: "08/09/2026", confidenza: 0.55, fonteLettura: "manoscritto" },
+    { colonna: "docente", valore: "Ing. M.Fittipaldi", estrattoDa: "Ing. M.Fittipaldi", confidenza: 0.97, fonteLettura: "testo" },
+  ], CITAZIONE_RIGA)],
+  COLONNE_FORMAZIONE, "leggibile",
+);
+const conf = mista[0].celle.filter((c) => c.valore !== null).map((c) => c.confidenza);
+verifica(
+  "★ le celle della stessa riga hanno confidenze DIVERSE",
+  new Set(conf).size > 1,
+  conf.join(", "),
+);
+verifica(
+  "la cella stampata sta sopra il tetto del manoscritto, quella a mano sotto",
+  mista[0].celle.find((c) => c.chiave === "corso").confidenza > TETTO_MANOSCRITTO &&
+    mista[0].celle.find((c) => c.chiave === "data").confidenza <= TETTO_MANOSCRITTO,
+);
+
+/* ══════════════════════════════════════════════════════════════════ */
+console.log("\n— QUANDO LA CITAZIONE AMMETTE DI NON ESSERE UNA LETTURA —");
+
+/**
+ * Il buco l'ha trovato il collaudo sul registro vero, non un'idea a
+ * tavolino: la cella «partecipanti» portava per citazione «4 righe
+ * compilate con discente, orari e firma (ricavato dal conteggio)».
+ * Dentro c'è un 4, quindi la regola delle cifre la dava per letta —
+ * mentre la citazione dichiarava in chiaro di essere una deduzione.
+ */
+const CAMPO_CALC = { chiave: "partecipanti", etichetta: "Partecipanti", tipo: "numero", calcolabile: true };
+
+verifica(
+  "★ una citazione che dice «ricavato» rende la cella calcolata anche se contiene la cifra",
+  giudicaValore(CAMPO_CALC, "4", "4 righe compilate con discente, orari e firma (ricavato dal conteggio)") ===
+    "calcolato",
+);
+verifica(
+  "vale per le altre parole della deduzione",
+  ["conteggio delle presenze", "somma di ingressi e uscite", "stimato dagli orari", "differenza fra 9:00 e 13:00", "dedotto dalle firme", "non è dichiarato sul foglio"].every(
+    (f) => giudicaValore(CAMPO_CALC, "4", `4 — ${f}`) === "calcolato",
+  ),
+);
+verifica(
+  "★ ma una citazione che è una lettura vera resta una lettura",
+  giudicaValore(CAMPO_CALC, "4", "Partecipanti: 4") === "tieni",
+);
+verifica(
+  "la dichiarazione non azzera mai: il valore resta e si marca",
+  giudicaValore(CAMPO_CALC, "4", "ricavato dal conteggio") !== "azzera",
+);
+verifica(
+  "e non tocca i campi che calcolabili non sono",
+  giudicaValore(
+    { chiave: "docente", etichetta: "Docente", tipo: "testo" },
+    "Ing. M. Fittipaldi",
+    "Ing. M.Fittipaldi (ricavato dall'intestazione)",
+  ) === "tieni",
+);
+
+/* ══════════════════════════════════════════════════════════════════ */
+console.log("\n— LA CELLA IN PAGINA: SEGNO, RIASSUNTO, COMPATIBILITÀ —");
+
+/**
+ * Qui si prova la METÀ VISIBILE della verificabilità per cella. Il
+ * Motore può anche distinguere alla perfezione fra letto e calcolato:
+ * se in pagina le due cose hanno lo stesso aspetto, la distinzione non
+ * esiste per il cliente, che è l'unico per cui è stata fatta.
+ */
+
+const cellaArc = (extra = {}) => ({
+  valore: "12",
+  confidenza: 0.95,
+  estrattoDa: "12",
+  fonteLettura: "testo",
+  calcolato: false,
+  avvisi: [],
+  stato: "da_confermare",
+  ...extra,
+});
+
+verifica(
+  "una cella letta in chiaro non porta nessun segno: il caso normale è muto",
+  statoCella(cellaArc()).chiave === "certa" &&
+    statoCella(cellaArc()).etichetta === "" &&
+    statoCella(cellaArc()).attenzione === false,
+);
+
+verifica(
+  "★ una cella CALCOLATA si dichiara calcolata, non «incerta»",
+  statoCella(cellaArc({ calcolato: true })).chiave === "calcolata",
+  statoCella(cellaArc({ calcolato: true })).etichetta,
+);
+
+// Il caso che conta finché la migrazione non è applicata: la colonna
+// `calcolato` non esiste, e il fatto viaggia nell'avviso già persistito.
+verifica(
+  "★ il calcolato si riconosce dall'avviso anche SENZA la sua colonna",
+  statoCella(
+    cellaArc({ avvisi: [notaCalcolata("Ore totali")] }),
+  ).chiave === "calcolata" &&
+    cellaCalcolata({ avvisi: [notaCalcolata("Ore totali")] }) === true,
+);
+
+verifica(
+  "il calcolato batte il manoscritto: è l'unico caso in cui il documento non lo dice",
+  statoCella(cellaArc({ calcolato: true, fonteLettura: "manoscritto" })).chiave ===
+    "calcolata",
+);
+
+verifica(
+  "una cella scritta a mano si dichiara scritta a mano",
+  statoCella(cellaArc({ fonteLettura: "manoscritto", confidenza: 0.6 })).chiave ===
+    "manoscritta",
+);
+
+verifica(
+  "una lettura non netta chiede attenzione anche senza avvisi",
+  statoCella(cellaArc({ confidenza: 0.7 })).chiave === "incerta",
+);
+
+verifica(
+  "★ una colonna non compilata NON chiede attenzione: non c'è niente da guardare",
+  statoCella(cellaArc({ valore: null, confidenza: 0 })).attenzione === false,
+);
+
+verifica(
+  "ma una cella svuotata da un presidio sì: l'avviso la distingue dal vuoto",
+  statoCella(
+    cellaArc({ valore: null, confidenza: 0, avvisi: [notaCompletamento("Data")] }),
+  ).attenzione === true,
+);
+
+/* ── il riassunto di riga ─────────────────────────────────────────── */
+
+const rias = riassumiRiga([
+  cellaArc({ confidenza: 0.98 }),
+  cellaArc({ confidenza: 0.42, estrattoDa: "altro" }),
+  cellaArc({ confidenza: 0.9, estrattoDa: "terzo" }),
+]);
+verifica(
+  "★ la riga vale quanto la sua cella più debole, non quanto la media",
+  rias.confidenza === 0.42,
+  String(rias.confidenza),
+);
+verifica(
+  "con citazioni diverse per cella, la riga NON si inventa una citazione propria",
+  rias.estrattoDa === null,
+);
+
+verifica(
+  "★ basta UNA cella a mano perché la riga sia a mano",
+  riassumiRiga([
+    cellaArc(),
+    cellaArc({ fonteLettura: "manoscritto", confidenza: 0.6 }),
+    cellaArc(),
+  ]).fonteLettura === "manoscritto",
+);
+
+verifica(
+  "una riga con una cella ancora aperta resta da confermare",
+  riassumiRiga([
+    cellaArc({ stato: "confermato" }),
+    cellaArc({ stato: "da_confermare" }),
+  ]).stato === "da_confermare",
+);
+verifica(
+  "una riga con celle confermate e scartate risulta confermata, non scartata",
+  riassumiRiga([
+    cellaArc({ stato: "confermato" }),
+    cellaArc({ stato: "rifiutato" }),
+  ]).stato === "confermato",
+);
+verifica(
+  "una riga interamente scartata risulta scartata",
+  riassumiRiga([
+    cellaArc({ stato: "rifiutato" }),
+    cellaArc({ stato: "rifiutato" }),
+  ]).stato === "rifiutato",
+);
+verifica(
+  "una colonna vuota non abbassa la confidenza della riga a zero",
+  riassumiRiga([cellaArc({ confidenza: 0.93 }), cellaArc({ valore: null, confidenza: 0 })])
+    .confidenza === 0.93,
+);
+
+/* ── COMPATIBILITÀ: i documenti letti con la struttura vecchia ────── */
+
+/**
+ * La forma vecchia in archivio: tutte le celle di una riga con la STESSA
+ * confidenza, la STESSA citazione e gli STESSI avvisi, perché il Motore
+ * ci copiava dentro i valori della riga. Quelle righe esistono e devono
+ * restare leggibili e confermabili — senza errori e senza bugie.
+ */
+const VECCHIA = "MARIO ROSSI 08/09/26 4 ORE";
+const allaVecchia = [
+  cellaArc({ valore: "Mario Rossi", confidenza: 0.55, estrattoDa: VECCHIA, fonteLettura: "manoscritto" }),
+  cellaArc({ valore: "2026-09-08", confidenza: 0.55, estrattoDa: VECCHIA, fonteLettura: "manoscritto" }),
+  cellaArc({ valore: "4", confidenza: 0.55, estrattoDa: VECCHIA, fonteLettura: "manoscritto" }),
+];
+const riasVecchia = riassumiRiga(allaVecchia);
+verifica(
+  "★ VECCHIO: la citazione uguale su tutte le celle resta citazione DI RIGA",
+  riasVecchia.estrattoDa === VECCHIA,
+);
+verifica(
+  "VECCHIO: la riga conserva la confidenza che aveva",
+  riasVecchia.confidenza === 0.55 && riasVecchia.fonteLettura === "manoscritto",
+);
+verifica(
+  "VECCHIO: nessuna cella finisce senza segno, quindi nessuna passa per certa",
+  allaVecchia.every((c) => statoCella(c).attenzione === true),
+);
+verifica(
+  "VECCHIO: la riga è confermabile — nessuna cella manca del suo identificativo di stato",
+  riasVecchia.stato === "da_confermare",
+);
+
+// E il caso nuovo, per contrasto: stessa riga letta oggi.
+const allaNuova = [
+  cellaArc({ valore: "Mario Rossi", confidenza: 0.55, estrattoDa: "MARIO ROSSI", fonteLettura: "manoscritto" }),
+  cellaArc({ valore: "2026-09-08", confidenza: 0.55, estrattoDa: "08/09/26", fonteLettura: "manoscritto" }),
+  cellaArc({ valore: "4", confidenza: 0.5, estrattoDa: "4 ORE", fonteLettura: "manoscritto" }),
+];
+verifica(
+  "★ NUOVO: ogni cella porta la sua citazione, e la riga non ne mostra una sola",
+  riassumiRiga(allaNuova).estrattoDa === null &&
+    new Set(allaNuova.map((c) => c.estrattoDa)).size === 3,
 );
 
 console.log(

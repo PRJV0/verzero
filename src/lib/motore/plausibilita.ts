@@ -227,12 +227,25 @@ export function notaCompletamento(etichetta: string): string {
 }
 
 /**
+ * La firma testuale del valore calcolato, isolata perché la RILEGGE la
+ * scheda di conferma.
+ *
+ * Finché la colonna `calcolato` non è applicata al remoto (v. la
+ * migrazione `20260911170000_confidenza_per_cella.sql`) il fatto che un
+ * valore sia stato dedotto da noi viaggia dentro gli avvisi, che sono
+ * già persistiti. Il portale lo riconosce da questa stringa e non da una
+ * frase ricopiata a mano: se un giorno la nota cambia parole, cambia in
+ * un posto solo.
+ */
+export const MARCA_CALCOLATO = "calcolato da noi";
+
+/**
  * Il valore c'è, ma non l'ha scritto il documento: l'abbiamo ricavato
  * noi. Non è un difetto ed è utile — ma il cliente deve sapere sempre
  * che cosa ha detto il suo documento e che cosa abbiamo dedotto.
  */
 export function notaCalcolata(etichetta: string): string {
-  return `${etichetta}: calcolato da noi dagli altri dati del documento, non letto. Controllalo.`;
+  return `${etichetta}: ${MARCA_CALCOLATO} dagli altri dati del documento, non letto. Controllalo.`;
 }
 
 /**
@@ -272,6 +285,18 @@ export function indizioMancante(
  */
 export type Verdetto = "tieni" | "azzera" | "calcolato";
 
+/**
+ * Le parole con cui una citazione ammette di non essere una lettura.
+ *
+ * Vale SOLO sui campi dichiarati `calcolabile`, e sposta il verdetto da
+ * «tieni» a «calcolato»: il valore resta, con il tetto di confidenza dei
+ * calcolati e la sua nota. Non azzera mai niente, quindi un falso
+ * positivo costa un avviso in più e mai un dato perso — che è il verso
+ * giusto in cui sbagliare.
+ */
+const DICHIARA_DEDUZIONE =
+  /\b(ricavat|calcolat|dedott|dedurre|stimat|conteggi|somma\s+d|differenza\s+(fra|tra)|desunt|inferit|non\s+(?:è\s+)?(?:dichiarat|indicat|scritt|riportat))/i;
+
 export function giudicaValore(
   campo: EtichettaCampo,
   valore: string | null,
@@ -291,12 +316,21 @@ export function giudicaValore(
   }
 
   if (campo.calcolabile) {
+    if (!fonte) return "tieni";
+    // ═══ QUANDO LA CITAZIONE LO DICE DA SÉ ═══
+    // Il collaudo sul registro vero ha mostrato il buco: alla cella
+    // «partecipanti» la citazione era «4 righe compilate con discente,
+    // orari e firma (RICAVATO dal conteggio)» — c'è dentro un 4, quindi
+    // la regola delle cifre la dava per letta, mentre la citazione
+    // dichiarava in chiaro di essere una deduzione. Leggere quella
+    // dichiarazione costa una riga e vale più di qualunque euristica:
+    // è il modello che si autoaccusa, e ignorarlo sarebbe assurdo.
+    if (DICHIARA_DEDUZIONE.test(fonte)) return "calcolato";
     // `completatoOltreLaFonte` si astiene quando nella citazione non c'è
     // nessuna cifra: per i campi normali è la scelta giusta — l'assenza
     // di prova non è prova. Per un CALCOLABILE no: un numero il cui
     // appoggio non contiene un solo numero è, per definizione, un numero
     // che abbiamo ricavato noi. «Quattro righe firmate» → partecipanti 4.
-    if (!fonte) return "tieni";
     const cifreNellaFonte = (fonte.match(CIFRE) ?? []).length > 0;
     const cifreNelValore = (valore.match(CIFRE) ?? []).length > 0;
     if (cifreNelValore && !cifreNellaFonte) return "calcolato";
@@ -494,6 +528,14 @@ export type CellaEstratta = {
   etichetta: string;
   valore: string | null;
   unita: string | null;
+  /** ═══ La verificabilità, per cella ═══ */
+  confidenza: number;
+  estrattoDa: string | null;
+  fonteLettura: FonteLettura;
+  /** Ricavato da noi da altre celle, non letto sul documento. */
+  calcolato: boolean;
+  /** Quello che il cliente deve sapere su QUESTA cella. */
+  avvisi: string[];
 };
 
 export type RigaEstratta = {
@@ -562,40 +604,87 @@ export function normalizzaRighe(
   for (const r of lette ?? []) {
     if (!r || !Array.isArray(r.celle)) continue;
 
-    const perColonna = new Map<string, string>();
+    const perColonna = new Map<string, RigaGrezza["celle"][number]>();
     for (const c of r.celle) {
       if (c && typeof c.colonna === "string" && !perColonna.has(c.colonna)) {
-        perColonna.set(c.colonna, String(c.valore ?? ""));
+        perColonna.set(c.colonna, c);
       }
     }
 
     // ═══ REGOLA INVIOLABILE — IL VALORE NON AGGIUNGE ═══
-    // Qui la citazione è della RIGA e non della singola cella (finché la
-    // confidenza non scende dentro la cella), e va bene così: il
-    // confronto è sulle cifre, e le cifre della riga ci sono tutte.
+    // Il confronto si fa sulla citazione DELLA CELLA quando c'è: con la
+    // citazione della riga il presidio sui valori calcolati non scattava
+    // mai, perché una riga è un sacchetto di cifre in cui «4» si trova
+    // sempre. Il ripiego sulla riga resta solo per i documenti letti
+    // prima (v. sotto), e allora si dice al cliente.
     const completate: string[] = [];
     const senzaIndizio: string[] = [];
     const calcolate: string[] = [];
+
     const celle: CellaEstratta[] = colonne.map((col) => {
-      const grezzo = (perColonna.get(col.chiave) ?? "").trim();
+      const g = perColonna.get(col.chiave);
+      const grezzo = (g?.valore ?? "").trim();
       const valore = grezzo === "" ? null : canonicalizza(grezzo, col.tipo);
-      const verdetto = giudicaValore(col, valore, r.estrattoDa);
+
+      // ═══ LA CITAZIONE DELLA CELLA, CON RIPIEGO SULLA RIGA ═══
+      // Il ripiego non è una comodità: è la compatibilità. I documenti
+      // letti prima di questo schema hanno solo la citazione di riga, e
+      // devono restare leggibili e confermabili.
+      const citazione = g?.estrattoDa?.trim() || r.estrattoDa || null;
+      const suCella = Boolean(g?.estrattoDa?.trim());
+      const fonte = g?.fonteLettura ?? r.fonteLettura ?? "testo";
+
+      const verdetto = giudicaValore(col, valore, citazione);
+      const avvisi: string[] = [];
+      let confidenza = g?.confidenza ?? r.confidenza ?? 0;
+      let finale = valore;
+      let calcolato = false;
+
       if (verdetto === "azzera") {
-        if (indizioMancante(col, r.estrattoDa)) senzaIndizio.push(col.etichetta);
-        else completate.push(col.etichetta);
-        return {
-          chiave: col.chiave,
-          etichetta: col.etichetta,
-          valore: null,
-          unita: col.unita ?? null,
-        };
+        finale = null;
+        confidenza = 0;
+        if (indizioMancante(col, citazione)) {
+          senzaIndizio.push(col.etichetta);
+          avvisi.push(notaIndizioMancante(col.etichetta));
+        } else {
+          completate.push(col.etichetta);
+          avvisi.push(notaCompletamento(col.etichetta));
+        }
+      } else if (verdetto === "calcolato") {
+        calcolato = true;
+        calcolate.push(col.etichetta);
+        confidenza = Math.min(confidenza, TETTO_CALCOLATO);
+        avvisi.push(notaCalcolata(col.etichetta));
       }
-      if (verdetto === "calcolato") calcolate.push(col.etichetta);
+
+      if (finale === null) confidenza = 0;
+      else if (qualita === "faticosa") {
+        confidenza = Math.max(0, confidenza - PENALITA_QUALITA_FATICOSA);
+      }
+      if (fonte === "manoscritto" && finale !== null) {
+        if (confidenza > TETTO_MANOSCRITTO) confidenza = TETTO_MANOSCRITTO;
+        avvisi.push(
+          "Scritto a mano: controllalo sul documento prima di confermare.",
+        );
+      }
+      // Senza citazione propria la cella non è più verificabile della
+      // riga: si dice, invece di lasciar credere il contrario.
+      if (finale !== null && !suCella) {
+        avvisi.push(
+          "La provenienza è di tutta la riga, non di questo singolo valore.",
+        );
+      }
+
       return {
         chiave: col.chiave,
         etichetta: col.etichetta,
-        valore,
+        valore: finale,
         unita: col.unita ?? null,
+        confidenza: Math.round(Math.min(1, Math.max(0, confidenza)) * 100) / 100,
+        estrattoDa: citazione,
+        fonteLettura: fonte,
+        calcolato,
+        avvisi,
       };
     });
 

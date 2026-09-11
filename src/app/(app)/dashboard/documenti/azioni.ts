@@ -306,6 +306,13 @@ export async function rifiutaCampo(id: string) {
  * lui, è confermato per definizione. La provenienza (pagina, estratto,
  * confidenza) resta quella della lettura: dice come ci eravamo arrivati
  * noi, e serve a capire perché avevamo sbagliato.
+ *
+ * GLI AVVISI INVECE SI RIFANNO, e non è un dettaglio. Un valore scritto
+ * dal cliente non può continuare a portare «calcolato da noi» o «scritto
+ * a mano: controllalo»: quelle frasi parlavano del NOSTRO valore, che
+ * adesso non c'è più. Lasciarle sarebbe attribuirgli un difetto che è di
+ * una lettura sostituita — e cancellarle e basta perderebbe la terza
+ * provenienza, che è la più forte delle tre.
  */
 export async function correggiCampo(id: string, valore: string) {
   const pulito = valore.trim().slice(0, 500);
@@ -317,8 +324,33 @@ export async function correggiCampo(id: string, valore: string) {
       valore: pulito,
       stato: "confermato",
       confirmed_at: new Date().toISOString(),
+      avvisi: ["Scritto da te: questo valore non viene dalla nostra lettura."],
     })
     .eq("id", id);
+  aggiornaViste();
+}
+
+/**
+ * Conferma ESATTAMENTE le celle indicate, e nessun'altra.
+ *
+ * Serve alla conferma cella per cella: quando il cliente ne ha già
+ * scartata una, «conferma il resto della riga» non può essere un update
+ * sulla riga intera — riporterebbe a `confermato` proprio quella che
+ * aveva appena buttato. Con gli identificativi espliciti non c'è corsa
+ * fra i salvataggi, che partono in ordine ma arrivano quando arrivano.
+ *
+ * La RLS resta l'unico giudice: si usa il client di sessione, quindi un
+ * identificativo di un'altra organizzazione semplicemente non trova
+ * nulla da aggiornare.
+ */
+export async function confermaCelle(ids: string[]) {
+  const puliti = [...new Set(ids)].filter((i) => i.length > 0).slice(0, 500);
+  if (puliti.length === 0) return;
+  const supabase = await createClient();
+  await supabase
+    .from("document_fields")
+    .update({ stato: "confermato", confirmed_at: new Date().toISOString() })
+    .in("id", puliti);
   aggiornaViste();
 }
 
@@ -401,7 +433,7 @@ export async function confermaRigheSicure(
   const supabase = await createClient();
   const { data: righe } = await supabase
     .from("document_fields")
-    .select("riga, confidenza, avvisi, fonte_lettura, stato")
+    .select("riga, valore, confidenza, avvisi, fonte_lettura, stato")
     .eq("document_id", documentId)
     .eq("stato", "da_confermare");
   if (!righe || righe.length === 0) return 0;
@@ -409,6 +441,16 @@ export async function confermaRigheSicure(
   const escluse = new Set<number>();
   const candidate = new Set<number>();
   for (const r of righe) {
+    // Una cella vuota e senza avvisi è una colonna che su quella riga non
+    // era compilata: non porta nessun dato, quindi non può rendere
+    // insicura la riga. Prima la escludeva la sola confidenza a zero, e
+    // bastava una colonna facoltativa perché il blocco non confermasse
+    // più niente su tutta la tabella.
+    const vuotaESerena = r.valore === null && (r.avvisi ?? []).length === 0;
+    if (vuotaESerena) {
+      candidate.add(r.riga);
+      continue;
+    }
     if (
       r.fonte_lettura === "manoscritto" ||
       (r.avvisi ?? []).length > 0 ||

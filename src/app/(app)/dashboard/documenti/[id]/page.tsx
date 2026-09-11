@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { tipoDocumento } from "@/lib/documenti";
 import { voceMotore } from "@/lib/motore/famiglie";
+import { riassumiRiga, type FonteVista } from "@/lib/motore/portale";
 
 import { IntestazioneSezione } from "../../_ui";
 import { linkVista } from "../azioni";
@@ -67,6 +68,11 @@ export default async function ConfermaDocumentoPage({
     (voce?.campi ?? []).map((c, i) => [c.chiave, i] as const),
   );
 
+  // ═══ LA RIGA È UN RIASSUNTO DELLE SUE CELLE, NON UNA COPIA ═══
+  // Prima qui si leggeva `ordinate[0]` per confidenza, citazione e fonte,
+  // perché il Motore le scriveva identiche su tutte le celle. Adesso ogni
+  // cella porta le sue, e il riassunto di riga va CALCOLATO — con una
+  // regola sola: la riga vale quanto la sua cella più debole.
   const righe: RigaVista[] = [...perRiga.entries()]
     .sort((a, b) => a[0] - b[0])
     .map(([riga, celle]) => {
@@ -75,24 +81,30 @@ export default async function ConfermaDocumentoPage({
           (ordineColonne.get(a.campo) ?? 99) - (ordineColonne.get(b.campo) ?? 99),
       );
       const prima = ordinate[0];
+
+      const viste = ordinate.map((c) => ({
+        id: c.id,
+        chiave: c.campo,
+        etichetta: c.etichetta,
+        valore: c.valore,
+        unita: c.unita,
+        confidenza: c.confidenza ?? 0,
+        estrattoDa: c.estratto_da ?? null,
+        fonteLettura: (c.fonte_lettura ?? "testo") as FonteVista,
+        // La colonna `calcolato` arriva con la migrazione; finché non c'è,
+        // il fatto si legge dagli avvisi (v. `cellaCalcolata`).
+        calcolato: c.calcolato === true,
+        avvisi: c.avvisi ?? [],
+        stato: c.stato ?? "da_confermare",
+      }));
+
       return {
         riga,
-        celle: ordinate.map((c) => ({
-          id: c.id,
-          chiave: c.campo,
-          etichetta: c.etichetta,
-          valore: c.valore,
-          unita: c.unita,
-        })),
-        // Confidenza, pagina, estratto e fonte sono della RIGA e uguali su
-        // tutte le sue celle (v. la migrazione): si legge la prima.
-        confidenza: prima?.confidenza ?? 0,
+        celle: viste,
+        ...riassumiRiga(viste),
         pagina: prima?.pagina ?? null,
-        estrattoDa: prima?.estratto_da ?? null,
-        fonteLettura: prima?.fonte_lettura ?? "testo",
         nota: prima?.nota ?? null,
         avvisi: [...new Set(ordinate.flatMap((c) => c.avvisi ?? []))],
-        stato: prima?.stato ?? "da_confermare",
       };
     });
 

@@ -199,14 +199,59 @@ async function esamina({ nome, dati, mime, etichetta }) {
           `\n  ── riga ${r.indice} ── conf ${r.confidenza?.toFixed(2)} · ${r.fonteLettura}${r.pagina ? ` · pag ${r.pagina}` : ""}`,
         );
         for (const c of r.celle) {
+          // ═══ LA MISURA CHE CONTA ADESSO ═══
+          // Prima qui si stampava solo chiave e valore, e non si poteva
+          // vedere la cosa che stiamo collaudando: se la provenienza è
+          // DELLA CELLA o ancora della riga, e se il presidio sui valori
+          // dedotti è scattato. Un banco che non mostra la variabile
+          // misurata non misura.
+          const segno = c.calcolato
+            ? "CALCOLATO"
+            : c.valore === null
+              ? "azzerato "
+              : c.fonteLettura === "manoscritto"
+                ? "a mano   "
+                : "letto    ";
           console.log(
-            `     ${c.chiave.padEnd(16)} ${String(c.valore ?? "— (vuoto)").padEnd(30)}${c.unita ?? ""}`,
+            `     ${c.chiave.padEnd(16)} ${String(c.valore ?? "— (vuoto)").padEnd(26)}${(c.unita ?? "").padEnd(5)} ${segno} conf ${(c.confidenza ?? 0).toFixed(2)}`,
           );
+          if (c.estrattoDa) {
+            const propria = c.estrattoDa !== r.estrattoDa;
+            console.log(
+              `       ${propria ? "da questa cella" : "SOLO dalla riga"}: «${c.estrattoDa}»`,
+            );
+          }
+          if (c.avvisi?.length) c.avvisi.forEach((a) => console.log(`       ⚠ ${a}`));
         }
         if (r.estrattoDa) console.log(`     DICE DI AVER LETTO: «${r.estrattoDa}»`);
         if (r.nota) console.log(`     nota: ${r.nota}`);
         if (r.avvisi?.length) r.avvisi.forEach((a) => console.log(`     ⚠ ${a}`));
       }
+    }
+
+    /* — LA VERIFICABILITÀ PER CELLA, contata — */
+    if (lettura.righe?.length) {
+      const celle = lettura.righe.flatMap((r) =>
+        r.celle.map((c) => ({ ...c, citazioneRiga: r.estrattoDa })),
+      );
+      const piene = celle.filter((c) => c.valore !== null);
+      const propria = piene.filter(
+        (c) => c.estrattoDa && c.estrattoDa !== c.citazioneRiga,
+      );
+      console.log("\n  PROVENIENZA PER CELLA");
+      console.log(`   celle piene:            ${piene.length} su ${celle.length}`);
+      console.log(
+        `   con citazione PROPRIA:  ${propria.length} (${piene.length ? Math.round((propria.length / piene.length) * 100) : 0}%)`,
+      );
+      console.log(
+        `   calcolate da noi:       ${celle.filter((c) => c.calcolato).length}  ← il presidio sui valori dedotti`,
+      );
+      console.log(
+        `   azzerate da un presidio:${String(celle.filter((c) => c.valore === null && c.avvisi?.length).length).padStart(3)}`,
+      );
+      console.log(
+        `   scritte a mano:         ${celle.filter((c) => c.fonteLettura === "manoscritto").length}`,
+      );
     }
 
     if (lettura.avvisi?.length) {

@@ -291,16 +291,34 @@ costare un minuto, non venti.** Come:
 1. **Il documento sta accanto**, sempre, e si apre da solo sulla pagina
    della riga in corso. Nessuna finestra da cercare, nessuno zoom da
    rifare.
-2. **Una riga alla volta**, grande, con accanto la riga **così com'è
-   scritta sul foglio** (`estrattoDa`): il confronto è un colpo d'occhio.
-3. **La tastiera basta**: Invio conferma e passa avanti, `E` corregge,
-   `X` scarta, `↑ ↓` si muovono. Venti righe diventano venti battute.
-4. **L'interfaccia avanza subito** e il salvataggio la insegue: aspettare
-   il server a ogni riga trasformerebbe un minuto in cinque.
-5. **Avanzamento visibile**: si vede quanto manca, e si vede che finisce.
-6. **Il blocco «conferma quelle che tornano» esiste, e NON tocca il
-   manoscritto**: conferma solo le righe lette in chiaro, senza avvisi e
-   sopra la soglia di confidenza. Le righe a mano restano una per una, e
+2. **Una riga alla volta**, grande, con accanto il pezzo di documento
+   **così com'è scritto sul foglio** (`estrattoDa`): il confronto è un
+   colpo d'occhio. La cella scelta mostra la citazione SUA; quella di
+   riga si mostra solo quando è davvero dell'intera riga.
+3. **Ogni cella dice che cos'è**, con un filetto e una parola: letta in
+   chiaro (nessun segno — il caso normale deve essere muto, o nessun
+   segno si vede più), scritta a mano, calcolata da noi (filetto
+   tratteggiato: fra il documento e quel valore manca un pezzo),
+   lasciata vuota da un presidio, scritta da te. Una colonna che su
+   quella riga non era compilata non porta segno e non chiede niente:
+   non c'è nulla da guardare.
+4. **La tastiera basta, su due livelli.** Alla RIGA: Invio conferma
+   quello che resta aperto e passa avanti, `E` corregge, `X` scarta,
+   `↑ ↓` si muovono, `→` scende. Alla CELLA: Invio la conferma e salta
+   alla prossima **da guardare** — non alla successiva in ordine — `E`
+   la corregge, `X` scarta solo quella, `← →` scorrono le colonne, `Esc`
+   risale. Chi non scende non paga niente per il livello di sotto: è
+   l'unico modo di aggiungere precisione senza togliere velocità.
+   Venti righe restano venti battute.
+5. **L'interfaccia avanza subito** e il salvataggio la insegue: aspettare
+   il server a ogni riga trasformerebbe un minuto in cinque. Una cella
+   già scartata non torna confermata dal gesto sulla riga: si confermano
+   gli identificativi espliciti delle celle rimaste aperte, non la riga
+   in blocco.
+6. **Avanzamento visibile**: si vede quanto manca, e si vede che finisce.
+7. **Il blocco «conferma quelle che tornano» esiste, e NON tocca il
+   manoscritto**: conferma solo le righe in cui OGNI cella è stata letta
+   in chiaro, senza avvisi e sopra la soglia di confidenza. Le righe a mano restano una per una, e
    la schermata lo dice — «una grafia non la conferma un automatismo».
 
 Vive in `src/app/(app)/dashboard/documenti/[id]`.
@@ -454,15 +472,40 @@ toglie la funzionalità.
 2. **Ogni valore porta la sua provenienza**: documento, **pagina**, e il
    frammento di testo da cui è stato ricavato (`estrattoDa`). Chi controlla
    deve poter aprire la pagina indicata e trovarci quel numero.
-3. **Confidenza per campo, non per documento.** In una bolletta il POD si
-   legge benissimo e il consumo per fascia sta in una tabella storta: una
-   confidenza unica media le due cose e nasconde proprio quella che serve.
-4. **Stato «da confermare», sempre**, senza eccezioni per i campi facili.
+   Nelle tabelle la provenienza è **della cella, non della riga**: in
+   `estrattoDa` di una cella sta solo il pezzo di documento da cui viene
+   QUEL valore. Per un periodo ci abbiamo scritto la riga intera, e il
+   presidio sui valori dedotti non poteva scattare — una riga è un
+   sacchetto di cifre in cui ogni numero si ritrova, quindi qualunque
+   valore risultava «attestato». I documenti letti allora restano
+   leggibili: quando tutte le celle di una riga portano la stessa
+   citazione la si mostra come citazione di riga, e la scheda dice che
+   la provenienza è dell'insieme e non del singolo valore.
+3. **Confidenza per CELLA**, non per documento e nemmeno per riga. In una
+   bolletta il POD si legge benissimo e il consumo per fascia sta in una
+   tabella storta: una confidenza unica media le due cose e nasconde
+   proprio quella che serve. In un foglio firma vale lo stesso dentro la
+   singola riga — il corso stampato a 0,98 accanto alla data a penna a
+   0,45. La confidenza della riga è il **riassunto**, e vale quanto la sua
+   cella peggiore.
+4. **Ciò che abbiamo dedotto non si confonde con ciò che il documento
+   dice.** Un valore ricavato da altre celle — le ore fra ingresso e
+   uscita, i partecipanti contati uno per uno — è marcato `calcolato`, ha
+   un tetto di confidenza suo (0,5) e porta una nota che lo dichiara. Il
+   presidio guarda la citazione della cella in due modi: se il valore
+   contiene cifre che nella citazione non ci sono, e se la citazione
+   stessa **ammette** di essere una deduzione («ricavato», «conteggio»,
+   «stimato», «non dichiarato»). La seconda regola l'ha chiesta il
+   collaudo su un registro vero, dove la citazione diceva «4 righe
+   compilate (ricavato dal conteggio)»: c'era dentro un 4, quindi la prima
+   regola la dava per letta. Nessuna delle due azzera mai niente: al
+   massimo marcano — è il verso giusto in cui sbagliare.
+5. **Stato «da confermare», sempre**, senza eccezioni per i campi facili.
    Non entra in nessun calcolo, non compare in nessun elaborato, **non fa
    salire l'anello a peso pieno** finché il cliente non conferma. La
    conferma è un gesto umano registrato con data: è anche il posizionamento
    legale del prodotto — l'AI assiste, il cliente valida.
-5. **Documento sbagliato: lo si dice.** Tre casi distinti, tre messaggi
+6. **Documento sbagliato: lo si dice.** Tre casi distinti, tre messaggi
    distinti, mai un errore generico:
    - **altro tipo** («questa è una bolletta del gas, non elettrica») → si
      propone di riclassificarlo, e non lo si legge col prompt sbagliato;

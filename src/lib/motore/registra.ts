@@ -365,6 +365,15 @@ export async function eseguiLettura(opzioni: {
       .eq("document_id", documentId)
       .gt("riga", 0);
 
+    // ═══ OGNI CELLA PORTA LA PROPRIA VERIFICABILITÀ ═══
+    // Prima qui si copiavano confidenza, citazione e fonte DELLA RIGA su
+    // tutte le sue celle: in archivio finivano cinque celle identiche
+    // per provenienza, e in pagina il cliente non poteva sapere quale
+    // guardare. La tabella nel database era già per cella — mancava solo
+    // che ci scrivessimo il dato giusto.
+    //
+    // `pagina` e `nota` restano della riga: la pagina è dove sta la riga
+    // sul foglio, e la nota è il commento del modello sull'insieme.
     for (const riga of esito.righe) {
       for (const cella of riga.celle) {
         await scrivi(riga.indice, {
@@ -372,12 +381,15 @@ export async function eseguiLettura(opzioni: {
           etichetta: cella.etichetta,
           valore: cella.valore,
           unita: cella.unita,
-          confidenza: riga.confidenza,
+          confidenza: cella.confidenza,
           pagina: riga.pagina,
-          estrattoDa: riga.estrattoDa,
-          fonteLettura: riga.fonteLettura,
+          estrattoDa: cella.estrattoDa,
+          // `calcolato` non ha ancora una colonna sua: finché la
+          // migrazione non è applicata viaggia negli avvisi, che sono
+          // già persistiti e già mostrati nella scheda di conferma.
+          fonteLettura: cella.fonteLettura,
           nota: riga.nota,
-          avvisi: riga.avvisi,
+          avvisi: cella.avvisi.length > 0 ? cella.avvisi : riga.avvisi,
         });
       }
     }

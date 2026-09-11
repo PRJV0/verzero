@@ -205,9 +205,17 @@ type Documento = {
 };
 
 /**
- * Un campo estratto da un documento (docs/motore.md §4). Ogni riga porta
- * la propria verificabilità: confidenza, pagina, e la stringa così com'è
- * scritta nel documento. Nasce sempre `da_confermare`.
+ * Un campo estratto da un documento (docs/motore.md §4).
+ *
+ * UNA RIGA È UNA CELLA, e ogni cella porta la PROPRIA verificabilità:
+ * confidenza, citazione, fonte di lettura e avvisi sono di quel singolo
+ * valore, non della riga di tabella a cui appartiene. La tabella era già
+ * fatta così; per un periodo il Motore ci ha scritto dentro i valori
+ * della riga copiati su tutte le sue celle, e il presidio sui valori
+ * dedotti non poteva scattare — una riga è un sacchetto di cifre in cui
+ * ogni numero si ritrova. Di riga restano `riga` (l'indice) e `pagina`.
+ *
+ * Nasce sempre `da_confermare`.
  */
 type CampoDocumento = {
   id: string;
@@ -223,6 +231,18 @@ type CampoDocumento = {
   pagina: number | null;
   estratto_da: string | null;
   fonte_lettura: "testo" | "immagine" | "manoscritto";
+  /**
+   * Vero quando il valore non è scritto sul documento ma l'abbiamo
+   * ricavato noi dalle altre celle.
+   *
+   * FACOLTATIVO DI PROPOSITO: la colonna arriva con la migrazione
+   * `20260911170000_confidenza_per_cella.sql`, che non è ancora applicata
+   * al remoto. Finché non c'è, la `select` non la restituisce e il
+   * portale riconosce il calcolato dagli avvisi (`cellaCalcolata` in
+   * `src/lib/motore/portale.ts`). Dichiararla obbligatoria farebbe
+   * credere al codice di avere un dato che non riceve.
+   */
+  calcolato?: boolean;
   nota: string | null;
   avvisi: string[];
   stato: "da_confermare" | "confermato" | "rifiutato";

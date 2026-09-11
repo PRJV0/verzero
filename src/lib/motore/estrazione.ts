@@ -163,10 +163,10 @@ export function istruzioni(voce: VoceLeggibile, ctx: ContestoLettura): string {
     "REGOLE, nell'ordine di importanza:",
     "1. NON INVENTARE MAI. Se un valore non è leggibile con certezza, lascialo come stringa VUOTA e scrivi in `nota` perché. Un campo vuoto è un esito corretto; un valore plausibile inventato è il danno peggiore che tu possa fare, perché finisce in un documento che l'impresa porta in banca.",
     tabella
-      ? "2. PROVENIENZA SEMPRE. Per ogni riga indica la `pagina` (0 se non la sai) e in `estrattoDa` la riga ESATTA come appare sul documento, senza riformattarla."
+      ? "2. PROVENIENZA PER CELLA. Ogni cella porta la SUA `confidenza`, la SUA `fonteLettura` e in `estrattoDa` SOLO il pezzo di documento da cui viene QUEL valore — non la riga intera. Se la data viene da «8/09/26», `estrattoDa` della cella data è «8/09/26» e nient'altro. Un valore che ricavi da altre celle invece di leggerlo (le ore fra ingresso e uscita, i partecipanti contati uno per uno sul foglio) porta in `estrattoDa` ciò da cui l'hai ricavato, e allora si vede che non l'hai letto. Della riga indica `pagina` (0 se non la sai) e in `estrattoDa` la riga come appare sul foglio."
       : "2. PROVENIENZA SEMPRE. Per ogni campo indica la `pagina` (0 se non la sai) e in `estrattoDa` la stringa ESATTA come compare nel documento, senza riformattarla.",
     tabella
-      ? "3. CONFIDENZA PER RIGA, da 0 a 1, sincera. Se una sola cella è incerta, abbassa la confidenza della riga e DI' QUALE nella `nota`."
+      ? "3. CONFIDENZA PER CELLA, da 0 a 1, sincera: quella della cella riguarda SOLO quel valore. La `confidenza` della riga è il riassunto, e non può essere più alta della sua cella peggiore. Se una sola cella è incerta, abbassa quella cella e DI' QUALE nella `nota`."
       : "3. CONFIDENZA PER CAMPO, da 0 a 1, sincera: 1 solo se il valore è scritto in chiaro e senza ambiguità. Se hai dedotto, calcolato o interpretato, scendi.",
     "4. `fonteLettura`: «testo» se il valore è testo del documento, «immagine» se l'hai letto da una pagina scansionata o fotografata, «manoscritto» se è scritto a mano — comprese le correzioni a penna sopra il prestampato. Non è un dettaglio: i valori manoscritti li trattiamo in modo diverso.",
     "5. FORMA DEI VALORI: i numeri col punto decimale e senza separatore di migliaia (12500 o 3187.45, mai 12.500 né 3.187,45); le date come AAAA-MM-GG. In `estrattoDa` invece resta la forma originale del documento.",

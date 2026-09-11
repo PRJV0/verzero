@@ -229,7 +229,15 @@ export function schemaScheda(campi: EtichettaCampo[], extra: z.ZodRawShape = {})
 /* ------------------------------------------------------------------ */
 
 export type RigaGrezza = {
-  celle: { colonna: string; valore: string }[];
+  celle: {
+    colonna: string;
+    valore: string;
+    /** Per cella. Assenti sui documenti letti con lo schema vecchio:
+     *  lì si ripiega su quelli della riga. */
+    confidenza?: number;
+    estrattoDa?: string;
+    fonteLettura?: FonteLettura;
+  }[];
   confidenza: number;
   pagina: number;
   estrattoDa: string;
@@ -248,13 +256,43 @@ export function schemaTabella(
     qualita: z.enum(QUALITA),
     righe: z.array(
       z.object({
+        /**
+         * ═══ LA VERIFICABILITÀ STA NELLA CELLA ═══
+         *
+         * Prima confidenza, fonte e citazione erano della RIGA e si
+         * ripetevano identiche su tutte le sue celle. Su un registro
+         * presenze questo faceva due danni misurati:
+         *
+         *   · il presidio sui valori calcolati NON SCATTAVA. La citazione
+         *     di riga è un sacchetto di cifre — «Ingresso 9:00 Uscita
+         *     13:00, 4 righe firmate» — in cui il «4» di `oreTotali` si
+         *     trova comunque, anche se sul foglio quel 4 non è scritto da
+         *     nessuna parte. Con la citazione della CELLA il confronto
+         *     torna onesto.
+         *   · una riga con una data illeggibile e quattro celle stampate
+         *     perfette prendeva 0,52 dappertutto: il cliente non poteva
+         *     sapere QUALE cella guardare, e le controllava tutte.
+         *
+         * `estrattoDa` per cella è anche ciò che rende confermabile un
+         * registro di venti righe in un minuto: si conferma in blocco
+         * quello che è certo e si guarda solo ciò che non lo è.
+         */
         celle: z.array(
           z.object({
             colonna: z.enum(chiaviDi(colonne)),
             valore: z.string(),
+            /** Di QUESTA cella, non della riga. */
+            confidenza: z.number().min(0).max(1),
+            /** Il pezzo di documento da cui viene QUESTO valore. */
+            estrattoDa: z.string(),
+            fonteLettura: z.enum(FONTI_LETTURA),
           }),
         ),
-        /** Della RIGA: v. la nota in testa al file. */
+        /**
+         * Della riga: resta come RIPIEGO. Se il modello non popola la
+         * cella — o se si rilegge un documento estratto con lo schema
+         * vecchio — si usa questa.
+         */
         confidenza: z.number().min(0).max(1),
         pagina: z.number().int().min(0),
         /** La riga come appare sul foglio: è la prova di cosa c'era. */
