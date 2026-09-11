@@ -50,10 +50,14 @@ import {
   serveRileggere,
 } from "../src/lib/motore/riuso.ts";
 import {
+  TETTO_CALCOLATO,
   TETTO_MANOSCRITTO,
   canonicalizza,
+  dataAttestata,
   dataValida,
   completatoOltreLaFonte,
+  giudicaValore,
+  indizioMancante,
   normalizzaCampi,
   normalizzaRighe,
   verificaBollettaElettrica,
@@ -65,6 +69,7 @@ import {
 import {
   CAMPI_BOLLETTA_ELETTRICA,
   COLONNE_FORMAZIONE,
+  COLONNE_ORGANICO,
 } from "../src/lib/motore/schemi.ts";
 import { formattaValore, raggruppaLetture, livelloConfidenza } from "../src/lib/motore/portale.ts";
 import { naturaPdf, testoDelPdf } from "../src/lib/motore/pdf.ts";
@@ -1904,6 +1909,211 @@ verifica(
 verifica(
   "una scheda resta al tetto suo: pochi campi, nessuna riga",
   tettoToken("scheda", 1, 10) === 4000,
+);
+
+/* ══════════════════════════════════════════════════════════════════
+   I QUATTRO PRESIDI, misurati sul registro presenze vero.
+   Il foglio: intestazione col refuso, quattro righe a mano con le date
+   in formati diversi e una col giorno illeggibile, una quinta riga con
+   il solo docente prestampato, nessuna indicazione di genere.
+   ══════════════════════════════════════════════════════════════════ */
+
+console.log("\n— (1) LE DATE: il secolo e lo zero di riempimento li mettiamo noi —");
+
+const DATA = COLONNE_FORMAZIONE.find((c) => c.chiave === "data");
+
+// I quattro formati osservati sul foglio, più le varianti vicine.
+for (const [fonte, atteso, perche] of [
+  ["8/09/26 Ing. M.Fittipaldi ANDREA FIORI 9:00 13:00", true, "anno a due cifre, giorno senza zero"],
+  ["8/09/26", true, "la sola cella"],
+  ["08/09/2026 Ing. M.Fittipaldi ANNA MIA 9 13:00", true, "forma piena"],
+  ["8/9/26", true, "mese senza zero"],
+  ["08.09.26", true, "separatore punto"],
+  ["2026-09-08", true, "già canonica"],
+  ["8 settembre 2026", true, "mese in lettere"],
+  ["/9/26 Ing. M.Fittipaldi ROBERTA ANGELI 9:00 13", false, "GIORNO ILLEGGIBILE: va azzerata"],
+  ["8/09", false, "anno assente del tutto"],
+  ["7/09/26", false, "giorno diverso da quello scritto"],
+  ["8/09/25", false, "anno diverso da quello scritto"],
+]) {
+  verifica(
+    `data «${fonte.slice(0, 34)}» → ${atteso ? "attestata" : "NON attestata"} (${perche})`,
+    dataAttestata("2026-09-08", fonte) === atteso,
+    `ha detto ${dataAttestata("2026-09-08", fonte)}`,
+  );
+}
+
+verifica(
+  "senza citazione la data non si giudica: l'assenza di prova non è prova",
+  dataAttestata("2026-09-08", null) === null,
+);
+
+// Il caso che ha fatto nascere il presidio resta chiuso.
+verifica(
+  "l'anno completato con quello di rendicontazione resta azzerato",
+  giudicaValore(DATA, "2025-08-28", "28/08") === "azzera",
+);
+
+// E sul foglio vero: tre date buone su quattro, azzerata solo la terza.
+const RIGHE_FOGLIO = [
+  "8/09/26 Ing. M.Fittipaldi ANDREA FIORI 9:00 13:00",
+  "8/09/26 Ing. M.Fittipaldi MATTIA COSTA 9:05 13:05",
+  "/9/26 Ing. M.Fittipaldi ROBERTA ANGELI 9:00 13",
+  "08/09/2026 Ing. M.Fittipaldi ANNA MIA 9 13:00",
+];
+const verdetti = RIGHE_FOGLIO.map((f) => giudicaValore(DATA, "2026-09-08", f));
+verifica(
+  "sul foglio vero: 3 date tenute su 4, azzerata solo quella col giorno illeggibile",
+  verdetti.filter((v) => v === "tieni").length === 3 && verdetti[2] === "azzera",
+  verdetti.join(", "),
+);
+
+console.log("\n— (2) I VALORI CALCOLATI: si tengono, ma si dice che li abbiamo ricavati noi —");
+
+const ORE = COLONNE_FORMAZIONE.find((c) => c.chiave === "oreTotali");
+const PARTECIPANTI = COLONNE_FORMAZIONE.find((c) => c.chiave === "partecipanti");
+
+verifica(
+  "le ore dedotte da 9:00-13:00 non si azzerano: si marcano come calcolate",
+  giudicaValore(ORE, "4", "Ingresso 9:00 Uscita 13:00") === "calcolato",
+);
+verifica(
+  "le ore scritte sul documento restano un dato letto",
+  giudicaValore(ORE, "4", "Durata del corso: 4 ore") === "tieni",
+);
+verifica(
+  "i partecipanti contati dalle firme sono calcolati, non letti",
+  giudicaValore(PARTECIPANTI, "4", "quattro righe firmate") === "calcolato",
+);
+
+const conCalcolo = normalizzaCampi(
+  [
+    { nome: "oreTotali", valore: "4", confidenza: 0.95, fonteLettura: "manoscritto", estrattoDa: "Ingresso 9:00 Uscita 13:00" },
+  ],
+  COLONNE_FORMAZIONE,
+  "leggibile",
+);
+const ore = conCalcolo.find((c) => c.chiave === "oreTotali");
+verifica(
+  "il valore calcolato arriva al cliente, e con l'avviso che lo dice",
+  ore.valore === "4" && ore.avvisi.some((a) => /calcolato da noi/i.test(a)),
+  JSON.stringify(ore.avvisi),
+);
+verifica(
+  `un valore calcolato non supera il tetto dei calcolati (${TETTO_CALCOLATO})`,
+  ore.confidenza <= TETTO_CALCOLATO,
+  `confidenza ${ore.confidenza}`,
+);
+verifica(
+  "un calcolato sta sotto un manoscritto letto davvero",
+  TETTO_CALCOLATO < TETTO_MANOSCRITTO,
+);
+
+// La retribuzione media non si calcola da dati individuali: si legge.
+const RETRIBUZIONE = COLONNE_ORGANICO.find((c) => c.chiave === "retribuzioneMediaLorda");
+verifica(
+  "la retribuzione media ricavata da cedolini individuali si azzera, non si marca",
+  giudicaValore(RETRIBUZIONE, "31000", "Rossi 30000, Bianchi 32000") === "azzera",
+);
+
+console.log("\n— (3) IL GENERE: solo se il documento lo dichiara —");
+
+const DONNE = COLONNE_FORMAZIONE.find((c) => c.chiave === "partecipantiDonne");
+
+verifica(
+  "«di cui donne» dedotto dai nomi si azzera",
+  giudicaValore(DONNE, "3", "ANDREA FIORI, MATTIA COSTA, ROBERTA ANGELI, ANNA MIA") === "azzera",
+);
+verifica(
+  "«di cui donne» si tiene se il documento ha una colonna che lo dichiara",
+  giudicaValore(DONNE, "2", "Partecipanti 4 di cui donne 2") === "tieni",
+);
+verifica(
+  "e lo riconosce anche scritto in altro modo",
+  giudicaValore(DONNE, "2", "Genere: 2 F, 2 M") === "tieni",
+);
+verifica(
+  "senza citazione non si giudica nemmeno il genere",
+  indizioMancante(DONNE, null) === false,
+);
+
+const GENERE = COLONNE_ORGANICO.find((c) => c.chiave === "genere");
+verifica(
+  "nell'organico il genere dedotto da un elenco nominativo si azzera",
+  giudicaValore(GENERE, "donne", "Rossi Maria, Bianchi Anna, Verdi Luca") === "azzera",
+);
+verifica(
+  "e si tiene quando la riga è per genere, come nei prospetti veri",
+  giudicaValore(GENERE, "donne", "Impiegati — donne — 12") === "tieni",
+);
+
+const conGenere = normalizzaCampi(
+  [
+    { nome: "partecipanti", valore: "4", confidenza: 0.9, fonteLettura: "manoscritto", estrattoDa: "quattro firme" },
+    { nome: "partecipantiDonne", valore: "3", confidenza: 0.9, fonteLettura: "manoscritto", estrattoDa: "ANDREA, ROBERTA, ANNA" },
+  ],
+  COLONNE_FORMAZIONE,
+  "faticosa",
+);
+const donne = conGenere.find((c) => c.chiave === "partecipantiDonne");
+verifica(
+  "e il cliente legge perché il campo è vuoto",
+  donne.valore === null && donne.avvisi.some((a) => /non lo dichiara/i.test(a)),
+  JSON.stringify(donne.avvisi),
+);
+
+console.log("\n— (4) LA RIGA PRESTAMPATA: la quinta riga del registro —");
+
+const rigaFoglio = (celle, estrattoDa) => ({
+  celle: celle.map(([colonna, valore]) => ({ colonna, valore })),
+  confidenza: 0.8,
+  pagina: 1,
+  estrattoDa,
+  fonteLettura: "manoscritto",
+  nota: "",
+});
+
+const cinqueRighe = normalizzaRighe(
+  [
+    rigaFoglio([["data", "08/09/2026"], ["docente", "Ing. M.Fittipaldi"], ["partecipanti", "1"]], "08/09/2026 Ing. M.Fittipaldi ANDREA FIORI 9:00 13:00"),
+    rigaFoglio([["data", "08/09/2026"], ["docente", "Ing. M.Fittipaldi"], ["partecipanti", "1"]], "08/09/2026 Ing. M.Fittipaldi MATTIA COSTA 9:05 13:05"),
+    rigaFoglio([["data", "08/09/2026"], ["docente", "Ing. M.Fittipaldi"], ["partecipanti", "1"]], "08/09/2026 Ing. M.Fittipaldi ROBERTA ANGELI 9:00 13"),
+    rigaFoglio([["data", "08/09/2026"], ["docente", "Ing. M.Fittipaldi"], ["partecipanti", "1"]], "08/09/2026 Ing. M.Fittipaldi ANNA MIA 9 13:00"),
+    // La quinta: solo il docente, che è stampato su tutte le righe.
+    rigaFoglio([["docente", "Ing. M.Fittipaldi"]], "Ing. M.Fittipaldi"),
+  ],
+  COLONNE_FORMAZIONE,
+  "faticosa",
+);
+verifica(
+  "la riga col solo docente prestampato non diventa una presenza",
+  cinqueRighe.length === 4,
+  `sopravvissute ${cinqueRighe.length}`,
+);
+verifica(
+  "e le quattro che restano sono rinumerate da 1",
+  cinqueRighe.map((r) => r.indice).join(",") === "1,2,3,4",
+);
+
+// Il caso opposto: righe tutte uguali non si svuotano.
+const tutteUguali = normalizzaRighe(
+  [
+    rigaFoglio([["docente", "Ing. M.Fittipaldi"]], "Ing. M.Fittipaldi"),
+    rigaFoglio([["docente", "Ing. M.Fittipaldi"]], "Ing. M.Fittipaldi"),
+  ],
+  COLONNE_FORMAZIONE,
+  "faticosa",
+);
+verifica(
+  "ma una tabella in cui TUTTE le righe sono uguali non si svuota",
+  tutteUguali.length === 2,
+  `sopravvissute ${tutteUguali.length}`,
+);
+
+const righeVuote = normalizzaRighe([rigaFoglio([["docente", ""]], "")], COLONNE_FORMAZIONE, "faticosa");
+verifica(
+  "una riga senza nessun valore resta scartata come prima",
+  righeVuote.length === 0,
 );
 
 console.log(

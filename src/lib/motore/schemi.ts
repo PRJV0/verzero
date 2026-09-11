@@ -92,6 +92,36 @@ export type EtichettaCampo = {
    * messo, e non costa niente metterlo.
    */
   soloSeScritto?: boolean;
+
+  /**
+   * Il valore si può legittimamente RICAVARE da altri valori del
+   * documento, invece di esserci scritto: le ore di un corso stanno fra
+   * l'ingresso e l'uscita, i partecipanti si contano dalle firme.
+   *
+   * Azzerarli sarebbe rifiutare una deduzione utile; lasciarli passare
+   * come dati letti sarebbe peggio, perché il cliente non distingue più
+   * quello che ha detto il suo documento da quello che abbiamo ricavato
+   * noi. Misurato su un registro presenze: tutte e tre le letture hanno
+   * scritto `oreTotali: 4` — corretto, dedotto da 9:00-13:00, e sul
+   * foglio quel 4 non c'è da nessuna parte.
+   *
+   * Quindi: se il valore NON è attestato nella citazione, si tiene e si
+   * marca. La marcatura viaggia negli `avvisi`, che sono già persistiti
+   * e già mostrati nella scheda di conferma.
+   */
+  calcolabile?: boolean;
+
+  /**
+   * Il valore si accetta solo se nella citazione compare uno di questi
+   * indizi.
+   *
+   * Nasce dal campo «di cui donne» di un registro presenze: il genere
+   * non si deduce dai nomi — sarebbe un'attribuzione arbitraria su
+   * persone reali — e il divieto viveva SOLO nelle istruzioni al
+   * modello. Un divieto nel prompt è una richiesta; qui diventa un
+   * vincolo. Vale per qualunque campo ricavabile da attributi personali.
+   */
+  richiedeIndizio?: readonly string[];
 };
 
 type Chiavi = readonly [string, ...string[]];
@@ -386,12 +416,30 @@ export const COLONNE_ORGANICO: EtichettaCampo[] = [
     tipo: "testo",
     essenziale: true,
   },
+  // ═══ STESSA REGOLA DELLA FORMAZIONE ═══
+  // Qui il genere è la dimensione della riga, e nel caso normale il
+  // documento lo scrive in testa alla colonna: la citazione porta
+  // «donne» o «uomini» e il campo passa. Il caso che questa guardia
+  // ferma è l'altro — un libro unico nominativo che il modello aggrega
+  // deducendo il genere dai nomi delle persone. Le istruzioni glielo
+  // vietano già; questo lo rende un vincolo.
   {
     chiave: "genere",
     etichetta: "Genere",
     tipo: "scelta",
     valori: ["donne", "uomini", "altro", "non-dichiarato"],
     essenziale: true,
+    richiedeIndizio: [
+      "genere",
+      "sesso",
+      "donne",
+      "uomini",
+      "femmine",
+      "maschi",
+      "m/f",
+      "f/m",
+      "non-dichiarato",
+    ],
   },
   { chiave: "numero", etichetta: "Numero di addetti", tipo: "numero", essenziale: true, min: 0 },
   {
@@ -402,11 +450,16 @@ export const COLONNE_ORGANICO: EtichettaCampo[] = [
     nonSupera: "numero",
   },
   { chiave: "partTime", etichetta: "di cui part time", tipo: "numero", min: 0, nonSupera: "numero" },
+  // Le istruzioni dicono già «non calcolarla tu da dati individuali».
+  // Calcolarla vorrebbe dire fare una media su retribuzioni di persone
+  // singole, cioè trattare esattamente i dati che non vogliamo toccare:
+  // questa si LEGGE, e se non c'è non c'è.
   {
     chiave: "retribuzioneMediaLorda",
     etichetta: "Retribuzione media lorda annua",
     tipo: "numero",
     unita: "€",
+    soloSeScritto: true,
   },
   { chiave: "eta", etichetta: "Fascia d'età", tipo: "testo" },
 ];
@@ -416,20 +469,49 @@ export const COLONNE_ORGANICO: EtichettaCampo[] = [
 export const COLONNE_FORMAZIONE: EtichettaCampo[] = [
   { chiave: "corso", etichetta: "Corso o argomento", tipo: "testo", essenziale: true },
   { chiave: "data", etichetta: "Data", tipo: "data", essenziale: true, dentroLAnno: true },
-  { chiave: "oreTotali", etichetta: "Ore", tipo: "numero", min: 0.5, max: 500 },
+  // Le ore quasi mai sono scritte: stanno fra l'ingresso e l'uscita, e
+  // il modello le ricava. Misurato su un registro vero: tutte e tre le
+  // letture hanno scritto 4, e sul foglio quel 4 non c'è.
+  {
+    chiave: "oreTotali",
+    etichetta: "Ore",
+    tipo: "numero",
+    min: 0.5,
+    max: 500,
+    calcolabile: true,
+  },
+  // Su un foglio firma si contano le firme: è una deduzione legittima,
+  // e va detto che l'abbiamo fatta noi.
   {
     chiave: "partecipanti",
     etichetta: "Partecipanti",
     tipo: "numero",
     essenziale: true,
     min: 1,
+    calcolabile: true,
   },
+  // ═══ IL GENERE NON SI DEDUCE DAI NOMI ═══
+  // Il divieto viveva solo nelle istruzioni al modello. Su un registro
+  // con «Andrea» in mezzo a «Roberta» e «Anna» — Andrea è maschile, ed è
+  // la trappola perfetta — bastava che il modello disobbedisse una volta
+  // per attribuire un genere a quattro persone reali. Adesso il campo si
+  // accetta solo se la citazione porta un'indicazione esplicita.
   {
     chiave: "partecipantiDonne",
     etichetta: "di cui donne",
     tipo: "numero",
     min: 0,
     nonSupera: "partecipanti",
+    richiedeIndizio: [
+      "genere",
+      "sesso",
+      "donne",
+      "uomini",
+      "femmine",
+      "maschi",
+      "m/f",
+      "f/m",
+    ],
   },
   { chiave: "categoria", etichetta: "Inquadramento dei partecipanti", tipo: "testo" },
   {

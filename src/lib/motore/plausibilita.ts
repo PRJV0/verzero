@@ -47,6 +47,13 @@ export type CampoEstratto = {
  *  alle istruzioni è una regola che il modello può disattendere. */
 export const TETTO_MANOSCRITTO = 0.6;
 
+/**
+ * Un valore che nessuno ha scritto non può presentarsi come uno letto
+ * bene: sta sotto il tetto del manoscritto, perché di quello almeno
+ * esiste un segno sul foglio.
+ */
+export const TETTO_CALCOLATO = 0.5;
+
 /** Quanto si abbassa tutto quando la scansione è faticosa da leggere. */
 export const PENALITA_QUALITA_FATICOSA = 0.2;
 
@@ -103,6 +110,103 @@ export function completatoOltreLaFonte(
   return nelValore.some((gruppo) => !flusso.includes(gruppo));
 }
 
+/* ------------------------------------------------------------------ */
+
+/**
+ * LE DATE HANNO UN CONFRONTO LORO, e il confronto generico non va bene.
+ *
+ * ═══ PERCHÉ ═══
+ * Il confronto sui gruppi di cifre azzerava date PERFETTAMENTE LEGGIBILI.
+ * Misurato su un registro vero: «8/09/26» produce il flusso `80926`, e il
+ * valore canonico `2026-09-08` porta i gruppi `2026`, `09`, `08`. Né
+ * `2026` né `08` compaiono in `80926`, quindi la data spariva — benché
+ * sul foglio ci fosse per intero. Su quel foglio azzerava tre date su
+ * quattro, e due lo erano a torto.
+ *
+ * La colpa non è del modello: è della CANONICALIZZAZIONE. Siamo noi a
+ * espandere il secolo (`26` → `2026`) e a mettere lo zero di riempimento
+ * (`8` → `08`); poi cercavamo quelle cifre nella citazione e non le
+ * trovavamo, perché ce le eravamo aggiunte da soli.
+ *
+ * ═══ COME FUNZIONA ADESSO ═══
+ * Si cercano nella citazione le date SCRITTE — tre componenti separate
+ * da `/`, `.` o `-`, oppure giorno + mese in lettere + anno — e si
+ * confronta componente per componente, ammettendo le due normalizzazioni
+ * che facciamo noi:
+ *   · lo zero di riempimento: `8` vale `08`;
+ *   · l'espansione del secolo: `26` vale `2026` (ultime due cifre).
+ *
+ * L'azzeramento resta esattamente dove serviva: quando una componente è
+ * ASSENTE dal documento. «/9/26» col giorno illeggibile non produce
+ * nessuna data a tre componenti, e «8/09» senza anno nemmeno: in
+ * entrambi i casi il valore non è attestato e va tolto.
+ */
+const MESI = [
+  "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno",
+  "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre",
+];
+
+/** Date a tre componenti numeriche: `8/09/26`, `08-09-2026`, `2026.09.08`. */
+const DATA_NUMERICA = /(\d{1,4})\s*[/.\-]\s*(\d{1,2})\s*[/.\-]\s*(\d{1,4})/g;
+/** Date con il mese in lettere: «8 settembre 2026». */
+const DATA_A_PAROLE = new RegExp(
+  `(\\d{1,2})\\s+(${MESI.join("|")})\\s+(\\d{2,4})`,
+  "gi",
+);
+
+/** `8` vale `08`, e viceversa: lo zero di riempimento lo mettiamo noi. */
+const stessoNumero = (a: string, b: string) => Number(a) === Number(b);
+
+/** `26` vale `2026`: l'espansione del secolo la facciamo noi. */
+function stessoAnno(scritto: string, canonico: string): boolean {
+  if (Number(scritto) === Number(canonico)) return true;
+  return (
+    scritto.replace(/^0+/, "").length <= 2 &&
+    Number(scritto) === Number(canonico) % 100
+  );
+}
+
+/**
+ * La data canonica è attestata nella citazione?
+ *
+ * `null` quando non si può giudicare — valore non ISO, o citazione
+ * assente: non avere la prova non è la prova del contrario.
+ */
+export function dataAttestata(
+  valoreIso: string | null,
+  fonte: string | null | undefined,
+): boolean | null {
+  if (!valoreIso || !fonte || !iso.test(valoreIso)) return null;
+  const [anno, mese, giorno] = valoreIso.split("-");
+
+  DATA_NUMERICA.lastIndex = 0;
+  for (const m of fonte.matchAll(DATA_NUMERICA)) {
+    const [, a, b, c] = m;
+    // Ordine italiano — giorno/mese/anno — e ordine ISO quando la prima
+    // componente ha quattro cifre.
+    const italiano =
+      stessoNumero(a, giorno) && stessoNumero(b, mese) && stessoAnno(c, anno);
+    const isoScritto =
+      a.length === 4 && stessoAnno(a, anno) && stessoNumero(b, mese) && stessoNumero(c, giorno);
+    if (italiano || isoScritto) return true;
+  }
+
+  DATA_A_PAROLE.lastIndex = 0;
+  for (const m of fonte.matchAll(DATA_A_PAROLE)) {
+    const [, g, nomeMese, a] = m;
+    const numeroMese = MESI.indexOf(nomeMese.toLowerCase()) + 1;
+    if (
+      stessoNumero(g, giorno) &&
+      numeroMese === Number(mese) &&
+      stessoAnno(a, anno)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 /**
  * Il campo è di quelli che si possono COMPLETARE?
  *
@@ -120,6 +224,90 @@ export function soggettoACompletamento(campo: EtichettaCampo): boolean {
 /** Come si dice al cliente, senza dargli del bugiardo e senza gergo. */
 export function notaCompletamento(etichetta: string): string {
   return `${etichetta}: sul documento non c'è per intero, e non lo completiamo noi. Scrivilo tu.`;
+}
+
+/**
+ * Il valore c'è, ma non l'ha scritto il documento: l'abbiamo ricavato
+ * noi. Non è un difetto ed è utile — ma il cliente deve sapere sempre
+ * che cosa ha detto il suo documento e che cosa abbiamo dedotto.
+ */
+export function notaCalcolata(etichetta: string): string {
+  return `${etichetta}: calcolato da noi dagli altri dati del documento, non letto. Controllalo.`;
+}
+
+/**
+ * Il campo si accetta solo con un indizio esplicito, e l'indizio non
+ * c'è. Il caso che l'ha resa necessaria è il «di cui donne» di un
+ * registro presenze, dove l'unico modo di riempirlo sarebbe dedurre il
+ * genere dai nomi delle persone.
+ */
+export function notaIndizioMancante(etichetta: string): string {
+  return `${etichetta}: il documento non lo dichiara, e non lo ricaviamo da altro. Lasciato vuoto.`;
+}
+
+/** Senza accenti e in minuscolo: gli indizi si cercano così. */
+const piatto = (t: string) =>
+  t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+/**
+ * Il campo chiede un indizio esplicito nella citazione, e non ce l'ha.
+ * Senza citazione non si giudica, come per il completamento: l'assenza
+ * di prova non è prova.
+ */
+export function indizioMancante(
+  campo: EtichettaCampo,
+  fonte: string | null | undefined,
+): boolean {
+  if (!campo.richiedeIndizio?.length || !fonte) return false;
+  const testo = piatto(fonte);
+  return !campo.richiedeIndizio.some((i) => testo.includes(piatto(i)));
+}
+
+/**
+ * Il verdetto su UN valore, unico per schede e righe.
+ *
+ *   `tieni`     — attestato, o non giudicabile
+ *   `azzera`    — il documento non lo dice e non lo deduciamo
+ *   `calcolato` — non è scritto, ma si ricava: si tiene e si marca
+ */
+export type Verdetto = "tieni" | "azzera" | "calcolato";
+
+export function giudicaValore(
+  campo: EtichettaCampo,
+  valore: string | null,
+  fonte: string | null | undefined,
+): Verdetto {
+  if (valore === null) return "tieni";
+
+  // Un campo che esige un indizio esplicito viene prima di tutto: se
+  // l'indizio manca, il valore non si tiene in nessuna forma.
+  if (indizioMancante(campo, fonte)) return "azzera";
+
+  if (campo.tipo === "data") {
+    const attestata = dataAttestata(valore, fonte);
+    if (attestata === null) return "tieni";
+    if (attestata) return "tieni";
+    return campo.calcolabile ? "calcolato" : "azzera";
+  }
+
+  if (campo.calcolabile) {
+    // `completatoOltreLaFonte` si astiene quando nella citazione non c'è
+    // nessuna cifra: per i campi normali è la scelta giusta — l'assenza
+    // di prova non è prova. Per un CALCOLABILE no: un numero il cui
+    // appoggio non contiene un solo numero è, per definizione, un numero
+    // che abbiamo ricavato noi. «Quattro righe firmate» → partecipanti 4.
+    if (!fonte) return "tieni";
+    const cifreNellaFonte = (fonte.match(CIFRE) ?? []).length > 0;
+    const cifreNelValore = (valore.match(CIFRE) ?? []).length > 0;
+    if (cifreNelValore && !cifreNellaFonte) return "calcolato";
+    return completatoOltreLaFonte(valore, fonte) ? "calcolato" : "tieni";
+  }
+
+  if (campo.soloSeScritto && completatoOltreLaFonte(valore, fonte)) {
+    return "azzera";
+  }
+
+  return "tieni";
 }
 
 /* ------------------------------------------------------------------ */
@@ -247,17 +435,25 @@ export function normalizzaCampi(
     }
 
     // ═══ REGOLA INVIOLABILE — IL VALORE NON AGGIUNGE ═══
-    // Prima di ogni altra cosa: se il valore porta cifre che nella
-    // citazione non ci sono, non è un valore letto male — è un valore
-    // completato, e va tolto.
+    // Un valore che il documento non dice o si toglie, o si marca come
+    // ricavato da noi: quello che non può succedere è che arrivi al
+    // cliente mescolato ai dati letti.
     let finale = valore;
-    if (
-      soggettoACompletamento(e) &&
-      completatoOltreLaFonte(valore, g?.estrattoDa)
-    ) {
+    const verdetto = giudicaValore(e, valore, g?.estrattoDa);
+    if (verdetto === "azzera") {
       finale = null;
       confidenza = 0;
-      avvisi.push(notaCompletamento(e.etichetta));
+      avvisi.push(
+        indizioMancante(e, g?.estrattoDa)
+          ? notaIndizioMancante(e.etichetta)
+          : notaCompletamento(e.etichetta),
+      );
+    } else if (verdetto === "calcolato") {
+      // Si tiene, perché è una deduzione legittima e utile. Ma la
+      // confidenza scende sotto il tetto del manoscritto: un valore che
+      // nessuno ha scritto non può presentarsi come uno letto bene.
+      confidenza = Math.min(confidenza, TETTO_CALCOLATO);
+      avvisi.push(notaCalcolata(e.etichetta));
     }
 
     // ═══ REGOLA INVIOLABILE (docs/motore.md §3) ═══
@@ -323,6 +519,39 @@ export type RigaEstratta = {
  * e mostrarla al cliente da confermare sarebbe chiedergli di confermare
  * il nulla.
  */
+/**
+ * LE COLONNE PRESTAMPATE — quelle che portano lo stesso valore ovunque.
+ *
+ * Su un registro presenze il docente è stampato su tutte e cinque le
+ * righe, compresa la quinta, che è VUOTA: nessun discente, nessun orario,
+ * nessuna firma. La regola di scarto chiedeva che TUTTE le celle fossero
+ * nulle, e quel docente prestampato bastava a salvarla — così una riga
+ * bianca diventava una presenza.
+ *
+ * Una colonna è prestampata se, dove compare, porta sempre lo stesso
+ * valore e compare in più di una riga. Una riga fatta di sole colonne
+ * prestampate non dice niente di suo.
+ */
+function colonnePrestampate(
+  righe: { celle: CellaEstratta[] }[],
+): Set<string> {
+  const visti = new Map<string, Set<string>>();
+  const quante = new Map<string, number>();
+  for (const r of righe) {
+    for (const c of r.celle) {
+      if (c.valore === null) continue;
+      if (!visti.has(c.chiave)) visti.set(c.chiave, new Set());
+      visti.get(c.chiave)!.add(c.valore);
+      quante.set(c.chiave, (quante.get(c.chiave) ?? 0) + 1);
+    }
+  }
+  const fuori = new Set<string>();
+  for (const [chiave, valori] of visti) {
+    if (valori.size === 1 && (quante.get(chiave) ?? 0) > 1) fuori.add(chiave);
+  }
+  return fuori;
+}
+
 export function normalizzaRighe(
   lette: RigaGrezza[],
   colonne: EtichettaCampo[],
@@ -345,14 +574,15 @@ export function normalizzaRighe(
     // confidenza non scende dentro la cella), e va bene così: il
     // confronto è sulle cifre, e le cifre della riga ci sono tutte.
     const completate: string[] = [];
+    const senzaIndizio: string[] = [];
+    const calcolate: string[] = [];
     const celle: CellaEstratta[] = colonne.map((col) => {
       const grezzo = (perColonna.get(col.chiave) ?? "").trim();
       const valore = grezzo === "" ? null : canonicalizza(grezzo, col.tipo);
-      if (
-        soggettoACompletamento(col) &&
-        completatoOltreLaFonte(valore, r.estrattoDa)
-      ) {
-        completate.push(col.etichetta);
+      const verdetto = giudicaValore(col, valore, r.estrattoDa);
+      if (verdetto === "azzera") {
+        if (indizioMancante(col, r.estrattoDa)) senzaIndizio.push(col.etichetta);
+        else completate.push(col.etichetta);
         return {
           chiave: col.chiave,
           etichetta: col.etichetta,
@@ -360,6 +590,7 @@ export function normalizzaRighe(
           unita: col.unita ?? null,
         };
       }
+      if (verdetto === "calcolato") calcolate.push(col.etichetta);
       return {
         chiave: col.chiave,
         etichetta: col.etichetta,
@@ -374,6 +605,8 @@ export function normalizzaRighe(
     const avvisi: string[] = [];
 
     for (const etichetta of completate) avvisi.push(notaCompletamento(etichetta));
+    for (const etichetta of senzaIndizio) avvisi.push(notaIndizioMancante(etichetta));
+    for (const etichetta of calcolate) avvisi.push(notaCalcolata(etichetta));
 
     if (qualita === "faticosa") {
       confidenza = Math.max(0, confidenza - PENALITA_QUALITA_FATICOSA);
@@ -396,7 +629,45 @@ export function normalizzaRighe(
     });
   }
 
-  return out;
+  // ═══ LA RIGA SENZA INFORMAZIONE PROPRIA ═══
+  // Si scarta DOPO aver costruito tutte le righe, perché «prestampata»
+  // è una proprietà che si vede solo confrontando le righe fra loro.
+  // E si scarta solo se qualche ALTRA riga porta qualcosa in più: una
+  // tabella in cui tutte le righe sono uguali non è una tabella di
+  // righe vuote, è una tabella che ripete — e non tocca a noi svuotarla.
+  const prestampate = colonnePrestampate(out);
+  const piene = (r: RigaEstratta) =>
+    new Set(r.celle.filter((c) => c.valore !== null).map((c) => c.chiave));
+
+  // Su questo registro le quattro righe vere hanno TUTTE le stesse
+  // colonne piene con gli stessi valori — data, docente, partecipanti —
+  // perché ciò che le distingue davvero, il nome del discente, non lo
+  // estraiamo apposta. Quindi la costanza dei valori non basta a
+  // riconoscere la riga vuota: serve guardare QUANTE colonne porta.
+  //
+  // Una riga si scarta se porta solo colonne prestampate E se esiste
+  // un'altra riga che porta tutto quello che ha lei e qualcosa in più.
+  // La quinta riga ha il solo docente, le altre hanno docente + data +
+  // partecipanti: è un sottoinsieme stretto, e se ne va. Se invece le
+  // righe sono tutte uguali nessuna è sottoinsieme stretto di un'altra,
+  // e la tabella resta intera — ripetere non è essere vuoti.
+  const insiemi = out.map(piene);
+  const daScartare = new Set<number>();
+  out.forEach((r, i) => {
+    const mie = insiemi[i];
+    if (mie.size === 0) return;
+    if (![...mie].every((k) => prestampate.has(k))) return;
+    const superata = insiemi.some(
+      (altre, j) =>
+        j !== i && altre.size > mie.size && [...mie].every((k) => altre.has(k)),
+    );
+    if (superata) daScartare.add(i);
+  });
+  if (daScartare.size === 0) return out;
+
+  return out
+    .filter((_, i) => !daScartare.has(i))
+    .map((r, i) => ({ ...r, indice: i + 1 }));
 }
 
 /** Il valore numerico di una cella, o null. */

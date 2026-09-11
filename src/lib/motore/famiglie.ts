@@ -339,7 +339,9 @@ export const REGISTRO_MOTORE: VoceMotore[] = [
     istruzioni: [
       "Una riga per CORSO o sessione formativa. Se il documento è un foglio firma di una sola sessione, la tabella ha una riga sola e `partecipanti` è il numero di firme leggibili.",
       "- `partecipanti`: quante persone hanno partecipato. Su un foglio firma conta le firme, e se qualcuna è illeggibile contala comunque ma dillo in `avvertenze`.",
-      "- `partecipantiDonne`: solo se il documento distingue il genere. Non dedurlo dai nomi: sarebbe un'attribuzione arbitraria.",
+      "- `oreTotali` e `partecipanti` si possono RICAVARE dagli altri dati (ingresso/uscita, numero di firme): fallo pure, ma in `estrattoDa` cita ciò da cui li hai ricavati. Se non sono scritti sul documento li marchiamo come calcolati da noi, e il cliente lo vede.",
+      "- Le righe della tabella che riportano SOLO parti prestampate — il docente stampato su ogni riga, senza discente e senza orari — non sono presenze: non emetterle.",
+      "- `partecipantiDonne`: solo se il documento distingue il genere, e in `estrattoDa` deve comparire la parte che lo dichiara. Non dedurlo dai nomi: sarebbe un'attribuzione arbitraria su persone reali, e il nostro codice lo azzera comunque.",
       "- ═══ NON RIPORTARE I NOMI dei partecipanti ═══ servono i numeri, non le persone.",
       "- `ambito`: scegli fra i valori ammessi guardando l'argomento del corso.",
       "- Le firme sono manoscritte: per le righe lette da un foglio firma usa `fonteLettura: \"manoscritto\"`.",
