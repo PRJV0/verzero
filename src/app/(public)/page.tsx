@@ -10,7 +10,7 @@ import { HeroHome } from "@/components/hero-home";
 import { OndaParticelle } from "@/components/onda-particelle";
 import { PrezzoPrincipio } from "@/components/prezzo-principio";
 import { AnnuncioFase } from "@/components/annuncio-fase";
-import { FONDO_SOGLIA, PRESET } from "@/lib/onda";
+import { SFONDO_SOGLIA, PRESET } from "@/lib/onda";
 import { AnteprimaPassi } from "@/components/guida-passi";
 import { MotoreInAzione } from "@/components/motore-in-azione";
 import { JsonLd } from "@/components/json-ld";
@@ -430,7 +430,7 @@ export default function HomePage() {
         id="prezzo"
         className="relative isolate overflow-hidden px-5 py-16 md:py-24"
         style={{
-          background: `linear-gradient(to bottom, ${FONDO_SOGLIA[0]}, ${FONDO_SOGLIA[1]})`,
+          background: SFONDO_SOGLIA,
         }}
       >
         <OndaParticelle config={PRESET.tecnica} className="-z-10" />

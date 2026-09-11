@@ -90,7 +90,7 @@ export function bloccoAvvioTesto(siteUrl: string): string {
 
 export function bloccoAvvioHtml(siteUrl: string): string {
   return [
-    '<p style="background:#F6F1E4;border-left:4px solid #065B3C;padding:12px 16px">',
+    '<p style="background:#F6F1E4;border-left:4px solid #21544F;padding:12px 16px">',
     `<strong>${AVVIO.addebito.titolo}.</strong> ${AVVIO.addebito.testo}</p>`,
     `<p>${AVVIO.contatto.titolo}. ${AVVIO.contatto.testo}</p>`,
     `<p><strong>${AVVIO.intanto.titolo}.</strong> ${AVVIO.intanto.testo}</p>`,
@@ -98,7 +98,7 @@ export function bloccoAvvioHtml(siteUrl: string): string {
     ...AVVIO.intanto.azioni.map(
       (a) =>
         `<li style="margin-bottom:10px"><strong>${a.titolo}</strong><br>${a.testo}<br>` +
-        `<a href="${siteUrl}${a.href}" style="color:#065B3C;font-weight:600">${a.cta}</a></li>`,
+        `<a href="${siteUrl}${a.href}" style="color:#21544F;font-weight:600">${a.cta}</a></li>`,
     ),
     "</ol>",
   ].join("\n");

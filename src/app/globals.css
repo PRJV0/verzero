@@ -5,51 +5,58 @@
  * Da qui in poi si usano le utility Tailwind: bg-paper, text-pine, border-line...
  */
 /*
- * ═══ LA PALETTE — IL CARATTERE STA NEL VERDE, IL CALORE NEI NEUTRI ═══
+ * ═══ LA PALETTE — VERDE-ACQUA PROFONDO, NEUTRI CALDI ═══
  *
- * ═══ L'ERRORE PRECEDENTE, E PERCHÉ ═══
- * Il verde istituzionale sembrava freddo, e la correzione è stata
- * scaldarlo: la tinta era scesa a 148°, verso il giallo. Sbagliato. Un
- * verde profondo a 148° con quella saturazione non diventa caldo,
- * diventa OLIVASTRO — perde il nerbo e sembra impolverato. Il verde
- * scuro è la voce istituzionale del marchio: non è lì che si mette il
- * calore.
+ * Tinta 174°, saturazione 44%, luminosità del pino 23% e del fondo 14%.
+ * È la via di mezzo fra il teal tecnologico (188°, 73%) e il salvia
+ * eucalipto (159°, 30%): a metà strada su entrambi gli assi.
  *
- * La tesi giusta è un'altra, e divide i compiti:
- *   · IL CARATTERE sta nel verde profondo — saturo, con nerbo,
- *     leggermente verso il blu-verde (158°) e mai verso il giallo;
- *   · IL CALORE viene dai NEUTRI — l'avorio al posto del bianco puro e
- *     una carta appena calda. È la leva che rende accogliente una pagina
- *     senza toccare il colore istituzionale;
- *   · L'ENERGIA è del MENTA, non del verde scuro: la menta viva sale a
- *     55% di luminosità e 86% di saturazione, e sul pino profondo fa
- *     9,87:1 — è lei a portare il dinamismo.
+ * ═══ COME CI SIAMO ARRIVATI, IN TRE ERRORI ═══
+ * Vale la pena tenerli scritti, perché due erano miei e il terzo è la
+ * ragione per cui esiste `controllo-contrasti.mjs`.
+ *   1. «Il verde è freddo» → l'ho SCALDATO portando la tinta a 148°,
+ *      verso il giallo. Un verde profondo a quella tinta non diventa
+ *      caldo: diventa olivastro. Il calore non si mette nel verde.
+ *   2. → l'ho riportato a 158° e saturato all'88%. Giusto come
+ *      ripristino, ma non risolveva il problema vero: il fondo al 10%
+ *      di luminosità si legge come quasi-nero, e nessuna tinta lo cambia.
+ *   3. La palette originale aveva TRE contrasti sotto soglia che nessuno
+ *      vedeva guardando la pagina.
  *
- * ═══ IL BIANCO PURO NON ESISTE PIÙ ═══
- * `--color-white` è ridefinito ad avorio: ogni `bg-white` e `text-white`
- * del prodotto diventa caldo in un colpo solo, senza riscrivere
- * centinaia di classi. Il bianco vero resta dove deve restare — la
- * placca del Sigillo, che su carta stampata è bianca e basta, e lo
- * dichiara col suo `#FFFFFF` dentro l'SVG.
+ * ═══ LA DIVISIONE DEI COMPITI, CHE RESTA ═══
+ *   · IL CARATTERE sta nel verde — qui nel blu-verde, che è dove
+ *     l'identità incontra il registro tecnologico senza copiarlo;
+ *   · IL CALORE viene dai NEUTRI: `--color-white` È AVORIO, quindi ogni
+ *     `bg-white` e `text-white` del prodotto è caldo senza riscrivere
+ *     una classe. Il bianco vero resta solo dove non è cromo del sito —
+ *     la placca del Sigillo, il fondo di un QR, la pagina di una
+ *     scansione — e lì è dichiarato a mano;
+ *   · L'ENERGIA è del menta, non del verde scuro.
  *
- * ═══ IL VERDE INTERMEDIO ═══
- * `--color-sage` riempie il vuoto fra il pino (19% di luminosità) e il
- * salvia (93%): all'80% è un fondo su cui il pino sta a 5,53:1, ed è
- * quello che toglie lo spigolo alle fasce.
+ * ═══ IL FONDO NON È PIATTO ═══
+ * `SFONDO_SOGLIA` in `onda.ts` mette un alone largo dentro il gradiente
+ * verticale: il fondo dell'hero ha una modulazione che c'è comunque,
+ * anche prima che il canvas parta e con «riduci movimento».
+ *
+ * ═══ LA STAMPA ═══
+ * Questo verde sta FUORI dalla banda 172°-200° ad alta saturazione, che
+ * è dove la quadricromia sposta la tinta in modo visibile: la copertura
+ * d'inchiostro del pino è 134%, contro il 163% del teal puro. La misura
+ * è però una conversione ingenua, non un profilo ICC: prima di stampare
+ * il marchio su un documento che va in banca serve un contratto di prova
+ * colore sul profilo della tipografia.
  *
  * I contrasti si rimisurano con `node scripts/controllo-contrasti.mjs`,
- * che gira nel `prebuild`: un token cambiato a occhio non dà errore da
- * nessuna parte, ed è così che tre casi sotto soglia erano sopravvissuti
- * per mesi.
+ * che gira nel `prebuild`.
  */
 @theme {
   --color-ink: #15231e;
-  --color-pine: #065b3c;
-  --color-pine-dark: #04432D;
-  --color-moss: #e8f3ee;
+  --color-pine: #21544f;
+  --color-pine-dark: #193E3A;
+  --color-moss: #eaf0ef;
   --color-paper: #f7f6f2;
   --color-line: #e7e5df;
-  --color-mint: #057f57;
+  --color-mint: #206f62;
   --color-gray-warm: #5e6e66;
   --color-gray-light: #7b8e85;
   --color-amber-soft: #f7ecd9;
@@ -61,13 +68,13 @@
   /* Il verde intermedio che mancava: fondi e mezzitoni. Sopra ci va il
      testo pino (5,60:1) o l'inchiostro (10,67:1) — NON la menta, che a
      questa luminosità non tiene. */
-  --color-sage: #bddbcf;
+  --color-sage: #c4d4d1;
 
   /* Direzione grafica (SPEC §12.W) — due registri: editoriale chiaro e
      scuro istituzionale. Il registro "carta e timbro" (crema/terracotta) è
      stato ritirato: sul sito non esistono più quei token. */
-  --color-mint-bright: #2aefa7; /* bagliori e segmenti su fondo scuro */
-  --color-pine-deep: #052e20; /* fondo del registro scuro istituzionale */
+  --color-mint-bright: #59d4b7; /* bagliori e segmenti su fondo scuro */
+  --color-pine-deep: #15322f; /* fondo del registro scuro istituzionale */
 
   /* ---------------------------------------------------------------
    * SISTEMA DI MOVIMENTO (brief §5). Regole, non gusti.

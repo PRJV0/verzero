@@ -122,7 +122,7 @@ const LINK_ACCESSO =
   "{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=magiclink";
 
 const bottone = (href, testo) =>
-  `<p style="margin:28px 0"><a href="${href}" style="background:#065B3C;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600">${testo}</a></p>`;
+  `<p style="margin:28px 0"><a href="${href}" style="background:#21544F;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:600">${testo}</a></p>`;
 
 const LINK_CONFERMA =
   "{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=signup&next=/dashboard";

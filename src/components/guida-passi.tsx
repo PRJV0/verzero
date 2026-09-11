@@ -124,7 +124,7 @@ function Anello({ percento, grande = false }: { percento: number; grande?: boole
         cy="34"
         r={r}
         fill="none"
-        stroke="#2AEFA7"
+        stroke="#59D4B7"
         strokeWidth="6"
         strokeLinecap="round"
         strokeDasharray={`${(giro * percento) / 100} ${giro}`}
@@ -418,7 +418,7 @@ function VistaConsegna() {
                 cy="24"
                 r="20"
                 fill="none"
-                stroke="#2AEFA7"
+                stroke="#59D4B7"
                 strokeWidth="2.5"
                 strokeDasharray="0.2 5.2"
                 strokeLinecap="round"
@@ -429,7 +429,7 @@ function VistaConsegna() {
                 rx="7"
                 ry="10"
                 fill="none"
-                stroke="#065B3C"
+                stroke="#21544F"
                 strokeWidth="2.5"
               />
             </svg>
@@ -727,7 +727,7 @@ function AnelloSegno({ percento }: { percento: number }) {
         cy="36"
         r={r}
         fill="none"
-        stroke="#057F57"
+        stroke="#206F62"
         strokeWidth="5"
         strokeLinecap="round"
         strokeDasharray={`${(giro * percento) / 100} ${giro}`}

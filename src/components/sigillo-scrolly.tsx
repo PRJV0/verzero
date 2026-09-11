@@ -108,7 +108,7 @@ export function SigilloScrolly() {
                     cy="100"
                     r="82"
                     fill="none"
-                    stroke="#065B3C"
+                    stroke="#21544F"
                     strokeWidth="2.2"
                     strokeDasharray="0.1 11.4"
                     strokeLinecap="round"
@@ -119,7 +119,7 @@ export function SigilloScrolly() {
                       key={p.titolo}
                       d={arco(p.from, p.to)}
                       fill="none"
-                      stroke={i % 2 === 0 ? "#065B3C" : "#057F57"}
+                      stroke={i % 2 === 0 ? "#21544F" : "#206F62"}
                       strokeWidth="4.6"
                       strokeLinecap="round"
                       data-fase={i + 1}
@@ -134,7 +134,7 @@ export function SigilloScrolly() {
                     rx="25"
                     ry="38"
                     fill="none"
-                    stroke="#065B3C"
+                    stroke="#21544F"
                     strokeWidth="4.2"
                   />
                   <text
@@ -146,7 +146,7 @@ export function SigilloScrolly() {
                       fontSize: "15px",
                       letterSpacing: "5px",
                     }}
-                    fill="#04432D"
+                    fill="#193E3A"
                   >
                     2026
                   </text>

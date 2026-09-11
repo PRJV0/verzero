@@ -7,7 +7,7 @@ import { Orientatore } from "@/components/orientatore";
 import { ArrowRight } from "lucide-react";
 
 import { OndaParticelle } from "@/components/onda-particelle";
-import { FONDO_SOGLIA, ONDA_CONTENUTA, ONDA_SOGLIA } from "@/lib/onda";
+import { SFONDO_SOGLIA, ONDA_CONTENUTA, ONDA_SOGLIA } from "@/lib/onda";
 
 /**
  * LA SOGLIA — l'hero su fondo scuro.
@@ -59,7 +59,7 @@ function TrattoMenta() {
       <path
         d="M2 8.2 C 38 4.1, 76 5.4, 116 6.2 S 176 4.6, 198 5.1"
         fill="none"
-        stroke="#2AEFA7"
+        stroke="#59D4B7"
         strokeWidth="3.4"
         strokeLinecap="round"
         vectorEffect="non-scaling-stroke"
@@ -67,7 +67,7 @@ function TrattoMenta() {
       <path
         d="M8 10 C 52 7.6, 96 8.8, 140 8.1 S 184 7.2, 194 7.8"
         fill="none"
-        stroke="#2AEFA7"
+        stroke="#59D4B7"
         strokeOpacity="0.45"
         strokeWidth="2"
         strokeLinecap="round"
@@ -107,7 +107,7 @@ export function HeroHome() {
       // Il fondo lo dipinge anche il canvas, ma qui serve comunque: è
       // ciò che si vede prima che il JS parta e con «riduci movimento».
       style={{
-        background: `linear-gradient(to bottom, ${FONDO_SOGLIA[0]}, ${FONDO_SOGLIA[1]})`,
+        background: SFONDO_SOGLIA,
       }}
     >
       <OndaParticelle

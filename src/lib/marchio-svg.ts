@@ -76,7 +76,7 @@ export function marchioEstesoGruppo({
  * larghezza del suo zero, e così se lo porta comunque dietro.
  */
 export function marchioEstesoSvg({ scuro = false }: { scuro?: boolean }): string {
-  const colore = scuro ? "#E8F3EE" : "#065B3C";
+  const colore = scuro ? "#EAF0EF" : "#21544F";
   const respiro = LOCKUP.respiro * U;
   const larghezza = +(LOCKUP.larghezza * U + respiro * 2).toFixed(2);
   const altezza = +(LOCKUP.altezza * U + respiro * 2).toFixed(2);
@@ -84,7 +84,7 @@ export function marchioEstesoSvg({ scuro = false }: { scuro?: boolean }): string
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${larghezza} ${altezza}" role="img" aria-label="Verzero — ${esc(SITO.payoff)}">
   <title>Verzero — ${esc(SITO.payoff)}</title>
   <desc>Lockup esteso: il logotipo privato dello zero finale, il payoff in maiuscolo spaziato della stessa larghezza, e un solo zero canonico che chiude entrambe le righe. Generato da src/lib/marchio-svg.ts: non va modificato a mano.</desc>
-${scuro ? `  <rect width="${larghezza}" height="${altezza}" fill="#052E20"/>\n` : ""}  <g transform="translate(${respiro.toFixed(2)},${respiro.toFixed(2)})">
+${scuro ? `  <rect width="${larghezza}" height="${altezza}" fill="#15322F"/>\n` : ""}  <g transform="translate(${respiro.toFixed(2)},${respiro.toFixed(2)})">
   ${marchioEstesoGruppo({ colore })}
   </g>
 </svg>
@@ -123,7 +123,7 @@ export function logotipoSvg({
   scuro?: boolean;
   monogramma?: boolean;
 }): string {
-  const colore = scuro ? "#E8F3EE" : "#065B3C";
+  const colore = scuro ? "#EAF0EF" : "#21544F";
   const tracciato = monogramma ? TRACCIATO_NOME_CORTO : TRACCIATO_NOME;
   const larghezzaNome = monogramma ? 1.67349 : LOCKUP.larghezzaNome;
 
@@ -145,7 +145,7 @@ export function logotipoSvg({
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${tela.w.toFixed(2)} ${tela.h.toFixed(2)}" role="img" aria-label="${nome}">
   <title>${nome} — logotipo con lo zero canonico E1</title>
   <desc>Il nome in Fraunces come tracciati vettoriali, con lo zero canonico (ellisse monolinea) come ultima lettera. Generato da src/lib/marchio-svg.ts: non va modificato a mano.</desc>
-${scuro ? `  <rect width="${tela.w.toFixed(2)}" height="${tela.h.toFixed(2)}" fill="#052E20"/>\n` : ""}  <g transform="translate(${respiro.toFixed(2)},${respiro.toFixed(2)})" fill="${colore}">
+${scuro ? `  <rect width="${tela.w.toFixed(2)}" height="${tela.h.toFixed(2)}" fill="#15322F"/>\n` : ""}  <g transform="translate(${respiro.toFixed(2)},${respiro.toFixed(2)})" fill="${colore}">
     <path transform="translate(0 ${n(base)}) scale(${U})" d="${tracciato}"/>
     <ellipse cx="${n(zeroCentro)}" cy="${n(zeroCentroY)}" rx="${n(SEMPLICE.rx)}" ry="${n(SEMPLICE.ry)}" fill="none" stroke="${colore}" stroke-width="${n(SEMPLICE.tratto)}"/>
   </g>
@@ -183,9 +183,9 @@ export function cardSocialeSvg(): string {
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${L} ${H}" width="${L}" height="${H}" role="img" aria-label="Verzero — ${esc(SITO.payoff)}">
   <title>Verzero — ${esc(SITO.payoff)}</title>
-  <rect width="${L}" height="${H}" fill="#052E20"/>
+  <rect width="${L}" height="${H}" fill="#15322F"/>
   <g transform="translate(${x.toFixed(2)},${y.toFixed(2)}) scale(${scala.toFixed(5)})">
-  ${marchioEstesoGruppo({ colore: "#E8F3EE" })}
+  ${marchioEstesoGruppo({ colore: "#EAF0EF" })}
   </g>
 </svg>
 `;

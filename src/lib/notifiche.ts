@@ -49,8 +49,8 @@ const FIRMA_TESTO = [
 ].join("\n");
 
 const FIRMA_HTML = [
-  `<p style="margin-top:24px">— <a href="${publicEnv.siteUrl}" style="color:#065B3C;text-decoration:none"><strong>${SITO.monogramma}</strong></a>`,
-  `<br><span style="color:#065B3C">${SITO.payoff}</span></p>`,
+  `<p style="margin-top:24px">— <a href="${publicEnv.siteUrl}" style="color:#21544F;text-decoration:none"><strong>${SITO.monogramma}</strong></a>`,
+  `<br><span style="color:#21544F">${SITO.payoff}</span></p>`,
 ].join("");
 
 /** Nuovo messaggio dal modulo contatti. */
@@ -212,7 +212,7 @@ export async function confermaWaitlist(dati: {
       "<p>Apriamo a poche imprese alla volta perché ognuna parta con il",
       "percorso costruito bene. Ti scriviamo noi quando apriamo il tuo turno,",
       "con le <strong>condizioni fondatori</strong> riservate ai primi.</p>",
-      '<p style="background:#F6F1E4;border-left:4px solid #065B3C;padding:12px 16px">',
+      '<p style="background:#F6F1E4;border-left:4px solid #21544F;padding:12px 16px">',
       "Niente newsletter, niente promozioni: da noi ricevi solo questa email",
       "e quella con cui apriamo il tuo turno.</p>",
       FIRMA_HTML,

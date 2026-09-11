@@ -19,8 +19,8 @@ import { marchioEstesoGruppo } from "@/lib/marchio-svg";
  * dichiarano Fraunces/Inter con fallback di sistema, senza dipendenze.
  */
 
-const PINE = "#065B3C";
-const PINE_DARK = "#04432D";
+const PINE = "#21544F";
+const PINE_DARK = "#193E3A";
 const INK = "#1A241D";
 const GRAY = "#5A6B5F";
 const PAPER = "#FBFAF7";

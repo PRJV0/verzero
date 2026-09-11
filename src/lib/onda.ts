@@ -35,11 +35,11 @@ import { fbm01, fbm3, fbmPieno, rumore3 } from "@/lib/rumore";
 /* ------------------------------------------------------------------ */
 
 /** Verde pino del marchio e menta: l'onda sui fondi chiari. */
-export const PINO: readonly [number, number, number] = [6, 91, 60];
-export const MENTA: readonly [number, number, number] = [5, 127, 87];
+export const PINO: readonly [number, number, number] = [33, 84, 79];
+export const MENTA: readonly [number, number, number] = [32, 111, 98];
 /** Sui fondi scuri si inverte: bianco con accenti menta accesa. */
 export const BIANCO: readonly [number, number, number] = [255, 255, 255];
-export const MENTA_ACCESA: readonly [number, number, number] = [42, 239, 167];
+export const MENTA_ACCESA: readonly [number, number, number] = [89, 212, 183];
 
 export type Palette = "chiara" | "scura";
 
@@ -130,7 +130,27 @@ export const ONDA_DECISA: ConfigOnda = {
 };
 
 /** Il pino profondo dell'hero, e il suo schiarimento verso il basso. */
-export const FONDO_SOGLIA = ["#052E20", "#093F2C"] as const;
+export const FONDO_SOGLIA = ["#15322F", "#214542"] as const;
+
+/**
+ * L'ALONE attorno al fascio.
+ *
+ * Il fondo dell'hero era una superficie PIATTA più un canvas sopra: due
+ * strati che non si parlavano, e prima che il JavaScript partisse — o
+ * con «riduci movimento» — restava solo il piatto. Un alone largo dentro
+ * il gradiente dà al fondo una modulazione interna che c'è comunque,
+ * canvas o non canvas, e fa sembrare il fascio una cosa che illumina
+ * invece che un livello appoggiato sopra.
+ *
+ * È dichiarato qui perché è la stessa menta del fascio: se cambia lei,
+ * cambia l'alone, e non c'è un secondo posto da ricordarsi.
+ */
+export const ALONE_SOGLIA = "rgba(89, 212, 183, 0.17)";
+
+/** Il fondo completo della soglia: alone dentro il gradiente. */
+export const SFONDO_SOGLIA =
+  `radial-gradient(78% 58% at 50% 30%, ${ALONE_SOGLIA}, transparent 70%),` +
+  ` linear-gradient(to bottom, ${FONDO_SOGLIA[0]}, ${FONDO_SOGLIA[1]})`;
 
 /**
  * L'ONDA DELLA SOGLIA — l'hero su fondo scuro.
