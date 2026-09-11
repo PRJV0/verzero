@@ -63,6 +63,7 @@ import {
   notaCalcolata,
   notaCompletamento,
   verificaBollettaElettrica,
+  verificaBollettaGas,
 } from "../src/lib/motore/plausibilita.ts";
 import {
   MAX_AVVERTENZE,
@@ -70,6 +71,8 @@ import {
 } from "../src/lib/motore/estrazione.ts";
 import {
   CAMPI_BOLLETTA_ELETTRICA,
+  CAMPI_BOLLETTA_GAS,
+  COLONNE_CARBURANTI,
   COLONNE_FORMAZIONE,
   COLONNE_ORGANICO,
 } from "../src/lib/motore/schemi.ts";
@@ -2482,6 +2485,404 @@ verifica(
   riassumiRiga(allaNuova).estrattoDa === null &&
     new Set(allaNuova.map((c) => c.estrattoDa)).size === 3,
 );
+
+/* ══════════════════════════════════════════════════════════════════ */
+console.log("\n— LA BOLLETTA DEL GAS: DUE SCAMBI CHE PRODUCONO UN NUMERO PLAUSIBILE —");
+
+/**
+ * Il gas non è la bolletta elettrica con un'altra unità. Le due trappole
+ * che contano producono entrambe un numero CREDIBILE e sbagliato, che è
+ * la forma di errore peggiore perché non si vede in revisione:
+ *   · il PDR scambiato col POD;
+ *   · i metri cubi del contatore presi per gli Smc fatturati.
+ */
+
+const VOCE_GAS = voceMotore("bolletta-gas");
+
+verifica("★ la bolletta del gas adesso si sa leggere", siSaLeggere("bolletta-gas"));
+verifica(
+  "ed è una scheda, con la sua versione di schema",
+  VOCE_GAS.forma === "scheda" && VOCE_GAS.versione === "bolletta-gas/1",
+);
+verifica(
+  "le istruzioni dicono al modello di non applicare il coefficiente",
+  istruzioni(VOCE_GAS, CTX).includes("non moltiplicarlo tu"),
+);
+
+const gasSana = (sovrascrivi = {}) => {
+  const campi = {
+    pdr: c("12345678901234"),
+    fornitore: c("Italgas Più"),
+    periodoInizio: c("2025-01-01"),
+    periodoFine: c("2025-01-31"),
+    consumoSmc: c(1030),
+    coefficienteC: c(1.03),
+    consumoMc: c(1000),
+    importoEuro: c(1030),
+    tipoLettura: c("effettiva"),
+  };
+  const testa = {
+    tipoRilevato: "atteso",
+    tipoEffettivo: "",
+    qualita: "leggibile",
+    piuPdr: false,
+    avvertenze: [],
+    noteLibere: [],
+  };
+  for (const [k, v] of Object.entries(sovrascrivi)) {
+    if (["tipoRilevato", "tipoEffettivo", "qualita", "piuPdr", "avvertenze", "noteLibere"].includes(k)) testa[k] = v;
+    else campi[k] = v;
+  }
+  return { testa, campi: Object.entries(campi).map(([nome, v]) => ({ nome, ...v })) };
+};
+
+/**
+ * Si legge passando dalla PIPELINE VERA (`interpretaRisposta`), non dal
+ * solo verificatore: è lì che girano i vincoli dichiarati — formati,
+ * minimi, massimi, valori ammessi — e provare il verificatore da solo
+ * misurerebbe metà del presidio dichiarando di misurarlo tutto.
+ */
+const leggiGas = (sovrascrivi = {}) => {
+  const { testa, campi } = gasSana(sovrascrivi);
+  return interpretaRisposta({ ...testa, campi }, VOCE_GAS, CTX);
+};
+
+const gasOk = leggiGas();
+verifica(
+  "una bolletta sana si legge, senza avvisi",
+  gasOk.esito === "ok" && gasOk.avvisi.length === 0,
+  `${gasOk.esito} · ${gasOk.avvisi.join(" | ")}`,
+);
+verifica(
+  "e tiene tutti i campi essenziali",
+  ["pdr", "consumoSmc", "periodoInizio", "periodoFine"].every(
+    (k) => campoDi(gasOk, k).valore !== null,
+  ),
+);
+
+/* — STORTO 1: il POD elettrico spacciato per PDR — */
+const conPod = leggiGas({ pdr: c("IT001E12345678") });
+verifica(
+  "★ un codice che comincia per IT viene riconosciuto come POD, non come PDR",
+  conPod.avvisi.some((a) => a.includes("bolletta della luce")),
+  conPod.avvisi.join(" | "),
+);
+verifica(
+  "e il campo perde confidenza invece di sparire: un valore tolto non si può correggere",
+  campoDi(conPod, "pdr").valore !== null && campoDi(conPod, "pdr").confidenza < 0.5,
+  String(campoDi(conPod, "pdr").confidenza),
+);
+
+/* — STORTO 2: il PDR troppo corto (matricola del contatore) — */
+const pdrCorto = leggiGas({ pdr: c("987654321") });
+verifica(
+  "un PDR di nove cifre porta l'avviso del formato",
+  campoDi(pdrCorto, "pdr").avvisi.length > 0,
+);
+
+/* — STORTO 3: i mc del contatore scambiati per Smc — */
+const scambio = leggiGas({ consumoSmc: c(1000), consumoMc: c(1000) });
+verifica(
+  "★★ mc e Smc uguali col coefficiente a 1,03: il conto non torna e lo si dice",
+  scambio.avvisi.some((a) => a.includes("letto male")),
+  scambio.avvisi.join(" | "),
+);
+verifica(
+  "e si segnalano tutti e tre i numeri, non uno solo: indicare il colpevole sbagliato è peggio",
+  ["consumoSmc", "consumoMc", "coefficienteC"].every(
+    (k) => campoDi(scambio, k).avvisi.length > 0,
+  ),
+);
+
+/* — STORTO 4: solo i mc, senza Smc — */
+const soloMc = leggiGas({ consumoSmc: c(null), consumoMc: c(980) });
+verifica(
+  "★ coi soli metri cubi NON convertiamo noi, e spieghiamo perché guardarla",
+  soloMc.avvisi.some((a) => a.includes("non lo applichiamo noi")),
+);
+verifica(
+  "il presidio sui valori dedotti non ha inventato gli Smc",
+  campoDi(soloMc, "consumoSmc").valore === null,
+);
+
+/* — STORTO 5: il coefficiente fuori scala (1,3 non esiste in Italia) — */
+const coeffAssurdo = leggiGas({ coefficienteC: c(1.3), consumoSmc: c(1300) });
+verifica(
+  "un coefficiente fuori scala porta l'avviso del vincolo dichiarato",
+  campoDi(coeffAssurdo, "coefficienteC").avvisi.length > 0,
+);
+
+/* — STORTO 6: consumo letto dalla citazione sbagliata — */
+const dedotto = leggiGas({
+  consumoSmc: { ...c(1030), estrattoDa: "consumo del periodo precedente: 890 Smc" },
+});
+verifica(
+  "★ un consumo che non compare nella citazione si azzera: il valore non aggiunge",
+  campoDi(dedotto, "consumoSmc").valore === null,
+);
+
+/* — STORTO 7: lettura stimata — */
+const stimata = leggiGas({ tipoLettura: c("stimata") });
+verifica(
+  "una lettura stimata si dichiara: il numero di oggi è provvisorio",
+  stimata.avvisi.some((a) => a.includes("stimata")),
+);
+
+/* — STORTO 8: periodo a cavallo di due anni, fuori rendicontazione — */
+const fuori = leggiGas({
+  periodoInizio: c("2023-11-01"),
+  periodoFine: c("2023-11-30"),
+});
+verifica(
+  "un periodo fuori dall'anno si estrae lo stesso e si segnala",
+  fuori.fuoriPeriodo === true && campoDi(fuori, "consumoSmc").valore !== null,
+);
+
+/* — STORTO 9: periodo rovesciato — */
+const rovescio = leggiGas({
+  periodoInizio: c("2025-01-31"),
+  periodoFine: c("2025-01-01"),
+});
+verifica(
+  "un periodo che finisce prima di cominciare lo dice su entrambe le date",
+  campoDi(rovescio, "periodoInizio").avvisi.length > 0 &&
+    campoDi(rovescio, "periodoFine").avvisi.length > 0,
+);
+
+/* — STORTO 10: nota di credito — */
+const credito = leggiGas({ importoEuro: c(-420) });
+verifica(
+  "un importo negativo si tiene e si spiega",
+  campoDi(credito, "importoEuro").valore !== null &&
+    campoDi(credito, "importoEuro").avvisi.some((a) => a.includes("nota di credito")),
+);
+
+/* — STORTO 11: importo e consumo che non stanno insieme — */
+const sproporzione = leggiGas({ importoEuro: c(48000) });
+verifica(
+  "1030 Smc per 48.000 € non stanno insieme, e si dice quale rapporto non torna",
+  campoDi(sproporzione, "importoEuro").avvisi.some((a) => a.includes("€/Smc")),
+);
+
+/* — STORTO 12: più punti di riconsegna — */
+const multisito = leggiGas({ piuPdr: true });
+verifica(
+  "★ con più punti di riconsegna il totale non è il consumo di niente, e tutto perde confidenza",
+  multisito.avvisi.some((a) => a.includes("più punti di riconsegna")) &&
+    campoDi(multisito, "consumoSmc").confidenza < campoDi(gasOk, "consumoSmc").confidenza,
+);
+
+/* ══════════════════════════════════════════════════════════════════ */
+console.log("\n— I CARBURANTI: UNA RIGA PER RIFORNIMENTO, E I KM SONO UN CONTATORE —");
+
+const VOCE_CARB = voceMotore("carburanti");
+
+verifica("★ il registro carburanti adesso si sa leggere", siSaLeggere("carburanti"));
+verifica(
+  "ed è una tabella, con la sua versione di schema",
+  VOCE_CARB.forma === "tabella" && VOCE_CARB.versione === "carburanti/1",
+);
+verifica(
+  "le istruzioni vietano di ricavare i litri dividendo l'importo per il prezzo",
+  istruzioni(VOCE_CARB, CTX).includes("NON dividere per il prezzo"),
+);
+verifica(
+  "★ e vietano di riportare il nome di chi guida: la targa basta, la persona no",
+  istruzioni(VOCE_CARB, CTX).includes("mai il nome della persona che guida"),
+);
+
+const rigaCarb = (celle, extra = {}) => ({
+  celle,
+  confidenza: 0.9,
+  pagina: 1,
+  estrattoDa: "",
+  fonteLettura: "testo",
+  nota: "",
+  ...extra,
+});
+
+const leggiCarburanti = (righe, qualita = "leggibile") =>
+  interpretaRisposta(
+    {
+      tipoRilevato: "atteso",
+      tipoEffettivo: "",
+      qualita,
+      avvertenze: [],
+      noteLibere: [],
+      righe,
+    },
+    VOCE_CARB,
+    CTX,
+  ).righe ?? [];
+
+/* — Il caso normale: tre rifornimenti letti da una fattura nativa — */
+const flotta = leggiCarburanti([
+  rigaCarb([
+    cella("data", "2026-03-04", "04/03/2026"),
+    cella("mezzo", "AB123CD", "AB123CD"),
+    cella("tipoCarburante", "gasolio", "Diesel"),
+    cella("litri", "58.4", "58,40 LT"),
+    cella("importoEuro", "102.20", "102,20"),
+    cella("chilometriContatore", "84320", "84.320 km"),
+  ]),
+  rigaCarb([
+    cella("data", "2026-03-18", "18/03/2026"),
+    cella("mezzo", "AB123CD", "AB123CD"),
+    cella("tipoCarburante", "gasolio", "Diesel"),
+    cella("litri", "61", "61,00 LT"),
+    cella("importoEuro", "106.75", "106,75"),
+    cella("chilometriContatore", "85180", "85.180 km"),
+  ]),
+]);
+verifica(
+  "★ due rifornimenti restano DUE righe: non si aggrega per mezzo",
+  flotta.length === 2,
+  String(flotta.length),
+);
+verifica(
+  "le colonne tornano nell'ordine dichiarato",
+  flotta[0].celle.map((x) => x.chiave).join(",") ===
+    COLONNE_CARBURANTI.map((x) => x.chiave).join(","),
+);
+verifica(
+  "i litri con la virgola diventano un numero sommabile",
+  flotta[0].celle.find((x) => x.chiave === "litri").valore === "58.4",
+);
+verifica(
+  "e il contachilometri col punto delle migliaia non diventa 84,32",
+  flotta[0].celle.find((x) => x.chiave === "chilometriContatore").valore === "84320",
+);
+
+/* — STORTO 1: i km percorsi ricavati per differenza fra due righe — */
+const perDifferenza = leggiCarburanti([
+  rigaCarb([
+    cella("data", "2026-03-18", "18/03/2026"),
+    cella("tipoCarburante", "gasolio", "Diesel"),
+    cella("litri", "61", "61,00 LT"),
+    cella("chilometriContatore", "85180", "85.180 km"),
+    cella("chilometriPercorsi", "860", "differenza fra 85.180 e il rifornimento precedente"),
+  ]),
+]);
+const kmPercorsi = perDifferenza[0].celle.find((x) => x.chiave === "chilometriPercorsi");
+verifica(
+  "★★ i chilometri percorsi ricavati per differenza risultano CALCOLATI, non letti",
+  kmPercorsi.calcolato === true,
+  `calcolato=${kmPercorsi.calcolato}`,
+);
+verifica(
+  "si tengono — sono utili — ma sotto il tetto dei calcolati",
+  kmPercorsi.valore === "860" && kmPercorsi.confidenza <= TETTO_CALCOLATO,
+);
+verifica(
+  "e il contachilometri della stessa riga resta letto",
+  perDifferenza[0].celle.find((x) => x.chiave === "chilometriContatore").calcolato === false,
+);
+
+/* — STORTO 2: i litri ricavati dividendo l'importo per il prezzo — */
+const litriDivisi = leggiCarburanti([
+  rigaCarb([
+    cella("data", "2026-05-06", "06/05/2026"),
+    cella("tipoCarburante", "benzina", "Super"),
+    cella("litri", "47.3", "importo 84,20 € al prezzo esposto"),
+    cella("importoEuro", "84.20", "84,20 €"),
+  ]),
+]);
+verifica(
+  "★ i litri che non compaiono nella citazione si azzerano: `soloSeScritto` non perdona",
+  litriDivisi[0].celle.find((x) => x.chiave === "litri").valore === null,
+);
+verifica(
+  "e il cliente legge perché sono vuoti, sulla cella",
+  litriDivisi[0].celle
+    .find((x) => x.chiave === "litri")
+    .avvisi.some((a) => a.includes("Scrivilo tu")),
+);
+
+/* — STORTO 3: la scheda carburante compilata a mano — */
+const schedaAMano = leggiCarburanti([
+  rigaCarb(
+    [
+      cella("data", "2026-02-09", "9/2/26", { fonteLettura: "manoscritto", confidenza: 0.8 }),
+      cella("mezzo", "Furgone 2", "Furgone 2", { fonteLettura: "manoscritto", confidenza: 0.8 }),
+      cella("tipoCarburante", "gasolio", "gasolio", { fonteLettura: "manoscritto", confidenza: 0.8 }),
+      cella("litri", "40", "40 l", { fonteLettura: "manoscritto", confidenza: 0.9 }),
+    ],
+    { fonteLettura: "manoscritto" },
+  ),
+], "faticosa");
+const litriAMano = schedaAMano[0].celle.find((x) => x.chiave === "litri");
+verifica(
+  "★ su una scheda a mano nessuna cella supera il tetto del manoscritto, per quanto sicura si dichiari",
+  schedaAMano[0].celle.filter((x) => x.valore !== null).every((x) => x.confidenza <= TETTO_MANOSCRITTO),
+  schedaAMano[0].celle.map((x) => `${x.chiave}:${x.confidenza}`).join(" "),
+);
+verifica(
+  "e ogni cella scritta a mano lo dichiara per conto suo",
+  litriAMano.avvisi.some((a) => a.includes("Scritto a mano")),
+);
+
+/* — STORTO 4: la data fuori dall'anno di rendicontazione — */
+const fuoriAnno = leggiCarburanti([
+  rigaCarb([
+    cella("data", "2019-07-02", "02/07/2019"),
+    cella("tipoCarburante", "gasolio", "Diesel"),
+    cella("litri", "50", "50,00 LT"),
+  ]),
+]);
+verifica(
+  "una data fuori dall'anno porta l'avviso, e la riga resta",
+  fuoriAnno.length === 1 &&
+    fuoriAnno[0].celle.find((x) => x.chiave === "data").avvisi.length > 0,
+);
+
+/* — STORTO 5: la riga di totale in fondo alla tabella — */
+const conTotale = leggiCarburanti([
+  rigaCarb([
+    cella("data", "2026-03-04", "04/03/2026"),
+    cella("mezzo", "AB123CD", "AB123CD"),
+    cella("tipoCarburante", "gasolio", "Diesel"),
+    cella("litri", "58.4", "58,40 LT"),
+  ]),
+  rigaCarb([cella("litri", "58.4", "TOTALE 58,40")]),
+]);
+verifica(
+  "★ la riga di totale, che ripete valori di colonne costanti, si scarta",
+  conTotale.length === 1,
+  `${conTotale.length} righe`,
+);
+
+/* — STORTO 6: il pieno da centomila litri (la virgola letta al contrario) — */
+const virgola = leggiCarburanti([
+  rigaCarb([
+    cella("data", "2026-03-04", "04/03/2026"),
+    cella("tipoCarburante", "gasolio", "Diesel"),
+    cella("litri", "584000", "584.000"),
+  ]),
+]);
+verifica(
+  "un pieno da 584.000 litri porta l'avviso del massimo dichiarato",
+  virgola[0].celle.find((x) => x.chiave === "litri").avvisi.length > 0,
+);
+
+/* — STORTO 7: un carburante non fra quelli ammessi — */
+const idrogeno = leggiCarburanti([
+  rigaCarb([
+    cella("data", "2026-03-04", "04/03/2026"),
+    cella("tipoCarburante", "idrogeno", "idrogeno"),
+    cella("litri", "12", "12 kg"),
+  ]),
+]);
+verifica(
+  "★ un carburante fuori elenco non viene ricondotto al più simile: si segnala",
+  idrogeno[0].celle.find((x) => x.chiave === "tipoCarburante").avvisi.length > 0 ||
+    idrogeno[0].celle.find((x) => x.chiave === "tipoCarburante").valore === null,
+);
+
+/* — STORTO 8: la riga senza niente dentro — */
+const rifornimentoVuoto = leggiCarburanti([
+  rigaCarb([cella("data", "", ""), cella("litri", "", "")]),
+]);
+verifica("una riga senza nessun valore non diventa un rifornimento", rifornimentoVuoto.length === 0);
 
 console.log(
   `\nRisultato: ${superati}/${superati + falliti} test superati${falliti ? ` — ${falliti} FALLITI` : ""}\n`,

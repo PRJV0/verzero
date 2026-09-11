@@ -17,7 +17,7 @@ Le tre pallottole indicano quanto spesso quel tipo arriva **nativo**,
 **scansionato** e **manoscritto**: ●●● prevalente, ●●○ frequente,
 ●○○ raro, ○○○ mai.
 
-**5 tipi su 20 si sanno leggere oggi.** Gli altri sono
+**7 tipi su 20 si sanno leggere oggi.** Gli altri sono
 dichiarati: vengono archiviati, riconosciuti e smistati come sempre — i
 chip «alimenta …» funzionano — ma il loro contenuto non viene ancora
 letto. Dichiarato non è implementato, e il portale non lascia credere il
@@ -42,6 +42,42 @@ contrario.
 **Attesa di qualità:** Lo emette un sistema informatico: arriva quasi sempre in PDF nativo, e si legge in chiaro.
 
 **Percorsi serviti:** Carbon Footprint di Organizzazione · Percorso Ver0 · Bilancio di Sostenibilità (VSME).
+
+---
+
+### bolletta del gas
+
+| | |
+|---|---|
+| chiave | `bolletta-gas` |
+| famiglia | **FONTE** |
+| forma | scheda (campi fissi) |
+| stato | **si legge** (bolletta-gas/1) |
+| nativo · scansione · manoscritto | ●●● · ●○○ · ○○○ |
+
+**Si estrae:** PDR e fornitore; periodo di fatturazione; consumo in Smc e coefficiente C; importo.
+
+**Attesa di qualità:** Lo emette un sistema informatico: arriva quasi sempre in PDF nativo, e si legge in chiaro.
+
+**Percorsi serviti:** Carbon Footprint di Organizzazione · Percorso Ver0 · Bilancio di Sostenibilità (VSME).
+
+---
+
+### registro o fatture dei carburanti
+
+| | |
+|---|---|
+| chiave | `carburanti` |
+| famiglia | **FONTE** |
+| forma | tabella (righe ripetute) |
+| stato | **si legge** (carburanti/1) |
+| nativo · scansione · manoscritto | ●●○ · ●●○ · ●●○ |
+
+**Si estrae:** una riga per rifornimento: data, tipo di carburante, litri, importo; mezzo o targa quando dichiarata; chilometri percorsi, dove il registro li tiene.
+
+**Attesa di qualità:** Le schede carburante di flotta sono spesso compilate a mano; le fatture dei consorzi sono native.
+
+**Percorsi serviti:** Carbon Footprint di Organizzazione · Percorso Ver0.
 
 ---
 
@@ -120,24 +156,6 @@ contrario.
 
 ## Dichiarati, non ancora letti
 
-### bolletta del gas
-
-| | |
-|---|---|
-| chiave | `bolletta-gas` |
-| famiglia | **FONTE** |
-| forma | scheda (campi fissi) |
-| stato | dichiarato |
-| nativo · scansione · manoscritto | ●●● · ●○○ · ○○○ |
-
-**Si estrae:** PDR e fornitore; periodo di fatturazione; consumo in Smc e coefficiente C; importo.
-
-**Attesa di qualità:** Lo emette un sistema informatico: arriva quasi sempre in PDF nativo, e si legge in chiaro.
-
-**Percorsi serviti:** Carbon Footprint di Organizzazione · Percorso Ver0 · Bilancio di Sostenibilità (VSME).
-
----
-
 ### bolletta del teleriscaldamento
 
 | | |
@@ -153,24 +171,6 @@ contrario.
 **Attesa di qualità:** Lo emette un sistema informatico: arriva quasi sempre in PDF nativo, e si legge in chiaro.
 
 **Percorsi serviti:** Carbon Footprint di Organizzazione · Percorso Ver0 · Bilancio di Sostenibilità (VSME).
-
----
-
-### registro o fatture dei carburanti
-
-| | |
-|---|---|
-| chiave | `carburanti` |
-| famiglia | **FONTE** |
-| forma | tabella (righe ripetute) |
-| stato | dichiarato |
-| nativo · scansione · manoscritto | ●●○ · ●●○ · ●●○ |
-
-**Si estrae:** una riga per rifornimento: data, tipo di carburante, litri, importo; mezzo o targa quando dichiarata; chilometri percorsi, dove il registro li tiene.
-
-**Attesa di qualità:** Le schede carburante di flotta sono spesso compilate a mano; le fatture dei consorzi sono native.
-
-**Percorsi serviti:** Carbon Footprint di Organizzazione · Percorso Ver0.
 
 ---
 

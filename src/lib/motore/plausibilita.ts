@@ -826,6 +826,60 @@ function numeroDi(campi: CampoEstratto[], chiave: string): number | null {
 }
 
 /**
+ * IL PERIODO DI UNA FATTURA — uguale per l'energia elettrica, per il gas
+ * e per qualunque bolletta verrà dopo.
+ *
+ * Stava dentro il verificatore dell'energia elettrica, e copiarlo nel
+ * gas avrebbe creato due tarature destinate a divergere alla prima
+ * correzione. Le tre cose che fa sono le stesse ovunque: che le date si
+ * leggano, che non finiscano prima di cominciare, e che il periodo cada
+ * nell'anno di rendicontazione — e quest'ultima non è un difetto del
+ * documento, è un dato vero di un altro anno (docs/motore.md §4.5).
+ */
+function verificaPeriodo(
+  campi: CampoEstratto[],
+  annoRendicontazione: number,
+  avvisiDocumento: string[],
+  cosa = "bolletta",
+): { fuoriPeriodo: boolean; totaleGiorni: number | null } {
+  const grezzoInizio = campi.find((c) => c.chiave === "periodoInizio")?.valore;
+  const grezzoFine = campi.find((c) => c.chiave === "periodoFine")?.valore;
+  const inizio = dataValida(grezzoInizio ?? null);
+  const fine = dataValida(grezzoFine ?? null);
+
+  if (grezzoInizio && !inizio) {
+    segna(campi, "periodoInizio", `«${grezzoInizio}» non è una data valida.`, 0.5);
+  }
+  if (grezzoFine && !fine) {
+    segna(campi, "periodoFine", `«${grezzoFine}» non è una data valida.`, 0.5);
+  }
+  if (!inizio || !fine) return { fuoriPeriodo: false, totaleGiorni: null };
+
+  const giorni = giorniFra(inizio, fine);
+  if (giorni < 0) {
+    segna(campi, "periodoFine", "Il periodo finisce prima di cominciare.", 0.5);
+    segna(campi, "periodoInizio", "Il periodo finisce prima di cominciare.", 0.5);
+  } else if (giorni > GIORNI_MASSIMI) {
+    segna(
+      campi,
+      "periodoFine",
+      `Il periodo copre ${giorni} giorni: più di un anno di fatturazione è insolito.`,
+    );
+  }
+
+  const dentro =
+    inizio.getUTCFullYear() === annoRendicontazione ||
+    fine.getUTCFullYear() === annoRendicontazione;
+  if (!dentro) {
+    avvisiDocumento.push(
+      `Il periodo di questa ${cosa} (${grezzoInizio} — ${grezzoFine}) è fuori dall'anno di rendicontazione ${annoRendicontazione}: il dato resta in archivio ma non entra nei documenti di quell'anno.`,
+    );
+    return { fuoriPeriodo: true, totaleGiorni: giorni };
+  }
+  return { fuoriPeriodo: false, totaleGiorni: giorni };
+}
+
+/**
  * I controlli di senso su una bolletta elettrica, applicati ai campi già
  * normalizzati. Restituisce gli stessi campi con avvisi e confidenza
  * corretti: non toglie mai un valore, perché un valore tolto è un valore
@@ -838,46 +892,12 @@ export const verificaBollettaElettrica: Verificatore = (campi, _righe, ctx) => {
   };
   const avvisiDocumento: string[] = [];
 
-  /* — POD — */
   /* — Periodo — */
-  const inizio = dataValida(campi.find((c) => c.chiave === "periodoInizio")?.valore ?? null);
-  const fine = dataValida(campi.find((c) => c.chiave === "periodoFine")?.valore ?? null);
-  const grezzoInizio = campi.find((c) => c.chiave === "periodoInizio")?.valore;
-  const grezzoFine = campi.find((c) => c.chiave === "periodoFine")?.valore;
-
-  if (grezzoInizio && !inizio) {
-    segna(campi, "periodoInizio", `«${grezzoInizio}» non è una data valida.`, 0.5);
-  }
-  if (grezzoFine && !fine) {
-    segna(campi, "periodoFine", `«${grezzoFine}» non è una data valida.`, 0.5);
-  }
-
-  let fuoriPeriodo = false;
-  if (inizio && fine) {
-    const giorni = giorniFra(inizio, fine);
-    if (giorni < 0) {
-      segna(campi, "periodoFine", "Il periodo finisce prima di cominciare.", 0.5);
-      segna(campi, "periodoInizio", "Il periodo finisce prima di cominciare.", 0.5);
-    } else if (giorni > GIORNI_MASSIMI) {
-      segna(
-        campi,
-        "periodoFine",
-        `Il periodo copre ${giorni} giorni: più di un anno di fatturazione è insolito.`,
-      );
-    }
-
-    // Fuori dall'anno di rendicontazione: il dato è vero, ma non è di
-    // quest'anno. Si estrae lo stesso e si dice (docs/motore.md §4.5).
-    const anno = contesto.annoRendicontazione;
-    const dentro =
-      inizio.getUTCFullYear() === anno || fine.getUTCFullYear() === anno;
-    if (!dentro) {
-      fuoriPeriodo = true;
-      avvisiDocumento.push(
-        `Il periodo di questa bolletta (${grezzoInizio} — ${grezzoFine}) è fuori dall'anno di rendicontazione ${anno}: il dato resta in archivio ma non entra nei documenti di quell'anno.`,
-      );
-    }
-  }
+  const { fuoriPeriodo } = verificaPeriodo(
+    campi,
+    ctx.annoRendicontazione,
+    avvisiDocumento,
+  );
 
   /* — Consumi — */
   const totale = numeroDi(campi, "consumoTotaleKwh");
@@ -930,6 +950,124 @@ export const verificaBollettaElettrica: Verificatore = (campi, _righe, ctx) => {
       "Questo documento contiene più punti di prelievo: i totali potrebbero riguardare più contatori insieme. Controlla prima di confermare.",
     );
     for (const c of campi) c.confidenza = Math.round(Math.max(0, c.confidenza - 0.2) * 100) / 100;
+  }
+
+  return { avvisiDocumento, fuoriPeriodo };
+};
+
+/* ------------------------------------------------------------------ */
+/* Bolletta del gas                                                    */
+/* ------------------------------------------------------------------ */
+
+/** Quanto può costare uno standard metro cubo, IVA e oneri compresi. */
+const EURO_PER_SMC_MAX = 5;
+const EURO_PER_SMC_MIN = 0.1;
+/** Scarto ammesso fra Smc dichiarati e mc × coefficiente C. */
+// L'uno per cento. La conversione mc → Smc è aritmetica esatta: quello
+// che resta è l'arrotondamento con cui la bolletta stampa i tre numeri.
+// A tre per cento lo scambio più comune — mc presi per Smc con
+// coefficiente 1,03 — passava indenne, che è esattamente il caso per cui
+// il controllo esiste.
+const TOLLERANZA_COEFFICIENTE = 0.01;
+
+/**
+ * I controlli di senso su una bolletta del gas.
+ *
+ * Due sono suoi e non li sa fare nessun vincolo dichiarato:
+ *
+ * 1. IL CONTO DEL COEFFICIENTE. Se il documento espone metri cubi,
+ *    standard metri cubi e coefficiente C, i tre numeri devono stare
+ *    insieme: Smc ≈ mc × C. Quando non tornano, uno dei tre è stato
+ *    letto male — e tipicamente è lo scambio fra mc e Smc, che produce
+ *    un consumo plausibile e sbagliato di qualche punto percentuale.
+ *    Si segnalano tutti e tre: indicare il colpevole sbagliato è peggio
+ *    che non indicarlo.
+ * 2. IL POD SCAMBIATO PER PDR. Il formato dichiarato rifiuta già un
+ *    codice che comincia per IT, ma lo rifiuta come «forma non attesa»,
+ *    che non dice al cliente quello che è successo davvero: ha caricato
+ *    una bolletta della luce fra quelle del gas, e va detto così.
+ */
+export const verificaBollettaGas: Verificatore = (campi, _righe, ctx) => {
+  const avvisiDocumento: string[] = [];
+  const { fuoriPeriodo } = verificaPeriodo(
+    campi,
+    ctx.annoRendicontazione,
+    avvisiDocumento,
+    "bolletta del gas",
+  );
+
+  /* — Il documento è davvero del gas? — */
+  const pdr = campi.find((c) => c.chiave === "pdr")?.valore ?? "";
+  if (/^IT/i.test(pdr.trim())) {
+    const avviso =
+      "Il codice letto comincia per IT: è un POD dell'energia elettrica, non un PDR del gas. Probabilmente questo documento è una bolletta della luce.";
+    segna(campi, "pdr", avviso, 0.6);
+    avvisiDocumento.push(avviso);
+  }
+
+  /* — Il conto del coefficiente C — */
+  const smc = numeroDi(campi, "consumoSmc");
+  const mc = numeroDi(campi, "consumoMc");
+  const c = numeroDi(campi, "coefficienteC");
+  if (smc !== null && mc !== null && c !== null && mc > 0) {
+    const atteso = mc * c;
+    const scarto = Math.abs(atteso - smc) / Math.max(atteso, 1);
+    if (scarto > TOLLERANZA_COEFFICIENTE) {
+      const avviso = `I metri cubi letti (${numeroLeggibile(mc)}) per il coefficiente ${numeroLeggibile(c)} darebbero ${numeroLeggibile(Math.round(atteso))} Smc, ma la bolletta ne dichiara ${numeroLeggibile(smc)}: uno dei tre numeri è stato letto male.`;
+      for (const k of ["consumoSmc", "consumoMc", "coefficienteC"]) {
+        segna(campi, k, avviso, 0.2);
+      }
+      avvisiDocumento.push(avviso);
+    }
+  }
+
+  // I soli metri cubi, senza gli Smc: non si converte noi. Il dato c'è ed
+  // è vero, ma non è quello che serve al calcolo delle emissioni, e il
+  // cliente deve sapere perché gli chiediamo di guardare.
+  if (smc === null && mc !== null) {
+    avvisiDocumento.push(
+      "Di questa bolletta abbiamo letto i metri cubi del contatore ma non gli standard metri cubi fatturati, che sono quelli che contano. Il coefficiente di conversione non lo applichiamo noi: controlla la bolletta.",
+    );
+  }
+
+  /* — Importo e consumo devono stare insieme — */
+  const importo = numeroDi(campi, "importoEuro");
+  if (importo !== null) {
+    if (importo < 0) {
+      segna(
+        campi,
+        "importoEuro",
+        "Importo negativo: se è una nota di credito, il consumo va verificato a parte.",
+        0.3,
+      );
+    } else if (smc !== null && smc > 0) {
+      const perSmc = importo / smc;
+      if (perSmc > EURO_PER_SMC_MAX || perSmc < EURO_PER_SMC_MIN) {
+        segna(
+          campi,
+          "importoEuro",
+          `Importo e consumo non stanno insieme (${numeroLeggibile(perSmc)} €/Smc): uno dei due è stato letto male.`,
+        );
+      }
+    }
+  }
+
+  /* — La lettura stimata non è un consumo — */
+  const lettura = campi.find((c2) => c2.chiave === "tipoLettura")?.valore;
+  if (lettura === "stimata") {
+    avvisiDocumento.push(
+      "Questa bolletta riporta una lettura stimata, non effettiva: il consumo verrà corretto al conguaglio, e il numero di oggi è provvisorio.",
+    );
+  }
+
+  /* — Più punti di riconsegna nello stesso documento — */
+  if (ctx.grezzo.piuPdr === true) {
+    avvisiDocumento.push(
+      "Questo documento contiene più punti di riconsegna: i totali potrebbero riguardare più contatori insieme. Controlla prima di confermare.",
+    );
+    for (const campo of campi) {
+      campo.confidenza = Math.round(Math.max(0, campo.confidenza - 0.2) * 100) / 100;
+    }
   }
 
   return { avvisiDocumento, fuoriPeriodo };
@@ -1140,15 +1278,36 @@ export const verificaGenerica: Verificatore = (campi, righe, ctx) => {
     }
   }
 
-  /* — Le tabelle: gli stessi vincoli, riga per riga — */
+  /* — Le tabelle: gli stessi vincoli, CELLA PER CELLA — */
+  // Prima l'avviso di un vincolo violato finiva sulla RIGA: su un
+  // registro di venti rifornimenti, «584.000 litri è sopra il massimo»
+  // compariva come difetto della riga, e il cliente doveva cercare da
+  // solo quale delle sette colonne fosse. La riga conserva l'eco —
+  // serve a ordinare che cosa guardare prima — ma il dito lo si punta
+  // sulla cella, che è dove sta il valore.
   for (const r of righe) {
     for (const cella of r.celle) {
       if (cella.valore === null) continue;
       const esito = controllaVincoli(cella.chiave, cella.valore, r.celle, ctx);
-      for (const a of esito.avvisi) segnalaRiga(r, a, 0.45);
+      for (const a of esito.avvisi) {
+        cella.avvisi.push(a);
+        cella.confidenza =
+          Math.round(Math.max(0, cella.confidenza - 0.45) * 100) / 100;
+        segnalaRiga(r, a, 0.45);
+      }
       if (esito.fuoriAnno !== null) {
         conData++;
-        if (esito.fuoriAnno) fuori++;
+        if (esito.fuoriAnno) {
+          fuori++;
+          // FUORI ANNO NON È UN DIFETTO. La data è letta bene e il dato è
+          // vero: è di un altro esercizio. Si dice sulla cella — perché è
+          // lì che il cliente guarda — ma NON si taglia la confidenza:
+          // penalizzare una lettura corretta insegnerebbe a diffidare
+          // proprio dei documenti che abbiamo letto meglio.
+          cella.avvisi.push(
+            `${cella.etichetta}: questa data non è dell'anno di rendicontazione ${ctx.annoRendicontazione}. Il dato resta in archivio ma non entra nei documenti di quell'anno.`,
+          );
+        }
       }
     }
   }
@@ -1204,6 +1363,23 @@ function controllaVincoli(
           );
         }
       }
+    }
+  }
+
+  // ═══ I VALORI AMMESSI, FATTI RISPETTARE DAL CODICE ═══
+  // `valori` finiva SOLO nelle istruzioni al modello, ed era l'ennesima
+  // regola affidata al prompt — cioè una regola che prima o poi il
+  // modello disattende. Su un registro di rifornimenti un carburante
+  // ricondotto «al più simile» cambia il fattore di emissione e nessuno
+  // se ne accorge. Non si azzera: il valore fuori elenco potrebbe essere
+  // la parola vera del documento, e il cliente deve poterla correggere
+  // invece di trovare una cella vuota.
+  if (regola.tipo === "scelta" && regola.valori?.length) {
+    const scritto = valore.trim().toLowerCase();
+    if (!regola.valori.some((v) => v.toLowerCase() === scritto)) {
+      avvisi.push(
+        `${regola.etichetta}: «${valore}» non è fra i valori che sappiamo trattare (${regola.valori.join(", ")}). Controllalo.`,
+      );
     }
   }
 

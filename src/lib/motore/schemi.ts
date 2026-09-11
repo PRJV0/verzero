@@ -388,6 +388,183 @@ export const CAMPI_BOLLETTA_ELETTRICA: EtichettaCampo[] = [
   },
 ];
 
+/* ── Bolletta del gas — SCHEDA ───────────────────────────────────── */
+
+/**
+ * ═══ PERCHÉ NON È LA BOLLETTA ELETTRICA CON UN'ALTRA UNITÀ ═══
+ * Tre trappole, tutte capaci di produrre un numero plausibile e
+ * sbagliato — che è la forma di errore che ci fa più danno, perché non
+ * si vede.
+ *
+ * 1. PDR ≠ POD. Il PDR del gas è quattordici cifre e basta; il POD
+ *    elettrico comincia per IT. Chi legge in fretta scambia i due, e il
+ *    formato dichiarato è l'unica cosa che se ne accorge.
+ * 2. Smc ≠ mc. Il contatore misura METRI CUBI; la bolletta fattura
+ *    STANDARD metri cubi, cioè i metri cubi moltiplicati per il
+ *    coefficiente C. Prendere i mc del contatore per Smc sottostima le
+ *    emissioni di qualche punto percentuale, in un documento che va in
+ *    banca. Si legge quello FATTURATO, e il coefficiente si registra
+ *    accanto perché il cliente possa controllare il conto.
+ * 3. Il coefficiente C NON si applica da noi. È dichiarato sulla
+ *    bolletta; se manca, manca — non lo si stima dall'altitudine del
+ *    comune, che è esattamente il genere di deduzione che il presidio
+ *    sui valori dedotti esiste per fermare.
+ */
+export const CAMPI_BOLLETTA_GAS: EtichettaCampo[] = [
+  {
+    chiave: "pdr",
+    etichetta: "Codice PDR",
+    tipo: "testo",
+    essenziale: true,
+    // Quattordici cifre esatte. La regola tiene fuori il POD elettrico,
+    // che comincia per lettere, e le matricole del contatore, più corte.
+    formato: "^\\d{14}$",
+    formatoNota:
+      "Il codice PDR non ha la forma attesa (quattordici cifre): controllalo. Attenzione a non prendere il POD dell'energia elettrica, che comincia per IT.",
+  },
+  { chiave: "fornitore", etichetta: "Fornitore", tipo: "testo" },
+  { chiave: "periodoInizio", etichetta: "Periodo dal", tipo: "data", essenziale: true },
+  { chiave: "periodoFine", etichetta: "Periodo al", tipo: "data", essenziale: true },
+  {
+    chiave: "consumoSmc",
+    etichetta: "Consumo del periodo",
+    tipo: "numero",
+    unita: "Smc",
+    essenziale: true,
+    soloSeScritto: true,
+    min: 0,
+    max: 50_000_000,
+  },
+  {
+    // Il coefficiente C sta quasi sempre in bolletta, in piccolo. Serve a
+    // far tornare il conto fra mc letti e Smc fatturati: senza, il
+    // cliente non può verificare il numero che gli stiamo attribuendo.
+    chiave: "coefficienteC",
+    etichetta: "Coefficiente C",
+    tipo: "numero",
+    min: 0.8,
+    max: 1.2,
+    soloSeScritto: true,
+  },
+  {
+    chiave: "consumoMc",
+    etichetta: "Metri cubi letti al contatore",
+    tipo: "numero",
+    unita: "mc",
+    min: 0,
+    max: 50_000_000,
+    soloSeScritto: true,
+  },
+  {
+    chiave: "importoEuro",
+    etichetta: "Importo della bolletta",
+    tipo: "numero",
+    unita: "€",
+    max: 5_000_000,
+    soloSeScritto: true,
+  },
+  {
+    chiave: "tipoLettura",
+    etichetta: "Tipo di lettura",
+    tipo: "scelta",
+    valori: ["effettiva", "stimata", "autolettura", "non-dichiarato"],
+  },
+];
+
+/* ── Registri e fatture di carburante — TABELLA ──────────────────── */
+
+/**
+ * ═══ UNA RIGA PER RIFORNIMENTO, NON PER MEZZO ═══
+ * La tentazione è aggregare per targa: un mezzo, un totale. Sarebbe una
+ * somma fatta da noi su valori che il documento espone riga per riga —
+ * cioè un valore dedotto travestito da valore letto. Le righe si
+ * riportano come stanno, e chi somma è il calcolo a valle, dopo la
+ * conferma del cliente.
+ *
+ * ═══ I CHILOMETRI SONO UN CONTATORE, NON UNA DISTANZA ═══
+ * Sulle schede carburante la colonna «km» è quasi sempre il CONTACHILOMETRI
+ * al momento del rifornimento, non i chilometri percorsi da quello prima.
+ * Sono due grandezze diverse e una si ricava dall'altra per differenza:
+ * `chilometriPercorsi` è perciò `calcolabile`, così quando il modello la
+ * ricava lo dichiara invece di spacciarla per letta.
+ *
+ * ═══ LA TARGA È UN DATO PERSONALE QUANDO IL MEZZO È DI UNA PERSONA ═══
+ * Sui rimborsi chilometrici il «mezzo» è l'auto privata del dipendente, e
+ * la targa la identifica. Il campo resta perché sui mezzi aziendali serve
+ * a distinguere le righe, ma il modello ha istruzione di non riportare
+ * mai il nome di chi guida.
+ */
+export const COLONNE_CARBURANTI: EtichettaCampo[] = [
+  {
+    chiave: "data",
+    etichetta: "Data",
+    tipo: "data",
+    essenziale: true,
+    dentroLAnno: true,
+  },
+  {
+    chiave: "mezzo",
+    etichetta: "Mezzo o impianto",
+    tipo: "testo",
+  },
+  {
+    chiave: "tipoCarburante",
+    etichetta: "Tipo di carburante",
+    tipo: "scelta",
+    essenziale: true,
+    // I fattori di emissione sono per vettore: un carburante non
+    // riconosciuto va detto, non ricondotto al più simile.
+    valori: [
+      "gasolio",
+      "benzina",
+      "gpl",
+      "metano",
+      "elettrico",
+      "hvo",
+      "altro",
+    ],
+  },
+  {
+    chiave: "litri",
+    etichetta: "Quantità",
+    tipo: "numero",
+    unita: "l",
+    essenziale: true,
+    soloSeScritto: true,
+    min: 0,
+    // Un pieno da mille litri esiste (una cisterna di cantiere); da
+    // centomila no, ed è la virgola letta come separatore di migliaia.
+    max: 100_000,
+  },
+  {
+    chiave: "importoEuro",
+    etichetta: "Importo",
+    tipo: "numero",
+    unita: "€",
+    min: 0,
+    max: 1_000_000,
+    soloSeScritto: true,
+  },
+  {
+    chiave: "chilometriContatore",
+    etichetta: "Contachilometri",
+    tipo: "numero",
+    unita: "km",
+    min: 0,
+    max: 5_000_000,
+    soloSeScritto: true,
+  },
+  {
+    chiave: "chilometriPercorsi",
+    etichetta: "Chilometri percorsi",
+    tipo: "numero",
+    unita: "km",
+    min: 0,
+    max: 200_000,
+    calcolabile: true,
+  },
+];
+
 /* ── Visura camerale — SCHEDA ────────────────────────────────────── */
 
 export const CAMPI_VISURA: EtichettaCampo[] = [
@@ -578,3 +755,11 @@ export const COLONNE_FORMAZIONE: EtichettaCampo[] = [
  * contatori insieme, e allora ogni valore va guardato due volte.
  */
 export const EXTRA_BOLLETTA = { piuPod: z.boolean() };
+
+/**
+ * Lo stesso problema, col nome del gas: più punti di riconsegna in una
+ * bolletta sola. Capita nelle forniture multisito, ed è il caso in cui
+ * il consumo totale non è il consumo di NIENTE — non di una sede, non di
+ * un impianto: è una somma che nessuna riga dichiara.
+ */
+export const EXTRA_BOLLETTA_GAS = { piuPdr: z.boolean() };

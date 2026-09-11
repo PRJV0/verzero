@@ -2,6 +2,7 @@ import type { z } from "zod";
 
 import {
   verificaBollettaElettrica,
+  verificaBollettaGas,
   verificaOrganico,
   verificaOrganigramma,
   verificaVisura,
@@ -9,8 +10,11 @@ import {
 } from "./plausibilita";
 import {
   CAMPI_BOLLETTA_ELETTRICA,
+  CAMPI_BOLLETTA_GAS,
   CAMPI_VISURA,
   EXTRA_BOLLETTA,
+  EXTRA_BOLLETTA_GAS,
+  COLONNE_CARBURANTI,
   COLONNE_FORMAZIONE,
   COLONNE_ORGANICO,
   COLONNE_ORGANIGRAMMA,
@@ -190,6 +194,19 @@ export const REGISTRO_MOTORE: VoceMotore[] = [
       "importo",
     ],
     attesa: QUASI_SEMPRE_NATIVO,
+    schema: schemaScheda(CAMPI_BOLLETTA_GAS, EXTRA_BOLLETTA_GAS),
+    versione: "bolletta-gas/1",
+    campi: CAMPI_BOLLETTA_GAS,
+    verifica: verificaBollettaGas,
+    effort: "medium",
+    istruzioni: [
+      "- `pdr`: il Punto Di Riconsegna, QUATTORDICI CIFRE. Non è il POD, che è dell'energia elettrica e comincia per IT: se sul documento trovi un codice che comincia per IT non è un PDR, e allora questo non è una bolletta del gas. Non è nemmeno la matricola del contatore.",
+      "- `consumoSmc`: il consumo FATTURATO del periodo, in Smc (standard metri cubi). ATTENZIONE: il contatore misura metri cubi, la bolletta fattura Smc, e i due numeri sono diversi. Se il documento espone entrambi, `consumoSmc` prende quello fatturato e `consumoMc` quello letto al contatore. Se espone solo i mc del contatore, lascia `consumoSmc` VUOTO: non moltiplicarlo tu per il coefficiente.",
+      "- `coefficienteC`: il coefficiente di conversione dichiarato in bolletta (di norma fra 0,9 e 1,1). Se non c'è, lascialo vuoto: non si ricava dall'altitudine del comune né da nessun'altra cosa.",
+      "- `importoEuro`: il totale da pagare, IVA compresa.",
+      "- `tipoLettura`: «effettiva», «stimata» o «autolettura» SOLO se il documento lo dice; altrimenti «non-dichiarato». Su una lettura stimata il consumo non è un consumo reale, e va saputo.",
+      "- In `avvertenze`: conguagli, letture stimate, note di credito, più punti di riconsegna nello stesso documento, periodi che sconfinano in due anni.",
+    ],
   },
   {
     tipo: "teleriscaldamento",
@@ -220,6 +237,18 @@ export const REGISTRO_MOTORE: VoceMotore[] = [
       manoscritto: "frequente",
       nota: "Le schede carburante di flotta sono spesso compilate a mano; le fatture dei consorzi sono native.",
     },
+    schema: schemaTabella(COLONNE_CARBURANTI),
+    versione: "carburanti/1",
+    campi: COLONNE_CARBURANTI,
+    effort: "medium",
+    istruzioni: [
+      "- UNA RIGA PER RIFORNIMENTO, nell'ordine in cui compaiono. NON aggregare per mezzo, per mese o per tipo di carburante: la somma non la fai tu.",
+      "- `tipoCarburante`: scegli fra i valori ammessi solo se il documento lo dice o se è scritto sul distributore (Diesel → «gasolio», Super/Benzina → «benzina»). Se il documento non lo dice, «altro» e spiegalo nella nota: un carburante indovinato cambia il fattore di emissione.",
+      "- `litri`: la quantità erogata. Se il documento espone solo l'importo in euro NON dividere per il prezzo: lascia `litri` vuoto.",
+      "- `chilometriContatore` è il CONTACHILOMETRI al rifornimento; `chilometriPercorsi` sono i chilometri fatti da quello prima. Sulle schede carburante la colonna «km» è quasi sempre il contachilometri: mettila lì. Se ricavi i percorsi per differenza fra due righe, scrivilo in `estrattoDa` della cella — così si vede che non l'hai letto.",
+      "- `mezzo`: la targa o il nome dell'impianto. NON riportare mai il nome della persona che guida, nemmeno se il registro lo porta in colonna.",
+      "- In `avvertenze`: righe senza data, rifornimenti fuori dall'anno, contachilometri che va all'indietro, righe di totale o di riporto in fondo alla tabella.",
+    ],
   },
 
   /* ══ Documenti camerali e societari ═════════════════════════════ */
