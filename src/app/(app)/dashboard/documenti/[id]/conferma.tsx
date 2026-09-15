@@ -18,10 +18,13 @@ import {
   type StatoCella,
 } from "@/lib/motore/portale";
 
+import { useRouter } from "next/navigation";
+
 import {
   confermaCelle,
   confermaRigheSicure,
   correggiCampo,
+  riapriValori,
   rifiutaCampo,
   rifiutaRiga,
 } from "../azioni";
@@ -177,7 +180,9 @@ export function ConfermaAffiancata({
   const [cella, setCella] = useState<number | null>(null);
   const [scrivo, setScrivo] = useState(false);
   const [bozza, setBozza] = useState("");
+  const [errore, setErrore] = useState<string | null>(null);
   const [inCorso, avvia] = useTransition();
+  const router = useRouter();
   const campo = useRef<HTMLInputElement>(null);
   const bottoni = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -256,8 +261,32 @@ export function ConfermaAffiancata({
     }
     setDecise((d) => ({ ...d, [c.id]: "confermata" }));
     setCorretti((m) => ({ ...m, [c.id]: pulito }));
+    setErrore(null);
     avvia(async () => {
-      await correggiCampo(c.id, pulito);
+      const esito = await correggiCampo(c.id, pulito);
+      if (esito.ok) return;
+      // Non salvata: la cella torna aperta col valore di prima, e la sua
+      // riga torna fra quelle da controllare. Mostrarla corretta sarebbe
+      // far credere al cliente un dato che la banca dati non ha.
+      const riga = righe.find((r) => r.celle.some((x) => x.id === c.id))?.riga;
+      setDecise((d) => {
+        const n = { ...d };
+        delete n[c.id];
+        return n;
+      });
+      setCorretti((m) => {
+        const n = { ...m };
+        delete n[c.id];
+        return n;
+      });
+      if (riga !== undefined) {
+        setFatte((f) => {
+          const n = new Set(f);
+          n.delete(riga);
+          return n;
+        });
+      }
+      setErrore(`${c.etichetta}: ${esito.errore}`);
     });
   }
 
@@ -424,6 +453,11 @@ export function ConfermaAffiancata({
 
       {/* ═══ LE RIGHE ═══ */}
       <div>
+        {errore && (
+          <p role="alert" className="mb-3 rounded-xl border border-amber-ink/25 bg-amber-soft/60 px-4 py-3 text-sm leading-relaxed text-amber-ink">
+            Correzione non salvata — {errore}
+          </p>
+        )}
         {/* Avanzamento: si vede che finisce. */}
         <div className="rounded-xl border border-line bg-white p-4">
           <div className="flex items-baseline justify-between gap-3">
@@ -767,6 +801,30 @@ export function ConfermaAffiancata({
             <p className="mt-1 text-xs leading-relaxed text-gray-warm">
               Quello che hai scartato resta fuori e non te lo riproporremo.
             </p>
+            {/* Un dato confermato per sbaglio deve avere un posto dove
+                tornare: riaprire rimette tutto «da controllare», e finché
+                non lo riconfermi resta fuori dai calcoli. */}
+            <button
+              type="button"
+              disabled={inCorso}
+              onClick={() =>
+                avvia(async () => {
+                  const esito = await riapriValori(documentId, { tutti: true });
+                  if (!esito.ok) {
+                    setErrore(esito.errore);
+                    return;
+                  }
+                  setFatte(new Set());
+                  setDecise({});
+                  setCorretti({});
+                  setIndice(0);
+                  router.refresh();
+                })
+              }
+              className="mt-3 text-xs font-medium text-pine underline-offset-2 hover:underline disabled:opacity-60"
+            >
+              Riapri i valori per correggerli
+            </button>
           </div>
         )}
 

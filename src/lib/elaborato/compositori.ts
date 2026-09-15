@@ -303,19 +303,24 @@ const MESE_ANNO = (iso: string) =>
  * riferisce: «Bolletta di energia elettrica · gennaio 2025» si ritrova in
  * un archivio, «scan_0012.pdf» no — il nome del file resta nel dettaglio.
  */
+function titoloDocumento(l: LetturaDocumento): string {
+  const periodo = periodoDi(l);
+  const nome = tipoDocumento(l.documento.tipo)?.nome ?? "Documento dell'organizzazione";
+  const quando = periodo
+    ? MESE_ANNO(periodo.dal) === MESE_ANNO(periodo.al)
+      ? MESE_ANNO(periodo.dal)
+      : `${DATA_LUNGA(periodo.dal)} – ${DATA_LUNGA(periodo.al)}`
+    : null;
+  return quando ? `${nome} · ${quando}` : nome;
+}
+
 export function fonteDocumento(ctx: ContestoComposizione, l: LetturaDocumento): string {
   const d = l.documento;
   return ctx.fonti.registra(`doc:${d.id}`, () => {
     const periodo = periodoDi(l);
-    const nome = tipoDocumento(d.tipo)?.nome ?? "Documento dell'organizzazione";
-    const quando = periodo
-      ? MESE_ANNO(periodo.dal) === MESE_ANNO(periodo.al)
-        ? MESE_ANNO(periodo.dal)
-        : `${DATA_LUNGA(periodo.dal)} – ${DATA_LUNGA(periodo.al)}`
-      : null;
     return {
       tipo: "documento",
-      titolo: quando ? `${nome} · ${quando}` : nome,
+      titolo: titoloDocumento(l),
       dettaglio: [
         `File «${d.nome_file}», caricato il ${DATA_LUNGA(d.created_at)}${d.da_fotocamera ? ", acquisito con la fotocamera" : ""}`,
       ],
@@ -368,21 +373,26 @@ export function valoreLetto(
   campo: CampoDocumentoIngresso,
   testo?: string,
 ): Valore {
-  const doc = fonteDocumento(ctx, l);
-  const titolo = ctx.fonti.trova(doc)?.titolo ?? l.documento.nome_file;
+  const titolo = titoloDocumento(l);
   const confermato = campo.stato === "confermato";
-  let id = doc;
+  let id: string;
   if (cellaScrittaDalCliente(campo)) {
+    // La D del documento qui NON si registra: se tutti i valori usati di
+    // una bolletta sono stati riscritti, il registro avrebbe una voce di
+    // documento senza pagine né conferma, citata da nessun valore.
     id = ctx.fonti.registra(`scritto:${l.documento.id}`, () => ({
       tipo: "inserito",
       titolo: `Valori scritti dall'organizzazione al posto di quelli letti su «${titolo}»`,
-      dettaglio: [`Il documento resta la fonte degli altri valori (${doc}); questi li ha corretti l'organizzazione confermando la lettura`],
+      dettaglio: [
+        `File «${l.documento.nome_file}»: su quel documento c'è un altro valore, e l'organizzazione lo ha corretto confermando la lettura`,
+      ],
       confermata: true,
     }));
     ctx.fonti.conferma(id, campo.confirmed_at, confermato);
   } else if (
     cellaCalcolata({ calcolato: campo.calcolato ?? null, fonteLettura: campo.fonte_lettura, avvisi: campo.avvisi })
   ) {
+    const doc = fonteDocumento(ctx, l);
     id = ctx.fonti.registra(`ricavato:${l.documento.id}`, () => ({
       tipo: "calcolato",
       titolo: `Valori ricavati da altre celle di «${titolo}»`,
@@ -392,11 +402,15 @@ export function valoreLetto(
       ingressi: [doc],
       confermata: true,
     }));
-    ctx.fonti.pagina(doc, campo.pagina);
-    ctx.fonti.conferma(id, campo.confirmed_at, confermato);
-  } else {
+    // Il documento è l'ingresso del calcolo: porta anche lui pagina e
+    // conferma, come ogni documento del registro.
     ctx.fonti.pagina(doc, campo.pagina);
     ctx.fonti.conferma(doc, campo.confirmed_at, confermato);
+    ctx.fonti.conferma(id, campo.confirmed_at, confermato);
+  } else {
+    id = fonteDocumento(ctx, l);
+    ctx.fonti.pagina(id, campo.pagina);
+    ctx.fonti.conferma(id, campo.confirmed_at, confermato);
   }
   const n = numeroCanonico(campo.valore);
   return {
@@ -433,13 +447,17 @@ export function mancanzaCampo(
   perche: string,
 ): Mancanza {
   const etichetta = ETICHETTA_CAMPO[chiave] ?? chiave;
+  // I rimedi dicono solo gesti che il portale sa fare: nella scheda impresa
+  // un dato recuperato si conferma o si dichiara non corretto, e un dato che
+  // manca arriva dalla visura camerale — non si scrive a mano.
   return stato === "da_confermare"
     ? {
         tipo: "dato-da-confermare",
         chi: "impresa",
         sezione: ctx.sezione,
         messaggio: `Il dato «${etichetta}» della scheda impresa è stato recuperato ma aspetta la tua conferma: ${perche}.`,
-        rimedio: "Aprilo nella scheda impresa e confermalo, oppure correggilo.",
+        rimedio:
+          "Aprilo nella scheda impresa e confermalo se è giusto. Se non lo è, indicalo come non corretto e carica la visura camerale: il valore giusto lo leggiamo da lì.",
         azione: { etichetta: "Apri la scheda impresa", href: HREF_IMPRESA },
       }
     : {
@@ -447,8 +465,8 @@ export function mancanzaCampo(
         chi: "impresa",
         sezione: ctx.sezione,
         messaggio: `Manca il dato «${etichetta}» della scheda impresa: ${perche}.`,
-        rimedio: "Aggiungilo nella scheda impresa, oppure carica la visura camerale: lo leggiamo da lì.",
-        azione: { etichetta: "Apri la scheda impresa", href: HREF_IMPRESA },
+        rimedio: "Carica la visura camerale nella sezione Documenti: lo leggiamo da lì e ti chiediamo di confermarlo.",
+        azione: { etichetta: "Carica la visura", href: HREF_DOCUMENTI },
       };
 }
 

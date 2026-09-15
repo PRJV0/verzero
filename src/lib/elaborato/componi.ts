@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import { tipoDocumento } from "@/lib/documenti";
 import type { ModelloElaborato } from "@/lib/elaborati";
 import {
   NORME_VERIFICATE_IL,
@@ -70,7 +71,7 @@ export type EsitoComposizione = {
  * `src/lib/calc/`, `componi.ts`, `pdf.ts` o `docx.ts` in un modo che cambia
  * il documento, aggiorna questa stringa.
  */
-export const VERSIONE_GENERATORE = "2026-09-15.1";
+export const VERSIONE_GENERATORE = "2026-09-15.2";
 
 /** L'impronta del MODELLO e del generatore: se cambia la struttura, un testo o il codice che compone, cambia il documento. */
 export function improntaModello(modello: ModelloElaborato): string {
@@ -235,6 +236,35 @@ export function componiElaborato(ingresso: IngressoComposizione): EsitoComposizi
     // se i dati sono arrivati.
     if (blocchi.length === 0) piena = false;
     if (!datiRichiesti && blocchi.length > 0) piena = true;
+
+    // Un documento che la sezione ASPETTA ma che nessun suo compositore sa
+    // leggere non sparisce in silenzio: una bolletta del teleriscaldamento
+    // è Scope 2 anche finché la piattaforma non la calcola, e un inventario
+    // che la ignora esce con le emissioni sbagliate e il controllo superato.
+    const lettiQui = new Set(
+      s.componi.flatMap((parte) =>
+        "blocco" in parte && COMPOSITORI[parte.blocco] ? tipiLetti(COMPOSITORI[parte.blocco], parte.parametri ?? {}) : [],
+      ),
+    );
+    for (const tipo of s.attendeTipi ?? []) {
+      if (lettiQui.has(tipo)) continue;
+      const presenti = ingresso.documenti.filter(
+        (d) => d.tipo === tipo && d.stato !== "non_pertinente" && d.stato !== "dati_particolari",
+      );
+      if (presenti.length === 0) continue;
+      // Entra nell'impronta: quando il documento arriva o se ne va, il
+      // documento finale è un altro.
+      tipi.add(tipo);
+      piena = false;
+      mancanze.push({
+        tipo: "composizione-non-disponibile",
+        chi: "verzero",
+        sezione: s.titolo,
+        messaggio: `In archivio ${presenti.length === 1 ? `c'è «${presenti[0].nome_file}»` : `ci sono ${presenti.length} documenti`} di tipo «${tipoDocumento(tipo)?.nome ?? tipo}», che la sezione «${s.titolo}» deve includere ma che la piattaforma non sa ancora calcolare.`,
+        rimedio:
+          "Non serve niente da te: finché non lo calcoliamo il documento non esce, perché uscirebbe senza quella parte. Se quel documento non riguarda l'organizzazione, puoi eliminarlo dall'archivio.",
+      });
+    }
 
     return {
       numero: i + 1,

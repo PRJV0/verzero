@@ -677,13 +677,33 @@ un'assenza: un ufficio senza caldaia non ha bollette del gas, un contatore
 aperto a giugno non ha la bolletta di gennaio. L'impresa può dichiarare dal
 pannello del documento finale, accanto alla mancanza che la chiede: nessun
 consumo diretto di combustibili, nessun consumo di gas, nessun rifornimento,
-il periodo di attività di un contatore o che non è stato attivo. La
-dichiarazione si scrive nella scheda impresa con una chiave che porta
-l'esercizio, entra nel documento con la sua sigla **I** e la frase dichiarata
-parola per parola, e dove sostituisce una misura il testo lo dice («zero per
-dichiarazione, non per misura»). Una dichiarazione smentita dai documenti in
-archivio ferma il documento finché una delle due cose non viene tolta; quale,
-lo decide l'impresa.
+registri dei carburanti completi nonostante una pausa lunga, ricariche dei
+veicoli elettrici solo in sede, energia elettrica compresa nell'affitto, i
+periodi di attività di un contatore (fino a quattro) o che non è stato
+attivo. La dichiarazione si scrive nella scheda impresa con una chiave che
+porta l'esercizio, entra nel documento con la sua sigla **I** e la frase
+dichiarata parola per parola, e dove sostituisce una misura il testo lo dice
+(«zero per dichiarazione, non per misura»). Una dichiarazione smentita dai
+documenti in archivio ferma il documento finché una delle due cose non viene
+tolta; quale, lo decide l'impresa.
+
+**Un inventario completo spiega ciò che manca.** Una fonte di Scope 1 assente
+— il registro dei carburanti quando c'è il gas, o il contrario — ferma il
+documento finché non arrivano i documenti o la dichiarazione, anche al primo
+anno. Più di due mesi senza rifornimenti fermano il documento allo stesso
+modo. Due registri con gli stessi rifornimenti, una bolletta contenuta in
+un'altra, un POD scritto in due modi — che è lo stesso POD — non passano. E un
+documento che una sezione del modello aspetta ma che nessun compositore sa
+leggere (oggi il teleriscaldamento) non sparisce in silenzio: ferma il
+documento come mancanza nostra.
+
+**Ogni blocco ha un'uscita che il portale sa eseguire.** Una mancanza su un
+valore già confermato — una data scritta male, una riga doppia — porta i
+valori da riaprire: il pannello li riapre e porta alla pagina del documento,
+dove si correggono o si scartano. Nella pagina del documento e nell'archivio
+ogni valore deciso ha «Riapri». Una correzione che non si può usare senza
+indovinare non si salva: torna al cliente col perché. E una lettura rimasta a
+metà per un quarto d'ora si può rifare.
 
 **Il collaudo** (`scripts/collaudo-elaborato.mjs`) genera l'Inventario GHG
 2025 dell'impresa d'esempio con le stesse funzioni del portale, con e senza
@@ -979,6 +999,12 @@ immutabilità ammette **una** sola modifica, l'azzeramento di chi ha generato
 la versione che Postgres esegue da sé quando quell'utente viene cancellato —
 senza, la cancellazione di un utente fallirebbe su ogni documento che ha
 generato.
+
+La stessa migrazione mette in banca dati il **segno della provenienza**: un
+valore cambiato da un utente autenticato prende da sé l'avviso «scritto da
+te» (celle dei documenti) o la provenienza «utente» (scheda impresa). Il
+portale scriveva quel segno; un aggiornamento diretto del solo valore lo
+lasciava com'era, e un numero del cliente passava per letto dalla bolletta.
 
 ### 8.1 Le versioni degli STANDARD (non delle norme)
 

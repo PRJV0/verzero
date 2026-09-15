@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { AlertTriangle, Coins, FileCheck2, Gauge, ScrollText } from "lucide-react";
 
-import { tabellaAssente } from "@/lib/elaborato/archivio";
+import { tabellaAssente, tutte } from "@/lib/elaborato/archivio";
 import { createClient } from "@/lib/supabase/server";
 import { REGISTRO_MOTORE, tipiDichiarati, tipiLeggibili } from "@/lib/motore/famiglie";
 import { FAIR_USE, statoUso } from "@/lib/motore/fair-use";
@@ -174,15 +174,39 @@ export default async function MotorePage() {
   // si mostra a chi non può usarlo è già un difetto. Senza migrazione la
   // tabella non c'è, e la sezione tace.
   const { data: amministratore } = await supabase.rpc("is_admin");
-  const { data: daValidare, error: erroreVersioni } = amministratore
-    ? await supabase
-        .from("elaborati_versioni")
-        .select("id, organization_id, modello, documento, esercizio, revisione, codice, stato_validazione, created_at")
-        .order("created_at", { ascending: false })
-        .limit(200)
-    : { data: [], error: null };
-  const ultimePerDocumento = new Map<string, NonNullable<typeof daValidare>[number]>();
-  for (const v of tabellaAssente(erroreVersioni) ? [] : (daValidare ?? [])) {
+  // TUTTE le versioni, a pagine e senza il contenuto: con un tetto fisso le
+  // revisioni più vecchie ancora da validare sparivano dall'elenco appena
+  // le altre imprese ne emettevano di nuove.
+  type RigaVersione = {
+    id: string;
+    organization_id: string;
+    modello: string;
+    documento: string;
+    esercizio: number;
+    revisione: number;
+    codice: string;
+    stato_validazione: string;
+    created_at: string;
+  };
+  let daValidare: RigaVersione[] = [];
+  if (amministratore) {
+    try {
+      daValidare = await tutte<RigaVersione>((da, a) =>
+        supabase
+          .from("elaborati_versioni")
+          .select("id, organization_id, modello, documento, esercizio, revisione, codice, stato_validazione, created_at", { count: "exact" })
+          .order("created_at", { ascending: false })
+          .order("id")
+          .range(da, a),
+      );
+    } catch (errore) {
+      // Senza migrazione la tabella non c'è, e la sezione tace; qualunque
+      // altro errore va visto.
+      if (!tabellaAssente({ message: errore instanceof Error ? errore.message : String(errore) })) throw errore;
+    }
+  }
+  const ultimePerDocumento = new Map<string, RigaVersione>();
+  for (const v of daValidare) {
     const chiave = `${v.organization_id}|${v.modello}|${v.esercizio}`;
     const prima = ultimePerDocumento.get(chiave);
     if (!prima || v.revisione > prima.revisione) ultimePerDocumento.set(chiave, v);

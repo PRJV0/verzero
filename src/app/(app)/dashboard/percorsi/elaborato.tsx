@@ -19,6 +19,7 @@ import type { EsitoGenerazione } from "@/lib/elaborato/archivio";
 import type { Dichiarazione } from "@/lib/elaborato/dichiarazioni";
 import type { Mancanza } from "@/lib/elaborato/mancanze";
 
+import { riapriValori } from "../documenti/azioni";
 import {
   dichiarazioneAzione,
   generaElaboratoAzione,
@@ -70,9 +71,14 @@ const DATA = (iso: string) =>
 function Dichiara({ d, fatto }: { d: Dichiarazione; fatto: () => void }) {
   const [inCorso, avvia] = useTransition();
   const [errore, setErrore] = useState<string | null>(null);
-  const periodo = d.tipo === "periodo-contatore" && d.valore?.includes("/") ? d.valore.split("/") : null;
-  const [dal, setDal] = useState(periodo?.[0] ?? "");
-  const [al, setAl] = useState(periodo?.[1] ?? "");
+  const dichiarati =
+    d.tipo === "periodo-contatore" && d.valore && d.valore !== "inattivo"
+      ? d.valore.split(";").map((p) => {
+          const [dal, al] = p.split("/");
+          return { dal: dal ?? "", al: al ?? "" };
+        })
+      : [];
+  const [periodi, setPeriodi] = useState<{ dal: string; al: string }[]>(dichiarati.length > 0 ? dichiarati : [{ dal: "", al: "" }]);
 
   function invia(richiesta: RichiestaDichiarazione) {
     setErrore(null);
@@ -86,21 +92,23 @@ function Dichiara({ d, fatto }: { d: Dichiarazione; fatto: () => void }) {
   const bottone =
     "inline-flex items-center gap-1 rounded-md border border-pine/30 bg-white px-2.5 py-1 text-[11px] font-semibold text-pine transition-colors hover:border-pine disabled:opacity-60";
   const secondario = "text-[11px] font-medium text-gray-warm underline-offset-2 hover:text-pine hover:underline disabled:opacity-60";
+  const aggiorna = (i: number, campo: "dal" | "al", valore: string) =>
+    setPeriodi((ps) => ps.map((p, j) => (j === i ? { ...p, [campo]: valore } : p)));
 
   return (
     <div className="mt-2 rounded-lg border border-pine/20 bg-white px-3 py-2.5">
-      {d.tipo === "assenza" ? (
+      {d.tipo === "fatto" ? (
         <>
           <p className="text-[11px] leading-snug text-ink">
             {d.resa ? "Hai dichiarato: " : "Da dichiarare: "}«{d.testo}»
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-3">
             {d.resa ? (
-              <button type="button" disabled={inCorso} className={bottone} onClick={() => invia({ tipo: "assenza", fonte: d.fonte, esercizio: d.esercizio, ritira: true })}>
+              <button type="button" disabled={inCorso} className={bottone} onClick={() => invia({ tipo: "fatto", fatto: d.fatto, esercizio: d.esercizio, ritira: true })}>
                 Ritira la dichiarazione
               </button>
             ) : (
-              <button type="button" disabled={inCorso} className={bottone} onClick={() => invia({ tipo: "assenza", fonte: d.fonte, esercizio: d.esercizio })}>
+              <button type="button" disabled={inCorso} className={bottone} onClick={() => invia({ tipo: "fatto", fatto: d.fatto, esercizio: d.esercizio })}>
                 Lo dichiaro
               </button>
             )}
@@ -111,40 +119,56 @@ function Dichiara({ d, fatto }: { d: Dichiarazione; fatto: () => void }) {
         <>
           <p className="text-[11px] leading-snug text-ink">{d.resa ? `Hai dichiarato: «${d.testo}»` : d.testo}</p>
           <form
-            className="mt-2 flex flex-wrap items-end gap-2"
+            className="mt-2 space-y-2"
             onSubmit={(e) => {
               e.preventDefault();
-              invia({ tipo: "periodo-contatore", punto: d.punto, esercizio: d.esercizio, dal, al });
+              invia({ tipo: "periodo-contatore", punto: d.punto, esercizio: d.esercizio, periodi });
             }}
           >
-            <label className="flex flex-col text-[10px] font-medium text-gray-warm">
-              Attivo dal
-              <input
-                type="date"
-                required
-                min={`${d.esercizio}-01-01`}
-                max={`${d.esercizio}-12-31`}
-                value={dal}
-                onChange={(e) => setDal(e.target.value)}
-                className="mt-0.5 rounded-md border border-line px-2 py-1 text-xs text-ink"
-              />
-            </label>
-            <label className="flex flex-col text-[10px] font-medium text-gray-warm">
-              al
-              <input
-                type="date"
-                required
-                min={`${d.esercizio}-01-01`}
-                max={`${d.esercizio}-12-31`}
-                value={al}
-                onChange={(e) => setAl(e.target.value)}
-                className="mt-0.5 rounded-md border border-line px-2 py-1 text-xs text-ink"
-              />
-            </label>
-            <button type="submit" disabled={inCorso} className={bottone}>
-              Dichiara il periodo
-            </button>
-            {inCorso && <Loader2 size={13} className="mb-1.5 animate-spin text-pine" />}
+            {periodi.map((p, i) => (
+              <div key={i} className="flex flex-wrap items-end gap-2">
+                <label className="flex flex-col text-[10px] font-medium text-gray-warm">
+                  Attivo dal
+                  <input
+                    type="date"
+                    required
+                    min={`${d.esercizio}-01-01`}
+                    max={`${d.esercizio}-12-31`}
+                    value={p.dal}
+                    onChange={(e) => aggiorna(i, "dal", e.target.value)}
+                    className="mt-0.5 rounded-md border border-line px-2 py-1 text-xs text-ink"
+                  />
+                </label>
+                <label className="flex flex-col text-[10px] font-medium text-gray-warm">
+                  al
+                  <input
+                    type="date"
+                    required
+                    min={`${d.esercizio}-01-01`}
+                    max={`${d.esercizio}-12-31`}
+                    value={p.al}
+                    onChange={(e) => aggiorna(i, "al", e.target.value)}
+                    className="mt-0.5 rounded-md border border-line px-2 py-1 text-xs text-ink"
+                  />
+                </label>
+                {periodi.length > 1 && (
+                  <button type="button" className={`${secondario} mb-1.5`} onClick={() => setPeriodi((ps) => ps.filter((_, j) => j !== i))}>
+                    Togli
+                  </button>
+                )}
+              </div>
+            ))}
+            <div className="flex flex-wrap items-center gap-3">
+              <button type="submit" disabled={inCorso} className={bottone}>
+                {periodi.length === 1 ? "Dichiara il periodo" : "Dichiara i periodi"}
+              </button>
+              {periodi.length < 4 && (
+                <button type="button" className={secondario} onClick={() => setPeriodi((ps) => [...ps, { dal: "", al: "" }])}>
+                  Aggiungi un periodo — per un contatore sospeso e riattivato
+                </button>
+              )}
+              {inCorso && <Loader2 size={13} className="animate-spin text-pine" />}
+            </div>
           </form>
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <button
@@ -170,6 +194,42 @@ function Dichiara({ d, fatto }: { d: Dichiarazione; fatto: () => void }) {
       )}
       {errore && <p className="mt-1.5 text-[11px] text-amber-ink">{errore}</p>}
     </div>
+  );
+}
+
+/**
+ * RIAPRIRE IL VALORE, E ANDARE A CORREGGERLO.
+ *
+ * Una mancanza su un valore già confermato — una data scritta male, una riga
+ * doppia — non si risolve da nessuna pagina finché il valore resta
+ * confermato: la conferma mostra solo ciò che aspetta una risposta. Il
+ * bottone lo riapre e porta alla pagina del documento, dove si corregge o si
+ * scarta.
+ */
+function Riapri({ r }: { r: NonNullable<Mancanza["riapri"]> }) {
+  const router = useRouter();
+  const [inCorso, avvia] = useTransition();
+  const [errore, setErrore] = useState<string | null>(null);
+  return (
+    <>
+      <button
+        type="button"
+        disabled={inCorso}
+        onClick={() =>
+          avvia(async () => {
+            setErrore(null);
+            const esito = await riapriValori(r.documentId, { campi: r.campi, righe: r.righe });
+            if (esito.ok) router.push(`/dashboard/documenti/${r.documentId}`);
+            else setErrore(esito.errore);
+          })
+        }
+        className="inline-flex items-center gap-1 rounded-md border border-pine/30 bg-white px-2.5 py-1 text-[11px] font-semibold text-pine transition-colors hover:border-pine disabled:opacity-60"
+      >
+        {inCorso ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+        Riapri {r.righe?.length ? (r.righe.length === 1 ? "la riga" : "le righe") : (r.campi?.length ?? 0) === 1 ? "il valore" : "i valori"} e correggi
+      </button>
+      {errore && <span className="text-[11px] text-amber-ink">{errore}</span>}
+    </>
   );
 }
 
@@ -271,11 +331,14 @@ export function PannelloElaborato({
                       {m.sezione && <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-ink/80">{m.sezione}</p>}
                       <p className="text-xs font-semibold leading-snug text-ink">{m.messaggio}</p>
                       <p className="mt-0.5 text-[11px] leading-snug text-gray-warm">{m.rimedio}</p>
-                      {m.azione && (
-                        <a href={m.azione.href} className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-pine underline-offset-2 hover:underline">
-                          {m.azione.etichetta} <ArrowRight size={12} />
-                        </a>
-                      )}
+                      <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                        {m.riapri && puoGenerare && <Riapri r={m.riapri} />}
+                        {m.azione && (
+                          <a href={m.azione.href} className="inline-flex items-center gap-1 text-xs font-semibold text-pine underline-offset-2 hover:underline">
+                            {m.azione.etichetta} <ArrowRight size={12} />
+                          </a>
+                        )}
+                      </div>
                       {m.dichiarazione && puoGenerare && (
                         <Dichiara
                           d={m.dichiarazione}
@@ -299,6 +362,17 @@ export function PannelloElaborato({
                   {daNoi.map((m) => (
                     <li key={`${m.tipo}-${m.messaggio}`} className="text-xs leading-snug text-ink">
                       {m.messaggio} <span className="text-gray-warm">{m.rimedio}</span>
+                      {/* Anche un blocco nostro può nascere da una dichiarazione:
+                          chi l'ha resa per sbaglio deve poterla ritirare da qui. */}
+                      {m.dichiarazione && puoGenerare && (
+                        <Dichiara
+                          d={m.dichiarazione}
+                          fatto={() => {
+                            setEsito(null);
+                            router.refresh();
+                          }}
+                        />
+                      )}
                     </li>
                   ))}
                 </ul>

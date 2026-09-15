@@ -36,7 +36,8 @@ export type TipoMancanza =
   | "fonte-non-confermata"
   | "segnaposto"
   | "composizione-non-disponibile"
-  | "dichiarazione-contraddetta";
+  | "dichiarazione-contraddetta"
+  | "documento-doppio";
 
 export type Mancanza = {
   tipo: TipoMancanza;
@@ -51,6 +52,12 @@ export type Mancanza = {
   azione?: { etichetta: string; href: string };
   /** La dichiarazione che il cliente può rendere lì, quando è quella il rimedio. */
   dichiarazione?: Dichiarazione;
+  /**
+   * I valori GIÀ CONFERMATI da riaprire perché il cliente li corregga o li
+   * scarti. Senza, un blocco su un valore confermato non avrebbe uscita: la
+   * pagina di conferma mostra solo ciò che aspetta ancora una risposta.
+   */
+  riapri?: { documentId: string; campi?: string[]; righe?: number[] };
 };
 
 /** Le mancanze uguali si dicono una volta: la stessa bolletta da confermare non è tre compiti. */

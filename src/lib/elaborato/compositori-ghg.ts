@@ -4,6 +4,7 @@ import {
   copertura,
   esercizioComePeriodo,
   giorniInclusivi,
+  pauseRifornimenti,
   quotaNellEsercizio,
   scope2 as calcolaScope2,
   sovrapposizione,
@@ -39,16 +40,17 @@ import {
 } from "./compositori";
 import type { Blocco, Cella, Valore } from "./contenuto";
 import {
-  chiaveAssenza,
   chiaveAttivita,
+  chiaveFatto,
   domandaAttivita,
   leggiAttivita,
-  testoAssenza,
+  puntoCanonico,
   testoAttivita,
+  testoFatto,
   valoreAttivita,
-  type AssenzaDichiarabile,
   type AttivitaContatore,
   type Dichiarazione,
+  type FattoDichiarabile,
 } from "./dichiarazioni";
 import { DATA_LUNGA } from "./fonti";
 import type { CampoImpresaIngresso } from "./ingresso";
@@ -76,16 +78,19 @@ import type { Mancanza } from "./mancanze";
  * «al meglio»: si chiede di correggerli. «11.840» scritto a mano può
  * essere undicimila o undici, e un inventario che sceglie da solo esce con
  * le emissioni divise per mille. Un documento non ancora letto non vale
- * come assente: si aspetta la lettura, o si chiede di avviarla.
+ * come assente. Un codice POD scritto con uno spazio è lo stesso POD.
  *
- * ═══ GLI ALTRI ESERCIZI SONO UN INDIZIO ═══
- * L'archivio di un cliente al secondo anno contiene le bollette del primo.
- * Un documento di un altro esercizio non conta come presente e da solo non
- * blocca niente; ma un contatore o una fonte che c'erano nell'esercizio
- * precedente e in questo mancano vanno spiegati — con i documenti
- * dell'anno, o con una dichiarazione dell'organizzazione
- * (`dichiarazioni.ts`). È così che al secondo anno il portale chiede le
- * bollette nuove invece di dichiarare vuote tre sezioni.
+ * ═══ UNA FONTE ASSENTE SI DICHIARA ═══
+ * Un inventario è completo solo se ogni fonte di emissione che manca è
+ * spiegata. Se ci sono bollette del gas e nessun registro dei carburanti,
+ * i mezzi non si tolgono in silenzio: o arriva il registro, o
+ * l'organizzazione dichiara di non avere fatto rifornimenti. Lo stesso per
+ * un contatore che c'era l'anno prima, per mesi senza rifornimenti, per
+ * l'energia compresa nell'affitto (`dichiarazioni.ts`).
+ *
+ * ═══ OGNI BLOCCO HA UN'USCITA CHE IL PORTALE SA ESEGUIRE ═══
+ * Una mancanza su un valore già confermato porta `riapri`: il pannello lo
+ * riapre, e la pagina del documento lo mostra per correggerlo o scartarlo.
  */
 
 const HREF_DOCUMENTI = "/dashboard/documenti";
@@ -140,11 +145,14 @@ const MAIUSCOLA = (s: string) => `${s.charAt(0).toUpperCase()}${s.slice(1)}`;
 
 const conta = (n: number, uno: string, molti: string) => `${n} ${n === 1 ? uno : molti}`;
 
+/** Gli anni scritti dentro un valore illeggibile: bastano a dire se il problema riguarda l'esercizio, non a calcolare. */
+const anniIn = (grezzo: string | null) => [...(grezzo ?? "").matchAll(/(?<!\d)(?:19|20)\d{2}(?!\d)/g)].map((m) => Number(m[0]));
+
 /* ------------------------------------------------------------------ */
 /* Le dichiarazioni, lette dalla scheda impresa                         */
 /* ------------------------------------------------------------------ */
 
-type AssenzaResa = { fonte: AssenzaDichiarabile; campo: CampoImpresaIngresso };
+type FattoReso = { fatto: FattoDichiarabile; campo: CampoImpresaIngresso };
 type AttivitaResa = { punto: string; attivita: AttivitaContatore; campo: CampoImpresaIngresso };
 
 function campoDichiarato(ctx: ContestoComposizione, chiave: string | null) {
@@ -152,9 +160,9 @@ function campoDichiarato(ctx: ContestoComposizione, chiave: string | null) {
   return ctx.ingresso.campi.find((c) => c.campo === chiave && c.stato === "confermato" && c.valore);
 }
 
-function assenzaDichiarata(ctx: ContestoComposizione, fonte: AssenzaDichiarabile): AssenzaResa | null {
-  const campo = campoDichiarato(ctx, chiaveAssenza(fonte, ctx.esercizio));
-  return campo?.valore === "si" ? { fonte, campo } : null;
+function fattoDichiarato(ctx: ContestoComposizione, fatto: FattoDichiarabile): FattoReso | null {
+  const campo = campoDichiarato(ctx, chiaveFatto(fatto, ctx.esercizio));
+  return campo?.valore === "si" ? { fatto, campo } : null;
 }
 
 function attivitaDichiarata(ctx: ContestoComposizione, punto: string): AttivitaResa | null {
@@ -163,16 +171,22 @@ function attivitaDichiarata(ctx: ContestoComposizione, punto: string): AttivitaR
   return campo && attivita ? { punto, attivita, campo } : null;
 }
 
-const TITOLO_ASSENZA: Record<AssenzaDichiarabile, string> = {
-  combustibili: "nessun consumo diretto di combustibili",
-  gas: "nessun consumo di gas naturale",
-  carburanti: "nessun rifornimento di carburante",
+const TITOLO_FATTO: Record<FattoDichiarabile, string> = {
+  "senza-combustibili": "nessun consumo diretto di combustibili",
+  "senza-gas": "nessun consumo di gas naturale",
+  "senza-carburanti": "nessun rifornimento di carburante",
+  "rifornimenti-completi": "registri dei carburanti completi",
+  "ricariche-in-sede": "ricariche dei veicoli elettrici solo nelle sedi",
+  "elettricita-in-affitto": "energia elettrica compresa nell'affitto",
 };
 
-const NEGAZIONE_ASSENZA: Record<AssenzaDichiarabile, string> = {
-  combustibili: "non ha avuto consumi diretti di combustibili",
-  gas: "non ha avuto consumi di gas naturale",
-  carburanti: "non ha fatto rifornimenti di carburante",
+const NEGAZIONE_FATTO: Record<FattoDichiarabile, string> = {
+  "senza-combustibili": "non ha avuto consumi diretti di combustibili",
+  "senza-gas": "non ha avuto consumi di gas naturale",
+  "senza-carburanti": "non ha fatto rifornimenti di carburante",
+  "rifornimenti-completi": "ha registrato tutti i rifornimenti",
+  "ricariche-in-sede": "ha ricaricato i veicoli elettrici solo nelle sue sedi",
+  "elettricita-in-affitto": "non ha bollette di energia elettrica intestate",
 };
 
 /**
@@ -191,13 +205,13 @@ function siglaDichiarazione(ctx: ContestoComposizione, chiave: string, titolo: s
   return id;
 }
 
-function siglaAssenza(ctx: ContestoComposizione, a: AssenzaResa): string {
+function siglaFatto(ctx: ContestoComposizione, r: FattoReso): string {
   return siglaDichiarazione(
     ctx,
-    chiaveAssenza(a.fonte, ctx.esercizio),
-    `${TITOLO_ASSENZA[a.fonte]} nell'esercizio ${ctx.esercizio}`,
-    testoAssenza(a.fonte, ctx.esercizio),
-    a.campo,
+    chiaveFatto(r.fatto, ctx.esercizio),
+    `${TITOLO_FATTO[r.fatto]} nell'esercizio ${ctx.esercizio}`,
+    testoFatto(r.fatto, ctx.esercizio),
+    r.campo,
   );
 }
 
@@ -211,8 +225,8 @@ function siglaAttivita(ctx: ContestoComposizione, a: AttivitaResa): string {
   );
 }
 
-function offriAssenza(ctx: ContestoComposizione, fonte: AssenzaDichiarabile, resa: boolean): Dichiarazione {
-  return { tipo: "assenza", fonte, esercizio: ctx.esercizio, resa, testo: testoAssenza(fonte, ctx.esercizio) };
+function offriFatto(ctx: ContestoComposizione, fatto: FattoDichiarabile, resa: boolean): Dichiarazione {
+  return { tipo: "fatto", fatto, esercizio: ctx.esercizio, resa, testo: testoFatto(fatto, ctx.esercizio) };
 }
 
 function offriAttivita(ctx: ContestoComposizione, punto: string, resa: AttivitaResa | null): Dichiarazione | undefined {
@@ -224,6 +238,18 @@ function offriAttivita(ctx: ContestoComposizione, punto: string, resa: AttivitaR
     resa: resa !== null,
     testo: resa ? testoAttivita(punto, ctx.esercizio, resa.attivita) : domandaAttivita(punto, ctx.esercizio),
     ...(resa ? { valore: valoreAttivita(resa.attivita) } : {}),
+  };
+}
+
+function contraddetta(ctx: ContestoComposizione, fatto: FattoDichiarabile, documenti: string): Mancanza {
+  return {
+    tipo: "dichiarazione-contraddetta",
+    chi: "impresa",
+    sezione: ctx.sezione,
+    messaggio: `L'organizzazione ha dichiarato che nel ${ctx.esercizio} ${NEGAZIONE_FATTO[fatto]}, ma in archivio ci sono ${documenti} di quell'esercizio.`,
+    rimedio: "Ritira la dichiarazione, oppure elimina dall'archivio i documenti che non riguardano l'organizzazione: le due cose insieme non possono stare.",
+    azione: { etichetta: "Vai ai documenti", href: HREF_DOCUMENTI },
+    dichiarazione: offriFatto(ctx, fatto, true),
   };
 }
 
@@ -262,6 +288,8 @@ export type Inventario = {
   elettrico: AreaPeriodica<EsitoScope2<string>> & {
     location?: FattoreEmissione;
     mercato?: FattoreEmissione;
+    /** L'energia compresa nell'affitto, se l'organizzazione lo ha dichiarato. */
+    inAffitto: FattoReso | null;
   };
   gas: AreaPeriodica<EsitoCombustione<string>> & { fattore?: FattoreEmissione };
   carburanti: {
@@ -274,12 +302,14 @@ export type Inventario = {
     altriEsercizi: number;
     /** Di quelli, i registri con rifornimenti dell'esercizio precedente. */
     precedenti: number;
+    /** Le pause lunghe fra i rifornimenti dell'esercizio. */
+    pause: Periodo[];
   };
   scope1: {
-    /** Fonti sparite, dichiarazioni contraddette, nessun documento: ciò che nessuna delle due aree dice da sola. */
+    /** Fonti assenti, dichiarazioni contraddette, nessun documento: ciò che nessuna delle due aree dice da sola. */
     mancanze: Mancanza[];
-    /** Le dichiarazioni d'assenza che reggono, e che il documento riporta. */
-    assenze: AssenzaResa[];
+    /** Le dichiarazioni che reggono, e che il documento riporta. */
+    dichiarazioni: FattoReso[];
     /** Scope 1 pari a zero per dichiarazione dell'organizzazione. */
     perDichiarazione: boolean;
   };
@@ -320,33 +350,52 @@ function nonLetto(ctx: ContestoComposizione, l: LetturaDocumento): Mancanza | nu
   if (d.stato === "letto") return null;
   const nome = tipoDocumento(d.tipo)?.nome ?? "Documento";
   const azione = { etichetta: "Apri il documento", href: `${HREF_DOCUMENTI}/${d.id}` };
-  if (d.stato === "in_lettura" || d.stato === "in_coda") {
+  const base = { chi: "impresa" as const, sezione: ctx.sezione };
+  if (d.stato === "in_coda") {
     return {
+      ...base,
       tipo: "dato-mancante",
-      chi: "verzero",
-      sezione: ctx.sezione,
-      messaggio: `${nome} «${d.nome_file}» è ${d.stato === "in_coda" ? "in coda per la lettura" : "in lettura"}: finché non è letto non si sa che cosa porta all'inventario.`,
-      rimedio: "Non serve niente da te adesso: quando la lettura finisce ti chiediamo di confermare i valori.",
+      messaggio: `${nome} «${d.nome_file}» è in coda per la lettura: finché non è letto non si sa che cosa porta all'inventario.`,
+      rimedio: "Apri l'archivio dei documenti e lascialo aperto: la lettura dei documenti in coda procede da lì, e poi ti chiediamo di confermare i valori.",
+      azione: { etichetta: "Apri l'archivio", href: HREF_DOCUMENTI },
+    };
+  }
+  if (d.stato === "in_lettura") {
+    return {
+      ...base,
+      tipo: "dato-mancante",
+      messaggio: `${nome} «${d.nome_file}» è in lettura: finché non è letto non si sa che cosa porta all'inventario.`,
+      rimedio: "Aspetta che la lettura finisca. Se il documento resta in lettura, rileggilo dalla pagina del documento.",
+      azione,
     };
   }
   if (d.stato === "illeggibile") {
     return {
+      ...base,
       tipo: "documento-mancante",
-      chi: "impresa",
-      sezione: ctx.sezione,
       messaggio: `${nome} «${d.nome_file}» non si è potuto leggere, e potrebbe contenere consumi dell'esercizio ${ctx.esercizio}.`,
       rimedio: "Carica una copia più leggibile; se il documento non serve all'inventario, eliminalo dall'archivio.",
       azione,
     };
   }
   return {
+    ...base,
     tipo: "dato-mancante",
-    chi: "impresa",
-    sezione: ctx.sezione,
     messaggio: `${nome} «${d.nome_file}» non è ancora stato letto, e potrebbe contenere consumi dell'esercizio ${ctx.esercizio}.`,
     rimedio: "Avvia la lettura dalla pagina del documento: poi ti chiediamo di confermare i valori.",
     azione,
   };
+}
+
+/** I giorni di un periodo dentro l'esercizio che cadono FUORI da tutti i periodi dichiarati. */
+function giorniFuoriDa(p: Periodo, esercizio: number, finestre: Periodo[]): number {
+  const dentroAnno = sovrapposizione(p, esercizioComePeriodo(esercizio));
+  if (!dentroAnno) return 0;
+  const dentro = finestre.reduce((t, f) => {
+    const s = sovrapposizione(dentroAnno, f);
+    return t + (s ? giorniInclusivi(s) : 0);
+  }, 0);
+  return giorniInclusivi(dentroAnno) - dentro;
 }
 
 /**
@@ -394,13 +443,20 @@ function bollette(ctx: ContestoComposizione, tipo: "bolletta-elettrica" | "bolle
     const alGrezzo = l.scheda.get("periodoFine")?.valore ?? null;
     const dal = dataCanonica(dalGrezzo);
     const al = dataCanonica(alGrezzo);
-    const punto = l.scheda.get(chiavePunto)?.valore?.trim() || null;
+    const puntoGrezzo = l.scheda.get(chiavePunto)?.valore ?? null;
+    const punto = puntoGrezzo ? puntoCanonico(puntoGrezzo) || null : null;
 
     // Un periodo confermato che non tocca l'esercizio basta a dire che la
     // bolletta è di un altro anno, qualunque altro valore aspetti ancora.
     if (dal && al && dal <= al && quotaNellEsercizio({ dal, al }, anno).giorniNellEsercizio === 0) {
       altriEsercizi.push({ lettura: l, punto, periodo: { dal, al } });
       continue;
+    }
+    // Date scritte male ma con l'anno leggibile, e nessuna del nostro
+    // esercizio: il problema è di un altro inventario, non di questo.
+    if ((dalGrezzo && !dal) || (alGrezzo && !al)) {
+      const anni = [...anniIn(dalGrezzo), ...anniIn(alGrezzo)];
+      if (anni.length >= 2 && (Math.max(...anni) < anno || Math.min(...anni) > anno)) continue;
     }
 
     nellEsercizio++;
@@ -423,37 +479,39 @@ function bollette(ctx: ContestoComposizione, tipo: "bolletta-elettrica" | "bolle
     const rinnovabile =
       rinnovabileGrezzo === "si" || rinnovabileGrezzo === "no" || rinnovabileGrezzo === "non-dichiarato" ? rinnovabileGrezzo : null;
     const illeggibili = [
-      dalGrezzo && !dal ? `la data d'inizio «${dalGrezzo}»` : null,
-      alGrezzo && !al ? `la data di fine «${alGrezzo}»` : null,
-      quantitaGrezza && quantita === null ? `il consumo «${quantitaGrezza}»` : null,
-      rinnovabileGrezzo && !rinnovabile ? `la fornitura rinnovabile «${rinnovabileGrezzo}»` : null,
-    ].filter((x): x is string => x !== null);
+      dalGrezzo && !dal ? { campo: "periodoInizio", testo: `la data d'inizio «${dalGrezzo}»` } : null,
+      alGrezzo && !al ? { campo: "periodoFine", testo: `la data di fine «${alGrezzo}»` } : null,
+      quantitaGrezza && quantita === null ? { campo: chiaveQuantita, testo: `il consumo «${quantitaGrezza}»` } : null,
+      rinnovabileGrezzo && !rinnovabile ? { campo: "energiaRinnovabile", testo: `la fornitura rinnovabile «${rinnovabileGrezzo}»` } : null,
+    ].filter((x): x is { campo: string; testo: string } => x !== null);
     if (illeggibili.length > 0) {
       mancanze.push({
         tipo: "valore-non-calcolabile",
         chi: "impresa",
         sezione,
-        messaggio: `${nome} «${l.documento.nome_file}»: ${illeggibili.join(" e ")} non ${illeggibili.length === 1 ? "è scritto" : "sono scritti"} in una forma che si possa usare senza indovinare.`,
+        messaggio: `${nome} «${l.documento.nome_file}»: ${illeggibili.map((x) => x.testo).join(" e ")} non ${illeggibili.length === 1 ? "è scritto" : "sono scritti"} in una forma che si possa usare senza indovinare.`,
         rimedio:
-          "Riscrivi il valore nella pagina del documento, come lo leggi in bolletta: i numeri con le loro cifre, le date come giorno, mese e anno, la fornitura rinnovabile come sì, no o non dichiarata.",
-        azione: azione("Correggi il valore"),
+          "Riapri il valore e riscrivilo come lo leggi in bolletta: i numeri con le loro cifre, le date come giorno, mese e anno, la fornitura rinnovabile come sì, no o non dichiarata.",
+        azione: azione("Apri la bolletta"),
+        riapri: { documentId: id, campi: illeggibili.map((x) => x.campo) },
       });
       continue;
     }
 
     const assenti = [
-      !dal || !al ? "il periodo" : null,
-      quantita === null ? "il consumo" : null,
-      !punto ? `il codice ${nomePunto}` : null,
-    ].filter((x): x is string => x !== null);
+      !dal || !al ? { campi: ["periodoInizio", "periodoFine"], testo: "il periodo" } : null,
+      quantita === null ? { campi: [chiaveQuantita], testo: "il consumo" } : null,
+      !punto ? { campi: [chiavePunto], testo: `il codice ${nomePunto}` } : null,
+    ].filter((x): x is { campi: string[]; testo: string } => x !== null);
     if (assenti.length > 0) {
       mancanze.push({
         tipo: "dato-mancante",
         chi: "impresa",
         sezione,
-        messaggio: `${nome} «${l.documento.nome_file}»: non risulta ${assenti.join(" né ")}, e senza non si può attribuire all'esercizio né al contatore.`,
-        rimedio: "Apri la bolletta e completa i valori mancanti guardando il documento.",
+        messaggio: `${nome} «${l.documento.nome_file}»: non risulta ${assenti.map((x) => x.testo).join(" né ")}, e senza non si può attribuire all'esercizio né al contatore.`,
+        rimedio: "Riapri la bolletta e completa i valori mancanti guardando il documento.",
         azione: azione("Apri la bolletta"),
+        riapri: { documentId: id, campi: assenti.flatMap((x) => x.campi) },
       });
       continue;
     }
@@ -464,8 +522,9 @@ function bollette(ctx: ContestoComposizione, tipo: "bolletta-elettrica" | "bolle
         chi: "impresa",
         sezione,
         messaggio: `${nome} «${l.documento.nome_file}»: il periodo finisce prima di cominciare (${DATA_LUNGA(dal!)} – ${DATA_LUNGA(al!)}).`,
-        rimedio: "Controlla le due date sul documento e correggile.",
-        azione: azione("Correggi il periodo"),
+        rimedio: "Riapri le due date, controllale sul documento e correggile.",
+        azione: azione("Apri la bolletta"),
+        riapri: { documentId: id, campi: ["periodoInizio", "periodoFine"] },
       });
       continue;
     }
@@ -493,39 +552,33 @@ function bollette(ctx: ContestoComposizione, tipo: "bolletta-elettrica" | "bolle
       continue;
     }
 
-    const finestra = resa && !resa.attivita.inattivo ? resa.attivita.periodo : undefined;
-    if (resa && finestra) {
+    const finestre = resa && !resa.attivita.inattivo ? resa.attivita.periodi : undefined;
+    if (resa && finestre) {
       attivita.set(punto, resa);
-      const intero = esercizioComePeriodo(anno);
-      const fuori = bb.filter((b) => {
-        const dentroAnno = sovrapposizione(b.periodo, intero);
-        if (!dentroAnno) return false;
-        const dentroFinestra = sovrapposizione(dentroAnno, finestra);
-        return giorniInclusivi(dentroAnno) - (dentroFinestra ? giorniInclusivi(dentroFinestra) : 0) > TOLLERANZA_GIORNI;
-      });
+      const fuori = bb.filter((b) => giorniFuoriDa(b.periodo, anno, finestre) > TOLLERANZA_GIORNI);
       if (fuori.length > 0) {
         mancanze.push({
           tipo: "dichiarazione-contraddetta",
           chi: "impresa",
           sezione,
-          messaggio: `${nomePunto} ${punto}: l'organizzazione ha dichiarato il contatore attivo dal ${DATA_LUNGA(finestra.dal)} al ${DATA_LUNGA(finestra.al)}, ma ${fuori.length === 1 ? `la bolletta «${fuori[0].lettura.documento.nome_file}» fattura` : `${fuori.length} bollette fatturano`} consumi fuori da quel periodo.`,
-          rimedio: "Correggi il periodo dichiarato, oppure controlla le date di quelle bollette: un contatore non consuma quando non è attivo.",
+          messaggio: `${nomePunto} ${punto}: l'organizzazione ha dichiarato «${testoAttivita(punto, anno, resa.attivita)}», ma ${fuori.length === 1 ? `la bolletta «${fuori[0].lettura.documento.nome_file}» fattura` : `${fuori.length} bollette fatturano`} consumi fuori da quei periodi.`,
+          rimedio: "Correggi i periodi dichiarati, oppure controlla le date di quelle bollette: un contatore non consuma quando non è attivo.",
           azione: { etichetta: "Vai ai documenti", href: HREF_DOCUMENTI },
           dichiarazione: offriAttivita(ctx, punto, resa),
         });
       }
     }
 
-    const { scoperti, sovrapposti } = copertura(bb.map((b) => b.periodo), anno, finestra);
+    const { scoperti, sovrapposti } = copertura(bb.map((b) => b.periodo), anno, finestre);
     for (const p of scoperti) {
       mancanze.push({
         tipo: "periodo-scoperto",
         chi: "impresa",
         sezione,
         messaggio: `${nomePunto} ${punto}: nessuna bolletta copre il periodo dal ${DATA_LUNGA(p.dal)} al ${DATA_LUNGA(p.al)}.`,
-        rimedio: finestra
-          ? "Carica le bollette di quel periodo, oppure correggi il periodo di attività dichiarato."
-          : "Carica le bollette di quel periodo. Se il contatore è stato attivato o chiuso durante l'anno, dichiara qui il periodo in cui è stato attivo.",
+        rimedio: finestre
+          ? "Carica le bollette di quel periodo, oppure correggi i periodi di attività dichiarati."
+          : "Carica le bollette di quel periodo. Se il contatore è stato attivato, chiuso o sospeso durante l'anno, dichiara qui i periodi in cui è stato attivo.",
         azione: { etichetta: "Carica le bollette", href: HREF_DOCUMENTI },
         dichiarazione: offriAttivita(ctx, punto, resa),
       });
@@ -537,7 +590,7 @@ function bollette(ctx: ContestoComposizione, tipo: "bolletta-elettrica" | "bolle
         sezione,
         messaggio: `${nomePunto} ${punto}: il periodo dal ${DATA_LUNGA(p.dal)} al ${DATA_LUNGA(p.al)} è coperto da più bollette, e il consumo conterebbe due volte.`,
         rimedio:
-          "Controlla se hai caricato due volte la stessa bolletta, o una bolletta e il suo conguaglio: tieni quella giusta ed elimina l'altra dall'archivio, oppure rifiutane periodo e consumo.",
+          "Controlla se hai caricato due volte la stessa bolletta, o una bolletta e il suo conguaglio: tieni quella giusta ed elimina l'altra dall'archivio, oppure riaprine periodo e consumo e scartali.",
         azione: { etichetta: "Vai ai documenti", href: HREF_DOCUMENTI },
       });
     }
@@ -564,13 +617,13 @@ function bollette(ctx: ContestoComposizione, tipo: "bolletta-elettrica" | "bolle
     // essere proprio una bolletta di questo contatore.
     if (usabili.length === 0 || inSospeso) continue;
     if (resa && !resa.attivita.inattivo) {
-      for (const p of copertura([], anno, resa.attivita.periodo).scoperti) {
+      for (const p of copertura([], anno, resa.attivita.periodi).scoperti) {
         mancanze.push({
           tipo: "periodo-scoperto",
           chi: "impresa",
           sezione,
           messaggio: `${nomePunto} ${punto}: nessuna bolletta copre il periodo dal ${DATA_LUNGA(p.dal)} al ${DATA_LUNGA(p.al)}, in cui il contatore è stato attivo.`,
-          rimedio: "Carica le bollette di quel periodo, oppure correggi il periodo di attività dichiarato.",
+          rimedio: "Carica le bollette di quel periodo, oppure correggi i periodi di attività dichiarati.",
           azione: { etichetta: "Carica le bollette", href: HREF_DOCUMENTI },
           dichiarazione: offriAttivita(ctx, punto, resa),
         });
@@ -598,12 +651,16 @@ function applicato(f: FattoreEmissione): FattoreApplicato {
   return { id: f.id, valore: f.valore, unita: f.unita };
 }
 
+/** I carburanti dello schema per cui un fattore non c'è ancora: tocca a noi, non al cliente. */
+const CARBURANTI_SENZA_FATTORE: Record<string, string> = { metano: "metano", hvo: "HVO" };
+
 /** I registri dei carburanti: rifornimenti utilizzabili, registri di altri anni, righe da sistemare. */
 function registri(ctx: ContestoComposizione) {
   const anno = ctx.esercizio;
   const sezione = ctx.sezione;
   const mancanze: Mancanza[] = [];
   const rifornimenti: Rifornimento<string>[] = [];
+  const nomi = new Map<string, string>();
   let nellEsercizio = 0;
   let altriEsercizi = 0;
   let precedenti = 0;
@@ -611,9 +668,12 @@ function registri(ctx: ContestoComposizione) {
   for (const l of letture(ctx, "carburanti")) {
     const id = l.documento.id;
     const href = `${HREF_DOCUMENTI}/${id}`;
+    nomi.set(id, l.documento.nome_file);
     const celle = ctx.ingresso.campiDocumento.filter((c) => c.document_id === id && c.riga > 0);
     // Tutte le righe scartate dal cliente: non contiene rifornimenti suoi.
-    if (celle.length > 0 && celle.every((c) => c.stato === "rifiutato" || !c.valore)) continue;
+    // Serve almeno uno scarto vero: un registro di celle tutte vuote non è
+    // un registro scartato, è un registro da guardare.
+    if (celle.some((c) => c.stato === "rifiutato") && celle.every((c) => c.stato === "rifiutato" || !c.valore)) continue;
 
     const lettura = nonLetto(ctx, l);
     if (lettura) {
@@ -624,7 +684,8 @@ function registri(ctx: ContestoComposizione) {
 
     const valide: Rifornimento<string>[] = [];
     const incomplete: number[] = [];
-    const illeggibili: string[] = [];
+    const illeggibili: { riga: number; testo: string }[] = [];
+    let illeggibiliAltroAnno = 0;
     for (const r of l.righe) {
       const dataGrezza = r.celle.get("data")?.valore ?? null;
       const litriGrezzi = r.celle.get("litri")?.valore ?? null;
@@ -635,7 +696,12 @@ function registri(ctx: ContestoComposizione) {
         (x): x is string => x !== null,
       );
       if (storti.length > 0) {
-        illeggibili.push(`riga ${r.riga} («${storti.join("», «")}»)`);
+        // Una data scritta male con un anno leggibile diverso dal nostro è
+        // un problema del registro di un altro esercizio.
+        const anni = anniIn(dataGrezza);
+        const dataAltroAnno = data ? !data.startsWith(`${anno}-`) : anni.length > 0 && !anni.includes(anno);
+        if (dataAltroAnno) illeggibiliAltroAnno++;
+        else illeggibili.push({ riga: r.riga, testo: `riga ${r.riga} («${storti.join("», «")}»)` });
         continue;
       }
       if (!data || !carburante || litri === null) {
@@ -648,7 +714,7 @@ function registri(ctx: ContestoComposizione) {
     const daSistemare = l.daConfermare > 0 || incomplete.length > 0 || illeggibili.length > 0;
     const nellAnno = valide.some((r) => r.data.startsWith(`${anno}-`));
 
-    if (!daSistemare && valide.length === 0) {
+    if (!daSistemare && valide.length === 0 && illeggibiliAltroAnno === 0) {
       // Letto, e non ne è uscito niente: né un rifornimento né una riga da
       // confermare. Contarlo come «zero» toglierebbe i mezzi dall'inventario
       // senza che nessuno lo veda.
@@ -686,9 +752,13 @@ function registri(ctx: ContestoComposizione) {
         tipo: "valore-non-calcolabile",
         chi: "impresa",
         sezione,
-        messaggio: `Registro carburanti «${l.documento.nome_file}»: date o litri che non si possono usare senza indovinare — ${illeggibili.slice(0, 5).join("; ")}${illeggibili.length > 5 ? `, e altre ${illeggibili.length - 5} righe` : ""}.`,
-        rimedio: "Riscrivi quei valori nella pagina del registro, come li leggi sul documento: i litri con le loro cifre, le date come giorno, mese e anno.",
-        azione: { etichetta: "Correggi le righe", href },
+        messaggio: `Registro carburanti «${l.documento.nome_file}»: date o litri che non si possono usare senza indovinare — ${illeggibili
+          .slice(0, 5)
+          .map((x) => x.testo)
+          .join("; ")}${illeggibili.length > 5 ? `, e altre ${illeggibili.length - 5} righe` : ""}.`,
+        rimedio: "Riapri quelle righe e riscrivi i valori come li leggi sul documento: i litri con le loro cifre, le date come giorno, mese e anno.",
+        azione: { etichetta: "Apri il registro", href },
+        riapri: { documentId: id, righe: illeggibili.map((x) => x.riga) },
       });
     }
     if (incomplete.length > 0) {
@@ -697,11 +767,40 @@ function registri(ctx: ContestoComposizione) {
         chi: "impresa",
         sezione,
         messaggio: `Registro carburanti «${l.documento.nome_file}»: ${incomplete.length === 1 ? `alla riga ${incomplete[0]} mancano` : `alle righe ${incomplete.slice(0, 8).join(", ")}${incomplete.length > 8 ? "…" : ""} mancano`} data, tipo di carburante o litri.`,
-        rimedio: "Completa le righe guardando il documento, oppure scartale se non sono rifornimenti.",
+        rimedio: "Riapri le righe e completale guardando il documento, oppure scartale se non sono rifornimenti.",
         azione: { etichetta: "Apri il registro", href },
+        riapri: { documentId: id, righe: incomplete },
       });
     }
   }
+
+  /* Lo stesso rifornimento in due documenti: il registro caricato due volte, o registro e fatture. */
+  const perChiave = new Map<string, Rifornimento<string>[]>();
+  for (const r of rifornimenti) {
+    const chiave = [r.data, r.carburante, r.litri, (r.mezzo ?? "").toUpperCase().replace(/\s+/g, " ").trim()].join("|");
+    perChiave.set(chiave, [...(perChiave.get(chiave) ?? []), r]);
+  }
+  const doppi = new Map<string, { a: string; b: string; righe: number[] }>();
+  for (const gruppo of perChiave.values()) {
+    const documenti = [...new Set(gruppo.map((r) => r.rif.split("#")[0]))];
+    if (documenti.length < 2) continue;
+    const [a, b] = documenti;
+    const coppia = doppi.get(`${a}|${b}`) ?? { a, b, righe: [] };
+    for (const r of gruppo.filter((x) => x.rif.startsWith(`${b}#`))) coppia.righe.push(Number(r.rif.split("#")[1]));
+    doppi.set(`${a}|${b}`, coppia);
+  }
+  for (const d of doppi.values()) {
+    mancanze.push({
+      tipo: "documento-doppio",
+      chi: "impresa",
+      sezione,
+      messaggio: `«${nomi.get(d.a)}» e «${nomi.get(d.b)}» riportano ${conta(d.righe.length, "rifornimento identico", "rifornimenti identici")} — stessa data, carburante, litri e mezzo: conterebbero due volte.`,
+      rimedio: "Se è lo stesso registro caricato due volte, o il registro e le fatture degli stessi rifornimenti, elimina il doppione dall'archivio. Se sono rifornimenti diversi, riapri le righe e correggile.",
+      azione: { etichetta: "Vai ai documenti", href: HREF_DOCUMENTI },
+      riapri: { documentId: d.b, righe: d.righe },
+    });
+  }
+
   return { rifornimenti, mancanze, nellEsercizio, altriEsercizi, precedenti };
 }
 
@@ -732,6 +831,10 @@ export function inventario(ctx: ContestoComposizione): Inventario {
           { location: applicato(location), mercato: applicato(mercato) },
         )
       : undefined;
+  const inAffitto = fattoDichiarato(ctx, "elettricita-in-affitto");
+  if (inAffitto && el.nellEsercizio > 0) {
+    mancanzeEl.push(contraddetta(ctx, "elettricita-in-affitto", "bollette di energia elettrica"));
+  }
 
   /* Gas naturale */
   const gas = bollette(ctx, "bolletta-gas");
@@ -750,10 +853,15 @@ export function inventario(ctx: ContestoComposizione): Inventario {
   /* Carburanti */
   const carb = registri(ctx);
   const mancanzeCarb = [...carb.mancanze];
+  const ricaricheInSede = fattoDichiarato(ctx, "ricariche-in-sede");
+  const elettriche = carb.rifornimenti.filter((r) => r.carburante === "elettrico" && r.data.startsWith(`${anno}-`));
+  // Le ricariche fatte in sede sono già nelle bollette: dichiarato questo,
+  // le righe escono dal calcolo dei carburanti invece di bloccarlo.
+  const daCalcolare = ricaricheInSede ? carb.rifornimenti.filter((r) => r.carburante !== "elettrico") : carb.rifornimenti;
   const fattoriCarb = new Map<string, FattoreEmissione>();
   const esitoCarb =
-    carb.rifornimenti.length > 0
-      ? calcolaCarburanti(carb.rifornimenti, anno, (carburante) => {
+    daCalcolare.length > 0
+      ? calcolaCarburanti(daCalcolare, anno, (carburante) => {
           const vettore = vettoreCarburante(carburante);
           const scelto = vettore ? fattorePer(vettore, anno)?.fattore : undefined;
           if (scelto) fattoriCarb.set(carburante, scelto);
@@ -762,46 +870,83 @@ export function inventario(ctx: ContestoComposizione): Inventario {
       : undefined;
   for (const s of esitoCarb?.senzaFattore ?? []) {
     const vettore = vettoreCarburante(s.carburante);
-    if (vettore) mancanzeCarb.push(mancanzaFattore(ctx, vettore));
-    else {
+    const registriCoinvolti = [...new Set(s.rif.map((r) => r.split("#")[0]))];
+    if (vettore) {
+      mancanzeCarb.push(mancanzaFattore(ctx, vettore));
+    } else if (CARBURANTI_SENZA_FATTORE[s.carburante]) {
+      mancanzeCarb.push({
+        tipo: "fattore-mancante",
+        chi: "verzero",
+        sezione,
+        messaggio: `Nei registri ci sono ${conta(s.rif.length, "rifornimento", "rifornimenti")} di ${CARBURANTI_SENZA_FATTORE[s.carburante]}: per questo carburante non abbiamo ancora un fattore di emissione verificato.`,
+        rimedio: "Non serve niente da te: il fattore va preso dalla pubblicazione ufficiale e verificato prima di entrare in un documento, e lo aggiungiamo noi.",
+      });
+    } else if (s.carburante === "elettrico") {
       mancanzeCarb.push({
         tipo: "valore-non-calcolabile",
         chi: "impresa",
         sezione,
-        messaggio: `Nel registro carburanti ci sono ${FORMATO.litri(s.litri)} di «${s.carburante}»: per questo tipo non si calcolano emissioni a litro.`,
+        messaggio: `Nei registri ci sono ${conta(s.rif.length, "ricarica elettrica", "ricariche elettriche")}: non sono combustione, e non si calcolano come carburante.`,
         rimedio:
-          s.carburante === "elettrico"
-            ? "Le ricariche elettriche non sono combustione: scarta quelle righe, il consumo elettrico è già nelle bollette."
-            : "Correggi il tipo di carburante sulle righe, o scrivici se è un combustibile che il documento deve includere.",
-        azione: { etichetta: "Vai ai documenti", href: HREF_DOCUMENTI },
+          "Se i veicoli si ricaricano solo nelle sedi dell'organizzazione, l'energia è già nelle bollette: dichiaralo qui. Se si ricaricano anche fuori, scrivici: quelle ricariche vanno nello Scope 2, e non le calcoliamo ancora.",
+        dichiarazione: offriFatto(ctx, "ricariche-in-sede", false),
       });
+    } else {
+      for (const documentId of registriCoinvolti) {
+        const righe = s.rif.filter((r) => r.startsWith(`${documentId}#`)).map((r) => Number(r.split("#")[1]));
+        mancanzeCarb.push({
+          tipo: "valore-non-calcolabile",
+          chi: "impresa",
+          sezione,
+          messaggio: `Registro carburanti «${ctx.ingresso.documenti.find((d) => d.id === documentId)?.nome_file ?? "registro"}»: ${conta(righe.length, "riga ha", "righe hanno")} il carburante «${s.carburante}», e non si sa quale sia.`,
+          rimedio: "Riapri quelle righe e indica il carburante — gasolio, benzina, GPL, metano — oppure scartale se non sono carburante, come l'AdBlue.",
+          azione: { etichetta: "Apri il registro", href: `${HREF_DOCUMENTI}/${documentId}` },
+          riapri: { documentId, righe },
+        });
+      }
     }
   }
+  // Le pause lunghe fra i rifornimenti dell'esercizio: un registro fermo a
+  // giugno somiglia a un registro incompleto più che a una flotta ferma.
+  const dateNellAnno = daCalcolare.filter((r) => r.data.startsWith(`${anno}-`)).map((r) => r.data);
+  const pause = dateNellAnno.length > 0 ? pauseRifornimenti(dateNellAnno, anno) : [];
+  const rifornimentiCompleti = fattoDichiarato(ctx, "rifornimenti-completi");
+  if (pause.length > 0 && !rifornimentiCompleti) {
+    mancanzeCarb.push({
+      tipo: "periodo-scoperto",
+      chi: "impresa",
+      sezione,
+      messaggio: `Nei registri dei carburanti del ${anno} non ci sono rifornimenti ${pause
+        .slice(0, 3)
+        .map((p) => `dal ${DATA_LUNGA(p.dal)} al ${DATA_LUNGA(p.al)}`)
+        .join(", ")}${pause.length > 3 ? ` e in altri ${pause.length - 3} periodi` : ""}.`,
+      rimedio:
+        pause.length === 1
+          ? "Carica i rifornimenti di quel periodo. Se in quel periodo i veicoli e le macchine non hanno fatto rifornimento, dichiaralo qui."
+          : "Carica i rifornimenti di quei periodi. Se in quei periodi i veicoli e le macchine non hanno fatto rifornimento, dichiaralo qui.",
+      azione: { etichetta: "Carica i documenti", href: HREF_DOCUMENTI },
+      dichiarazione: offriFatto(ctx, "rifornimenti-completi", false),
+    });
+  }
 
-  /* Lo Scope 1 nel suo insieme: che cosa c'è, che cosa è sparito, che cosa è dichiarato. */
+  /* Lo Scope 1 nel suo insieme: che cosa c'è, che cosa manca, che cosa è dichiarato. */
   const gasPresente = gas.nellEsercizio > 0;
   const carbPresente = carb.nellEsercizio > 0;
   const mancanzeScope1: Mancanza[] = [];
-  const assenze: AssenzaResa[] = [];
-  const combustibili = assenzaDichiarata(ctx, "combustibili");
-
-  const contraddetta = (fonte: AssenzaDichiarabile, documenti: string): Mancanza => ({
-    tipo: "dichiarazione-contraddetta",
-    chi: "impresa",
-    sezione,
-    messaggio: `L'organizzazione ha dichiarato che nel ${anno} ${NEGAZIONE_ASSENZA[fonte]}, ma in archivio ci sono ${documenti} di quell'esercizio.`,
-    rimedio: "Ritira la dichiarazione, oppure elimina dall'archivio i documenti che non riguardano l'organizzazione: le due cose insieme non possono stare.",
-    azione: { etichetta: "Vai ai documenti", href: HREF_DOCUMENTI },
-    dichiarazione: offriAssenza(ctx, fonte, true),
-  });
+  const dichiarazioni: FattoReso[] = [];
+  const combustibili = fattoDichiarato(ctx, "senza-combustibili");
 
   if (combustibili) {
     if (gasPresente || carbPresente) {
       mancanzeScope1.push(
-        contraddetta("combustibili", [gasPresente ? "bollette del gas" : null, carbPresente ? "registri dei carburanti" : null].filter(Boolean).join(" e ")),
+        contraddetta(
+          ctx,
+          "senza-combustibili",
+          [gasPresente ? "bollette del gas" : null, carbPresente ? "registri dei carburanti" : null].filter(Boolean).join(" e "),
+        ),
       );
     } else {
-      assenze.push(combustibili);
+      dichiarazioni.push(combustibili);
     }
   } else if (!gasPresente && !carbPresente) {
     const altri = gas.altriEsercizi.length + carb.altriEsercizi > 0;
@@ -812,33 +957,39 @@ export function inventario(ctx: ContestoComposizione): Inventario {
       messaggio: `${altri ? `Le bollette del gas e i registri dei carburanti in archivio riguardano altri esercizi: per il ${anno} non ce n'è nessuno` : `Non risultano bollette del gas né registri dei carburanti del ${anno}`}, e lo Scope 1 non si può dichiarare senza sapere se l'organizzazione ha consumato combustibili.`,
       rimedio: `Carica le bollette del gas e i registri o le fatture dei carburanti del ${anno}. Se l'organizzazione non ha consumi diretti di combustibili, dichiaralo qui.`,
       azione: { etichetta: "Carica i documenti", href: HREF_DOCUMENTI },
-      dichiarazione: offriAssenza(ctx, "combustibili", false),
+      dichiarazione: offriFatto(ctx, "senza-combustibili", false),
     });
   } else {
-    // Una parte dello Scope 1 c'è. L'altra, se l'anno prima c'era, va spiegata.
-    const fonti: { fonte: AssenzaDichiarabile; presente: boolean; prima: boolean; documenti: string; messaggio: string; rimedio: string }[] = [
+    // Una parte dello Scope 1 c'è. L'altra, se manca, va spiegata: un
+    // inventario che ha il gas e nessun carburante ha tolto i mezzi, o non
+    // ne ha. Il documento deve sapere quale delle due.
+    const fonti: { fatto: FattoDichiarabile; presente: boolean; documenti: string; messaggio: string; rimedio: string }[] = [
       {
-        fonte: "gas",
+        fatto: "senza-gas",
         presente: gasPresente,
-        prima: gas.scomparsi.length > 0,
         documenti: "bollette del gas",
-        messaggio: `Ci sono bollette del gas del ${anno - 1}, nessuna del ${anno}.`,
+        messaggio:
+          gas.scomparsi.length > 0
+            ? `Ci sono bollette del gas del ${anno - 1}, nessuna del ${anno}.`
+            : `Non risultano bollette del gas del ${anno}: nello Scope 1 ci sono i carburanti, ma senza sapere se c'è stato anche un consumo di gas non si può dire completo.`,
         rimedio: `Carica le bollette del gas del ${anno}. Se nel ${anno} l'organizzazione non ha avuto consumi di gas naturale, dichiaralo qui.`,
       },
       {
-        fonte: "carburanti",
+        fatto: "senza-carburanti",
         presente: carbPresente,
-        prima: carb.precedenti > 0,
         documenti: "registri dei carburanti",
-        messaggio: `C'è un registro dei carburanti con rifornimenti del ${anno - 1}, nessun rifornimento del ${anno}.`,
-        rimedio: `Carica il registro o le fatture dei carburanti del ${anno}. Se nel ${anno} l'organizzazione non ha fatto rifornimenti, dichiaralo qui.`,
+        messaggio:
+          carb.precedenti > 0
+            ? `C'è un registro dei carburanti con rifornimenti del ${anno - 1}, e nessun rifornimento del ${anno}.`
+            : `Non risultano registri o fatture dei carburanti del ${anno}: nello Scope 1 c'è il gas naturale, ma senza sapere se veicoli e macchine hanno fatto rifornimento non si può dire completo.`,
+        rimedio: `Carica i registri o le fatture dei carburanti del ${anno}. Se nel ${anno} l'organizzazione non ha fatto rifornimenti di carburante, dichiaralo qui.`,
       },
     ];
     for (const f of fonti) {
-      const resa = assenzaDichiarata(ctx, f.fonte);
-      if (resa && f.presente) mancanzeScope1.push(contraddetta(f.fonte, f.documenti));
-      else if (resa) assenze.push(resa);
-      else if (!f.presente && f.prima) {
+      const resa = fattoDichiarato(ctx, f.fatto);
+      if (resa && f.presente) mancanzeScope1.push(contraddetta(ctx, f.fatto, f.documenti));
+      else if (resa) dichiarazioni.push(resa);
+      else if (!f.presente) {
         mancanzeScope1.push({
           tipo: "documento-mancante",
           chi: "impresa",
@@ -846,11 +997,13 @@ export function inventario(ctx: ContestoComposizione): Inventario {
           messaggio: f.messaggio,
           rimedio: f.rimedio,
           azione: { etichetta: "Carica i documenti", href: HREF_DOCUMENTI },
-          dichiarazione: offriAssenza(ctx, f.fonte, false),
+          dichiarazione: offriFatto(ctx, f.fatto, false),
         });
       }
     }
   }
+  if (rifornimentiCompleti && pause.length > 0) dichiarazioni.push(rifornimentiCompleti);
+  if (ricaricheInSede && elettriche.length > 0) dichiarazioni.push(ricaricheInSede);
 
   const inv: Inventario = {
     esercizio: anno,
@@ -863,6 +1016,7 @@ export function inventario(ctx: ContestoComposizione): Inventario {
       attivita: el.attivita,
       spenti: el.spenti,
       scomparsi: el.scomparsi,
+      inAffitto,
       ...(location ? { location } : {}),
       ...(mercato ? { mercato } : {}),
     },
@@ -884,10 +1038,11 @@ export function inventario(ctx: ContestoComposizione): Inventario {
       nellEsercizio: carb.nellEsercizio,
       altriEsercizi: carb.altriEsercizi,
       precedenti: carb.precedenti,
+      pause,
     },
     scope1: {
       mancanze: mancanzeScope1,
-      assenze,
+      dichiarazioni,
       perDichiarazione: combustibili !== null && !gasPresente && !carbPresente,
     },
   };
@@ -1048,7 +1203,7 @@ function calcolo(ctx: ContestoComposizione, inv: Inventario, chiave: ChiaveCalco
     }
     case "scope1-totale": {
       if (inv.scope1.perDichiarazione) {
-        const d = siglaAssenza(ctx, inv.scope1.assenze.find((a) => a.fonte === "combustibili")!);
+        const d = siglaFatto(ctx, inv.scope1.dichiarazioni.find((x) => x.fatto === "senza-combustibili")!);
         return registraCalcolo(
           ctx,
           chiave,
@@ -1085,8 +1240,9 @@ function calcolo(ctx: ContestoComposizione, inv: Inventario, chiave: ChiaveCalco
 /**
  * Scope 1 completo? Serve ai risultati: un totale con un pezzo mancante non
  * è un totale. Completo vuol dire che ogni fonte presente nell'esercizio è
- * calcolata senza mancanze, che almeno una contribuisce — oppure che
- * l'organizzazione ha dichiarato di non averne, senza smentite.
+ * calcolata senza mancanze, che almeno una contribuisce, e che quelle
+ * assenti sono dichiarate — oppure che l'organizzazione ha dichiarato di
+ * non averne nessuna, senza smentite.
  */
 function scope1Completo(inv: Inventario): boolean {
   if (inv.scope1.mancanze.length > 0) return false;
@@ -1110,9 +1266,9 @@ function kgScope1(inv: Inventario): number {
 /** Le dichiarazioni che il documento riporta, ciascuna con la sua sigla. */
 function noteDichiarazioni(ctx: ContestoComposizione, inv: Inventario): string[] {
   return [
-    ...inv.scope1.assenze
-      .filter((a) => a.fonte !== "combustibili")
-      .map((a) => `Dichiarazione dell'organizzazione (${siglaAssenza(ctx, a)}): «${testoAssenza(a.fonte, ctx.esercizio)}»`),
+    ...inv.scope1.dichiarazioni
+      .filter((d) => d.fatto !== "senza-combustibili")
+      .map((d) => `Dichiarazione dell'organizzazione (${siglaFatto(ctx, d)}): «${testoFatto(d.fatto, ctx.esercizio)}»`),
     ...[...inv.gas.spenti, ...inv.elettrico.spenti].map(
       (s) => `Dichiarazione dell'organizzazione (${siglaAttivita(ctx, s)}): «${testoAttivita(s.punto, ctx.esercizio, s.attivita)}»`,
     ),
@@ -1159,7 +1315,7 @@ const sorgenti: Compositore = {
       righe.push([
         "Categoria 1 — emissioni dirette (Scope 1)",
         "Nessuna combustione diretta",
-        { testo: "per dichiarazione dell'organizzazione", fonte: siglaAssenza(ctx, inv.scope1.assenze.find((a) => a.fonte === "combustibili")!) },
+        { testo: "per dichiarazione dell'organizzazione", fonte: siglaFatto(ctx, inv.scope1.dichiarazioni.find((d) => d.fatto === "senza-combustibili")!) },
         "—",
       ]);
     }
@@ -1337,7 +1493,7 @@ function tabellaBollette(
         ]
       : []),
     ...(attivita
-      ? [`Dichiarazione dell'organizzazione (${siglaAttivita(ctx, attivita)}): «${testoAttivita(punto, ctx.esercizio, attivita.attivita)}» Le bollette coprono quel periodo.`]
+      ? [`Dichiarazione dell'organizzazione (${siglaAttivita(ctx, attivita)}): «${testoAttivita(punto, ctx.esercizio, attivita.attivita)}» Le bollette coprono quei periodi.`]
       : []),
   ];
   return {
@@ -1373,13 +1529,13 @@ const scope1: Compositore = {
 
     /* Nessuna combustione diretta, per dichiarazione */
     if (inv.scope1.perDichiarazione) {
-      const sigla = siglaAssenza(ctx, inv.scope1.assenze.find((a) => a.fonte === "combustibili")!);
+      const sigla = siglaFatto(ctx, inv.scope1.dichiarazioni.find((d) => d.fatto === "senza-combustibili")!);
       const totale = calcolo(ctx, inv, "scope1-totale");
       blocchi.push(
         {
           tipo: "riquadro",
           titolo: "Dichiarazione dell'organizzazione",
-          testo: `«${testoAssenza("combustibili", ctx.esercizio)}» (${sigla}). Le emissioni dirette di questo inventario sono pari a zero **per dichiarazione, non per misura**.`,
+          testo: `«${testoFatto("senza-combustibili", ctx.esercizio)}» (${sigla}). Le emissioni dirette di questo inventario sono pari a zero **per dichiarazione, non per misura**.`,
         },
         {
           tipo: "cifre",
@@ -1438,6 +1594,7 @@ const scope1: Compositore = {
         ];
       });
       const totaleRifornimenti = esito.perCarburante.reduce((t, c) => t + c.rifornimenti, 0);
+      const fuori = esito.fuori;
       blocchi.push({ tipo: "sottotitolo", testo: "Combustione mobile — carburanti" });
       blocchi.push({
         tipo: "tabella",
@@ -1457,10 +1614,10 @@ const scope1: Compositore = {
           "",
           { testo: FORMATO.t(esito.emissioni), fonte: emissioni, numero: esito.emissioni, forte: true },
         ],
-        ...(esito.fuori.length > 0
+        ...(fuori.length > 0
           ? {
               note: [
-                `${esito.fuori.length} ${esito.fuori.length === 1 ? "rifornimento ha" : "rifornimenti hanno"} una data fuori dall'esercizio ${ctx.esercizio}: ${esito.fuori.length === 1 ? "non è conteggiato" : "non sono conteggiati"}.`,
+                `${fuori.length} ${fuori.length === 1 ? "rifornimento ha" : "rifornimenti hanno"} una data fuori dall'esercizio ${ctx.esercizio}: ${fuori.length === 1 ? "non è conteggiato" : "non sono conteggiati"}.`,
               ],
             }
           : {}),
@@ -1497,14 +1654,27 @@ const scope2: Compositore = {
 
     if (inv.elettrico.nellEsercizio === 0) {
       const altri = inv.elettrico.altriEsercizi.length > 0;
-      mancanze.push({
-        tipo: "documento-mancante",
-        chi: "impresa",
-        sezione: ctx.sezione,
-        messaggio: `${altri ? "Le bollette di energia elettrica in archivio riguardano altri esercizi: non" : "Non"} risultano bollette del ${ctx.esercizio}, e lo Scope 2 si calcola da quelle.`,
-        rimedio: `Carica le bollette elettriche dei 12 mesi del ${ctx.esercizio}, una serie per ogni contatore. Se l'energia è compresa nell'affitto e non hai bollette, scrivici: è un caso da valutare prima di dichiarare lo Scope 2.`,
-        azione: { etichetta: "Carica le bollette", href: HREF_DOCUMENTI },
-      });
+      if (inv.elettrico.inAffitto) {
+        // Il cliente ha fatto la sua parte: il blocco resta, ed è nostro.
+        mancanze.push({
+          tipo: "composizione-non-disponibile",
+          chi: "verzero",
+          sezione: ctx.sezione,
+          messaggio: `L'energia elettrica dell'organizzazione è compresa nell'affitto, come ha dichiarato: lo Scope 2 del ${ctx.esercizio} va ricostruito dai consumi dell'edificio, e la piattaforma non lo sa ancora fare.`,
+          rimedio: "Non serve altro da te adesso: il documento esce quando lo Scope 2 è ricostruito, e per farlo ti chiederemo i dati del locatore.",
+          dichiarazione: offriFatto(ctx, "elettricita-in-affitto", true),
+        });
+      } else {
+        mancanze.push({
+          tipo: "documento-mancante",
+          chi: "impresa",
+          sezione: ctx.sezione,
+          messaggio: `${altri ? "Le bollette di energia elettrica in archivio riguardano altri esercizi: non" : "Non"} risultano bollette del ${ctx.esercizio}, e lo Scope 2 si calcola da quelle.`,
+          rimedio: `Carica le bollette elettriche dei 12 mesi del ${ctx.esercizio}, una serie per ogni contatore. Se l'energia elettrica è compresa nell'affitto e non hai bollette intestate, dichiaralo qui.`,
+          azione: { etichetta: "Carica le bollette", href: HREF_DOCUMENTI },
+          dichiarazione: offriFatto(ctx, "elettricita-in-affitto", false),
+        });
+      }
     }
 
     if (esito && inv.elettrico.location && inv.elettrico.mercato) {
@@ -1535,6 +1705,7 @@ const scope2: Compositore = {
           ]),
         });
       }
+      const quota = esito.kwh > 0 ? esito.kwhRinnovabili / esito.kwh : 0;
       blocchi.push({
         tipo: "cifre",
         voci: [
@@ -1550,11 +1721,7 @@ const scope2: Compositore = {
           },
           {
             etichetta: "Quota da forniture dichiarate rinnovabili",
-            valore: {
-              testo: FORMATO.percento(esito.kwh > 0 ? esito.kwhRinnovabili / esito.kwh : 0),
-              fonte: attribuito,
-              numero: esito.kwhRinnovabili,
-            },
+            valore: { testo: FORMATO.percento(quota), fonte: attribuito, numero: quota },
             nota: `${FORMATO.kwh(esito.kwhRinnovabili)} su ${FORMATO.kwh(esito.kwh)} (${attribuito})`,
           },
         ],
@@ -1659,7 +1826,7 @@ const risultati: Compositore = {
       rifornimenti ? conta(rifornimenti, "rifornimento registrato", "rifornimenti registrati") : "",
     ].filter(Boolean);
     const dichiarazioni =
-      inv.scope1.assenze.length + inv.gas.spenti.length + inv.elettrico.spenti.length + inv.gas.attivita.size + inv.elettrico.attivita.size;
+      inv.scope1.dichiarazioni.length + inv.gas.spenti.length + inv.elettrico.spenti.length + inv.gas.attivita.size + inv.elettrico.attivita.size;
 
     return {
       blocchi: [

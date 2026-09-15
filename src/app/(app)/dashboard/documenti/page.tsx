@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   ArrowRight,
   Archive,
@@ -14,7 +15,9 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database";
 import { documentiAttivi } from "@/lib/bozza";
+import { tutte } from "@/lib/elaborato/archivio";
 import { siSaLeggere } from "@/lib/motore/famiglie";
 import { etichettaContatore, statoUso } from "@/lib/motore/fair-use";
 import { formattaValore, livelloConfidenza } from "@/lib/motore/portale";
@@ -42,8 +45,11 @@ import {
   correggiCampo,
   correggiTipoDocumento,
   eliminaDocumento,
+  riapriValori,
   rifiutaCampo,
 } from "./azioni";
+
+type Tabelle = Database["public"]["Tables"];
 
 export const metadata: Metadata = {
   title: "Documenti — il tuo ecosistema",
@@ -72,30 +78,46 @@ const DATA = (iso: string) =>
 export default async function DocumentiPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cliente?: string }>;
+  searchParams: Promise<{ cliente?: string; correzione?: string }>;
 }) {
-  const { cliente } = await searchParams;
+  const { cliente, correzione } = await searchParams;
   const contesto = await caricaContesto(cliente, "/dashboard/documenti");
   const supabase = await createClient();
 
-  const [{ data: moduli }, { data: documenti }, { data: campiLetti }] = contesto.org
+  // Documenti e celle a pagine: la banca dati tronca oltre un tetto di
+  // righe senza dirlo, e un registro carburanti settimanale supera da solo
+  // le mille celle — le righe oltre il tetto non si vedrebbero, e nessuno
+  // potrebbe confermarle.
+  const orgId = contesto.org?.id;
+  const [{ data: moduli }, documenti, campiLetti] = orgId
     ? await Promise.all([
         supabase
           .from("module_activations")
           .select("module, stato")
-          .eq("organization_id", contesto.org.id),
-        supabase
-          .from("documents")
-          .select("*")
-          .eq("organization_id", contesto.org.id)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("document_fields")
-          .select("*")
-          .eq("organization_id", contesto.org.id)
-          .order("created_at", { ascending: true }),
+          .eq("organization_id", orgId),
+        tutte<Tabelle["documents"]["Row"]>((da, a) =>
+          supabase
+            .from("documents")
+            .select("*", { count: "exact" })
+            .eq("organization_id", orgId)
+            .order("created_at", { ascending: false })
+            .order("id")
+            .range(da, a),
+        ).catch(() => null),
+        tutte<Tabelle["document_fields"]["Row"]>((da, a) =>
+          supabase
+            .from("document_fields")
+            .select("*", { count: "exact" })
+            .eq("organization_id", orgId)
+            .order("created_at", { ascending: true })
+            .order("id")
+            .range(da, a),
+        ).catch(() => null),
       ])
-    : [{ data: [] }, { data: [] }, { data: [] }];
+    : [{ data: [] }, [], []];
+  // Una lettura rimasta a metà si dice: un archivio che mostra meno di
+  // quello che c'è, senza avvisare, fa credere che manchino dei documenti.
+  const letturaParziale = documenti === null || campiLetti === null;
 
   const attiviDocs = documentiAttivi(
     (moduli ?? [])
@@ -166,6 +188,20 @@ export default async function DocumentiPage({
       />
 
       <SelettoreCliente contesto={contesto} base="/dashboard/documenti" />
+
+      {letturaParziale && (
+        <p role="alert" className="mt-6 rounded-xl border border-amber-ink/25 bg-amber-soft/60 px-4 py-3 text-sm leading-relaxed text-amber-ink">
+          Una parte dell&apos;archivio non si è caricata: quello che vedi potrebbe non essere tutto. Ricarica la pagina tra poco.
+        </p>
+      )}
+
+      {/* Una correzione che non si è potuta salvare torna qui col suo
+          perché: il valore di prima resta, e il cliente sa cosa riscrivere. */}
+      {correzione && (
+        <p role="alert" className="mt-6 rounded-xl border border-amber-ink/25 bg-amber-soft/60 px-4 py-3 text-sm leading-relaxed text-amber-ink">
+          La correzione non è stata salvata: {correzione.slice(0, 300)}
+        </p>
+      )}
 
       {contesto.ruolo === "impresa" && (
         <section className="mt-8">
@@ -528,15 +564,38 @@ export default async function DocumentiPage({
                                     {contesto.ruolo === "impresa" &&
                                       c.valore !== null && (
                                         <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-line pt-2">
-                                          {c.stato === "confermato" ? (
-                                            <span className="text-[11px] font-semibold text-mint">
-                                              Confermato da te
-                                            </span>
-                                          ) : c.stato === "rifiutato" ? (
-                                            <span className="text-[11px] font-medium text-gray-light">
-                                              Scartato: non entra in nessun
-                                              documento.
-                                            </span>
+                                          {c.stato === "confermato" || c.stato === "rifiutato" ? (
+                                            <>
+                                              {c.stato === "confermato" ? (
+                                                <span className="text-[11px] font-semibold text-mint">
+                                                  Confermato da te
+                                                </span>
+                                              ) : (
+                                                <span className="text-[11px] font-medium text-gray-light">
+                                                  Scartato: non entra in nessun
+                                                  documento.
+                                                </span>
+                                              )}
+                                              {/* Un valore deciso si può rimettere in
+                                                  discussione: senza, un dato
+                                                  confermato per sbaglio non avrebbe
+                                                  più un posto dove correggerlo. */}
+                                              <form
+                                                action={async () => {
+                                                  "use server";
+                                                  await riapriValori(c.document_id, {
+                                                    campi: [c.campo],
+                                                  });
+                                                }}
+                                              >
+                                                <button
+                                                  type="submit"
+                                                  className="rounded-lg px-2 py-1 text-[11px] font-medium text-gray-warm underline-offset-2 hover:text-pine hover:underline"
+                                                >
+                                                  Riapri
+                                                </button>
+                                              </form>
+                                            </>
                                           ) : (
                                             <>
                                               <form
@@ -557,12 +616,17 @@ export default async function DocumentiPage({
                                                   formData: FormData,
                                                 ) => {
                                                   "use server";
-                                                  await correggiCampo(
+                                                  const esito = await correggiCampo(
                                                     c.id,
                                                     String(
                                                       formData.get("valore") ?? "",
                                                     ),
                                                   );
+                                                  if (!esito.ok) {
+                                                    redirect(
+                                                      `/dashboard/documenti?correzione=${encodeURIComponent(esito.errore)}`,
+                                                    );
+                                                  }
                                                 }}
                                                 className="flex items-center gap-1"
                                               >

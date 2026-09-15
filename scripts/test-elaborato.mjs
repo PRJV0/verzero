@@ -285,7 +285,7 @@ const doppiaScartata = componiEControlla({
   ],
 });
 verifica("★ il rimedio proposto per la bolletta doppia funziona: rifiutati periodo e consumo, il documento si consegna",
-  esitoDoppia.esito.mancanze.find((m) => m.tipo === "periodo-sovrapposto")?.rimedio.includes("rifiutane periodo e consumo") && doppiaScartata.esito.consegnabile,
+  esitoDoppia.esito.mancanze.find((m) => m.tipo === "periodo-sovrapposto")?.rimedio.includes("riaprine periodo e consumo e scartali") && doppiaScartata.esito.consegnabile,
   doppiaScartata.esito.mancanze?.map((m) => m.messaggio).join(" | "),
 );
 
@@ -361,7 +361,7 @@ verifica("un documento di origine di un altro anno usato nel documento blocca", 
 
 // 14. Un dato anagrafico richiesto.
 const senzaSede = componiEControlla({ ...ingressoEsempio(CARBON), campi: CAMPI_IMPRESA_ESEMPIO.filter((c) => c.campo !== "sede_legale") });
-verifica("senza sede legale confermata blocca, e manda alla scheda impresa", senzaSede.esito.mancanze?.some((m) => m.tipo === "dato-mancante" && m.azione?.href === "/dashboard/impresa"));
+verifica("senza sede legale confermata blocca, e manda a caricare la visura: nella scheda un dato non si scrive a mano", senzaSede.esito.mancanze?.some((m) => m.tipo === "dato-mancante" && m.azione?.href === "/dashboard/documenti" && /visura/.test(m.rimedio)));
 const sedeDaConfermare = componiEControlla({ ...ingressoEsempio(CARBON), campi: CAMPI_IMPRESA_ESEMPIO.map((c) => (c.campo === "sede_legale" ? { ...c, stato: "da_confermare", confirmed_at: null } : c)) });
 verifica("una sede recuperata e non confermata non entra: si chiede di confermarla", sedeDaConfermare.esito.mancanze?.some((m) => m.tipo === "dato-da-confermare" && m.messaggio.includes("Sede legale")) && !testoCompleto(sedeDaConfermare.elaborato).some((t) => t.includes("Via delle Industrie 14")));
 
@@ -478,8 +478,8 @@ verifica("★ al secondo anno, con in archivio solo i documenti del primo, si ch
 /* Un documento non letto non è un documento assente. */
 const inCoda = { id: "a0000000-0000-4000-8000-900000000001", nome_file: "bolletta_gas_scansione.pdf", tipo: "bolletta-gas", stato: "in_coda", created_at: "2026-09-01T00:00:00Z" };
 const esitoInCoda = componiEControlla({ ...ingressoEsempio(CARBON), documenti: [...DOCUMENTI_ESEMPIO, inCoda] });
-verifica("una bolletta ancora in coda di lettura ferma il documento, e dice che tocca a noi",
-  !esitoInCoda.esito.consegnabile && esitoInCoda.esito.mancanze.some((m) => m.chi === "verzero" && m.messaggio.includes("in coda")),
+verifica("una bolletta ancora in coda di lettura ferma il documento, e manda all'archivio, dove la coda procede",
+  !esitoInCoda.esito.consegnabile && esitoInCoda.esito.mancanze.some((m) => m.chi === "impresa" && m.messaggio.includes("in coda") && m.azione?.href === "/dashboard/documenti"),
 );
 const esitoIlleggibile = componiEControlla({ ...ingressoEsempio(CARBON), documenti: [...DOCUMENTI_ESEMPIO, { ...inCoda, stato: "illeggibile" }] });
 verifica("una bolletta illeggibile ferma il documento, e chiede all'impresa una copia leggibile",
@@ -510,7 +510,9 @@ const annota = (r) => {
 };
 
 verifica("un periodo di attività si legge solo dentro l'esercizio e nel verso giusto; «inattivo» è l'altra risposta",
-  dich.leggiAttivita("2025-05-16/2025-12-31", 2025)?.periodo?.dal === "2025-05-16" &&
+  dich.leggiAttivita("2025-05-16/2025-12-31", 2025)?.periodi?.[0]?.dal === "2025-05-16" &&
+    dich.leggiAttivita("2025-08-01/2025-12-31;2025-01-01/2025-04-30", 2025)?.periodi?.map((p) => p.dal).join() === "2025-01-01,2025-08-01" &&
+    dich.leggiAttivita("2025-01-01/2025-05-31;2025-05-01/2025-12-31", 2025) === null &&
     dich.leggiAttivita("2025-12-31/2025-05-16", 2025) === null &&
     dich.leggiAttivita("2024-12-16/2025-12-31", 2025) === null &&
     dich.leggiAttivita("16/05/2025/31/12/2025", 2025) === null &&
@@ -525,16 +527,16 @@ verifica("la chiave di un contatore tiene lettere e cifre, sta nei 60 caratteri 
 // Nessuna combustione diretta.
 const soloLuce = { ...ingressoEsempio(CARBON), documenti: DOCUMENTI_ESEMPIO.filter((d) => d.tipo !== "bolletta-gas" && d.tipo !== "carburanti") };
 const esitoSoloLuce = annota(componiEControlla(soloLuce));
-const offertaScope1 = esitoSoloLuce.esito.mancanze?.find((m) => m.dichiarazione?.tipo === "assenza");
+const offertaScope1 = esitoSoloLuce.esito.mancanze?.find((m) => m.dichiarazione?.tipo === "fatto");
 verifica("★ senza gas né carburanti lo Scope 1 si ferma, e il rimedio è una dichiarazione, non «scrivici»",
-  !esitoSoloLuce.esito.consegnabile && offertaScope1?.dichiarazione.fonte === "combustibili" && offertaScope1.dichiarazione.resa === false && !/scrivici/i.test(offertaScope1.rimedio),
+  !esitoSoloLuce.esito.consegnabile && offertaScope1?.dichiarazione.fatto === "senza-combustibili" && offertaScope1.dichiarazione.resa === false && !/scrivici/i.test(offertaScope1.rimedio),
 );
-const conAssenza = annota(componiEControlla({ ...soloLuce, campi: [...CAMPI_IMPRESA_ESEMPIO, dichiarata("ghg_assenza_combustibili_2025", "si")] }));
+const conAssenza = annota(componiEControlla({ ...soloLuce, campi: [...CAMPI_IMPRESA_ESEMPIO, dichiarata("ghg_senza_combustibili_2025", "si")] }));
 const eAssenza = conAssenza.elaborato;
 verifica("★ resa la dichiarazione, il documento si consegna", conAssenza.esito.consegnabile, messaggi(conAssenza));
 const fonteAssenza = eAssenza.fonti.find((f) => f.tipo === "inserito" && f.titolo.includes("nessun consumo diretto"));
 verifica("la dichiarazione ha la sua sigla I, con la frase dichiarata e la data nel registro",
-  fonteAssenza?.dettaglio.some((d) => d.includes(dich.testoAssenza("combustibili", 2025))) && Boolean(fonteAssenza?.confermataIl),
+  fonteAssenza?.dettaglio.some((d) => d.includes(dich.testoFatto("senza-combustibili", 2025))) && Boolean(fonteAssenza?.confermataIl),
 );
 verifica("★ lo Scope 1 è zero per dichiarazione, e il documento lo dice con queste parole",
   eAssenza.fonti.find((f) => f.titolo === "Totale Scope 1")?.ingressi?.includes(fonteAssenza?.id) &&
@@ -542,7 +544,7 @@ verifica("★ lo Scope 1 è zero per dichiarazione, e il documento lo dice con q
 );
 verifica("e il totale dell'inventario è il solo Scope 2", vicino(eAssenza.sezioni.at(-1).blocchi.find((b) => b.tipo === "cifre").voci[0].valore.numero, lb));
 verifica("il testo della dichiarazione non dice mai che qualcuno «firma»", !testoCompleto(eAssenza).some((t) => lessico.test(t)));
-const smentita = annota(componiEControlla({ ...ingressoEsempio(CARBON), campi: [...CAMPI_IMPRESA_ESEMPIO, dichiarata("ghg_assenza_combustibili_2025", "si")] }));
+const smentita = annota(componiEControlla({ ...ingressoEsempio(CARBON), campi: [...CAMPI_IMPRESA_ESEMPIO, dichiarata("ghg_senza_combustibili_2025", "si")] }));
 verifica("★ una dichiarazione smentita dai documenti ferma il documento, e offre di ritirarla",
   !smentita.esito.consegnabile && smentita.esito.mancanze.some((m) => m.tipo === "dichiarazione-contraddetta" && m.dichiarazione?.resa === true),
 );
@@ -600,11 +602,11 @@ const registroDel2024 = CAMPI_DOCUMENTO_ESEMPIO.map((c) => (c.document_id === RE
 const esitoRegistroVecchio = annota(componiEControlla({ ...ingressoEsempio(CARBON), campiDocumento: registroDel2024 }));
 verifica("★ un registro carburanti del 2024 e nessun rifornimento del 2025: si chiede il registro nuovo, o di dichiarare che non ce ne sono stati",
   !esitoRegistroVecchio.esito.consegnabile &&
-    esitoRegistroVecchio.esito.mancanze.some((m) => m.dichiarazione?.tipo === "assenza" && m.dichiarazione.fonte === "carburanti"),
+    esitoRegistroVecchio.esito.mancanze.some((m) => m.dichiarazione?.tipo === "fatto" && m.dichiarazione.fatto === "senza-carburanti"),
   messaggi(esitoRegistroVecchio),
 );
 const senzaRifornimenti = annota(
-  componiEControlla({ ...ingressoEsempio(CARBON), campiDocumento: registroDel2024, campi: [...CAMPI_IMPRESA_ESEMPIO, dichiarata("ghg_assenza_carburanti_2025", "si")] }),
+  componiEControlla({ ...ingressoEsempio(CARBON), campiDocumento: registroDel2024, campi: [...CAMPI_IMPRESA_ESEMPIO, dichiarata("ghg_senza_carburanti_2025", "si")] }),
 );
 const cifreScope1 = senzaRifornimenti.elaborato.sezioni.find((s) => s.titolo.startsWith("Scope 1")).blocchi.filter((b) => b.tipo === "cifre").at(-1);
 verifica("★ con la dichiarazione il documento esce, lo Scope 1 è il solo gas — niente carburanti tolti in silenzio né inventati",
@@ -617,11 +619,214 @@ const soloRegistroVecchio = annota(
   componiEControlla({ ...soloLuce, documenti: [...soloLuce.documenti, DOCUMENTI_ESEMPIO.find((d) => d.id === REGISTRO)], campiDocumento: registroDel2024 }),
 );
 verifica("★ un registro con soli rifornimenti di un altro anno non fa uno Scope 1 pari a zero: il documento si ferma",
-  !soloRegistroVecchio.esito.consegnabile && soloRegistroVecchio.esito.mancanze.some((m) => m.dichiarazione?.fonte === "combustibili" && /altri esercizi/.test(m.messaggio)),
+  !soloRegistroVecchio.esito.consegnabile && soloRegistroVecchio.esito.mancanze.some((m) => m.dichiarazione?.fatto === "senza-combustibili" && /altri esercizi/.test(m.messaggio)),
   messaggi(soloRegistroVecchio),
 );
+/* ══════════════════════════════════════════════════════════════════ */
+console.log("\n— NESSUN TOTALE SBAGLIATO PASSA —\n");
+
+const cellaRiga = (document_id, riga, campo, valore, stato = "confermato") => ({
+  document_id,
+  riga,
+  campo,
+  etichetta: campo,
+  valore,
+  unita: null,
+  pagina: 1,
+  fonte_lettura: "testo",
+  calcolato: false,
+  avvisi: [],
+  stato,
+  confirmed_at: stato === "confermato" ? "2026-03-18T10:12:00Z" : null,
+});
+const docRegistro = DOCUMENTI_ESEMPIO.find((d) => d.id === REGISTRO);
+
+// Lo stesso registro caricato due volte.
+const registroDoppio = { ...docRegistro, id: "c0000000-0000-4000-8000-900000000002", nome_file: "registro_carburanti_2025_foto.jpg" };
+const esitoRegistroDoppio = annota(
+  componiEControlla({
+    ...ingressoEsempio(CARBON),
+    documenti: [...DOCUMENTI_ESEMPIO, registroDoppio],
+    campiDocumento: [...CAMPI_DOCUMENTO_ESEMPIO, ...CAMPI_DOCUMENTO_ESEMPIO.filter((c) => c.document_id === REGISTRO).map((c) => ({ ...c, document_id: registroDoppio.id }))],
+  }),
+);
+const mancanzaDoppio = esitoRegistroDoppio.esito.mancanze?.find((m) => m.tipo === "documento-doppio");
+verifica("★ lo stesso registro carburanti caricato due volte non raddoppia lo Scope 1: il documento si ferma",
+  !esitoRegistroDoppio.esito.consegnabile && mancanzaDoppio?.riapri?.documentId === registroDoppio.id && mancanzaDoppio.riapri.righe.length === 30,
+  messaggi(esitoRegistroDoppio),
+);
+
+// Un documento che la sezione aspetta e la piattaforma non calcola.
+const teleriscaldamento = { id: "t0000000-0000-4000-8000-000000000001", nome_file: "teleriscaldamento_2025.pdf", tipo: "teleriscaldamento", stato: "letto", created_at: "2026-03-16T08:40:00Z" };
+const conTeleriscaldamento = componiEControlla({ ...ingressoEsempio(CARBON), documenti: [...DOCUMENTI_ESEMPIO, teleriscaldamento] });
+verifica("★ una bolletta del teleriscaldamento non sparisce in silenzio dallo Scope 2: il documento si ferma, e tocca a noi",
+  !conTeleriscaldamento.esito.consegnabile &&
+    conTeleriscaldamento.esito.mancanze.some((m) => m.tipo === "composizione-non-disponibile" && m.chi === "verzero" && m.sezione?.startsWith("Scope 2")) &&
+    conTeleriscaldamento.tipiLetti.includes("teleriscaldamento"),
+  messaggi(conTeleriscaldamento),
+);
+
+// Lo stesso POD scritto in due modi.
+const unaBollettaLuce = DOCUMENTI_ESEMPIO.find((d) => d.tipo === "bolletta-elettrica" && d.nome_file.includes("giugno")).id;
+const podScrittoMale = componiEControlla(
+  conCampi((cc) => cc.map((c) => (c.document_id === unaBollettaLuce && c.campo === "pod" ? { ...c, valore: "it001e 0000x0l7" } : c))),
+);
+verifica("★ un POD scritto con minuscole e spazi è lo stesso contatore: niente buchi finti, niente doppioni che passano",
+  podScrittoMale.esito.consegnabile &&
+    vicino(podScrittoMale.elaborato.sezioni.at(-1).blocchi.find((b) => b.tipo === "cifre").voci[0].valore.numero, s1 + lb),
+  messaggi(podScrittoMale),
+);
+
+// Una bolletta di tre giorni dentro un mese già fatturato.
+verifica("★ una bolletta di tre giorni contenuta in un'altra è un doppione, anche se sta nella tolleranza",
+  ghg.copertura([...mesi(), { dal: "2025-03-10", al: "2025-03-12" }], 2025).sovrapposti.length === 1 &&
+    ghg.copertura([{ dal: "2025-01-01", al: "2025-01-31" }, { dal: "2025-01-31", al: "2025-12-31" }], 2025).sovrapposti.length === 0,
+);
+
+// Il gas c'è, i carburanti no.
+const soloGasELuce = { ...ingressoEsempio(CARBON), documenti: DOCUMENTI_ESEMPIO.filter((d) => d.tipo !== "carburanti") };
+const esitoSoloGasELuce = annota(componiEControlla(soloGasELuce));
+verifica("★ con il gas e nessun registro dei carburanti lo Scope 1 non esce parziale: si chiede il registro, o di dichiarare che non ci sono stati rifornimenti",
+  !esitoSoloGasELuce.esito.consegnabile &&
+    esitoSoloGasELuce.esito.mancanze.some((m) => m.dichiarazione?.tipo === "fatto" && m.dichiarazione.fatto === "senza-carburanti"),
+  messaggi(esitoSoloGasELuce),
+);
+verifica("e con la dichiarazione esce, col solo gas nello Scope 1",
+  componiEControlla({ ...soloGasELuce, campi: [...CAMPI_IMPRESA_ESEMPIO, dichiarata("ghg_senza_carburanti_2025", "si")] }).esito.consegnabile,
+);
+
+// Un registro che si ferma a giugno.
+verifica("sei mesi senza rifornimenti sono una pausa lunga; qualche settimana no",
+  ghg.pauseRifornimenti(["2025-01-10", "2025-06-30"], 2025).length === 2 && ghg.pauseRifornimenti(["2025-01-20", "2025-03-10", "2025-05-01", "2025-06-25", "2025-08-20", "2025-10-15", "2025-12-10"], 2025).length === 0,
+);
+const fermoAGiugno = { ...ingressoEsempio(CARBON), campiDocumento: CAMPI_DOCUMENTO_ESEMPIO.filter((c) => c.document_id !== REGISTRO || c.riga <= 15) };
+const esitoFermoAGiugno = annota(componiEControlla(fermoAGiugno));
+verifica("★ un registro carburanti fermo a metà anno non passa per completo: si chiedono i rifornimenti mancanti, o di dichiararne la pausa",
+  !esitoFermoAGiugno.esito.consegnabile &&
+    esitoFermoAGiugno.esito.mancanze.some((m) => m.tipo === "periodo-scoperto" && m.dichiarazione?.fatto === "rifornimenti-completi"),
+  messaggi(esitoFermoAGiugno),
+);
+const fermoDichiarato = componiEControlla({ ...fermoAGiugno, campi: [...CAMPI_IMPRESA_ESEMPIO, dichiarata("ghg_rifornimenti_completi_2025", "si")] });
+verifica("dichiarata la pausa, il documento esce e la riporta con la sua sigla",
+  fermoDichiarato.esito.consegnabile && testoCompleto(fermoDichiarato.elaborato).some((t) => /^Dichiarazione dell'organizzazione \(I\d+\): «I registri dei carburanti del 2025 contengono tutti/.test(t)),
+  messaggi(fermoDichiarato),
+);
+
+/* ══════════════════════════════════════════════════════════════════ */
+console.log("\n— OGNI BLOCCO HA UN'USCITA CHE IL PORTALE SA ESEGUIRE —\n");
+
+verifica("★ un consumo scritto male porta con sé il valore da riaprire: il pannello lo riapre e la pagina del documento lo mostra",
+  scrittoMale.esito.mancanze.some((m) => m.tipo === "valore-non-calcolabile" && m.riapri?.documentId === primaBolletta && m.riapri.campi?.join() === "consumoTotaleKwh"),
+);
+verifica("e una data di rifornimento scritta male riapre la sua riga",
+  dataAllItaliana.esito.mancanze.some((m) => m.tipo === "valore-non-calcolabile" && m.riapri?.documentId === REGISTRO && m.riapri.righe?.join() === "6"),
+);
+verifica("ogni mancanza su valori riaperti o incompleti dell'impresa ha anche il posto dove andare",
+  [...scrittoMale.esito.mancanze, ...dataAllItaliana.esito.mancanze, ...(esitoRegistroDoppio.esito.mancanze ?? [])].filter((m) => m.riapri).every((m) => m.chi === "impresa" && m.azione?.href),
+);
+
+// Un registro del 2025 con una data scritta male non ferma l'inventario del 2026.
+const soloRegistro2025 = componiEControlla(
+  ingressoEsempio(modelloElaborato("carbon-footprint", 2026), {
+    organizzazione: { ...ORG_ESEMPIO, anno_rendicontazione: 2026 },
+    documenti: soloDel2025,
+    campiDocumento: CAMPI_DOCUMENTO_ESEMPIO.map((c) => (c.document_id === REGISTRO && c.riga === 6 && c.campo === "data" ? { ...c, valore: "06/03/2025" } : c)),
+  }),
+);
+verifica("una data scritta male in un registro di un altro anno non chiede di correggerla nel documento di quest'anno",
+  !soloRegistro2025.esito.mancanze.some((m) => m.tipo === "valore-non-calcolabile" || m.tipo === "dichiarazione-contraddetta"),
+  messaggi(soloRegistro2025),
+);
+
+// I carburanti che lo schema conosce e il calcolo no.
+const conTipo = (tipo, righe) =>
+  componiEControlla(conCampi((cc) => cc.map((c) => (c.document_id === REGISTRO && righe.includes(c.riga) && c.campo === "tipoCarburante" ? { ...c, valore: tipo } : c))));
+const conMetano = annota(conTipo("metano", [1, 3]));
+verifica("★ un furgone a metano ferma il documento come fattore mancante, e tocca a noi — non si chiede al cliente di cambiare carburante",
+  conMetano.esito.mancanze?.some((m) => m.tipo === "fattore-mancante" && m.chi === "verzero" && m.messaggio.includes("metano")) &&
+    !conMetano.esito.mancanze.some((m) => m.chi === "impresa" && m.messaggio.includes("metano")),
+);
+const conAltro = annota(conTipo("altro", [2]));
+verifica("una riga di tipo «altro» si riapre, per indicare il carburante o scartarla",
+  conAltro.esito.mancanze?.some((m) => m.chi === "impresa" && m.riapri?.documentId === REGISTRO && m.riapri.righe?.join() === "2"),
+);
+const conRicariche = annota(conTipo("elettrico", [5, 9]));
+verifica("★ le ricariche elettriche nel registro offrono la dichiarazione delle ricariche in sede",
+  !conRicariche.esito.consegnabile && conRicariche.esito.mancanze.some((m) => m.dichiarazione?.fatto === "ricariche-in-sede"),
+);
+const ricaricheInSede = componiEControlla({
+  ...ingressoEsempio(CARBON),
+  campiDocumento: CAMPI_DOCUMENTO_ESEMPIO.map((c) => (c.document_id === REGISTRO && [5, 9].includes(c.riga) && c.campo === "tipoCarburante" ? { ...c, valore: "elettrico" } : c)),
+  campi: [...CAMPI_IMPRESA_ESEMPIO, dichiarata("ghg_ricariche_in_sede_2025", "si")],
+});
+verifica("dichiarate in sede, le ricariche escono dal calcolo dei carburanti e il documento lo riporta",
+  ricaricheInSede.esito.consegnabile && testoCompleto(ricaricheInSede.elaborato).some((t) => t.includes("«Nel 2025 i veicoli elettrici dell'organizzazione sono stati ricaricati solo nelle sue sedi")),
+  messaggi(ricaricheInSede),
+);
+
+// Un registro letto con le celle vuote.
+const registroCelleVuote = { id: "c0000000-0000-4000-8000-900000000003", nome_file: "registro_illeggibile.pdf", tipo: "carburanti", stato: "letto", created_at: "2026-09-01T00:00:00Z" };
+const celleVuote = [1, 2].flatMap((riga) => ["data", "tipoCarburante", "litri"].map((campo) => cellaRiga(registroCelleVuote.id, riga, campo, null, "da_confermare")));
+verifica("un registro con tutte le celle vuote non si salta come se fosse scartato: ferma il documento",
+  !componiEControlla({ ...ingressoEsempio(CARBON), documenti: [...DOCUMENTI_ESEMPIO, registroCelleVuote], campiDocumento: [...CAMPI_DOCUMENTO_ESEMPIO, ...celleVuote] }).esito.consegnabile,
+);
+
+// L'energia compresa nell'affitto.
+const senzaLuce = { ...ingressoEsempio(CARBON), documenti: DOCUMENTI_ESEMPIO.filter((d) => d.tipo !== "bolletta-elettrica") };
+const esitoSenzaLuce = annota(componiEControlla(senzaLuce));
+verifica("★ senza bollette elettriche si offre la dichiarazione dell'energia compresa nell'affitto, non solo «scrivici»",
+  esitoSenzaLuce.esito.mancanze?.some((m) => m.chi === "impresa" && m.dichiarazione?.fatto === "elettricita-in-affitto"),
+);
+const luceInAffitto = annota(componiEControlla({ ...senzaLuce, campi: [...CAMPI_IMPRESA_ESEMPIO, dichiarata("ghg_elettricita_in_affitto_2025", "si")] }));
+verifica("resa la dichiarazione, il blocco resta ma è nostro, e la dichiarazione si può ritirare",
+  !luceInAffitto.esito.consegnabile &&
+    luceInAffitto.esito.mancanze.some((m) => m.chi === "verzero" && m.dichiarazione?.fatto === "elettricita-in-affitto" && m.dichiarazione.resa) &&
+    !luceInAffitto.esito.mancanze.some((m) => m.chi === "impresa" && m.sezione?.startsWith("Scope 2")),
+);
+
+// Un contatore sospeso d'estate.
+const senzaEstate = new Set(["e0000000-0000-4000-8000-000000000005", "e0000000-0000-4000-8000-000000000006", "e0000000-0000-4000-8000-000000000007", "e0000000-0000-4000-8000-000000000008"]);
+const sospeso = { ...ingressoEsempio(CARBON), documenti: DOCUMENTI_ESEMPIO.filter((d) => !senzaEstate.has(d.id)) };
+const esitoSospeso = componiEControlla({ ...sospeso, campi: [...CAMPI_IMPRESA_ESEMPIO, dichiarata(`ghg_attivita_${POD_ESEMPIO}_2025`, "2025-01-01/2025-04-15;2025-08-16/2025-12-31")] });
+verifica("★ un contatore sospeso d'estate si dichiara in due periodi, e il documento esce",
+  esitoSospeso.esito.consegnabile &&
+    testoCompleto(esitoSospeso.elaborato).some((t) => t.includes("è stato attivo solo dal 1 gennaio 2025 al 15 aprile 2025 e dal 16 agosto 2025 al 31 dicembre 2025.")),
+  messaggi(esitoSospeso),
+);
+
+// Valori scritti come parla una persona.
+verifica("«Non dichiarata», «diesel» ed «elettrica» sono le scelte dello schema; «1,000» si chiede, «0,125» e «1.250» no",
+  valoreCorretto("Non dichiarata", scelta).valore === "non-dichiarato" &&
+    valoreCorretto("diesel", { tipo: "scelta", valori: ["gasolio", "benzina", "elettrico"] }).valore === "gasolio" &&
+    valoreCorretto("elettrica", { tipo: "scelta", valori: ["gasolio", "benzina", "elettrico"] }).valore === "elettrico" &&
+    valoreCorretto("1,000", { tipo: "numero" }).avviso !== null &&
+    valoreCorretto("0,125", { tipo: "numero" }).valore === "0.125" &&
+    valoreCorretto("1.250", { tipo: "numero" }).valore === "1250",
+);
+
+// Una bolletta tutta riscritta dal cliente non lascia una D vuota nel registro.
+const tuttaRiscritta = componiEControlla(
+  conCampi((cc) => cc.map((c) => (c.document_id === unaBollettaLuce ? { ...c, avvisi: [AVVISO_SCRITTO_DA_TE] } : c))),
+);
+verifica("una bolletta di cui il cliente ha riscritto ogni valore non lascia nel registro una voce di documento senza pagine né conferma",
+  tuttaRiscritta.esito.consegnabile &&
+    tuttaRiscritta.elaborato.fonti.filter((f) => f.tipo === "documento").every((f) => f.dettaglio.some((d) => /^Pagin/.test(d)) && f.confermataIl),
+  messaggi(tuttaRiscritta),
+);
+verifica("la quota da forniture rinnovabili tiene nel numero la quota, non i kWh",
+  (() => {
+    const v = e.sezioni.flatMap((s) => s.blocchi).filter((b) => b.tipo === "cifre").flatMap((b) => b.voci).find((x) => x.etichetta.startsWith("Quota"));
+    return v && v.valore.numero > 0 && v.valore.numero < 1 && vicino(v.valore.numero, kwhRinnovabili / kwh);
+  })(),
+);
+const migrazione = readFileSync("supabase/migrations/20260915120000_elaborati_e_marchio.sql", "utf8");
+verifica("la banca dati mette da sé il segno «scritto da te» e la provenienza «utente» quando un utente cambia un valore",
+  /current_user = 'authenticated' and new\.valore is distinct from old\.valore then\s+new\.avvisi := array\['Scritto da te/.test(migrazione) &&
+    /old\.provenienza = 'motore' then\s+new\.provenienza := 'utente'/.test(migrazione),
+);
+
 verifica("ogni dichiarazione offerta è un compito dell'impresa, con la frase da dichiarare",
-  tutteLeMancanze.filter((m) => m.dichiarazione).length >= 7 && tutteLeMancanze.filter((m) => m.dichiarazione).every((m) => m.chi === "impresa" && m.dichiarazione.testo.length > 20),
+  tutteLeMancanze.filter((m) => m.dichiarazione).length >= 7 && tutteLeMancanze.filter((m) => m.dichiarazione).every((m) => (m.chi === "impresa" || m.dichiarazione.resa) && m.dichiarazione.testo.length > 20),
 );
 
 /* ══════════════════════════════════════════════════════════════════ */
@@ -713,6 +918,14 @@ verifica("un SVG dichiarato largo diecimila punti esce largo quanto serve, non o
 );
 const svgEntita = new TextEncoder().encode('<?xml version="1.0"?><!DOCTYPE svg [<!ENTITY a "aaaaaaaaaa">]><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><text>&a;</text></svg>');
 verifica("★ un SVG con DOCTYPE ed entità non si dà nemmeno al lettore d'immagini", "errore" in (await preparaLogo(svgEntita, "image/svg+xml")));
+const pngMinimo = await sharp({ create: { width: 4, height: 4, channels: 3, background: { r: 0, g: 0, b: 0 } } }).png().toBuffer();
+const svgConImmagine = new TextEncoder().encode(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><image href="data:image/png;base64,${pngMinimo.toString("base64")}" width="100" height="100"/></svg>`);
+const svgConUrl = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" style="fill:url(data:image/png;base64,AAAA)"/></svg>');
+const svgConGradiente = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="100"><defs><linearGradient id="g"><stop offset="0" stop-color="#1D4E89"/><stop offset="1" stop-color="#0F766E"/></linearGradient></defs><rect x="10" y="10" width="280" height="80" fill="url(#g)"/></svg>');
+verifica("★ un SVG che si porta dentro un'immagine non si apre: il suo PNG salterebbe il tetto dei pixel",
+  "errore" in (await preparaLogo(svgConImmagine, "image/svg+xml")) && "errore" in (await preparaLogo(svgConUrl, "image/svg+xml")),
+);
+verifica("un gradiente interno al disegno invece va bene", !("errore" in (await preparaLogo(svgConGradiente, "image/svg+xml"))));
 
 // Un PNG da 12.000 × 12.000 pixel che pesa pochi kilobyte: un bit per pixel,
 // tutti uguali. Decodificato come immagine a colori costerebbe più di un

@@ -9,13 +9,14 @@ import {
   type EsitoGenerazione,
 } from "@/lib/elaborato/archivio";
 import {
-  ASSENZE_DICHIARABILI,
-  chiaveAssenza,
   chiaveAttivita,
+  chiaveFatto,
+  FATTI_DICHIARABILI,
   leggiAttivita,
+  MAX_PERIODI_ATTIVITA,
   valoreAttivita,
-  type AssenzaDichiarabile,
   type AttivitaContatore,
+  type FattoDichiarabile,
 } from "@/lib/elaborato/dichiarazioni";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -93,15 +94,14 @@ export async function generaElaboratoAzione(
 }
 
 export type RichiestaDichiarazione =
-  | { tipo: "assenza"; fonte: AssenzaDichiarabile; esercizio: number; ritira?: boolean }
+  | { tipo: "fatto"; fatto: FattoDichiarabile; esercizio: number; ritira?: boolean }
   | {
       tipo: "periodo-contatore";
       punto: string;
       esercizio: number;
       ritira?: boolean;
       inattivo?: boolean;
-      dal?: string;
-      al?: string;
+      periodi?: { dal: string; al: string }[];
     };
 
 /**
@@ -146,20 +146,21 @@ export async function dichiarazioneAzione(
 
   let chiave: string | null;
   let valore = "si";
-  if (richiesta.tipo === "assenza") {
-    if (!ASSENZE_DICHIARABILI.includes(richiesta.fonte)) return { ok: false, errore: "Dichiarazione non riconosciuta." };
-    chiave = chiaveAssenza(richiesta.fonte, richiesta.esercizio);
+  if (richiesta.tipo === "fatto") {
+    if (!FATTI_DICHIARABILI.includes(richiesta.fatto)) return { ok: false, errore: "Dichiarazione non riconosciuta." };
+    chiave = chiaveFatto(richiesta.fatto, richiesta.esercizio);
   } else {
     chiave = chiaveAttivita(String(richiesta.punto ?? ""), richiesta.esercizio);
     if (!chiave) return { ok: false, errore: "Il codice del contatore non è valido." };
     if (!richiesta.ritira) {
+      const periodi = (richiesta.periodi ?? []).slice(0, MAX_PERIODI_ATTIVITA + 1);
       const attivita: AttivitaContatore | null = richiesta.inattivo
         ? { inattivo: true }
-        : leggiAttivita(`${richiesta.dal ?? ""}/${richiesta.al ?? ""}`, richiesta.esercizio);
+        : leggiAttivita(periodi.map((p) => `${p.dal ?? ""}/${p.al ?? ""}`).join(";"), richiesta.esercizio);
       if (!attivita) {
         return {
           ok: false,
-          errore: `Indica due date del ${richiesta.esercizio}, con la fine uguale o successiva all'inizio.`,
+          errore: `Indica da uno a ${MAX_PERIODI_ATTIVITA} periodi del ${richiesta.esercizio}, ciascuno con la fine uguale o successiva all'inizio, e senza sovrapporli.`,
         };
       }
       valore = valoreAttivita(attivita);

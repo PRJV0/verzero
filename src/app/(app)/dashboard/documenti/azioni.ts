@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { documentiAttivi } from "@/lib/bozza";
 import {
@@ -26,6 +27,9 @@ import { annoRendicontazioneDefault } from "@/lib/periodo";
  * documento, lo riconoscono e lo smistano — sempre col client di
  * sessione, così la RLS resta l'unico giudice di chi può cosa.
  */
+
+/** Oltre questo tempo in lettura, la lettura si considera interrotta e si può rifare. */
+const LETTURA_INTERROTTA_MS = 15 * 60 * 1000;
 
 function aggiornaViste() {
   revalidatePath("/dashboard/documenti");
@@ -219,7 +223,7 @@ export async function leggiDocumentoAzione(
   // Il documento si legge con la RLS attiva: se non è tuo, non esiste.
   const { data: documento } = await supabase
     .from("documents")
-    .select("id, organization_id, percorso, mime, tipo, stato")
+    .select("id, organization_id, percorso, mime, tipo, stato, updated_at")
     .eq("id", id)
     .maybeSingle();
   if (!documento) {
@@ -248,7 +252,12 @@ export async function leggiDocumentoAzione(
         "Questo tipo di documento non lo sappiamo ancora leggere: resta in archivio e alimenta i percorsi come prima.",
     };
   }
-  if (documento.stato === "in_lettura") {
+  // Una lettura vera dura secondi. Un documento fermo «in lettura» da un
+  // quarto d'ora è una lettura interrotta — una funzione scaduta a metà —
+  // e senza questa uscita non si potrebbe più rileggere, e l'inventario che
+  // lo aspetta resterebbe bloccato per sempre.
+  const interrotta = Date.now() - Date.parse(documento.updated_at) > LETTURA_INTERROTTA_MS;
+  if (documento.stato === "in_lettura" && !interrotta) {
     return { ok: false, messaggio: "Questo documento è già in lettura." };
   }
 
@@ -315,20 +324,40 @@ export async function rifiutaCampo(id: string) {
  * adesso non c'è più. Lasciarle sarebbe attribuirgli un difetto che è di
  * una lettura sostituita — e cancellarle e basta perderebbe la terza
  * provenienza, che è la più forte delle tre.
+ *
+ * ═══ PERCHÉ SCRIVE IL SERVER, E NON LA SESSIONE ═══
+ * Il cliente può aggiornare solo `valore`, `stato` e `confirmed_at`
+ * (permessi di colonna): gli avvisi no, ed è giusto — altrimenti potrebbe
+ * togliersi il «scritto da te» e far passare un suo numero per letto dal
+ * documento. Un aggiornamento che li comprendeva veniva rifiutato per
+ * intero, in silenzio, e la correzione non si salvava mai. Quindi: la
+ * sessione dimostra che il campo è dell'organizzazione di chi chiede, e il
+ * server scrive valore e segno insieme.
+ *
+ * ═══ UN VALORE CHE NON SI PUÒ USARE NON SI SALVA ═══
+ * Il tipo del campo decide la forma in cui si salva: un numero scritto
+ * all'italiana diventa il numero che la lettura avrebbe scritto. Quello
+ * che non si riconduce senza indovinare torna al cliente con il perché,
+ * e il valore di prima resta com'era.
  */
-export async function correggiCampo(id: string, valore: string) {
+export async function correggiCampo(
+  id: string,
+  valore: string,
+): Promise<{ ok: true } | { ok: false; errore: string }> {
   const pulito = valore.trim().slice(0, 500);
-  if (pulito.length === 0) return;
+  if (pulito.length === 0) return { ok: false, errore: "Scrivi il valore." };
   const supabase = await createClient();
-  // Il tipo del campo decide la forma in cui si salva: un numero scritto
-  // all'italiana diventa il numero che la lettura avrebbe scritto. La RLS
-  // resta il giudice — un campo di un'altra organizzazione non si trova.
-  const { data: campo } = await supabase
-    .from("document_fields")
-    .select("campo, document_id")
-    .eq("id", id)
-    .maybeSingle();
-  if (!campo) return;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, errore: "Sessione scaduta: rientra e riprova." };
+  const [{ data: profilo }, { data: campo }] = await Promise.all([
+    supabase.from("profiles").select("organization_id").eq("id", user.id).maybeSingle(),
+    supabase.from("document_fields").select("campo, document_id, organization_id").eq("id", id).maybeSingle(),
+  ]);
+  if (!campo || !profilo?.organization_id || campo.organization_id !== profilo.organization_id) {
+    return { ok: false, errore: "I valori li corregge l'impresa titolare dei dati." };
+  }
   const { data: documento } = await supabase
     .from("documents")
     .select("tipo")
@@ -336,16 +365,67 @@ export async function correggiCampo(id: string, valore: string) {
     .maybeSingle();
   const definizione = voceMotore(documento?.tipo)?.campi?.find((c) => c.chiave === campo.campo);
   const corretto = valoreCorretto(pulito, definizione);
-  await supabase
+  if (corretto.avviso) return { ok: false, errore: corretto.avviso };
+
+  const { error } = await createAdminClient()
     .from("document_fields")
     .update({
       valore: corretto.valore,
       stato: "confermato",
       confirmed_at: new Date().toISOString(),
-      avvisi: [AVVISO_SCRITTO_DA_TE, ...(corretto.avviso ? [corretto.avviso] : [])],
+      avvisi: [AVVISO_SCRITTO_DA_TE],
     })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("organization_id", profilo.organization_id);
+  if (error) return { ok: false, errore: "Non siamo riusciti a salvare la correzione: riprova." };
   aggiornaViste();
+  return { ok: true };
+}
+
+/**
+ * RIAPRIRE VALORI GIÀ CONFERMATI — l'uscita dei blocchi su un dato deciso.
+ *
+ * La pagina di conferma mostra solo ciò che aspetta una risposta: un valore
+ * confermato e sbagliato — una data scritta «01/04/25», un consumo doppio da
+ * scartare — non aveva più un posto dove correggerlo. Riaprirlo lo rimette
+ * «da confermare», con il suo valore e i suoi segni: esce dai calcoli
+ * finché il cliente non lo conferma, lo corregge o lo scarta di nuovo.
+ *
+ * Si riaprono le celle indicate — per campo nella scheda, per riga nelle
+ * tabelle — oppure, su richiesta esplicita, tutte quelle del documento.
+ * Scrive la sessione: `stato` e `confirmed_at` sono colonne del cliente, e
+ * la RLS limita l'aggiornamento alla sua organizzazione.
+ */
+export async function riapriValori(
+  documentId: string,
+  filtro: { campi?: string[]; righe?: number[]; tutti?: boolean },
+): Promise<{ ok: true } | { ok: false; errore: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, errore: "Sessione scaduta: rientra e riprova." };
+  const { data: profilo } = await supabase
+    .from("profiles")
+    .select("organization_id, ruolo")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!profilo?.organization_id || profilo.ruolo !== "impresa") {
+    return { ok: false, errore: "I valori li riapre l'impresa titolare dei dati." };
+  }
+  let richiesta = supabase
+    .from("document_fields")
+    .update({ stato: "da_confermare", confirmed_at: null })
+    .eq("document_id", documentId)
+    .eq("organization_id", profilo.organization_id)
+    .neq("stato", "da_confermare");
+  if (filtro.campi?.length) richiesta = richiesta.eq("riga", 0).in("campo", filtro.campi.slice(0, 50));
+  else if (filtro.righe?.length) richiesta = richiesta.in("riga", filtro.righe.slice(0, 500));
+  else if (!filtro.tutti) return { ok: false, errore: "Non c'è nessun valore da riaprire." };
+  const { error } = await richiesta;
+  if (error) return { ok: false, errore: "Non siamo riusciti a riaprire i valori: riprova." };
+  aggiornaViste();
+  return { ok: true };
 }
 
 /**

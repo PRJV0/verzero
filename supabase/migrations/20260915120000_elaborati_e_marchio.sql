@@ -9,11 +9,13 @@
 --     finale spiega che la generazione non è ancora attiva su questo
 --     ambiente (src/lib/elaborato/archivio.ts).
 --
--- Quattro pezzi:
+-- Cinque pezzi:
 --   1. `brand_settings` — la veste dei documenti, una riga per impresa;
 --   2. il bucket `marchi` — il logo, già preparato per la stampa;
 --   3. `elaborati_versioni` — ogni generazione è una VERSIONE, immutabile;
---   4. il bucket `elaborati` — i file PDF e DOCX di ogni versione.
+--   4. il bucket `elaborati` — i file PDF e DOCX di ogni versione;
+--   5. i segni di provenienza sulle correzioni del cliente, messi dalla
+--      banca dati e non dal portale.
 --
 -- ═══ CHI SCRIVE ═══
 -- Le versioni e il logo li scrive il SERVER col service role, dopo aver
@@ -255,6 +257,57 @@ create policy elaborati_select on storage.objects
       or (storage.foldername(name))[1] in (select o::text from public.orgs_gestite() o)
     )
   );
+
+-- ---------------------------------------------------------------------
+-- 5. La provenienza la decide chi scrive, non chi dichiara.
+--
+-- Nel documento consegnato un valore riscritto dal cliente porta la sigla
+-- I, uno letto dal documento la D, uno recuperato da una banca dati la B.
+-- La composizione lo capisce da un segno — l'avviso «Scritto da te» sulle
+-- celle dei documenti, `provenienza` sulla scheda impresa — che scrive il
+-- portale. Ma il client può aggiornare `valore` da solo, e il segno non lo
+-- tocca: un PATCH diretto farebbe passare un numero suo per letto dalla
+-- bolletta, o un indirizzo suo per recuperato dal VIES.
+--
+-- Qui il segno lo mette la banca dati, quando cambia il valore e a
+-- cambiarlo è un utente autenticato (il service role scrive le letture
+-- del Motore e le correzioni già marcate dal server).
+-- ---------------------------------------------------------------------
+create or replace function public.document_fields_scritto_dal_cliente()
+returns trigger
+language plpgsql
+as $$
+begin
+  if current_user = 'authenticated' and new.valore is distinct from old.valore then
+    new.avvisi := array['Scritto da te: questo valore non viene dalla nostra lettura.'];
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists document_fields_scritto_dal_cliente on public.document_fields;
+create trigger document_fields_scritto_dal_cliente
+  before update on public.document_fields
+  for each row execute function public.document_fields_scritto_dal_cliente();
+
+create or replace function public.company_fields_corretto_dal_cliente()
+returns trigger
+language plpgsql
+as $$
+begin
+  if current_user = 'authenticated' and new.valore is distinct from old.valore and old.provenienza = 'motore' then
+    new.provenienza := 'utente';
+    new.fonte := 'Corretto dall''impresa nella scheda';
+    new.fonte_url := null;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists company_fields_corretto_dal_cliente on public.company_fields;
+create trigger company_fields_corretto_dal_cliente
+  before update on public.company_fields
+  for each row execute function public.company_fields_corretto_dal_cliente();
 
 commit;
 

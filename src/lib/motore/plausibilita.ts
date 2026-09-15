@@ -448,6 +448,15 @@ export function valoreCorretto(
   const v = scritto.trim();
   if (!campo) return { valore: v, avviso: null };
   if (campo.tipo === "numero") {
+    // «1,000» è l'unica forma che nessuna convenzione scioglie: uno con tre
+    // decimali all'italiana, mille all'inglese. Si chiede, invece di scegliere.
+    const pulito = v.replace(/[^\d.,+-]/g, "");
+    if (/^[1-9]\d{0,2},\d{3}$/.test(pulito)) {
+      return {
+        valore: v,
+        avviso: `«${pulito}» si legge in due modi: scrivi ${pulito.replace(",", "")} se sono migliaia, oppure ${pulito.replace(/0+$/, "").replace(/,$/, "")} se è un numero con i decimali.`,
+      };
+    }
     const c = canonicalizza(v, "numero");
     return /^-?\d+(\.\d+)?$/.test(c) && String(Number(c)) === c
       ? { valore: c, avviso: null }
@@ -460,14 +469,32 @@ export function valoreCorretto(
       : { valore: v, avviso: "Non è una data valida: scrivila come giorno, mese e anno, per esempio 16/03/2025." };
   }
   if (campo.tipo === "scelta" && campo.valori?.length) {
-    const piano = v.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, "-");
-    const trovato = campo.valori.find((x) => x === piano);
+    const piano = v.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/\s+/g, "-");
+    // «Non dichiarata» è la scelta «non-dichiarato», «diesel» è il gasolio:
+    // la persona scrive come parla, e la scelta resta quella dello schema.
+    const radice = (x: string) => x.replace(/[aeio]$/, "");
+    const sinonimo = SINONIMI_SCELTE[piano];
+    const trovato =
+      campo.valori.find((x) => x === piano) ??
+      (sinonimo && campo.valori.includes(sinonimo) ? sinonimo : undefined) ??
+      campo.valori.find((x) => radice(x) === radice(piano) && radice(piano).length >= 2);
     return trovato
       ? { valore: trovato, avviso: null }
       : { valore: v, avviso: `Non è uno dei valori previsti: ${campo.valori.map((x) => x.replace(/-/g, " ")).join(", ")}.` };
   }
   return { valore: v, avviso: null };
 }
+
+/** I modi di dire le scelte che la radice comune non basta a riconoscere. */
+const SINONIMI_SCELTE: Record<string, string> = {
+  diesel: "gasolio",
+  "gas-naturale": "metano",
+  cng: "metano",
+  "gas-di-petrolio-liquefatto": "gpl",
+  "non-indicato": "non-dichiarato",
+  "non-indicata": "non-dichiarato",
+  "non-specificato": "non-dichiarato",
+};
 
 /**
  * Trasforma i campi dello schema in campi mostrabili: li rimette

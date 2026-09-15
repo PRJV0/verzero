@@ -82,22 +82,12 @@ export type EsitoCopertura = {
   sovrapposti: Periodo[];
 };
 
-/**
- * Quali tratti dell'esercizio restano scoperti, e quali sono coperti due
- * volte, per UN punto di prelievo.
- *
- * `attivita` è il periodo in cui il contatore è stato attivo, quando
- * l'organizzazione lo ha dichiarato (un contatore aperto a giugno, un
- * capannone chiuso a settembre): la copertura si chiede dentro quel
- * periodo, e fuori non c'è niente da coprire.
- */
-export function copertura(periodi: Periodo[], esercizio: number, attivita?: Periodo): EsitoCopertura {
-  const intero = esercizioComePeriodo(esercizio);
-  const anno = (attivita && sovrapposizione(attivita, intero)) || intero;
-  const inizio = giornoDi(anno.dal);
-  const fine = giornoDi(anno.al);
+/** Una passata sui periodi dentro una finestra: i buchi e i tratti coperti due volte. */
+function scansione(periodi: Periodo[], finestra: Periodo): EsitoCopertura {
+  const inizio = giornoDi(finestra.dal);
+  const fine = giornoDi(finestra.al);
   const tratti = periodi
-    .map((p) => sovrapposizione(p, anno))
+    .map((p) => sovrapposizione(p, finestra))
     .filter((p): p is Periodo => p !== null)
     .map((p) => ({ dal: giornoDi(p.dal), al: giornoDi(p.al) }))
     .sort((a, b) => a.dal - b.dal || a.al - b.al);
@@ -114,7 +104,12 @@ export function copertura(periodi: Periodo[], esercizio: number, attivita?: Peri
       }
     } else if (t.dal <= coperto) {
       const doppio = { dal: t.dal, al: Math.min(t.al, coperto) };
-      if (doppio.al - doppio.dal + 1 > TOLLERANZA_GIORNI) {
+      // La tolleranza vale per il bordo fra una bolletta e la successiva,
+      // non per una bolletta CONTENUTA in un'altra: tre giorni fatturati
+      // dentro un mese già fatturato sono consumo contato due volte, per
+      // quanto brevi.
+      const contenuto = t.al <= coperto;
+      if (contenuto || doppio.al - doppio.dal + 1 > TOLLERANZA_GIORNI) {
         sovrapposti.push({ dal: isoDi(doppio.dal), al: isoDi(doppio.al) });
       }
     }
@@ -123,6 +118,27 @@ export function copertura(periodi: Periodo[], esercizio: number, attivita?: Peri
   if (fine - coperto > TOLLERANZA_GIORNI) {
     scoperti.push({ dal: isoDi(coperto + 1), al: isoDi(fine) });
   }
+  return { scoperti, sovrapposti };
+}
+
+/**
+ * Quali tratti dell'esercizio restano scoperti, e quali sono coperti due
+ * volte, per UN punto di prelievo.
+ *
+ * `attivita` sono i periodi in cui il contatore è stato attivo, quando
+ * l'organizzazione li ha dichiarati (un contatore aperto a giugno, un
+ * capannone chiuso d'estate): i buchi si cercano solo dentro quei periodi,
+ * e fuori non c'è niente da coprire. I doppioni invece si cercano su tutto
+ * l'esercizio — due bollette dello stesso giorno contano due volte anche
+ * quando il contatore era spento.
+ */
+export function copertura(periodi: Periodo[], esercizio: number, attivita?: Periodo | Periodo[]): EsitoCopertura {
+  const intero = esercizioComePeriodo(esercizio);
+  const finestre = (attivita === undefined ? [intero] : Array.isArray(attivita) ? attivita : [attivita])
+    .map((f) => sovrapposizione(f, intero))
+    .filter((f): f is Periodo => f !== null);
+  const { sovrapposti } = scansione(periodi, intero);
+  const scoperti = finestre.flatMap((f) => scansione(periodi, f).scoperti);
   return { scoperti, sovrapposti };
 }
 
@@ -290,6 +306,29 @@ export type Rifornimento<R> = {
   litri: number;
   rif: R;
 };
+
+/**
+ * Oltre questa pausa fra due rifornimenti — o fra l'inizio dell'esercizio e
+ * il primo, o fra l'ultimo e la fine — un registro somiglia a un registro
+ * incompleto più che a una flotta ferma. Due mesi: una flotta che rifornisce
+ * ogni mese non ci arriva mai, una sola auto usata poco sì, e lo dichiara.
+ */
+export const PAUSA_MASSIMA_RIFORNIMENTI = 62;
+
+/** I tratti dell'esercizio senza rifornimenti più lunghi della pausa massima. */
+export function pauseRifornimenti(date: string[], esercizio: number): Periodo[] {
+  const intero = esercizioComePeriodo(esercizio);
+  const giorni = [...new Set(date.filter((d) => d >= intero.dal && d <= intero.al).map(giornoDi))].sort((a, b) => a - b);
+  if (giorni.length === 0) return [intero];
+  const pause: Periodo[] = [];
+  const limiti = [giornoDi(intero.dal) - 1, ...giorni, giornoDi(intero.al) + 1];
+  for (let i = 1; i < limiti.length; i++) {
+    const dal = limiti[i - 1] + 1;
+    const al = limiti[i] - 1;
+    if (al - dal + 1 > PAUSA_MASSIMA_RIFORNIMENTI) pause.push({ dal: isoDi(dal), al: isoDi(al) });
+  }
+  return pause;
+}
 
 export type EsitoCarburanti<R> = {
   /** Per carburante, nell'ordine in cui compaiono. */

@@ -97,16 +97,47 @@ rischio di un inventario che perde una sede senza che nessuno lo veda.
 
 **9ter. Un documento dell'inventario non ancora letto, o illeggibile, blocca.**
 Potrebbe essere proprio la bolletta che manca, e non si sa finché non è letto.
-In coda o in lettura tocca a noi; non letto o illeggibile, all'impresa
-(avviare la lettura, caricare una copia leggibile o eliminarlo). *Costo:* un
-documento illeggibile di un anno passato ferma l'inventario di quest'anno
-finché non lo si toglie.
+Il rimedio tocca sempre all'impresa: in coda, aprire l'archivio (la coda
+procede solo lì); in lettura da più di un quarto d'ora, rileggerlo; non letto
+o illeggibile, avviare la lettura, caricare una copia leggibile o eliminarlo.
+*Costo:* un documento illeggibile di un anno passato ferma l'inventario di
+quest'anno finché non lo si toglie.
 
-**9quater. Energia elettrica compresa nell'affitto: il rimedio resta
-«scrivici».**
-Senza bollette lo Scope 2 non si calcola, e la ripartizione dei consumi di un
-edificio condiviso è un caso da valutare con chi valida. Non c'è ancora una
-dichiarazione né un tipo di documento per il prospetto del locatore.
+**9quater. Energia elettrica compresa nell'affitto: una dichiarazione, e poi
+un blocco nostro.**
+Senza bollette lo Scope 2 non si calcola. L'impresa dichiara che l'energia è
+compresa nel canone; da lì il documento resta fermo, ma la mancanza passa a
+noi: la ripartizione dei consumi di un edificio condiviso va ricostruita con
+chi valida, e la piattaforma non la sa ancora fare.
+
+**9quinquies. Ogni fonte di Scope 1 assente va spiegata, anche al primo anno.**
+Con le bollette del gas e nessun registro dei carburanti — o il contrario — il
+documento chiede il documento mancante o la dichiarazione «nessun
+rifornimento» («nessun consumo di gas»). Un'impresa senza mezzi dichiara una
+volta per esercizio. *Alternativa più leggera:* chiedere solo quando la fonte
+c'era l'anno prima, che al primo anno lascerebbe passare un inventario senza
+la flotta.
+
+**9sexies. Più di due mesi senza rifornimenti fermano il documento.**
+Una pausa oltre i 62 giorni — fra due rifornimenti, o dall'inizio o fino alla
+fine dell'esercizio — somiglia a un registro incompleto. Il rimedio è caricare
+i rifornimenti o dichiarare che i registri sono completi. *Costo:* un'auto usata
+poco chiede la dichiarazione ogni anno.
+
+**9septies. Doppioni e documenti che la piattaforma non calcola fermano il
+documento.**
+Due registri con rifornimenti identici (data, carburante, litri, mezzo)
+bloccano come due bollette sovrapposte. Una bolletta contenuta in un'altra è un
+doppione anche se dura tre giorni. Un documento che una sezione aspetta ma che
+nessun compositore legge — oggi il teleriscaldamento — blocca come mancanza
+nostra, anche se è di un altro anno. Metano e HVO nei registri: fattore
+mancante, nostro. Le ricariche elettriche dei veicoli: l'impresa dichiara che
+avvengono in sede, oppure ci scrive, perché quelle fuori sede sono Scope 2 e non
+le calcoliamo ancora.
+
+**9octies. Più periodi di attività per contatore, fino a quattro.**
+Un contatore sospeso d'estate si dichiara in due periodi. I buchi si cercano
+dentro i periodi, i doppioni su tutto l'esercizio.
 
 **10. Un dato non confermato blocca solo se il documento lo usa.**
 Un numero REA da confermare non ferma un inventario; un consumo, un periodo o
@@ -134,14 +165,32 @@ la pagina indicata troverebbe un altro numero. Lo stesso per la scheda
 impresa: un dato recuperato e poi riscritto passa a provenienza «utente». Un
 valore ricavato dalla lettura da altre celle è C, con il documento come
 ingresso. *Alternativa:* D con una nota «corretto dall'organizzazione».
+Nella scheda impresa oggi un dato recuperato si conferma o si respinge, non si
+riscrive: il rimedio proposto per un dato sbagliato o mancante è la visura
+camerale.
 
 **12ter. Un numero o una data non canonici bloccano, anche quando
 un'interpretazione sembra ovvia.**
 «11.840» non si legge né come undicimila né come undici: si chiede di
-riscriverlo, e la correzione dal portale lo salva già nella forma giusta.
-Una scelta fuori elenco («forse» per la fornitura rinnovabile) blocca allo
-stesso modo. *Alternativa:* interpretare all'italiana, che è corretto quasi
-sempre — e sbaglia di mille volte quando non lo è.
+riscriverlo, e la correzione dal portale lo salva già nella forma giusta —
+all'italiana, «11.840» diventa 11840. L'unica forma che la correzione non
+scioglie è «1,000» (uno o mille): si chiede di riscriverla. Una scelta si
+riconosce anche detta a voce — «Non dichiarata», «diesel», «elettrica» — ma
+una fuori elenco («forse») non si salva. Una correzione che non si può usare
+non si salva affatto: torna al cliente col perché, invece di finire
+confermata e bloccare il documento. *Alternativa:* interpretare sempre
+all'italiana, che è corretto quasi sempre — e sbaglia di mille volte quando
+non lo è.
+
+**12quater. Un valore già confermato si riapre.**
+Nella pagina del documento e nell'archivio un valore confermato o scartato ha
+«Riapri»; dal pannello del documento finale, una mancanza su valori confermati
+li riapre e porta alla pagina dove correggerli. Riaperto, il valore esce dai
+calcoli finché non lo si conferma di nuovo. La correzione la scrive il server
+(il segno «scritto da te» non è una colonna che il cliente può toccare), e la
+migrazione aggiunge un vincolo in banca dati che mette quel segno — e la
+provenienza «utente» nella scheda — a ogni valore cambiato da un utente, anche
+senza passare dal portale.
 
 **13. La sigla accanto a ogni singolo valore, anche quando una riga intera
 viene dalla stessa bolletta.**

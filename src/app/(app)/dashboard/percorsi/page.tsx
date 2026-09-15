@@ -475,7 +475,10 @@ export default async function PercorsiPage({
             .select("*")
             .eq("organization_id", contesto.org.id)
             .order("created_at", { ascending: false }),
-          leggiIngressi(supabase, contesto.org.id),
+          // Una lettura rimasta a metà non deve far cadere la pagina intera:
+          // si dice che cosa è successo, e non si compone niente su dati
+          // incompleti (archivio.ts, `LetturaIncompleta`).
+          leggiIngressi(supabase, contesto.org.id).catch(() => null),
           leggiMarchio(supabase, contesto.org.id),
           leggiVersioni(supabase, contesto.org.id),
           supabase
@@ -491,6 +494,18 @@ export default async function PercorsiPage({
           { versioni: [], disponibile: false },
           { data: null },
         ];
+  if (!ingressi) {
+    return (
+      <main>
+        <IntestazioneSezione
+          eyebrow="I TUOI PERCORSI"
+          titolo="Non siamo riusciti a leggere tutto"
+          sotto="Una parte dei dati dell'archivio non è arrivata, e bozze e documenti non si compongono su dati incompleti. Ricarica la pagina tra poco: la lettura non ha toccato i tuoi dati."
+        />
+        <SelettoreCliente contesto={contesto} base="/dashboard/percorsi" />
+      </main>
+    );
+  }
   const righeScheda = ingressi.campi;
   const documenti = ingressi.documenti;
   const campiLetti = ingressi.campiDocumento;

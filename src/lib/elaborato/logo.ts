@@ -45,8 +45,16 @@ const LARGHEZZA_MASSIMA = 2400;
 
 const MB = (byte: number) => `${Math.round(byte / (1024 * 1024))} MB`;
 
-/** Ciò che un logo non ha motivo di contenere: codice, entità XML, risorse fuori dal file. */
-const PERICOLI_SVG = /<script|<foreignObject|<!DOCTYPE|<!ENTITY|(?:xlink:)?href\s*=\s*["']\s*(?:https?:|\/\/|file:)/i;
+/**
+ * Ciò che un logo vettoriale non ha motivo di contenere: codice, entità XML,
+ * immagini incorporate, riferimenti che escono dal disegno. Le immagini
+ * incorporate soprattutto: un SVG da un mega può portarsi dentro un PNG da
+ * sedicimila pixel per lato, che il rasterizzatore decodifica senza passare
+ * dal tetto dei pixel — tre gigabyte di memoria per un «logo». Un `href` o un
+ * `url()` è ammesso solo verso un elemento dello stesso disegno (`#id`).
+ */
+const PERICOLI_SVG =
+  /<script|<foreignObject|<!DOCTYPE|<!ENTITY|<image[\s>/]|<feImage[\s>/]|@import|(?:xlink:)?href\s*=\s*["']\s*(?!#)|url\(\s*["']?\s*(?!#)/i;
 
 /** Le varianti di codifica, dalla più fedele alla più leggera: si prende la prima che sta nel peso. */
 const CODIFICHE: { lato: number; tavolozza: boolean }[] = [

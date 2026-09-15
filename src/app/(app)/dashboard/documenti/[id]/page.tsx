@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database";
 import { tipoDocumento } from "@/lib/documenti";
+import { tutte } from "@/lib/elaborato/archivio";
 import { voceMotore } from "@/lib/motore/famiglie";
 import { riassumiRiga, type FonteVista } from "@/lib/motore/portale";
 
@@ -45,12 +47,30 @@ export default async function ConfermaDocumentoPage({
     .maybeSingle();
   if (!documento) notFound();
 
-  const { data: campi } = await supabase
-    .from("document_fields")
-    .select("*")
-    .eq("document_id", id)
-    .order("riga", { ascending: true })
-    .order("created_at", { ascending: true });
+  // A pagine: un registro settimanale di cinque mezzi supera le mille celle,
+  // e oltre il tetto la banca dati tronca senza dirlo — le ultime righe non
+  // comparirebbero mai da confermare.
+  const campi = await tutte<Database["public"]["Tables"]["document_fields"]["Row"]>((da, a) =>
+    supabase
+      .from("document_fields")
+      .select("*", { count: "exact" })
+      .eq("document_id", id)
+      .order("riga", { ascending: true })
+      .order("created_at", { ascending: true })
+      .order("id")
+      .range(da, a),
+  ).catch(() => null);
+  if (!campi) {
+    return (
+      <main>
+        <IntestazioneSezione
+          eyebrow="CONFERMA"
+          titolo="Non siamo riusciti a leggere tutti i valori"
+          sotto={`${documento.nome_file}: una parte dei valori letti non è arrivata, e confermarne solo una parte darebbe un documento a metà. Ricarica la pagina tra poco.`}
+        />
+      </main>
+    );
+  }
 
   const tipo = tipoDocumento(documento.tipo);
   const voce = voceMotore(documento.tipo);
@@ -59,7 +79,7 @@ export default async function ConfermaDocumentoPage({
   // Le celle si raggruppano per riga, nell'ordine delle colonne dichiarate
   // dal tipo: l'ordine di lettura sul foglio, non quello di inserimento.
   const perRiga = new Map<number, typeof campi>();
-  for (const c of campi ?? []) {
+  for (const c of campi) {
     const elenco = perRiga.get(c.riga) ?? [];
     elenco.push(c);
     perRiga.set(c.riga, elenco);

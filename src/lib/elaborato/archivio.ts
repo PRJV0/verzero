@@ -90,7 +90,7 @@ const PAGINA = 1000;
  * o un conteggio che non torna FERMA la composizione, invece di comporre
  * su dati a metà.
  */
-async function tutte<T>(
+export async function tutte<T>(
   pagina: (da: number, a: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null; count: number | null }>,
 ): Promise<T[]> {
   const righe: T[] = [];
@@ -560,6 +560,22 @@ async function archiviaVersione(dati: {
     .single();
 
   if (error || !data) {
+    // La risposta può perdersi DOPO che la riga è stata scritta: prima di
+    // togliere i file si guarda se la versione esiste. Cancellarli sotto una
+    // versione registrata lascerebbe un documento consegnato senza file.
+    const { data: registrata } = await servizio
+      .from("elaborati_versioni")
+      .select("id, revisione, codice, created_at, pdf_pagine, docx_percorso")
+      .eq("id", id)
+      .maybeSingle();
+    if (registrata) {
+      return {
+        esito: "generata",
+        versione: breve(registrata),
+        cambiato: dati.cambiato,
+        ...(dati.avviso ? { avviso: dati.avviso } : {}),
+      };
+    }
     await servizio.storage.from("elaborati").remove([`${base}.pdf`, ...(docx ? [`${base}.docx`] : [])]);
     return {
       esito: "errore",
