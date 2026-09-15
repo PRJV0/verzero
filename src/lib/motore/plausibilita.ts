@@ -432,6 +432,44 @@ export function canonicalizza(valore: string, tipo: TipoValore): string {
 }
 
 /**
+ * IL VALORE SCRITTO DAL CLIENTE, NELLA STESSA FORMA DI QUELLO LETTO.
+ *
+ * Una correzione arriva come la digita una persona: «11.840», «06/03/2025»,
+ * «Sì». Salvata così, la composizione del documento finale la leggerebbe
+ * nel modo sbagliato — undici virgola ottantaquattro kWh, un rifornimento
+ * fuori dall'anno — oppure dovrebbe indovinare. Qui passa dalla stessa
+ * `canonicalizza` della lettura, e ciò che non si riesce a ricondurre
+ * resta com'è con un avviso: il documento non lo usa, e dice perché.
+ */
+export function valoreCorretto(
+  scritto: string,
+  campo: Pick<EtichettaCampo, "tipo" | "valori"> | undefined,
+): { valore: string; avviso: string | null } {
+  const v = scritto.trim();
+  if (!campo) return { valore: v, avviso: null };
+  if (campo.tipo === "numero") {
+    const c = canonicalizza(v, "numero");
+    return /^-?\d+(\.\d+)?$/.test(c) && String(Number(c)) === c
+      ? { valore: c, avviso: null }
+      : { valore: v, avviso: "Non è un numero che si possa usare: riscrivilo con le sue cifre, come sul documento." };
+  }
+  if (campo.tipo === "data") {
+    const c = canonicalizza(v, "data");
+    return dataValida(c)
+      ? { valore: c, avviso: null }
+      : { valore: v, avviso: "Non è una data valida: scrivila come giorno, mese e anno, per esempio 16/03/2025." };
+  }
+  if (campo.tipo === "scelta" && campo.valori?.length) {
+    const piano = v.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, "-");
+    const trovato = campo.valori.find((x) => x === piano);
+    return trovato
+      ? { valore: trovato, avviso: null }
+      : { valore: v, avviso: `Non è uno dei valori previsti: ${campo.valori.map((x) => x.replace(/-/g, " ")).join(", ")}.` };
+  }
+  return { valore: v, avviso: null };
+}
+
+/**
  * Trasforma i campi dello schema in campi mostrabili: li rimette
  * nell'ordine dichiarato dal tipo, li riporta alla forma canonica e
  * applica le due correzioni che valgono su TUTTI i documenti — il tetto

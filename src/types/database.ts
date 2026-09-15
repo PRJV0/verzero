@@ -323,6 +323,72 @@ type Waitlist = {
   updated_at: string;
 };
 
+/**
+ * La veste dei documenti generati (docs/motore.md §6).
+ *
+ * Arriva con la migrazione `20260915120000_elaborati_e_marchio.sql`, NON
+ * ANCORA APPLICATA AL REMOTO: finché non c'è, le letture falliscono e il
+ * portale lo dice (src/lib/elaborato/archivio.ts). Il logo e le sue misure
+ * li scrive il server; colore e contatti il cliente.
+ */
+type ImpostazioniMarchioRiga = {
+  organization_id: string;
+  logo_percorso: string | null;
+  logo_larghezza: number | null;
+  logo_altezza: number | null;
+  logo_vettoriale: boolean;
+  logo_esito: { tono: "ok" | "avviso" | "blocco"; testo: string }[] | null;
+  colore_accento: string | null;
+  nome_intestazione: string | null;
+  indirizzo: string | null;
+  sito: string | null;
+  contatto: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/**
+ * Una versione di un elaborato generato: immutabile, scritta dal server.
+ * Stessa migrazione, stesso stato (non applicata al remoto).
+ */
+type ElaboratoVersione = {
+  id: string;
+  organization_id: string;
+  percorso: string;
+  modello: string;
+  documento: string;
+  esercizio: number;
+  revisione: number;
+  codice: string;
+  motivo: string;
+  cambiato: string[];
+  standard: string | null;
+  versione_standard: string | null;
+  designazione_standard: string | null;
+  riferimenti: unknown;
+  fonti: unknown;
+  contenuto: unknown;
+  impronta: unknown;
+  impronta_testo: string;
+  veste: unknown;
+  stato_validazione: "in_attesa" | "validata";
+  validata_da: string | null;
+  validata_qualifica: string | null;
+  validata_il: string | null;
+  rilievi: string[] | null;
+  valida_revisione: string | null;
+  pdf_percorso: string;
+  pdf_byte: number;
+  pdf_pagine: number;
+  pdf_sha256: string;
+  docx_percorso: string | null;
+  docx_byte: number | null;
+  docx_sha256: string | null;
+  generata_da: string | null;
+  created_at: string;
+};
+
 type Row<T> = {
   Row: T;
   Insert: Partial<T>;
@@ -347,6 +413,8 @@ export type Database = {
       extractions: Row<Estrazione>;
       motore_allarmi: Row<AllarmeMotore>;
       events: Row<Evento>;
+      brand_settings: Row<ImpostazioniMarchioRiga>;
+      elaborati_versioni: Row<ElaboratoVersione>;
       waitlist: Row<Waitlist>;
     };
     Views: Record<string, never>;

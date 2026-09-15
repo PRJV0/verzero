@@ -538,9 +538,9 @@ ragione e la nostra regola torto.
 
 ## 5. (e) Generazione dei documenti
 
-Il Motore produce l'elaborato, non solo i dati. Questa parte è progettata
-qui e implementata dopo l'estrazione (§11): senza dati veri non c'è niente
-da impaginare.
+Il Motore produce l'elaborato, non solo i dati. Progettata qui, **implementata
+il 15 settembre 2026** in `src/lib/elaborato/` — come, in fondo a questa
+sezione.
 
 ### La struttura viene dalla norma, non dal gusto
 
@@ -596,6 +596,99 @@ l'impaginazione come resa — la stessa disciplina di «adattare, non
 degradare» applicata ai documenti. La scorciatoia (generare HTML e
 stamparlo) produce un PDF accettabile e un DOCX inutilizzabile.
 
+### Com'è fatta, adesso
+
+**Un albero, due rese.** La composizione (`componi.ts`) produce un
+`Elaborato`: frontespizio, sezioni fatte di pochi blocchi (paragrafo,
+sottotitolo, elenco, coppie, tabella, cifre, barre, riquadro), riferimenti
+normativi, registro delle fonti, validazione, registro delle revisioni.
+`pdf.ts` (PDFKit, Inter incorporato) e `docx.ts` lo impaginano e **non
+aggiungono una parola**: tutto il testo che il cliente legge nasce nella
+composizione, una volta.
+
+**Il modello dichiara il contenuto.** Ogni sezione di `elaborati.ts` porta
+`componi`: paragrafi del modello coi segnaposto, e blocchi di dati affidati
+a compositori registrati per chiave (`compositori.ts` per i generici —
+anagrafica, perimetro, citazioni dal sito, `tabella-documenti`;
+`compositori-ghg.ts` per l'inventario). Il costruttore non conosce i
+domini: una sezione senza `componi` non si inventa, diventa una mancanza
+«da parte nostra». La prova che un ambito nuovo compone il suo documento
+dichiarando solo il modello è in `scripts/test-elaborato.mjs`.
+
+**Ogni dato ha una sigla.** Nel contenuto una cella è una stringa (testo
+nostro) o un `Valore` (dato dell'impresa), e un `Valore` senza fonte non
+passa il controllo. Le sigle — **D** letto da un documento dell'impresa,
+**B** recuperato da una banca dati, **C** calcolato, **I** inserito
+dall'impresa — rimandano al registro delle fonti in appendice: file, pagine
+e data di conferma; pubblicazione, tabella e data di verifica; procedimento
+e ingressi. Un calcolo è confermato solo se lo sono tutti i suoi ingressi,
+fino in fondo.
+
+**Il controllo è di un altro modulo** (`consegna.ts`), perché chi compone ha
+interesse a considerarsi completo. Rilegge il documento composto e blocca
+su: sezione richiesta mancante o vuota, sezione non componibile, valore
+senza fonte, fonte non confermata, riferimento ritirato o non registrato,
+designazione non registrata nel testo, segnaposto, versione dello standard
+superata per l'esercizio, esercizio incoerente, documento d'origine di un
+altro anno — più le mancanze dei compositori (un consumo da confermare, un
+mese scoperto, una bolletta doppia, un fattore che non c'è). Ogni mancanza
+dice **chi** rimedia (l'impresa o noi), **che cosa** e **dove**. I renderer
+accettano solo un `ElaboratoConsegnabile`, che esiste unicamente come uscita
+del controllo senza mancanze: un PDF di un documento incompleto non compila.
+
+**I fattori di emissione** stanno in `src/lib/calc/fattori.ts`, verificati
+sui documenti originali (ISPRA, MASE, AIB, DESNZ) con tabella e data; il
+calcolo (`src/lib/calc/ghg.ts`) è puro, attribuisce le bollette a cavallo
+d'anno per giorni, controlla la copertura per contatore e non arrotonda. Un
+fattore di un anno successivo all'esercizio non si usa mai.
+
+**Niente si indovina.** La composizione accetta numeri e date solo nella
+forma canonica della banca dati (`numeroCanonico`, `dataCanonica` in
+`compositori.ts`): «11.840» scritto a mano può essere undicimila o undici, e
+un inventario che sceglie da solo esce con le emissioni divise per mille. Un
+valore non canonico diventa la mancanza «valore-non-calcolabile», con il
+link per riscriverlo. Alla fonte, una correzione del cliente si salva già in
+quella forma (`valoreCorretto` in `src/lib/motore/plausibilita.ts`, la
+stessa `canonicalizza` della lettura), e ciò che non si riconduce resta com'è
+con un avviso. Un documento dei tipi dell'inventario non ancora letto, o
+illeggibile, ferma il documento: potrebbe essere proprio la bolletta che
+manca. Un registro da cui la lettura non ha tirato fuori righe non vale come
+zero.
+
+**La sigla dice chi ha scritto il numero.** Un valore riscritto dal cliente
+non è più «letto dalla bolletta» — su quella pagina c'è un altro numero — e
+diventa **I**; un valore che la lettura ha ricavato da altre celle diventa
+**C** con il documento fra gli ingressi; i calcoli che partono da lì li
+dichiarano. Nella scheda impresa, correggere un dato recuperato da una banca
+dati ne cambia la provenienza in `utente` (lo scrive il server: il client non
+può toccare provenienza e fonte). Anche i numeri derivati — i giorni di una
+bolletta nell'esercizio, i conteggi dei documenti, le cifre citate nelle
+note — portano la loro sigla.
+
+**Gli altri esercizi sono un indizio.** Al secondo anno l'archivio contiene
+le bollette del primo: un documento di un altro esercizio non conta come
+presente e da solo non blocca. Ma un contatore o una fonte di Scope 1 che
+avevano documenti nell'esercizio **precedente** e in questo non ne hanno
+vanno spiegati: con i documenti dell'anno, o con una dichiarazione.
+
+**Dove nessun documento risponde, una dichiarazione**
+(`src/lib/elaborato/dichiarazioni.ts`). Nessun documento dimostra
+un'assenza: un ufficio senza caldaia non ha bollette del gas, un contatore
+aperto a giugno non ha la bolletta di gennaio. L'impresa può dichiarare dal
+pannello del documento finale, accanto alla mancanza che la chiede: nessun
+consumo diretto di combustibili, nessun consumo di gas, nessun rifornimento,
+il periodo di attività di un contatore o che non è stato attivo. La
+dichiarazione si scrive nella scheda impresa con una chiave che porta
+l'esercizio, entra nel documento con la sua sigla **I** e la frase dichiarata
+parola per parola, e dove sostituisce una misura il testo lo dice («zero per
+dichiarazione, non per misura»). Una dichiarazione smentita dai documenti in
+archivio ferma il documento finché una delle due cose non viene tolta; quale,
+lo decide l'impresa.
+
+**Il collaudo** (`scripts/collaudo-elaborato.mjs`) genera l'Inventario GHG
+2025 dell'impresa d'esempio con le stesse funzioni del portale, con e senza
+veste, e l'anteprima.
+
 ---
 
 ## 6. (f) Personalizzazione grafica per cliente
@@ -627,6 +720,20 @@ riusano su tutti i suoi documenti: si impostano una volta.
 resta professionale — tipografia del prodotto, nessun rettangolo vuoto,
 nessun «il tuo logo qui». Un documento neutro ben fatto è meglio di un
 documento brandizzato male, e la maggioranza dei clienti non caricherà nulla.
+
+**Implementata** in `veste.ts` (giudizi puri) e `logo.ts` (lavoro sui byte
+con `sharp`), impostata da **Impostazioni → Veste dei documenti**. Il colore
+si misura contro un bianco di carta da ufficio, ruolo per ruolo: titoli
+4,5:1, filetti 3:1, fasce 1,3:1; dove non regge si torna al neutro per quel
+ruolo e lo si dice col numero accanto. Il logo si rifila dei margini vuoti,
+un SVG si rasterizza (e si rifiuta se porta script o risorse esterne), il
+fondo si legge dai pixel: chiaro su trasparente non si usa, su fondo
+colorato si usa con avviso, a bassa risoluzione si mostra più piccolo per
+restare nitido. La veste neutra è grafite e ardesia, non i verdi del sito:
+un documento neutro coi colori di Verzero sarebbe un documento col marchio
+di Verzero. Il nostro logotipo sta solo nel colophon, nei suoi colori.
+L'anteprima (copertina e prima sezione) esce dallo stesso impaginatore e
+dichiara su ogni pagina che non è il documento consegnato.
 
 ---
 
@@ -808,8 +915,21 @@ stessi dati, quindi non si rilegge — si riaprono i dati che ci sono, con la
 stessa frase e con «rileggilo comunque» accanto. Si rilegge quando il file
 è cambiato, quando lo schema è cambiato, o quando il cliente lo chiede.
 
-Le decisioni sono pure e provate in `src/lib/motore/riuso.ts`: la
-generazione, quando esisterà, ci si innesta senza riscriverle.
+Le decisioni sono pure e provate in `src/lib/motore/riuso.ts`, e la
+generazione ci si è innestata senza riscriverle: l'impronta di un elaborato
+(`src/lib/elaborato/impronta.ts`) aggiunge due componenti facoltative —
+i **fattori** di calcolo e la **veste** — perché «la norma ha cambiato
+edizione» non è il modo giusto di dire che è cambiato il logo. Riconfermare
+lo stesso valore non cambia l'impronta; un documento di un tipo che il
+modello non legge nemmeno. La cambia invece lo stesso numero riscritto a
+mano dal cliente, perché nel documento la sua sigla passa da D a I.
+
+**Il codice che compone è un ingresso anche lui.** L'impronta del modello
+contiene `VERSIONE_GENERATORE` (`src/lib/elaborato/componi.ts`): corretto un
+calcolo, un compositore o l'impaginazione, lo stesso ingresso produce un
+documento diverso, e senza quel numero il riuso riaprirebbe la versione
+vecchia — con l'errore dentro — come «già generata». Si aggiorna a mano, da
+chi cambia ciò che il generatore produce.
 
 ---
 
@@ -836,6 +956,29 @@ versioni precedenti restano: un documento consegnato non si cancella.
 
 È il meccanismo che rende vera la promessa «i documenti non invecchiano nel
 cassetto», e che alimenta il mantenimento del percorso di aggiornamento.
+
+**Implementato** con la tabella `elaborati_versioni` (migrazione
+`20260915120000_elaborati_e_marchio.sql`) e il bucket privato `elaborati`.
+Una riga per revisione, **immutabile** — un vincolo in banca dati rifiuta
+ogni modifica, anche dal service role — con dentro il contenuto completo,
+i riferimenti normativi e il registro delle fonti copiati, l'impronta degli
+ingressi, la veste usata e l'hash dei file. La **validazione professionale**
+non modifica la revisione validata: ne emette una nuova, con lo stesso
+contenuto salvato e la pagina di validazione compilata, dopo aver rifatto il
+controllo di consegna. Le scritture le fa il server col service role dopo
+che la sessione ha dimostrato di poter leggere quei dati; il cliente legge
+le proprie versioni e scarica i file con indirizzi temporanei.
+
+Tre dettagli che una revisione indipendente ha trovato rotti, e che adesso
+reggono: gli ingressi si leggono **a pagine e contati** — l'API della banca
+dati tronca le risposte oltre un tetto senza dare errore, e un registro
+carburanti settimanale supera da solo le mille celle; il file di una
+versione ha nel nome l'identificativo della riga, così un caricamento rimasto
+orfano non blocca per sempre la revisione successiva; e il vincolo di
+immutabilità ammette **una** sola modifica, l'azzeramento di chi ha generato
+la versione che Postgres esegue da sé quando quell'utente viene cancellato —
+senza, la cancellazione di un utente fallirebbe su ogni documento che ha
+generato.
 
 ### 8.1 Le versioni degli STANDARD (non delle norme)
 
@@ -1164,10 +1307,13 @@ ramo condizionale (che serve a uno solo).
 8. Famiglia OPERA piena: manuale di sistema, procedure, verbali, e
    l'analisi degli scostamenti che apre l'Aggiornamento del Sistema di
    Gestione.
-9. Generazione dell'elaborato con controllo di conformità bloccante — ed è
-   lì che il riuso (§7bis) trova il suo caso principale.
-10. Marchio del cliente e anteprima.
-11. Versioni e rigenerazione.
+9. ~~**Generazione dell'elaborato con controllo di conformità bloccante**~~ —
+   fatta per l'Inventario GHG (Scope 1 e 2): composizione dal modello,
+   controllo di consegna, PDF e DOCX, riuso. Gli altri modelli dichiarano
+   dove non arrivano ancora.
+10. ~~**Marchio del cliente e anteprima**~~ — fatti.
+11. ~~**Versioni e rigenerazione**~~ — fatte, con la validazione come
+    revisione nuova. La migrazione è da applicare al remoto.
 
 L'ordine non è negoziabile su un punto: **la tappa 1 arriva fino al
 portale**. Un'estrazione che funziona nei test e non si vede in pagina non è

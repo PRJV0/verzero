@@ -116,6 +116,41 @@ const SEMPLICE = {
   maiuscole: 0.7,
 };
 
+/**
+ * La geometria del logotipo semplice, in em, con l'origine sulla cima
+ * delle maiuscole.
+ *
+ * Esiste per chi disegna il logotipo FUORI dall'SVG — il colophon dei
+ * documenti PDF, che lo traccia con le primitive del PDF invece di
+ * incollare un'immagine. Sono gli stessi numeri di `logotipoSvg`, che li
+ * legge da qui: due copie della stessa geometria sarebbero due logotipi.
+ */
+export function geometriaLogotipo({ monogramma = false }: { monogramma?: boolean } = {}) {
+  const larghezzaNome = monogramma ? 1.67349 : LOCKUP.larghezzaNome;
+  // Lo zero è centrato nella sua scatola, e la scatola comincia dopo lo
+  // stacco: il centro dell'ellisse sta a metà di quella scatola.
+  const zeroCentro =
+    larghezzaNome + SEMPLICE.stacco + SEMPLICE.scatolaLarghezza / 2;
+  // L'origine del disegno è la cima delle maiuscole: la linea di base
+  // sta un'altezza-maiuscole più giù, e lo zero ci poggia sopra.
+  const base = SEMPLICE.maiuscole;
+  return {
+    tracciato: monogramma ? TRACCIATO_NOME_CORTO : TRACCIATO_NOME,
+    base,
+    zero: {
+      cx: zeroCentro,
+      cy: base - (SEMPLICE.ry + SEMPLICE.tratto / 2),
+      rx: SEMPLICE.rx,
+      ry: SEMPLICE.ry,
+      tratto: SEMPLICE.tratto,
+    },
+    larghezza: zeroCentro + SEMPLICE.rx + SEMPLICE.tratto / 2,
+    altezza: base,
+    /** L'area di rispetto: la larghezza della scatola dello zero. */
+    respiro: SEMPLICE.scatolaLarghezza,
+  };
+}
+
 export function logotipoSvg({
   scuro = false,
   monogramma = false,
@@ -124,21 +159,16 @@ export function logotipoSvg({
   monogramma?: boolean;
 }): string {
   const colore = scuro ? "#EAF0EF" : "#21544F";
-  const tracciato = monogramma ? TRACCIATO_NOME_CORTO : TRACCIATO_NOME;
-  const larghezzaNome = monogramma ? 1.67349 : LOCKUP.larghezzaNome;
+  const g = geometriaLogotipo({ monogramma });
+  const tracciato = g.tracciato;
 
   const n = (v: number) => +(v * U).toFixed(2);
-  // Lo zero è centrato nella sua scatola, e la scatola comincia dopo lo
-  // stacco: il centro dell'ellisse sta a metà di quella scatola.
-  const zeroCentro =
-    larghezzaNome + SEMPLICE.stacco + SEMPLICE.scatolaLarghezza / 2;
-  // L'origine del disegno è la cima delle maiuscole: la linea di base
-  // sta un'altezza-maiuscole più giù, e lo zero ci poggia sopra.
-  const base = SEMPLICE.maiuscole;
-  const altezza = base;
-  const zeroCentroY = base - (SEMPLICE.ry + SEMPLICE.tratto / 2);
-  const larghezza = zeroCentro + SEMPLICE.rx + SEMPLICE.tratto / 2;
-  const respiro = SEMPLICE.scatolaLarghezza * U;
+  const zeroCentro = g.zero.cx;
+  const base = g.base;
+  const altezza = g.altezza;
+  const zeroCentroY = g.zero.cy;
+  const larghezza = g.larghezza;
+  const respiro = g.respiro * U;
   const tela = { w: n(larghezza) + respiro * 2, h: n(altezza) + respiro * 2 };
   const nome = monogramma ? "Ver0" : "Verzero";
 

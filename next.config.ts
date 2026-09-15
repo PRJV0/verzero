@@ -6,7 +6,26 @@ const nextConfig: NextConfig = {
   // latenza — la predefinita di Vercel è Washington, quindi senza quel
   // file l'applicazione girerebbe negli Stati Uniti mentre la pagina
   // pubblica dichiara che i dati vivono in UE.
-  experimental: {},
+  experimental: {
+    // Il logo arriva a una server action: il limite predefinito (1 MB) è
+    // sotto i 4 MB che la veste dei documenti ammette (`MAX_BYTE_LOGO`).
+    // Non oltre 4,5: è il tetto delle richieste sulla piattaforma che ospita
+    // le funzioni, e un limite più largo qui prometterebbe un file che
+    // comunque non arriva.
+    serverActions: { bodySizeLimit: "4.5mb" },
+  },
+  // PDFKit legge a runtime i propri file di dati accanto al codice: se il
+  // bundler lo impacchetta, quei percorsi non esistono più.
+  serverExternalPackages: ["pdfkit"],
+  // I caratteri del generatore stanno fuori da `public/` (non sono una
+  // risorsa del sito): vanno portati esplicitamente nelle funzioni che
+  // generano documenti, insieme ai dati di PDFKit.
+  outputFileTracingIncludes: {
+    "/dashboard/**": [
+      "./src/lib/elaborato/caratteri/*.ttf",
+      "./node_modules/pdfkit/js/data/**/*",
+    ],
+  },
   // Rebranding: "bollino" -> "Sigillo Ver0". La vecchia rotta reindirizza
   // permanentemente alla nuova, così link e segnalibri esistenti non si rompono.
   async redirects() {

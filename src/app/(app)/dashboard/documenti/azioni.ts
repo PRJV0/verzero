@@ -11,7 +11,9 @@ import {
   statoIniziale,
   tipoDocumento,
 } from "@/lib/documenti";
-import { siSaLeggere } from "@/lib/motore/famiglie";
+import { siSaLeggere, voceMotore } from "@/lib/motore/famiglie";
+import { valoreCorretto } from "@/lib/motore/plausibilita";
+import { AVVISO_SCRITTO_DA_TE } from "@/lib/motore/portale";
 import { drenaCoda, eseguiLettura } from "@/lib/motore/registra";
 import { annoRendicontazioneDefault } from "@/lib/periodo";
 
@@ -318,13 +320,29 @@ export async function correggiCampo(id: string, valore: string) {
   const pulito = valore.trim().slice(0, 500);
   if (pulito.length === 0) return;
   const supabase = await createClient();
+  // Il tipo del campo decide la forma in cui si salva: un numero scritto
+  // all'italiana diventa il numero che la lettura avrebbe scritto. La RLS
+  // resta il giudice — un campo di un'altra organizzazione non si trova.
+  const { data: campo } = await supabase
+    .from("document_fields")
+    .select("campo, document_id")
+    .eq("id", id)
+    .maybeSingle();
+  if (!campo) return;
+  const { data: documento } = await supabase
+    .from("documents")
+    .select("tipo")
+    .eq("id", campo.document_id)
+    .maybeSingle();
+  const definizione = voceMotore(documento?.tipo)?.campi?.find((c) => c.chiave === campo.campo);
+  const corretto = valoreCorretto(pulito, definizione);
   await supabase
     .from("document_fields")
     .update({
-      valore: pulito,
+      valore: corretto.valore,
       stato: "confermato",
       confirmed_at: new Date().toISOString(),
-      avvisi: ["Scritto da te: questo valore non viene dalla nostra lettura."],
+      avvisi: [AVVISO_SCRITTO_DA_TE, ...(corretto.avviso ? [corretto.avviso] : [])],
     })
     .eq("id", id);
   aggiornaViste();

@@ -35,6 +35,12 @@ export type VoceRegistro = {
   ritirataIl?: string;
   sostituita?: string;
   nota?: string;
+  /**
+   * Il titolo ufficiale, come lo riporta il catalogo dell'ente. Facoltativo:
+   * si scrive solo dopo averlo letto sulla scheda ufficiale, perché finisce
+   * nella pagina dei riferimenti dei documenti consegnati.
+   */
+  titolo?: string;
 };
 
 export const REGISTRO_NORME: VoceRegistro[] = [
@@ -66,6 +72,9 @@ export const REGISTRO_NORME: VoceRegistro[] = [
     url: "https://store.uni.com/uni-en-iso-14064-1-2019",
     stato: "in vigore",
     dal: "11 aprile 2019",
+    // Letto sulla scheda store.uni.com il 15 settembre 2026, con lo stato.
+    titolo:
+      "Gas ad effetto serra - Parte 1: Specifiche e guida, al livello dell'organizzazione, per la quantificazione e la rendicontazione delle emissioni di gas ad effetto serra e della loro rimozione",
   },
   {
     codice: "UNI/PdR 125:2022",
@@ -118,6 +127,24 @@ export const REGISTRO_NORME: VoceRegistro[] = [
     stato: "in vigore",
     dal: "11 gennaio 2010",
     nota: "EMAS. Allegati I, II e III modificati dal Regolamento (UE) 2017/1505 del 28 agosto 2017 (allineamento alla ISO 14001:2015); allegato IV — la Dichiarazione Ambientale — sostituito dal Regolamento (UE) 2018/2026 del 19 dicembre 2018, in vigore dal 9 gennaio 2019. Verificato su EUR-Lex l'11 settembre 2026: nessun regolamento di modifica successivo.",
+  },
+  {
+    // Non è una norma UNI: è lo standard di rendicontazione di WRI e WBCSD,
+    // e si verifica su ghgprotocol.org. Sta nel registro perché finisce
+    // negli inventari dei clienti, e il controllo di consegna pretende che
+    // ogni riferimento citato in un documento sia registrato.
+    codice: "GHG Protocol Corporate Standard — edizione rivista (2004)",
+    url: "https://ghgprotocol.org/sites/default/files/standards/ghg-protocol-revised.pdf",
+    stato: "in vigore",
+    dal: "marzo 2004",
+    nota: "The Greenhouse Gas Protocol — A Corporate Accounting and Reporting Standard, Revised Edition (WRI/WBCSD). Il 29 luglio 2026 GHG Protocol e ISO hanno annunciato uno standard unico che riunirà Scope 1, 2 e 3 e la ISO 14064-1, con pubblicazione prevista nel 2028: fino ad allora resta questa l'edizione di riferimento. Verificato su ghgprotocol.org il 15 settembre 2026.",
+  },
+  {
+    codice: "GHG Protocol Scope 2 Guidance (2015)",
+    url: "https://ghgprotocol.org/sites/default/files/2023-03/Scope%202%20Guidance.pdf",
+    stato: "in vigore",
+    dal: "2015",
+    nota: "GHG Protocol Scope 2 Guidance — An amendment to the GHG Protocol Corporate Standard (WRI). La revisione è stata in consultazione pubblica dal 20 ottobre 2025 al 31 gennaio 2026 e non risulta pubblicata. Verificato su ghgprotocol.org il 15 settembre 2026.",
   },
   /* ── Ritirate: citabili SOLO per dire che sono ritirate ───────────── */
   {

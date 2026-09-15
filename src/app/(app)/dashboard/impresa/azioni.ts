@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -100,19 +101,61 @@ export async function salvaAnnoRendicontazione(formData: FormData) {
   revalidatePath("/dashboard/documenti");
 }
 
-/** Correzione di un campo proposto dall'AI Ver0: vince sempre il cliente. */
+/**
+ * Correzione di un campo proposto dall'AI Ver0: vince sempre il cliente.
+ *
+ * E CAMBIA LA PROVENIENZA. Un indirizzo riscritto dal cliente non viene più
+ * dal VIES: lasciarlo «recuperato dal VIES» farebbe citare nel documento
+ * consegnato una banca dati per un valore che quella banca dati non
+ * contiene. Provenienza e fonte il client non le può scrivere (permessi di
+ * colonna della 2.0, ed è giusto: non deve potersi spacciare per il
+ * Motore); le scrive il server, dopo aver letto la riga con la sessione e
+ * sulla sola organizzazione di chi chiede. Riscrivere lo stesso valore è
+ * una conferma, e la provenienza resta quella che era.
+ */
 export async function correggiCampo(campo: string, valore: string) {
   const pulito = valore.trim();
   if (pulito.length === 0 || pulito.length > 2000) return;
   const supabase = await createClient();
-  await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+  const { data: profilo } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!profilo?.organization_id) return;
+  const { data: riga } = await supabase
     .from("company_fields")
-    .update({
-      valore: pulito,
-      stato: "confermato",
-      confirmed_at: new Date().toISOString(),
-    })
-    .eq("campo", campo);
+    .select("valore, provenienza")
+    .eq("organization_id", profilo.organization_id)
+    .eq("campo", campo)
+    .maybeSingle();
+  if (!riga) return;
+
+  const adesso = new Date().toISOString();
+  if (riga.valore === pulito || riga.provenienza === "utente") {
+    await supabase
+      .from("company_fields")
+      .update({ valore: pulito, stato: "confermato", confirmed_at: adesso })
+      .eq("organization_id", profilo.organization_id)
+      .eq("campo", campo);
+  } else {
+    await createAdminClient()
+      .from("company_fields")
+      .update({
+        valore: pulito,
+        stato: "confermato",
+        confirmed_at: adesso,
+        provenienza: "utente",
+        fonte: "Corretto dall'impresa nella scheda",
+        fonte_url: null,
+      })
+      .eq("organization_id", profilo.organization_id)
+      .eq("campo", campo);
+  }
   revalidatePath("/dashboard/impresa");
   revalidatePath("/dashboard/percorsi");
   revalidatePath("/dashboard");

@@ -65,7 +65,28 @@ export type SezioneModello = {
   binding?: string;
   /** Presente solo se l'opzione è attiva nel taglio scelto. */
   soloSe?: string;
+  /**
+   * COME SI COMPONE nel documento finale, nell'ordine in cui si legge.
+   *
+   * La bozza mostra la FORMA della sezione mentre i dati arrivano; il
+   * documento consegnato ha bisogno del CONTENUTO. Qui il modello lo
+   * dichiara: paragrafi suoi (testo nostro, coi segnaposto) e blocchi di
+   * dati, ciascuno affidato a un compositore registrato per chiave in
+   * `src/lib/elaborato/compositori.ts`. Il costruttore del documento non
+   * sa che cosa componga: legge questo elenco.
+   *
+   * ASSENTE = la sezione non ha ancora una composizione automatica. Non è
+   * un errore da nascondere: il controllo di consegna la dichiara come
+   * mancanza nostra, e il documento non esce con una sezione vuota.
+   */
+  componi?: ParteSezione[];
 };
+
+/** Un pezzo di sezione: un paragrafo del modello, o un blocco di dati. */
+export type ParteSezione =
+  | { testo: string }
+  | { sottotitolo: string }
+  | { blocco: string; parametri?: Record<string, unknown> };
 
 export type VoceModello = {
   documento: string;
@@ -120,6 +141,26 @@ export type ModelloElaborato = {
   daFornire: VoceModello[];
   /** Quando il fascicolo è vuoto di proposito: da dove si compone. */
   zeroDocumenti?: string;
+
+  /* ── Il documento consegnato ────────────────────────────────────── */
+  /** Sopra il titolo in copertina, per esteso: che cosa è questo documento. */
+  occhiello?: string;
+  /** La sigla del codice del documento: «GHG» in «GHG-2025-4F2A9C-R0». */
+  sigla?: string;
+  /**
+   * I formati in cui si consegna. PDF sempre; DOCX dove il cliente deve
+   * poterci mettere le mani — manuali e procedure, che vivono e cambiano
+   * in azienda. NON per i documenti di rendicontazione: un inventario
+   * modificabile dopo l'emissione perde la sua tracciabilità
+   * (docs/motore.md §5).
+   */
+  formati?: ("pdf" | "docx")[];
+  /**
+   * Gli altri riferimenti citati oltre alle `norme`: standard di metodo,
+   * regolamenti. Ogni designazione deve stare in `REGISTRO_NORME`, come
+   * le norme: il controllo di consegna non distingue.
+   */
+  riferimenti?: { designazione: string; ruolo: string }[];
 };
 
 /* ================================================================== */
@@ -144,16 +185,89 @@ export const MODELLI_ELABORATO: ModelloElaborato[] = [
     norme: ["UNI EN ISO 14064-1:2019"],
     standard: "iso-14064-1",
     versione: "2019",
+    occhiello: "Inventario delle emissioni di gas a effetto serra dell'organizzazione",
+    sigla: "GHG",
+    // Un inventario non si consegna modificabile: dopo l'emissione un
+    // numero cambiato a mano non avrebbe più fonte (docs/motore.md §5).
+    formati: ["pdf"],
+    riferimenti: [
+      {
+        designazione: "GHG Protocol Corporate Standard — edizione rivista (2004)",
+        ruolo: "Principi e metodo di rendicontazione",
+      },
+      {
+        designazione: "GHG Protocol Scope 2 Guidance (2015)",
+        ruolo: "Doppia lettura dello Scope 2: location-based e market-based",
+      },
+    ],
     sezioni: [
-      { titolo: "Anagrafica e identificazione dell'organizzazione", binding: "anagrafica", obbligatoria: true },
-      { titolo: "Perimetro organizzativo e periodo di rendicontazione", binding: "perimetro", obbligatoria: true },
+      {
+        titolo: "Anagrafica e identificazione dell'organizzazione",
+        binding: "anagrafica",
+        obbligatoria: true,
+        componi: [
+          {
+            testo:
+              "L'inventario riguarda l'organizzazione identificata qui sotto. I dati vengono dalla registrazione, dalla scheda impresa, dalla visura camerale e dalle banche dati pubbliche: la sigla accanto a ciascuno dice da dove.",
+          },
+          { blocco: "anagrafica" },
+        ],
+      },
+      {
+        titolo: "Perimetro organizzativo e periodo di rendicontazione",
+        binding: "perimetro",
+        obbligatoria: true,
+        componi: [
+          {
+            testo:
+              "Il perimetro organizzativo comprende le attività e le sedi sulle quali {organizzazione} esercita il **controllo operativo**, uno dei criteri di consolidamento previsti dalla {norma} e dal GHG Protocol. L'inventario copre l'esercizio di rendicontazione {periodo}.",
+          },
+          { blocco: "perimetro" },
+          { sottotitolo: "Perimetro operativo" },
+          {
+            testo:
+              "L'inventario comprende le emissioni dirette dalla combustione di combustibili (Scope 1) e le emissioni indirette dall'energia elettrica acquistata (Scope 2), per le fonti documentate dalle bollette e dai registri dell'organizzazione.",
+          },
+          { blocco: "ghg:sorgenti" },
+          { sottotitolo: "Esclusioni" },
+          {
+            testo:
+              "Le altre emissioni indirette — beni e servizi acquistati, trasporti, rifiuti, spostamenti del personale (Scope 3) — non rientrano nel perimetro di questo inventario. Le eventuali emissioni fuggitive da impianti di refrigerazione e condizionamento non sono quantificate: non rientrano nei documenti del percorso, e la loro rilevanza per l'organizzazione è oggetto della validazione professionale.",
+          },
+          { sottotitolo: "Anno base" },
+          {
+            testo:
+              "L'esercizio {anno} è l'anno base di questo inventario. Eventuali inventari di esercizi precedenti non sono stati ricalcolati con lo stesso metodo e non sono confrontati in questo documento.",
+          },
+        ],
+      },
       {
         titolo: "Metodologia e fattori di emissione",
         stato: "impostata",
         obbligatoria: true,
-        fonte: "GHG Protocol · fattori ISPRA/DEFRA",
+        fonte: "GHG Protocol · fattori ISPRA, MASE, AIB e DESNZ",
         spiega:
           "Il metodo e i coefficienti ufficiali che trasformano i consumi in emissioni.",
+        componi: [
+          {
+            testo:
+              "Le emissioni si calcolano moltiplicando i dati di attività — i consumi letti sulle bollette e sui registri dell'organizzazione — per fattori di emissione pubblicati da fonti ufficiali: **emissioni = quantità attribuita all'esercizio × fattore di emissione**. Quantità, fattori e risultati riportati nel documento portano ciascuno la sigla della propria fonte.",
+          },
+          {
+            testo:
+              "Le bollette con un periodo a cavallo di due esercizi pesano sul {anno} in proporzione ai giorni che vi ricadono. Le bollette di uno stesso contatore devono coprire l'intero esercizio senza sovrapporsi; uno scarto fino a tre giorni fra una bolletta e la successiva è trattato come convenzione di fatturazione.",
+          },
+          {
+            testo:
+              "Le emissioni dall'energia elettrica acquistata si rendicontano con i due metodi della GHG Protocol Scope 2 Guidance: **location-based**, con il fattore medio dei consumi elettrici nazionali, e **market-based**, in cui le forniture dichiarate da fonti rinnovabili in bolletta pesano zero e le altre si calcolano con il mix residuale. I due risultati sono alternativi e non si sommano fra loro.",
+          },
+          { blocco: "ghg:fattori" },
+          { sottotitolo: "Incertezza" },
+          {
+            testo:
+              "I dati di attività vengono da documenti fiscali basati sulle misure dei contatori o sulle quantità fatturate, e hanno un'incertezza bassa. L'incertezza principale sta nei fattori di emissione, che sono medie nazionali o di mercato e non misure sugli impianti dell'organizzazione. Non è stata svolta una quantificazione numerica dell'incertezza.",
+          },
+        ],
       },
       {
         titolo: "Scope 1 — emissioni dirette",
@@ -162,6 +276,13 @@ export const MODELLI_ELABORATO: ModelloElaborato[] = [
         attende: "i registri o le fatture dei carburanti del {anno}",
         attendeTipi: ["carburanti", "bolletta-gas"],
         spiega: "Scope 1 = ciò che bruci tu: caldaie, mezzi aziendali, impianti.",
+        componi: [
+          {
+            testo:
+              "Le emissioni dirette sono quelle prodotte dalla combustione di combustibili negli impianti e nei mezzi dell'organizzazione: il gas naturale per riscaldamento e processi, i carburanti dei mezzi aziendali.",
+          },
+          { blocco: "ghg:scope1" },
+        ],
       },
       {
         titolo: "Scope 2 — energia acquistata (location e market based)",
@@ -170,6 +291,13 @@ export const MODELLI_ELABORATO: ModelloElaborato[] = [
         attende: "le bollette elettriche di {dodiciMesi}",
         attendeTipi: ["bolletta-elettrica", "teleriscaldamento"],
         spiega: "Scope 2 = le emissioni dell'energia elettrica che compri.",
+        componi: [
+          {
+            testo:
+              "Le emissioni indirette da energia importata sono quelle prodotte altrove per generare l'energia elettrica che l'organizzazione preleva dalla rete. Le tabelle riportano, contatore per contatore, le bollette dell'esercizio e la parte di consumo attribuita al {anno}.",
+          },
+          { blocco: "ghg:scope2" },
+        ],
       },
       {
         titolo: "Scope 3 — emissioni indirette di filiera",
@@ -184,6 +312,18 @@ export const MODELLI_ELABORATO: ModelloElaborato[] = [
         obbligatoria: true,
         attende: "il calcolo sui dati confermati",
         spiega: "Il totale delle emissioni e il rapporto coi numeri del bilancio.",
+        componi: [
+          { blocco: "ghg:risultati" },
+          { sottotitolo: "Dichiarazioni" },
+          {
+            testo:
+              "Il presente inventario è stato predisposto con riferimento ai requisiti della {norma} per la quantificazione e la rendicontazione delle emissioni di gas a effetto serra a livello di organizzazione, e ai principi del GHG Protocol Corporate Standard.",
+          },
+          {
+            testo:
+              "L'inventario non è stato sottoposto a verifica di parte terza. La validazione professionale, quando registrata, è riportata nella pagina dedicata di questo documento: non è una verifica né un'asseverazione.",
+          },
+        ],
       },
     ],
     daFornire: [
@@ -229,7 +369,12 @@ export const MODELLI_ELABORATO: ModelloElaborato[] = [
     intestazione: "Bilancio di Sostenibilità (VSME)",
     conAnno: true,
     sezioni: [
-      { titolo: "Anagrafica e identificazione dell'organizzazione", binding: "anagrafica", obbligatoria: true },
+      {
+        titolo: "Anagrafica e identificazione dell'organizzazione",
+        binding: "anagrafica",
+        obbligatoria: true,
+        componi: [{ blocco: "anagrafica" }],
+      },
       {
         titolo: "Struttura del bilancio secondo lo standard EFRAG",
         stato: "impostata",
@@ -238,7 +383,12 @@ export const MODELLI_ELABORATO: ModelloElaborato[] = [
         spiega:
           "VSME = il formato europeo standard del bilancio di sostenibilità: una risposta unica alle richieste di banche e clienti.",
       },
-      { titolo: "Profilo dell'impresa e modello di business", binding: "profilo", obbligatoria: true },
+      {
+        titolo: "Profilo dell'impresa e modello di business",
+        binding: "profilo",
+        obbligatoria: true,
+        componi: [{ blocco: "profilo" }],
+      },
       {
         titolo: "Indicatori ambientali",
         stato: "in-attesa",
@@ -308,7 +458,12 @@ export const MODELLI_ELABORATO: ModelloElaborato[] = [
     intestazione: "Profilo ESG per questionari e rating",
     conAnno: true,
     sezioni: [
-      { titolo: "Anagrafica e identificazione dell'organizzazione", binding: "anagrafica", obbligatoria: true },
+      {
+        titolo: "Anagrafica e identificazione dell'organizzazione",
+        binding: "anagrafica",
+        obbligatoria: true,
+        componi: [{ blocco: "anagrafica" }],
+      },
       {
         titolo: "Questionari mappati sui tuoi dati",
         stato: "impostata",
@@ -359,11 +514,19 @@ export const MODELLI_ELABORATO: ModelloElaborato[] = [
     documento: DOC_PARITA,
     intestazione: "Sistema di Gestione della Parità",
     conAnno: true,
+    // Politica, piano e procedure vivono in azienda e cambiano con lei: il
+    // documento si consegna anche modificabile.
+    formati: ["pdf", "docx"],
     norme: ["UNI/PdR 125:2022"],
     standard: "pdr-125",
     versione: "2022",
     sezioni: [
-      { titolo: "Anagrafica e identificazione dell'organizzazione", binding: "anagrafica", obbligatoria: true },
+      {
+        titolo: "Anagrafica e identificazione dell'organizzazione",
+        binding: "anagrafica",
+        obbligatoria: true,
+        componi: [{ blocco: "anagrafica" }],
+      },
       {
         titolo: "Le sei aree di KPI della prassi",
         stato: "impostata",
@@ -380,7 +543,12 @@ export const MODELLI_ELABORATO: ModelloElaborato[] = [
         attendeTipi: ["organico", "formazione"],
         spiega: "I numeri veri della tua impresa dentro ciascuna area.",
       },
-      { titolo: "Politica della parità e piano strategico", binding: "politicaParita", obbligatoria: true },
+      {
+        titolo: "Politica della parità e piano strategico",
+        binding: "politicaParita",
+        obbligatoria: true,
+        componi: [{ blocco: "politicaParita" }],
+      },
       {
         titolo: "Fascicolo per l'audit dell'organismo",
         stato: "in-attesa",
@@ -426,9 +594,17 @@ export function modelloManualeIso(
     ambito: "sistemi-gestione",
     documento: `Manuale ${ambitoNorma}`,
     intestazione: `Manuale del Sistema di Gestione ${ambitoNorma}`,
+    // Un manuale che il cliente non può modificare diventa falso al primo
+    // cambio di organigramma (docs/motore.md §5).
+    formati: ["pdf", "docx"],
     norme: [norma],
     sezioni: [
-      { titolo: "Anagrafica e identificazione dell'organizzazione", binding: "anagrafica", obbligatoria: true },
+      {
+        titolo: "Anagrafica e identificazione dell'organizzazione",
+        binding: "anagrafica",
+        obbligatoria: true,
+        componi: [{ blocco: "anagrafica" }],
+      },
       {
         titolo: "Struttura HLS del manuale e politica",
         stato: "impostata",
@@ -437,7 +613,12 @@ export function modelloManualeIso(
         spiega:
           "HLS = la struttura standard dei capitoli, uguale per tutte le norme ISO.",
       },
-      { titolo: "Contesto dell'organizzazione e parti interessate", binding: "contesto", obbligatoria: true },
+      {
+        titolo: "Contesto dell'organizzazione e parti interessate",
+        binding: "contesto",
+        obbligatoria: true,
+        componi: [{ blocco: "contesto" }],
+      },
       {
         titolo: "Processi, procedure e modulistica operativa",
         stato: "in-attesa",

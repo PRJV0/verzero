@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
-import { AlertTriangle, Coins, Gauge, ScrollText } from "lucide-react";
+import { AlertTriangle, Coins, FileCheck2, Gauge, ScrollText } from "lucide-react";
 
+import { tabellaAssente } from "@/lib/elaborato/archivio";
 import { createClient } from "@/lib/supabase/server";
 import { REGISTRO_MOTORE, tipiDichiarati, tipiLeggibili } from "@/lib/motore/famiglie";
 import { FAIR_USE, statoUso } from "@/lib/motore/fair-use";
 import { DOLLARO, TETTI } from "@/lib/motore/tetti";
 
 import { IntestazioneSezione, TestataSezione } from "../_ui";
+import { ValidaRevisione } from "./validazione";
 
 export const metadata: Metadata = {
   title: "Motore — back-office",
@@ -164,6 +166,29 @@ export default async function MotorePage() {
 
   const daVedere = (allarmi ?? []).filter((a) => !a.visto_at);
 
+  // Le revisioni da validare: le ultime emesse di ciascun documento, non
+  // ancora validate. Qui la RLS NON basta come barriera, a differenza del
+  // resto della pagina: le versioni le legge anche l'impresa titolare e il
+  // suo consulente, che vedrebbero la sezione e il modulo di validazione
+  // dei propri documenti. L'azione rifiuterebbe comunque, ma un modulo che
+  // si mostra a chi non può usarlo è già un difetto. Senza migrazione la
+  // tabella non c'è, e la sezione tace.
+  const { data: amministratore } = await supabase.rpc("is_admin");
+  const { data: daValidare, error: erroreVersioni } = amministratore
+    ? await supabase
+        .from("elaborati_versioni")
+        .select("id, organization_id, modello, documento, esercizio, revisione, codice, stato_validazione, created_at")
+        .order("created_at", { ascending: false })
+        .limit(200)
+    : { data: [], error: null };
+  const ultimePerDocumento = new Map<string, NonNullable<typeof daValidare>[number]>();
+  for (const v of tabellaAssente(erroreVersioni) ? [] : (daValidare ?? [])) {
+    const chiave = `${v.organization_id}|${v.modello}|${v.esercizio}`;
+    const prima = ultimePerDocumento.get(chiave);
+    if (!prima || v.revisione > prima.revisione) ultimePerDocumento.set(chiave, v);
+  }
+  const inAttesa = [...ultimePerDocumento.values()].filter((v) => v.stato_validazione === "in_attesa");
+
   return (
     <main>
       <IntestazioneSezione
@@ -171,6 +196,29 @@ export default async function MotorePage() {
         titolo="Il Motore, coi numeri veri"
         sotto="Costo per pratica e per cliente, tetti di spesa, e dove la lettura fallisce. Questi numeri non compaiono da nessuna parte nel portale del cliente."
       />
+
+      {inAttesa.length > 0 && (
+        <section className="mt-6">
+          <TestataSezione
+            icona={FileCheck2}
+            titolo={`${inAttesa.length} ${inAttesa.length === 1 ? "documento da validare" : "documenti da validare"}`}
+            sotto="L'ultima revisione emessa di ciascun documento, in attesa della validazione professionale. Validare emette una revisione nuova con la pagina di validazione compilata: la revisione originale non si tocca."
+          />
+          <ul className="mt-3 space-y-2">
+            {inAttesa.map((v) => (
+              <ValidaRevisione
+                key={v.id}
+                versione={{
+                  id: v.id,
+                  titolo: `${v.documento} ${v.esercizio} · revisione ${v.revisione} · ${v.codice}`,
+                  organizzazione: nomeOrg.get(v.organization_id) ?? v.organization_id,
+                  creata: DATA(v.created_at),
+                }}
+              />
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* Gli allarmi per primi: se c'è qualcosa di fermo, si vede subito. */}
       {daVedere.length > 0 && (

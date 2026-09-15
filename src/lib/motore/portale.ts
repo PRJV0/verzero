@@ -173,6 +173,21 @@ export type CellaGiudicabile = {
 };
 
 /**
+ * L'AVVISO DI UN VALORE SCRITTO DAL CLIENTE, parola per parola.
+ *
+ * Lo scrive la correzione in `documenti/azioni.ts` e lo legge la
+ * composizione dei documenti finali: un valore corretto a mano non è più
+ * «letto dal documento», e il registro delle fonti lo deve dire. Una sola
+ * costante, perché una frase ricopiata in due posti smette di combaciare
+ * alla prima revisione del testo — e allora il valore torna a sembrare letto.
+ */
+export const AVVISO_SCRITTO_DA_TE = "Scritto da te: questo valore non viene dalla nostra lettura.";
+
+export function cellaScrittaDalCliente(c: { avvisi?: string[] | null }): boolean {
+  return (c.avvisi ?? []).some((a) => a.startsWith("Scritto da te"));
+}
+
+/**
  * IL CALCOLATO SI RICONOSCE ANCHE SENZA LA SUA COLONNA.
  *
  * La colonna `calcolato` esiste nella migrazione, non ancora nel remoto:

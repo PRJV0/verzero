@@ -255,6 +255,42 @@ Prove: `node --import ./scripts/risolutore-ts.mjs scripts/test-aeo.mjs`.
   `src/lib/catalog.ts` è dato di portale, non di vetrina. Criterio: se
   un'informazione permette di ricostruire come si assembla un percorso,
   non va in pagina.
+- **Il documento consegnato si compone, si controlla, si versiona.**
+  Vive in `src/lib/elaborato/` (docs/motore.md §5–§8). Otto regole:
+  (1) **nessun dato senza sigla** — nel contenuto una cella è una
+  stringa (testo nostro) o un `Valore` con `fonte`, e la sigla (D letto
+  da un documento dell'impresa, B banca dati, C calcolato, I inserito
+  dall'impresa) rimanda al registro delle fonti in appendice; un calcolo
+  è confermato solo se lo sono i suoi ingressi, fino in fondo; (2) **il
+  testo lo scrive la composizione**: `pdf.ts` e `docx.ts` impaginano e
+  non aggiungono parole, altrimenti i due formati divergono alla prima
+  frase; (3) **il controllo di consegna non si aggira** — i renderer
+  accettano solo un `ElaboratoConsegnabile`, e chi aggiunge un
+  compositore dichiara le sue mancanze dicendo chi rimedia, che cosa e
+  dove; una sezione senza `componi` è una mancanza nostra, mai una
+  sezione finta; (4) **i fattori di emissione** si leggono solo da
+  `src/lib/calc/fattori.ts`, ciascuno verificato sul documento ufficiale
+  con tabella e data, mai di un anno successivo all'esercizio, e una
+  revisione si AGGIUNGE; (5) **la veste del cliente non tocca il nostro
+  marchio**: il logotipo Verzero sta nel colophon nei suoi colori, e la
+  veste neutra non usa i verdi del sito; (6) **una versione non si
+  modifica**: una correzione o una validazione professionale è una
+  revisione nuova; (7) **niente si indovina** — la composizione accetta
+  numeri e date solo nella forma canonica (`numeroCanonico`,
+  `dataCanonica`), ogni correzione del cliente si salva in quella forma
+  (`valoreCorretto`), la sigla dice chi ha scritto il numero (riscritto
+  dal cliente è I, ricavato è C), e nessun blocco resta senza un rimedio
+  che il portale sa eseguire — dove nessun documento può rispondere, una
+  dichiarazione dell'organizzazione (`dichiarazioni.ts`), non un
+  «scrivici» come unica via; (8) **chi cambia ciò che il
+  generatore produce a parità di ingressi aggiorna
+  `VERSIONE_GENERATORE`** in `componi.ts`: sta nell'impronta, e senza il
+  riuso riaprirebbe come «nulla è cambiato» un documento composto col
+  codice vecchio. Prove:
+  `node --import ./scripts/risolutore-ts.mjs scripts/test-elaborato.mjs`;
+  documento d'esempio da guardare:
+  `node --import ./scripts/risolutore-ts.mjs scripts/collaudo-elaborato.mjs`.
+  Le scelte ancora da confermare sono in `docs/decisioni-da-rivedere.md`.
 - **Prezzi**: fonte unica in `src/lib/pricing.ts`. Nessun prezzo scritto a mano
   nelle pagine, mai. E **nessun confronto economico con il mercato**:
   non si affianca il nostro prezzo a quello di terzi, non si citano

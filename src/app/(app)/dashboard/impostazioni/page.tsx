@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import { Briefcase, FileCheck2, Mail, ShieldCheck } from "lucide-react";
 
+import { MODELLO_PER_PERCORSO } from "@/lib/elaborati";
+import { leggiMarchio } from "@/lib/elaborato/archivio";
 import { createClient } from "@/lib/supabase/server";
 
 import { caricaContesto } from "../_contesto";
 import { IntestazioneSezione } from "../_ui";
 import { revocaMandato } from "../azioni";
 import { AccountAzioni } from "./account";
+import { VesteDocumenti } from "./veste";
 
 export const metadata: Metadata = {
   title: "Impostazioni — il tuo ecosistema",
@@ -27,12 +30,39 @@ const DOC_LABEL: Record<string, string> = {
 
 /**
  * IMPOSTAZIONI (SPEC §12.H, sezione 8 di 8): dati dell'account, consensi
- * registrati e — per l'impresa — i mandati dei consulenti, revocabili in
- * ogni momento (la titolarità dei dati resta all'impresa).
+ * registrati, la veste dei documenti e — per l'impresa — i mandati dei
+ * consulenti, revocabili in ogni momento (la titolarità dei dati resta
+ * all'impresa).
  */
 export default async function ImpostazioniPage() {
   const contesto = await caricaContesto();
   const supabase = await createClient();
+
+  // La veste si imposta una volta e vale per tutti i documenti: sta qui,
+  // fra le impostazioni, e l'anteprima la prova sul primo documento dei
+  // percorsi attivi che ne ha uno.
+  const [marchio, { data: attivi }] = contesto.org
+    ? await Promise.all([
+        leggiMarchio(supabase, contesto.org.id),
+        supabase
+          .from("module_activations")
+          .select("module")
+          .eq("organization_id", contesto.org.id)
+          .in("stato", ["attivo", "in_attivazione"]),
+      ])
+    : [{ impostazioni: null, esitoLogo: null, disponibile: false }, { data: [] }];
+  const primo = (attivi ?? [])
+    .map((m) => ({ percorso: m.module, voce: MODELLO_PER_PERCORSO[m.module]?.[0] }))
+    .find((x) => x.voce);
+  const anteprimaHref = primo?.voce
+    ? `/dashboard/percorsi/anteprima?percorso=${encodeURIComponent(primo.percorso)}&modello=${encodeURIComponent(primo.voce.modello)}${
+        contesto.ruolo === "consulente" && contesto.org ? `&cliente=${encodeURIComponent(contesto.org.id)}` : ""
+      }`
+    : null;
+  const logoUrl = marchio.impostazioni?.logo_percorso
+    ? ((await supabase.storage.from("marchi").createSignedUrl(marchio.impostazioni.logo_percorso, 3600)).data
+        ?.signedUrl ?? null)
+    : null;
 
   const [{ data: consensi }, { data: mandati }] = await Promise.all([
     contesto.org
@@ -80,6 +110,23 @@ export default async function ImpostazioniPage() {
           {/* Cambio password e uscita (SPEC §12.E) */}
           <AccountAzioni email={contesto.email} />
         </section>
+
+        {contesto.org && (
+          <VesteDocumenti
+            iniziali={{
+              colore: marchio.impostazioni?.colore_accento ?? null,
+              nome: marchio.impostazioni?.nome_intestazione ?? null,
+              indirizzo: marchio.impostazioni?.indirizzo ?? null,
+              sito: marchio.impostazioni?.sito ?? null,
+              contatto: marchio.impostazioni?.contatto ?? null,
+            }}
+            logoUrl={logoUrl}
+            esitoLogo={marchio.esitoLogo as { tono: "ok" | "avviso" | "blocco"; testo: string }[] | null}
+            disponibile={marchio.disponibile}
+            anteprimaHref={anteprimaHref}
+            solaLettura={contesto.ruolo !== "impresa"}
+          />
+        )}
 
         {/* Consensi registrati (reali, dal database) */}
         {contesto.ruolo === "impresa" && (

@@ -39,11 +39,23 @@ export type Impronta = {
   norme: string;
   /** Il modello del documento: cambiarlo cambia l'elaborato. */
   modello: string;
+  /**
+   * I fattori di calcolo usati (per un inventario, i fattori di emissione).
+   * Facoltativo: non tutti gli elaborati calcolano, e un fattore nuovo non
+   * è «la norma che ha cambiato edizione» — va detto con le sue parole.
+   */
+  fattori?: string;
+  /**
+   * La veste del documento: logo, colore, contatti. Cambiarla non tocca un
+   * numero, ma produce un documento diverso — e «nulla è cambiato» detto a
+   * chi ha appena caricato il logo sarebbe falso.
+   */
+  veste?: string;
 };
 
 /** L'impronta come stringa confrontabile. */
 export function improntaTesto(i: Impronta): string {
-  return [i.dati, i.documenti, i.norme, i.modello].join("|");
+  return [i.dati, i.documenti, i.norme, i.modello, i.fattori ?? "", i.veste ?? ""].join("|");
 }
 
 export type StatoRigenerazione = {
@@ -102,6 +114,12 @@ export function cosaECambiato(adesso: Impronta, ultima: Impronta): string[] {
   }
   if (adesso.modello !== ultima.modello) {
     cambiato.push("il modello del documento è stato aggiornato");
+  }
+  if ((adesso.fattori ?? "") !== (ultima.fattori ?? "")) {
+    cambiato.push("sono stati aggiornati i fattori di calcolo");
+  }
+  if ((adesso.veste ?? "") !== (ultima.veste ?? "")) {
+    cambiato.push("è cambiata la veste grafica del documento");
   }
   return cambiato;
 }

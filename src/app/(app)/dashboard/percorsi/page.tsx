@@ -25,10 +25,19 @@ import {
   type SezioneBozza,
 } from "@/lib/bozza";
 import { tipiRichiesti, tipoDocumento } from "@/lib/documenti";
+import { MODELLO_PER_PERCORSO } from "@/lib/elaborati";
+import {
+  leggiIngressi,
+  leggiMarchio,
+  leggiVersioni,
+  MESSAGGIO_NON_DISPONIBILE,
+  statoDocumento,
+} from "@/lib/elaborato/archivio";
 import { raggruppaLetture } from "@/lib/motore/portale";
 import { AVVIO, DOPO_AVVIO } from "@/lib/avvio";
 
 import { CaricaDocumenti } from "../documenti/carica";
+import { PannelloElaborato, type VersioneVista } from "./elaborato";
 
 import { caricaContesto } from "../_contesto";
 import { AnelloSigillo } from "../_anello";
@@ -455,12 +464,10 @@ export default async function PercorsiPage({
   const contesto = await caricaContesto(cliente, "/dashboard/percorsi");
   const supabase = await createClient();
 
-  const [
-    { data: moduli },
-    { data: righeScheda },
-    { data: documenti },
-    { data: campiLetti },
-  ] =
+  // Le stesse righe servono alla bozza e al documento finale: si leggono
+  // una volta, e la composizione del finale vede esattamente quello che
+  // vede la bozza.
+  const [{ data: moduli }, ingressi, marchio, archivio, { data: orgCompleta }] =
     contesto.org
       ? await Promise.all([
           supabase
@@ -468,20 +475,25 @@ export default async function PercorsiPage({
             .select("*")
             .eq("organization_id", contesto.org.id)
             .order("created_at", { ascending: false }),
+          leggiIngressi(supabase, contesto.org.id),
+          leggiMarchio(supabase, contesto.org.id),
+          leggiVersioni(supabase, contesto.org.id),
           supabase
-            .from("company_fields")
-            .select("campo, valore, fonte, stato")
-            .eq("organization_id", contesto.org.id),
-          supabase
-            .from("documents")
-            .select("id, tipo, stato")
-            .eq("organization_id", contesto.org.id),
-          supabase
-            .from("document_fields")
-            .select("document_id, riga, campo, etichetta, valore, unita, stato")
-            .eq("organization_id", contesto.org.id),
+            .from("organizations")
+            .select("id, ragione_sociale, partita_iva, anno_rendicontazione, sito_web, created_at")
+            .eq("id", contesto.org.id)
+            .maybeSingle(),
         ])
-      : [{ data: [] }, { data: [] }, { data: [] }, { data: [] }];
+      : [
+          { data: [] },
+          { campi: [], documenti: [], campiDocumento: [] },
+          { impostazioni: null, esitoLogo: null, disponibile: false },
+          { versioni: [], disponibile: false },
+          { data: null },
+        ];
+  const righeScheda = ingressi.campi;
+  const documenti = ingressi.documenti;
+  const campiLetti = ingressi.campiDocumento;
 
   // I tipi già in archivio: è ciò che fa cambiare stato alle sezioni e
   // alle voci del fascicolo, e muovere l'anello (SPEC §12.E).
@@ -648,6 +660,54 @@ export default async function PercorsiPage({
                             : undefined
                         }
                       />
+                      {(() => {
+                        // Il documento finale esiste solo per i documenti che
+                        // hanno un modello: gli altri restano bozza, e non si
+                        // finge il contrario.
+                        const voce = (MODELLO_PER_PERCORSO[m.module] ?? []).find(
+                          (v) => v.modello === comp.key,
+                        );
+                        if (!voce || !orgCompleta) return null;
+                        const stato = statoDocumento({
+                          chiaveModello: voce.modello,
+                          opzioni: voce.opzioni ?? [],
+                          percorso: m.module,
+                          organizzazione: orgCompleta,
+                          ingressi,
+                          impostazioni: marchio.impostazioni,
+                          versioni: archivio.versioni,
+                        });
+                        if (!stato) return null;
+                        const versioni: VersioneVista[] = stato.versioni.map((v) => ({
+                          id: v.id,
+                          revisione: v.revisione,
+                          codice: v.codice,
+                          data: v.created_at,
+                          motivo: v.motivo,
+                          pagine: v.pdf_pagine,
+                          docx: Boolean(v.docx_percorso),
+                          validata: v.stato_validazione === "validata",
+                          validataIl: v.validata_il,
+                        }));
+                        return (
+                          <PannelloElaborato
+                            percorso={m.module}
+                            chiaveModello={voce.modello}
+                            documento={stato.modello.documento}
+                            consegnabile={stato.consegna.consegnabile}
+                            mancanze={stato.consegna.mancanze}
+                            disponibile={archivio.disponibile && marchio.disponibile}
+                            messaggioNonDisponibile={MESSAGGIO_NON_DISPONIBILE}
+                            versioni={versioni}
+                            cambiato={stato.cambiato}
+                            superata={stato.superata}
+                            puoGenerare={contesto.ruolo === "impresa"}
+                            {...(contesto.ruolo === "consulente" && contesto.org
+                              ? { cliente: contesto.org.id }
+                              : {})}
+                          />
+                        );
+                      })()}
                     </section>
                   ))}
                 </div>
